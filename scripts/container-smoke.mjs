@@ -1,0 +1,109 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
+
+const image = process.argv[2] || 'bozkurt-obasi:local';
+const name = `bozkurt-smoke-${randomBytes(5).toString('hex')}`;
+const volume = `${name}-data`;
+function docker(args, allowFailure = false) {
+  const result = spawnSync('docker', args, { encoding: 'utf8', timeout: 60_000 });
+  if (result.status !== 0 && !allowFailure)
+    throw new Error(`docker ${args.join(' ')} failed\n${result.stderr || result.error}`);
+  return result.stdout?.trim() || '';
+}
+async function waitForHealth(baseUrl) {
+  for (let attempt = 0; attempt < 80; attempt++) {
+    try {
+      const response = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(1500) });
+      if (response.ok && (await response.json()).status === 'ok') return;
+    } catch {
+      /* Wait for the process to bind and open SQLite. */
+    }
+    await delay(250);
+  }
+  throw new Error('Container did not become healthy.');
+}
+let created = false;
+function containerUrl() {
+  const binding = JSON.parse(
+    docker(['inspect', '--format', '{{json .NetworkSettings.Ports}}', name]),
+  );
+  return `http://127.0.0.1:${binding['3000/tcp'][0].HostPort}`;
+}
+try {
+  docker(['volume', 'create', volume]);
+  docker([
+    'run',
+    '-d',
+    '--name',
+    name,
+    '--read-only',
+    '--tmpfs',
+    '/tmp:size=32m,mode=1777',
+    '--cap-drop=ALL',
+    '--security-opt=no-new-privileges:true',
+    '-p',
+    '127.0.0.1::3000',
+    '-v',
+    `${volume}:/data`,
+    image,
+  ]);
+  created = true;
+  let baseUrl = containerUrl();
+  await waitForHealth(baseUrl);
+  const page = await fetch(baseUrl);
+  assert.equal(page.status, 200, 'Production HTML must load.');
+  assert.match(await page.text(), /<html/i);
+  const sessionResponse = await fetch(`${baseUrl}/api/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  assert.equal(sessionResponse.status, 200, 'Guest session must be created.');
+  const cookie = sessionResponse.headers.get('set-cookie')?.split(';')[0];
+  assert.ok(cookie, 'Session cookie must be returned.');
+  const session = await sessionResponse.json();
+  const mutationResponse = await fetch(`${baseUrl}/api/action`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: cookie },
+    body: JSON.stringify({
+      action: { type: 'build', building: 'quarry' },
+      revision: session.revision,
+    }),
+  });
+  assert.equal(
+    mutationResponse.status,
+    200,
+    `Build action failed: ${await mutationResponse.clone().text()}`,
+  );
+  const saved = await mutationResponse.json();
+  assert.ok(
+    saved.state.buildings.some(
+      (building) => building.id === 'building-quarry' && building.level === 1,
+    ),
+    'Quarry must be constructed.',
+  );
+  docker(['restart', name]);
+  // Docker may allocate a different ephemeral host port after a restart.
+  baseUrl = containerUrl();
+  await waitForHealth(baseUrl);
+  const restoredResponse = await fetch(`${baseUrl}/api/state`, { headers: { Cookie: cookie } });
+  assert.equal(restoredResponse.status, 200, 'Guest session must survive container restart.');
+  const restored = await restoredResponse.json();
+  assert.deepEqual(
+    restored.state.buildings,
+    saved.state.buildings,
+    'Buildings must survive restart.',
+  );
+  assert.ok(restored.revision >= saved.revision, 'Revision must survive restart.');
+  console.log(
+    'Container smoke passed: non-root read-only runtime, HTTP health, production HTML, guest session, server action, persistent SQLite after restart.',
+  );
+} catch (error) {
+  if (created) console.error(docker(['logs', name], true));
+  throw error;
+} finally {
+  if (created) docker(['rm', '-f', name], true);
+  docker(['volume', 'rm', volume], true);
+}

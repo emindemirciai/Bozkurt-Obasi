@@ -1,0 +1,26 @@
+{
+  "name": "Bozkurt.Editor",
+  "rootNamespace": "Bozkurt.Editor",
+  "references": [
+    "Bozkurt.Core",
+    "Bozkurt.Input",
+    "Bozkurt.Gameplay",
+    "Bozkurt.UI",
+    "Unity.InputSystem",
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.RenderPipelines.Universal.Editor",
+    "UnityEngine.UI",
+    "Bozkurt.Networking"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

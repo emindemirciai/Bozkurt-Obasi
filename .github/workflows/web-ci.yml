@@ -1,0 +1,84 @@
+name: Web checks and container
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Reproducible install
+        run: npm ci --no-audit --no-fund
+      - name: Source, translations, and deployment checks
+        run: npm run check
+      - name: Source formatting
+        run: npm run format:check
+      - name: Engine and API tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Offline single-file preview
+        run: npm run build:preview
+      - name: Install browser for end-to-end checks
+        run: npx playwright install --with-deps chromium
+      - name: Browser gameplay checks
+        run: npm run test:e2e
+      - name: Count source lines
+        run: npm run count:lines -- --no-write --json
+      - name: Clean source archive
+        run: npm run backup
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bozkurt-Obasi-web-delivery
+          path: |
+            artifacts/*.zip
+            artifacts/*.sha256
+            preview/index.html
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-details
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: docker/setup-buildx-action@v3
+      - name: Validate compose
+        run: docker compose -f compose.yml config --quiet
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          push: false
+          tags: bozkurt-obasi:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Container health and persistent gameplay smoke
+        run: node scripts/container-smoke.mjs bozkurt-obasi:ci

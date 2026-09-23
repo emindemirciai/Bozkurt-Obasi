@@ -1,0 +1,19 @@
+{
+  "name": "Bozkurt.UI",
+  "rootNamespace": "Bozkurt.UI",
+  "references": [
+    "Bozkurt.Core",
+    "Bozkurt.Gameplay",
+    "UnityEngine.UI",
+    "Bozkurt.Networking"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

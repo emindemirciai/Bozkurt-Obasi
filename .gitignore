@@ -1,0 +1,64 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+!tools/build/
+!tools/build/**
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Server
+server/node_modules/
+server/build/
+server/dist/
+
+# Infrastructure data
+infrastructure/data/
+infrastructure/backups/
+
+Builds/
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+node_modules/
+.npm-cache/
+dist/
+artifacts/
+data/
+test-results/
+playwright-report/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

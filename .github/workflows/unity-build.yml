@@ -1,0 +1,73 @@
+name: Unity Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Build target
+        required: true
+        default: WebGL
+        type: choice
+        options:
+          - WebGL
+          - AndroidAPK
+          - AndroidAAB
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - uses: actions/cache@v4
+        with:
+          path: client/Library
+          key: Library-${{ runner.os }}-${{ inputs.target }}-${{ hashFiles('client/Packages/**', 'client/ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ runner.os }}-${{ inputs.target }}-
+            Library-${{ runner.os }}-
+
+      - name: Build WebGL
+        if: inputs.target == 'WebGL'
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: client
+          targetPlatform: WebGL
+          buildMethod: Bozkurt.Editor.BozkurtBuildPipeline.BuildWebGlCommandLine
+
+      - name: Build Android APK
+        if: inputs.target == 'AndroidAPK'
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: client
+          targetPlatform: Android
+          buildMethod: Bozkurt.Editor.BozkurtBuildPipeline.BuildAndroidApkCommandLine
+
+      - name: Build Android AAB
+        if: inputs.target == 'AndroidAAB'
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: client
+          targetPlatform: Android
+          buildMethod: Bozkurt.Editor.BozkurtBuildPipeline.BuildAndroidAabCommandLine
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bozkurt-Obasi-${{ inputs.target }}
+          path: Builds
+          if-no-files-found: error

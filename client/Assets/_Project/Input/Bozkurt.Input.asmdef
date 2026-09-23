@@ -1,0 +1,17 @@
+{
+  "name": "Bozkurt.Input",
+  "rootNamespace": "Bozkurt.Input",
+  "references": [
+    "Bozkurt.Core",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

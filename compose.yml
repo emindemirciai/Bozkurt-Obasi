@@ -1,0 +1,48 @@
+name: bozkurt-obasi
+
+services:
+  game:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DATABASE_PATH: /data/game.sqlite
+      TRUST_PROXY: "true"
+      ANALYZE_ENABLED: "${ANALYZE_ENABLED:-true}"
+      ANALYZE_URL: "${ANALYZE_URL:-https://analiz.bozkurtobasi.com}"
+      ANALYZE_SITE_ID: "${ANALYZE_SITE_ID:-bozkurtobasi.com}"
+      ANALYZE_ALLOWED_ORIGINS: "${ANALYZE_ALLOWED_ORIGINS:-https://bozkurtobasi.com,https://www.bozkurtobasi.com}"
+    expose:
+      - "3000"
+    volumes:
+      - game-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
+
+volumes:
+  game-data:
