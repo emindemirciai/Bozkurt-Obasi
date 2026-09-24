@@ -2,6 +2,7 @@
   "name": "bozkurt-obasi",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Bozkurt Obası: Ay-Yıldız Nöbeti — browser village builder and crescent formation defense",
   "homepage": "https://bozkurtobasi.com",

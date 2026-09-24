@@ -11,7 +11,8 @@ const files = await projectFiles();
 const javascript = files.filter(
   (file) =>
     /\.(?:mjs|js|cjs)$/.test(file) &&
-    (/^(?:web|shared|server\/web|scripts|tests)\//.test(file) || !file.includes('/')),
+    (/^(?:web|shared|server\/web|services\/admin|scripts|tests)\//.test(file) ||
+      !file.includes('/')),
 );
 for (const file of javascript) {
   const result = spawnSync(process.execPath, ['--check', path.join(projectRoot, file)], {
@@ -49,6 +50,8 @@ for (const line of dockerfile
 if (!/USER node/.test(dockerfile)) fail('Production container must run as node user.');
 if (!dockerfile.includes('/api/health')) fail('Container health route missing.');
 const compose = await readFile(path.join(projectRoot, 'compose.yml'), 'utf8');
+const dokployCompose = await readFile(path.join(projectRoot, 'docker-compose.yml'), 'utf8');
+if (compose !== dokployCompose) fail('Dokploy docker-compose.yml must match compose.yml.');
 for (const expected of [
   'game-data:/data',
   'DATABASE_PATH: /data/game.sqlite',
@@ -57,6 +60,21 @@ for (const expected of [
 ]) {
   if (!compose.includes(expected)) fail(`Compose requirement missing: ${expected}`);
 }
+for (const service of ['web', 'api', 'admin', 'analyze']) {
+  if (!new RegExp('^  ' + service + ':', 'm').test(compose))
+    fail('Compose service missing: ' + service);
+}
+for (const file of [
+  'services/web/Dockerfile',
+  'services/admin/Dockerfile',
+  'services/analyze/Dockerfile',
+  'services/analyze/LICENSE',
+]) {
+  await access(path.join(projectRoot, file)).catch(() => fail('Service source missing: ' + file));
+}
+const license = await readFile(path.join(projectRoot, 'LICENSE'), 'utf8');
+if (!license.startsWith('MIT License') || !license.includes('Permission is hereby granted'))
+  fail('Root MIT license missing.');
 const packageInfo = JSON.parse(await readFile(path.join(projectRoot, 'package.json'), 'utf8'));
 const lock = JSON.parse(await readFile(path.join(projectRoot, 'package-lock.json'), 'utf8'));
 if (packageInfo.name !== lock.name || packageInfo.version !== lock.version)

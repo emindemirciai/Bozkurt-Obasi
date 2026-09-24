@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createAdminRoutes } from './admin.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
@@ -243,6 +244,8 @@ export function createApp({
   trustProxy = false,
   rateLimit = 180,
   analytics = { enabled: false },
+  adminEmail = process.env.ADMIN_EMAIL,
+  adminPassword = process.env.ADMIN_PASSWORD,
 } = {}) {
   const { config: publicAnalytics, endpointOrigin: analyticsOrigin } =
     publicAnalyticsConfig(analytics);
@@ -274,6 +277,15 @@ export function createApp({
     ),
     cleanup: database.prepare('DELETE FROM sessions WHERE expires_at <= ?'),
   };
+  const adminRoutes = createAdminRoutes(database, {
+    email: adminEmail,
+    password: adminPassword,
+    trustProxy,
+    checkMutation,
+    readJson,
+    json,
+    HttpError,
+  });
   const limits = new Map();
   let lastCleanup = 0;
   let closed = false;
@@ -329,6 +341,7 @@ export function createApp({
         return await staticResponse(request, response, pathname, staticDir);
       const now = Math.floor(clock());
       allowRequest(request, now);
+      if (await adminRoutes.handle(request, response, pathname, now)) return;
       if (pathname === '/api/config' && request.method === 'GET') {
         return json(response, 200, { analytics: publicAnalytics }, { 'Cache-Control': 'no-store' });
       }

@@ -1,39 +1,33 @@
-# Web v1.0.0 doğrulama / Validation
+# Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-09-24. Yerel ortam / Local environment: Windows, Node 24.16.0, Chromium 153 via Playwright 1.63.0; Linux containers via Docker Desktop 29.8.0.
+Tarih / Date: 2026-09-24. Ortam / Environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| `npm run check` | Geçti / Passed — 22 JavaScript files, 173 TR/EN keys, Docker source paths, lock metadata |
+| `npm run check` | Geçti / Passed — 27 JS dosyası, 173 TR/EN oyun çeviri anahtarı, dört Compose servisi, MIT lisansı |
 | `npm run format:check` | Geçti / Passed |
-| `npm test` | 30/30 — deterministic simulation, validation, economy, interrupted battles, HTTP, SQLite, session isolation, CSRF, revisions, persistence, analytics config/CSP |
-| `npm run build` | Geçti / Passed — Vite 8.3.0 production bundle |
-| `npm run build:preview` | Geçti / Passed — self-contained `preview/index.html` |
-| `npm run test:e2e` | 14/14 — desktop/mobile, build/quests/training, combat, TR/EN, file preview, server/local separation, analytics view/duration/opt-out/failure isolation, delayed responses, keyboard focus |
-| Docker image build | Geçti / Passed — Linux Node 24, locked `npm ci`, non-root runtime |
-| `node scripts/container-smoke.mjs bozkurt-obasi:verify` | Geçti / Passed — non-root read-only container, health, HTML, guest session, construction, SQLite state after restart |
-| Production and local Compose config | Geçti / Passed |
+| `npm test` | 33/33 — oyun motoru, SQLite, API, yönetici giriş/oturum/koruma/kalıcılık |
+| `npm run build` | Geçti / Passed — Vite üretim paketi |
+| `npm run build:preview` | Geçti / Passed — tek dosyalık `preview/index.html` |
+| `npm run test:e2e` | 14/14 — masaüstü/mobil oyun, savaş, kayıt, TR/EN, analitik gönderimi ve tercihleri |
+| Dört Docker imajı / Four Docker images | Geçti / Passed — `web`, `api`, `admin`, `analyze` derlendi |
+| `docker compose config --quiet` | Geçti / Passed — üretim ve yerel override |
+| `node scripts/stack-smoke.mjs` | Geçti / Passed — dört servis health, oyun oturumu, yönetici ve analiz girişi, olay/süre kaydı |
+| `node scripts/stack-browser-smoke.mjs` | Geçti / Passed — yönetim ve analiz girişleri, TR/EN seçimi, iki panelin hatasız tarayıcı çizimi |
+| Görsel kontrol / Visual review | Yönetim ekranı 1440×900 ve 390×844 incelendi / Admin screen reviewed at both sizes |
 
 ## Türkçe
 
-Kurtlar ve karma sürü savaş alanında çakallara dönüktür. `npm run verify` yeniden çalıştırıldı: 30 motor/API ve 14 tarayıcı testi geçti; üretim ve tek dosya önizleme yenilendi. Yeni tarayıcı testleri üretim alan adındaki analitik veri akışını ağ taklidiyle doğruladı; canlı analiz paneline olay gönderilmedi. Ekran geçişinde tek kimlikli görüntüleme ve süre güncellemesi, gizli oyun bilgisinin dışarı çıkmaması, DNT/GPC, yerel ortamın sessiz kalması ve analiz kesintisinde oyunun çalışması sınandı. Yeni Linux imajı derlenip konteynerin sağlık, işlem ve yeniden başlatma sonrası SQLite kalıcılığı doğrulandı.
+Dört servis yerel Docker'da `127.0.0.1:3000–3003` portlarında çalıştırıldı. Yönetim paneli giriş sayfasındaki ilk 404 gerçek HTTP testinde yakalandı ve düzeltildi. Geçici test parolasıyla yönetim API'sinden bearer oturumu alındı; analiz paneli aynı oturumu doğruladı. Üretim origin başlığıyla `/api/track` adresine aynı kimlikte iki olay gönderildi; panelde tek kaydın süresi 7 saniyeye güncellendi. Yönetim ve analiz panellerinde gerçek Chromium ile giriş, dil değiştirme ve konsol hatası olmadan çizim doğrulandı. İlk denemede görülen React hydration uyuşmazlığı giderildi. Test parolası ortamdan kaldırılarak yerel API tekrar parolasız başlatıldı. Testler kalıcı oyunun volume'unu silmedi.
 
-Görsel kontrol masaüstü 1440×1100 ve mobil 390×844 boyutlarında yapıldı. Köy, ay-yıldız savaş sahnesi ve mobil menü incelendi. Test ekran görüntüleri `artifacts/` altında üretilir ve kaynak ZIP'ine dahil edilmez. Oyun çizimleri özgün SVG kodudur; uzaktan yazı tipi/görsel gerektirmez.
+Analiz imajının ilk derlemesi, özgün kaynakta React 19 ile `react-simple-maps` peer bağımlılığı uyuşmazlığı nedeniyle durdu. Docker kurulumu `npm ci --legacy-peer-deps` ile yeniden üretilebilir şekilde düzeltildi; Next.js derleme/tip kontrolü ve gerçek dört servis testi geçti. Analiz kaynağı ve özgün MIT lisansı [kaynak bildiriminde](ANALYZE-SOURCE.md) tanımlıdır.
 
-Kayıt güvenliği için geciken sunucu yanıtı sırasında yerel köye dönme, bekleyen okuma sonrası doğru revision ile işlem, bozuk başarılı API yanıtını reddetme ve otomatik kaynak üretimiyle inşaatın açılması tarayıcıda sınandı. Savaş açılışta hazırlığa dönerken HP/XP ve ilerlemenin korunması motor/API testlerinde doğrulandı.
-
-İlk konteyner testinde Docker'ın yeniden başlatma sırasında rastgele host portunu değiştirebildiği görüldü. Test aracı yeniden başlatmadan sonra portu tekrar okur; düzeltilmiş test geçti. Testler kendi geçici konteyner/volume ve bellek veritabanlarını kullanır.
-
-GitHub hedefi `emindemirciai/Bozkurt-Obasi`, oyun alan adı `bozkurtobasi.com`, analiz alan adı `analiz.bozkurtobasi.com` olarak belirlendi. Canlı Dokploy yayını, gerçek TLS/domain erişimi, analiz paneline gerçek ziyaret, çok oyunculu yük ve Unity derlemesi bu yerel çalışmada test edilmedi. Analiz panelinin `platform-admin` girişi, oyunda bulunmayan ayrı yönetici API uç noktalarını gerektirir. GitHub Actions sonucunu push sonrası ayrıca doğrulayın. Bu kayıt yerel sonuçların sınırlarını gösterir.
+Canlı Dokploy VPS, gerçek DNS/TLS ve GitHub Actions sonucu bu yerel kontrollerden ayrı doğrulanmalıdır. `ADMIN_PASSWORD` Dokploy'da tanımlanmadan yönetim ve analiz girişleri çalışmaz. SMTP gönderimi bu sürümde yoktur.
 
 ## English
 
-Wolves and the mixed herd face the jackals in battle. `npm run verify` was rerun: 30 engine/API and 14 browser tests passed, and production/standalone preview builds were refreshed. New browser tests mock the production analytics network without sending events to the live panel. They cover one view ID with a cumulative duration update on navigation, no game secrets in the payload, DNT/GPC preferences, no localhost traffic, and continued gameplay when analytics fails. The fresh Linux image passed container health, action, and SQLite persistence checks across restart.
+All four services ran locally on ports `127.0.0.1:3000–3003`. An initial admin-root 404 was found by real HTTP smoke testing and fixed. With a temporary test-only password, the API issued a bearer session, the analytics panel validated it, and two production-origin tracking posts with the same ID produced one event updated to seven seconds. Real Chromium also verified both panel sign-ins, language switching, and rendering without page errors. An initial React hydration mismatch was fixed. The test password was removed and the local API restored without it. Game volumes were preserved.
 
-Visual inspection covered desktop 1440×1100 and mobile 390×844, including the village, crescent/star battle scene, and mobile navigation. Test screenshots are generated under `artifacts/` and excluded from source archives. Artwork is original SVG code and needs no remote images or fonts.
+The first analytics image build exposed an upstream React 19 / `react-simple-maps` peer dependency mismatch. Reproducible installation now uses `npm ci --legacy-peer-deps`; Next.js compilation/type checking and the full stack smoke passed. The original analytics MIT notice is retained in the [source notice](ANALYZE-SOURCE.md).
 
-Browser regressions cover delayed server responses after returning to the local village, action serialization with the latest revision, rejecting invalid successful API responses, and unlocking construction through passive production. Engine/API tests confirm interrupted battles return to preparation without resetting HP/XP or granting unearned rewards.
-
-The initial container smoke exposed that Docker may reassign an ephemeral host port on restart. The smoke now re-reads the binding after restart and passes. Tests use dedicated temporary containers/volumes and in-memory databases.
-
-The selected GitHub target is `emindemirciai/Bozkurt-Obasi`; the game and analytics domains are `bozkurtobasi.com` and `analiz.bozkurtobasi.com`. Live Dokploy publication, production TLS/domain access, actual traffic arriving in the analytics panel, multiplayer load, and Unity builds were not tested locally. The panel's `platform-admin` login requires a separate admin API that is absent from this game repository. Verify the GitHub Actions run after push. These are local results, not a guarantee of future deployments.
+Local tests do not establish live Dokploy DNS/TLS or the GitHub Actions result. Set `ADMIN_PASSWORD` in Dokploy to enable admin and analytics login. SMTP delivery is not implemented.

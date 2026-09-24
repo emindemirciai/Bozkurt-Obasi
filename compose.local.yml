@@ -1,7 +1,20 @@
 # Local override: docker compose -f compose.yml -f compose.local.yml up --build -d
 services:
-  game:
+  web:
     ports:
       - "127.0.0.1:3000:3000"
+  api:
+    ports:
+      - "127.0.0.1:3001:3000"
     environment:
       TRUST_PROXY: "false"
+      ANALYZE_ENABLED: "false"
+  admin:
+    ports:
+      - "127.0.0.1:3002:3000"
+  analyze:
+    ports:
+      - "127.0.0.1:3003:3000"
+    environment:
+      ANALYZE_AUTH_API_URL: http://api:3000
+      ANALYZE_GEO_LOOKUP: "false"

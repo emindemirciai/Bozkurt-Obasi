@@ -19,6 +19,7 @@ const codeExtensions = new Set([
 const categories = {
   web: { label: 'Web istemci / Web client', files: 0, lines: 0 },
   server: { label: 'Web sunucu / Web server', files: 0, lines: 0 },
+  services: { label: 'Dağıtım servisleri / Deployment services', files: 0, lines: 0 },
   shared: { label: 'Paylaşılan oyun / Shared game', files: 0, lines: 0 },
   delivery: { label: 'Web test ve araçlar / Web tests and tools', files: 0, lines: 0 },
   legacy: { label: 'Korunan Unity kaynakları / Preserved Unity sources', files: 0, lines: 0 },
@@ -30,13 +31,15 @@ for (const file of await projectFiles()) {
   const group =
     file.startsWith('web/') || file === 'index.html'
       ? 'web'
-      : file.startsWith('server/web/')
-        ? 'server'
-        : file.startsWith('shared/')
-          ? 'shared'
-          : /^(?:scripts|tests)\//.test(file) || (!file.includes('/') && /\.[cm]?js$/.test(file))
-            ? 'delivery'
-            : 'legacy';
+      : file.startsWith('services/')
+        ? 'services'
+        : file.startsWith('server/web/')
+          ? 'server'
+          : file.startsWith('shared/')
+            ? 'shared'
+            : /^(?:scripts|tests)\//.test(file) || (!file.includes('/') && /\.[cm]?js$/.test(file))
+              ? 'delivery'
+              : 'legacy';
   categories[group].files += 1;
   categories[group].lines += lines;
 }

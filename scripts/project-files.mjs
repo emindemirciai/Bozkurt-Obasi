@@ -6,6 +6,7 @@ export const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 
 const excludedDirectories = new Set([
   '.git',
+  '.next',
   '.codex',
   '.agents',
   '.idea',

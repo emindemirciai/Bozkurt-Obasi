@@ -16,7 +16,7 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,7 +62,7 @@ jobs:
 
   container:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     needs: checks
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +71,9 @@ jobs:
           node-version: "24"
       - uses: docker/setup-buildx-action@v3
       - name: Validate compose
-        run: docker compose -f compose.yml config --quiet
+        run: |
+          docker compose -f compose.yml config --quiet
+          docker compose -f docker-compose.yml config --quiet
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -82,3 +84,15 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Container health and persistent gameplay smoke
         run: node scripts/container-smoke.mjs bozkurt-obasi:ci
+
+      - name: Build all Dokploy services
+        run: docker compose -f compose.yml -f compose.local.yml build
+      - name: Four-service auth and analytics smoke
+        env:
+          ADMIN_PASSWORD: ci-only-test-password-2026
+        run: |
+          docker compose -f compose.yml -f compose.local.yml up -d --no-build
+          node scripts/stack-smoke.mjs
+      - name: Remove ephemeral CI stack
+        if: always()
+        run: docker compose -f compose.yml -f compose.local.yml down -v
