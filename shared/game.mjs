@@ -368,7 +368,7 @@ function requireHome(state) {
 }
 
 /** Apply one command. The authoritative caller supplies time and persists the result. */
-export function applyAction(state, action, now = Date.now()) {
+export function applyAction(state, action, now = Date.now(), random = Math.random) {
   checkClock(now);
   if (
     !action ||
@@ -426,12 +426,6 @@ export function applyAction(state, action, now = Date.now()) {
       state.formation[action.unit] = action.value;
       log(state, 'formationChanged', at);
       break;
-    case 'tactic':
-      requirePeace(state);
-      if (!TACTICS.includes(action.value)) fail('INVALID_TACTIC');
-      state.battle.tactic = action.value;
-      log(state, 'tacticChanged', at);
-      break;
     case 'startBattle':
       if (state.battle.status !== 'preparing')
         fail(state.battle.status === 'active' ? 'BATTLE_ACTIVE' : 'BATTLE_FINISHED');
@@ -441,7 +435,10 @@ export function applyAction(state, action, now = Date.now()) {
         state.wolves.filter((wolf) => wolf.hp >= 20).length < 3
       )
         fail('PACK_EXHAUSTED');
+      const draw = random();
+      if (!Number.isFinite(draw) || draw < 0 || draw >= 1) fail('INVALID_RANDOM');
       spend(state, { water: 12, feed: 16 });
+      state.battle.tactic = TACTICS[Math.floor(draw * TACTICS.length)];
       state.battle.status = 'active';
       state.battle.startedAt = at;
       state.battle.log = ['battleStarted'];

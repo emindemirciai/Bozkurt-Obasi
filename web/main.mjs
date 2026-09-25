@@ -6,7 +6,6 @@ import {
   resumeGame,
   validateGame,
   BUILDINGS,
-  TACTICS,
   FORMATIONS,
   getProduction,
   getUpgradeCost,
@@ -73,7 +72,6 @@ const logLabels = {
   journeyArrived: 'logArrived',
   questClaimed: 'logClaimed',
   formationChanged: 'formation',
-  tacticChanged: 'tactic',
   battlePrepared: 'prepare',
   battleResumed: 'prepare',
 };
@@ -241,8 +239,54 @@ function buildingList() {
 }
 
 function battlePanel() {
-  const active = state.battle.status === 'active';
-  return `<section class="detail-card battle-settings"><div class="section-label">${t('prepare')}${icon('battle', 17)}</div><h3>${t('tactic')}</h3><div class="tactic-list">${TACTICS.map((key) => button(`<span class="radio-dot"></span>${t(key)}`, `tactic`, 'choice ' + (state.battle.tactic === key ? 'chosen' : ''), active || busy, `data-value="${key}" aria-pressed="${state.battle.tactic === key}"`)).join('')}</div><h3>${t('formation')}</h3>${['wolf', 'herd'].map((unit) => `<label class="formation-label">${t(unit === 'wolf' ? 'wolfFormation' : 'herdFormation')}</label><div class="segmented">${FORMATIONS.map((f) => button(t(f), 'formation', state.formation[unit] === f ? 'chosen' : '', active || busy, `data-unit="${unit}" data-value="${f}" aria-pressed="${state.formation[unit] === f}"`)).join('')}</div>`).join('')}<p class="battle-help">${t(active ? 'active' : 'battleReady')} ${t('battleReward')}</p></section><section class="detail-card battle-count"><span>${t('enemies')}</span><strong>${state.battle.enemies.filter((e) => e.hp > 0).length}<small> / ${state.battle.enemies.length}</small></strong>${progress(state.herd.hp, state.herd.maxHp)}<p>${t('panic')} <b>${Math.round(state.herd.panic)}%</b></p></section>`;
+  const status = state.battle.status;
+  const active = status === 'active';
+  const tacticKnown = status !== 'preparing';
+  return `<section class="detail-card battle-settings"><div class="section-label">${t('prepare')}${icon('battle', 17)}</div><div class="battle-status"><span>${t(status === 'preparing' ? 'battleReady' : status)}</span>${active ? `<strong class="battle-elapsed" aria-hidden="true">${state.battle.tick} ${t('seconds')}</strong>` : ''}</div><h3>${t('tactic')}</h3><div class="tactic-reveal ${tacticKnown ? 'revealed' : 'concealed'}" aria-live="polite">${icon(tacticKnown ? 'battle' : 'help', 19)}<strong>${t(tacticKnown ? state.battle.tactic : 'tacticUnknown')}</strong></div><h3>${t('formation')}</h3>${['wolf', 'herd'].map((unit) => `<label class="formation-label">${t(unit === 'wolf' ? 'wolfFormation' : 'herdFormation')}</label><div class="segmented">${FORMATIONS.map((formation) => button(t(formation), 'formation', state.formation[unit] === formation ? 'chosen' : '', active || busy, `data-unit="${unit}" data-value="${formation}" aria-pressed="${state.formation[unit] === formation}"`)).join('')}</div>`).join('')}<p class="battle-help">${t('battleReward')}</p></section><section class="detail-card battle-count"><span>${t('enemies')}</span><strong>${state.battle.enemies.filter((enemy) => enemy.hp > 0).length}<small> / ${state.battle.enemies.length}</small></strong>${progress(state.herd.hp, state.herd.maxHp)}<p>${t('panic')} <b>${Math.round(state.herd.panic)}%</b></p></section>`;
+}
+
+function refreshBattleView() {
+  const svg = root.querySelector('.battle-scene.is-active');
+  if (
+    !svg ||
+    state.battle.status !== 'active' ||
+    svg.dataset.startedAt !== String(state.battle.startedAt)
+  )
+    return false;
+  for (const actor of svg.querySelectorAll('[data-enemy-id]')) {
+    const enemy = state.battle.enemies.find((entry) => entry.id === actor.dataset.enemyId);
+    if (!enemy) return false;
+    actor.style.display = enemy.hp > 0 ? '' : 'none';
+    actor
+      .querySelector('[data-hp-bar]')
+      ?.setAttribute('width', String((32 * enemy.hp) / enemy.maxHp));
+  }
+  for (const actor of svg.querySelectorAll('[data-wolf]')) {
+    const wolf = state.wolves.find((entry) => entry.id === actor.dataset.wolf);
+    if (!wolf) return false;
+    actor
+      .querySelector('[data-hp-bar]')
+      ?.setAttribute('width', String((42 * wolf.hp) / wolf.maxHp));
+    actor.classList.toggle('is-wounded', wolf.hp < wolf.maxHp * 0.35);
+  }
+  const enemyCount = root.querySelector('.battle-count > strong');
+  if (enemyCount)
+    enemyCount.innerHTML = `${state.battle.enemies.filter((enemy) => enemy.hp > 0).length}<small> / ${state.battle.enemies.length}</small>`;
+  const herdProgress = root.querySelector('.battle-count .progress > span');
+  if (herdProgress)
+    herdProgress.style.width = `${Math.max(0, (100 * state.herd.hp) / state.herd.maxHp)}%`;
+  const panic = root.querySelector('.battle-count p b');
+  if (panic) panic.textContent = `${Math.round(state.herd.panic)}%`;
+  const elapsed = root.querySelector('.battle-elapsed');
+  if (elapsed) elapsed.textContent = `${state.battle.tick} ${t('seconds')}`;
+  const herd = root.querySelector('.map-toolbar > span');
+  if (herd?.lastChild)
+    herd.lastChild.textContent = ` ${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}`;
+  const recovery = root.querySelector('.recovery-bar p');
+  if (recovery)
+    recovery.textContent = `${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}`;
+  renderedSignature = interfaceSignature();
+  return true;
 }
 
 function battleRecovery() {
@@ -475,7 +519,6 @@ root.addEventListener('click', async (event) => {
     collect: { type: 'collect' },
     upgrade: { type: 'upgrade', id: target.dataset.id },
     build: { type: 'build', building: target.dataset.buildingType },
-    tactic: { type: 'tactic', value: target.dataset.value },
     formation: { type: 'formation', unit: target.dataset.unit, value: target.dataset.value },
     startBattle: { type: 'startBattle' },
     newBattle: { type: 'newBattle' },
@@ -519,8 +562,10 @@ setInterval(async () => {
   else advanceGame(state, Date.now());
   if (generation !== sessionGeneration || busy) return;
   if (interfaceSignature() !== renderedSignature && !modal) {
-    render();
-    return;
+    if (view !== 'battle' || !refreshBattleView()) {
+      render();
+      return;
+    }
   }
   for (const key of ['wood', 'stone', 'water', 'feed', 'herbs']) {
     const el = document.querySelector(`[data-resource="${key}"]`);

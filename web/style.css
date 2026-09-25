@@ -533,6 +533,80 @@ main {
 .empty-plot:hover {
   filter: brightness(1.1);
 }
+.battle-scene .battle-motion,
+.battle-scene .battle-herd,
+.battle-scene .battle-impact {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.battle-scene .battle-impact {
+  opacity: 0;
+  pointer-events: none;
+}
+.battle-scene.is-active .battle-jackal .battle-motion {
+  animation: jackal-charge 1.35s cubic-bezier(0.37, 0, 0.26, 1) var(--delay, 0s) infinite;
+}
+.battle-scene.is-active .battle-wolf .battle-motion {
+  animation: wolf-counter 1.35s cubic-bezier(0.37, 0, 0.26, 1) var(--delay, 0s) infinite;
+}
+.battle-scene.is-active .battle-herd {
+  animation: herd-sway 2.7s ease-in-out var(--delay, 0s) infinite;
+}
+.battle-scene.is-active .battle-impact {
+  animation: battle-impact 1.35s ease-out var(--delay, 0s) infinite;
+}
+@keyframes jackal-charge {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  17% {
+    transform: translate(0, 0) rotate(-4deg);
+  }
+  52% {
+    transform: translate(var(--charge-x, 0px), var(--charge-y, 0px)) rotate(3deg);
+  }
+  65% {
+    transform: translate(var(--charge-x, 0px), var(--charge-y, 0px)) rotate(-3deg);
+  }
+}
+@keyframes wolf-counter {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  27% {
+    transform: translate(-4px, 2px) rotate(3deg);
+  }
+  53% {
+    transform: translate(-16px, -4px) rotate(-5deg);
+  }
+  69% {
+    transform: translate(-6px, 1px) rotate(2deg);
+  }
+}
+@keyframes herd-sway {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  48% {
+    transform: translate(3px, -2px);
+  }
+}
+@keyframes battle-impact {
+  0%,
+  39%,
+  78%,
+  100% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  54% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
 .overview {
   display: flex;
   flex-direction: column;
@@ -843,35 +917,70 @@ main {
   margin: 22px 0 10px;
   color: #778966;
 }
-.tactic-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.choice {
-  justify-content: flex-start;
-  padding: 9px 11px;
-  border-radius: 6px;
-  border: 1px solid #e4e9d9;
-  font-size: 10px;
-  color: #8b977c;
+.tactic-reveal {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
   gap: 9px;
+  min-width: 0;
+  min-height: 60px;
+  padding: 12px 13px;
+  border: 1px solid #d7e2c7;
+  border-radius: 8px;
+  background: linear-gradient(115deg, #edf3e6, #f7f6e9);
+  color: #456b4e;
+  overflow-wrap: anywhere;
 }
-.choice.chosen {
-  color: #517147;
-  border-color: #a8bc93;
-  background: #edf1df;
+.tactic-reveal svg {
+  color: #789568;
 }
-.radio-dot {
-  width: 9px;
-  height: 9px;
-  border: 1px solid #b1bda1;
+.tactic-reveal strong {
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 650;
+}
+.tactic-reveal.concealed {
+  border-style: dashed;
+  border-color: #dcdcc8;
+  background: #f5f5eb;
+  color: #818a77;
+}
+.tactic-reveal.concealed svg {
+  color: #a5ae98;
+}
+.tactic-reveal.revealed {
+  border-color: #aac59b;
+  background: linear-gradient(115deg, #e8f1de, #f7f5e5);
+}
+.battle-elapsed {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 650;
+  color: #637e63;
+}
+.battle-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: #eaf0df;
+  color: #54744e;
+  font-size: 10px;
+  font-weight: 650;
+}
+.battle-status::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
+  background: currentColor;
 }
-.chosen .radio-dot {
-  background: #78915f;
-  box-shadow: inset 0 0 0 2px #edf1df;
-  border-color: #78915f;
+.battle-status .battle-elapsed {
+  margin-left: auto;
+  white-space: nowrap;
 }
 .formation-label {
   font-size: 9px;
@@ -1533,27 +1642,7 @@ footer > span:first-child {
     font-size: 8px;
   }
   .battle-settings {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .battle-settings .section-label,
-  .battle-settings .battle-help {
-    grid-column: 1/-1;
-  }
-  .battle-settings h3 {
-    margin: 0;
-  }
-  .battle-settings .tactic-list {
-    grid-row: 3/7;
-  }
-  .battle-settings > .formation-label,
-  .battle-settings > .segmented {
-    grid-column: 2;
-  }
-  .battle-settings h3:nth-of-type(2) {
-    grid-column: 2;
-    grid-row: 2;
+    display: block;
   }
   .battle-count {
     display: flex;

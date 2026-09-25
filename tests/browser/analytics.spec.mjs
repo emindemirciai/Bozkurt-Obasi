@@ -64,10 +64,10 @@ test('production screens send one upserted visit, cumulative duration, and no ga
   expect(events[2].body.path).toBe('/battle');
   expect(events[2].body.id).not.toBe(initial.id);
   expect(events[2].body.visitorId).toBe(initial.visitorId);
-  await page.getByRole('button', { name: 'Sağ kanat', exact: true }).click();
+  await page.getByRole('button', { name: 'Geniş', exact: true }).first().click();
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await page.clock.fastForward(3000);
-  expect(events).toHaveLength(3); // Rendering, tactics and translation do not count as visits.
+  expect(events).toHaveLength(3); // Rendering, formations and translation do not count as visits.
   for (const event of events) {
     expect(event.headers.cookie).toBeUndefined();
     expect(JSON.stringify(event.body)).not.toMatch(

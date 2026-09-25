@@ -81,7 +81,7 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
     middle += Array.from({ length: Math.min(state.herd.count, 24) }, (_, i) => {
       const a = i < 4 ? (i * Math.PI) / 2 : -Math.PI / 2 + (((i - 4) % 5) * Math.PI * 2) / 5,
         r = (i < 4 ? 12 : 34 + Math.floor((i - 4) / 5) * 20) * herdSpread;
-      return sheep(470 + Math.cos(a) * r, 326 + Math.sin(a) * r * 0.8, 0.66, i % 5 === 0, -1);
+      return `<g class="battle-herd" style="--delay:-${(i % 7) * 0.28}s">${sheep(470 + Math.cos(a) * r, 326 + Math.sin(a) * r * 0.8, 0.66, i % 5 === 0, -1)}</g>`;
     }).join('');
     const wolfSpread = { tight: 0.84, balanced: 1, wide: 1.14 }[state.formation.wolf];
     middle += state.wolves
@@ -89,24 +89,32 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
         const a = -1.18 + i * 0.59,
           x = 370 - Math.cos(a) * 66 * wolfSpread,
           y = 328 + Math.sin(a) * 139 * wolfSpread;
-        return `<g data-wolf="${w.id}" role="button" tabindex="0" aria-label="${t(w.name === 'healer' ? 'healerPath' : w.name)}" class="scene-building" transform="translate(${x} ${y})"><ellipse cy="9" rx="29" ry="17" fill="${w.hp > 0 ? '#c5dec3' : '#cfafa0'}" opacity=".75"/>${wolfArt(w.name === 'healer' ? '#749b78' : '#626e66', 0.85, -1)}<rect x="-21" y="-40" width="42" height="4" rx="2" fill="#708474"/><rect x="-21" y="-40" width="${(42 * w.hp) / w.maxHp}" height="4" rx="2" fill="#c3df96"/></g>`;
+        return `<g data-wolf="${w.id}" role="button" tabindex="0" aria-label="${t(w.name === 'healer' ? 'healerPath' : w.name)}" class="scene-building battle-wolf" transform="translate(${x} ${y})"><ellipse cy="9" rx="29" ry="17" fill="${w.hp > 0 ? '#c5dec3' : '#cfafa0'}" opacity=".75"/><g class="battle-motion" style="--delay:${(i % 5) * 0.16}s">${wolfArt(w.name === 'healer' ? '#749b78' : '#626e66', 0.85, -1)}</g><rect x="-21" y="-40" width="42" height="4" rx="2" fill="#708474"/><rect x="-21" y="-40" data-hp-bar width="${(42 * w.hp) / w.maxHp}" height="4" rx="2" fill="#c3df96"/></g>`;
       })
       .join('');
     const enemies = state.battle.enemies?.length
       ? state.battle.enemies
       : Array.from({ length: 6 }, (_, i) => ({ id: i, hp: 100, maxHp: 100 }));
+    const tactic = state.battle.status === 'preparing' ? 'direct' : state.battle.tactic;
     middle += enemies
-      .filter((e) => e.hp > 0)
       .map((e, i) => {
-        let x = 175 + (i % 2) * 36,
-          y = 197 + i * 45;
-        if (state.battle.status === 'active') x += 60 + (state.battle.tick % 3) * 12;
-        if (state.battle.tactic === 'left') y -= 65;
-        if (state.battle.tactic === 'right') y += 50;
-        if (state.battle.tactic === 'double') y += i % 2 ? 100 : -70;
-        return `<g class="enemy" transform="translate(${x} ${y})">${wolfArt('#ad7c55', 0.68)}<rect x="-16" y="-29" width="${(32 * e.hp) / e.maxHp}" height="3" fill="#bd7752"/></g>`;
+        const x = 175 + (i % 2) * 36;
+        const y = 197 + i * 45;
+        const chargeX = tactic === 'rush' ? 118 : tactic === 'double' ? 94 : 84;
+        const chargeY =
+          tactic === 'left'
+            ? -55
+            : tactic === 'right'
+              ? 45
+              : tactic === 'double'
+                ? i % 2
+                  ? 70
+                  : -70
+                : 0;
+        return `<g class="enemy battle-jackal" data-enemy-id="${e.id}" style="${e.hp > 0 ? '' : 'display:none'}" transform="translate(${x} ${y})"><g class="battle-motion" style="--delay:${i * 0.2}s;--charge-x:${chargeX}px;--charge-y:${chargeY}px">${wolfArt('#ad7c55', 0.68)}<rect x="-16" y="-29" width="32" height="3" fill="#704c3b"/><rect data-hp-bar x="-16" y="-29" width="${(32 * e.hp) / e.maxHp}" height="3" fill="#bd7752"/></g></g>`;
       })
       .join('');
+    middle += `<g transform="translate(276 252)" aria-hidden="true"><g class="battle-impact"><path d="M0-13 0-4M-12 0-4 0M8-8 14-14M8 8 15 15" stroke="#fff4bf" stroke-width="3" stroke-linecap="round"/></g></g><g transform="translate(295 358)" aria-hidden="true"><g class="battle-impact" style="--delay:-.7s"><path d="M0-13 0-4M-12 0-4 0M8-8 14-14M8 8 15 15" stroke="#fff4bf" stroke-width="3" stroke-linecap="round"/></g></g>`;
   } else {
     const spots = {
       hall: [431, 288],
@@ -136,5 +144,5 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
       .join('');
     middle += `<g transform="translate(373 370)">${wolfArt('#67766a', 0.55)}</g><g transform="translate(513 242)">${wolfArt('#819486', 0.45)}</g>`;
   }
-  return `<svg class="landscape" viewBox="0 0 900 650" role="img" aria-label="${t(battle ? 'battle' : 'village')}"><defs><radialGradient id="grass"><stop stop-color="#cbd2a0"/><stop offset="1" stop-color="#a3ba8b"/></radialGradient><linearGradient id="river" x2="1" y2="1"><stop stop-color="#8fbfbb"/><stop offset="1" stop-color="#6aa6a5"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="8"/></filter></defs><rect width="900" height="650" fill="url(#grass)"/><g transform="translate(${450 * (1 - zoom)} ${325 * (1 - zoom)}) scale(${zoom})"><path d="M770-50C698 110 816 180 777 284S697 390 808 474 797 670 810 710" fill="none" stroke="#e1d8ad" stroke-width="112"/><path d="M775-50C703 110 821 180 782 284S702 390 813 474 802 670 815 710" fill="none" stroke="url(#river)" stroke-width="91"/><path d="M772-30C735 105 818 171 783 256M786 392Q750 430 822 486M814 535 826 592" fill="none" stroke="#c4e0c9" stroke-width="3" opacity=".6"/><g opacity=".18" fill="#759665">${Array.from({ length: 19 }, (_, i) => `<ellipse cx="${(i * 131) % 900}" cy="${(i * 83) % 650}" rx="${25 + (i % 5) * 11}" ry="18"/>`).join('')}</g>${trees}${Array.from({ length: 60 }, (_, i) => `<path d="m${34 + ((i * 151) % 825)} ${50 + ((i * 93) % 552)} 2-5 2 5m-2-2 5-3" fill="none" stroke="#7f9b6c" stroke-width="1.5" opacity=".5"/>`).join('')}${middle}${pine(85, 540, 1.4)}${pine(125, 602, 1.65, 1)}${pine(685, 600, 1.3)}<g fill="#eee9bf">${Array.from({ length: 22 }, (_, i) => `<circle cx="${110 + ((i * 151) % 600)}" cy="${98 + ((i * 127) % 476)}" r="2"/>`).join('')}</g><g opacity=".12" filter="url(#soft)" fill="#fff"><ellipse cx="100" cy="80" rx="170" ry="25"/><ellipse cx="650" cy="70" rx="130" ry="24"/></g></g></svg>`;
+  return `<svg class="landscape ${battle ? `battle-scene ${state.battle.status === 'active' ? 'is-active' : ''}` : ''}" data-tactic="${battle && state.battle.status === 'active' ? state.battle.tactic : ''}" data-started-at="${battle ? (state.battle.startedAt ?? '') : ''}" viewBox="0 0 900 650" role="img" aria-label="${t(battle ? 'battle' : 'village')}"><defs><radialGradient id="grass"><stop stop-color="#cbd2a0"/><stop offset="1" stop-color="#a3ba8b"/></radialGradient><linearGradient id="river" x2="1" y2="1"><stop stop-color="#8fbfbb"/><stop offset="1" stop-color="#6aa6a5"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="8"/></filter></defs><rect width="900" height="650" fill="url(#grass)"/><g transform="translate(${450 * (1 - zoom)} ${325 * (1 - zoom)}) scale(${zoom})"><path d="M770-50C698 110 816 180 777 284S697 390 808 474 797 670 810 710" fill="none" stroke="#e1d8ad" stroke-width="112"/><path d="M775-50C703 110 821 180 782 284S702 390 813 474 802 670 815 710" fill="none" stroke="url(#river)" stroke-width="91"/><path d="M772-30C735 105 818 171 783 256M786 392Q750 430 822 486M814 535 826 592" fill="none" stroke="#c4e0c9" stroke-width="3" opacity=".6"/><g opacity=".18" fill="#759665">${Array.from({ length: 19 }, (_, i) => `<ellipse cx="${(i * 131) % 900}" cy="${(i * 83) % 650}" rx="${25 + (i % 5) * 11}" ry="18"/>`).join('')}</g>${trees}${Array.from({ length: 60 }, (_, i) => `<path d="m${34 + ((i * 151) % 825)} ${50 + ((i * 93) % 552)} 2-5 2 5m-2-2 5-3" fill="none" stroke="#7f9b6c" stroke-width="1.5" opacity=".5"/>`).join('')}${middle}${pine(85, 540, 1.4)}${pine(125, 602, 1.65, 1)}${pine(685, 600, 1.3)}<g fill="#eee9bf">${Array.from({ length: 22 }, (_, i) => `<circle cx="${110 + ((i * 151) % 600)}" cy="${98 + ((i * 127) % 476)}" r="2"/>`).join('')}</g><g opacity=".12" filter="url(#soft)" fill="#fff"><ellipse cx="100" cy="80" rx="170" ry="25"/><ellipse cx="650" cy="70" rx="130" ry="24"/></g></g></svg>`;
 }

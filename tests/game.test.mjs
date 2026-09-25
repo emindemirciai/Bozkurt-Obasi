@@ -155,10 +155,34 @@ test('training consumes points, affects ranks, advances the quest, and cannot ov
   assert.equal(validateGame(state), true);
 });
 
+test('each battle picks a random jackal tactic when it starts', () => {
+  for (const [index, tactic] of TACTICS.entries()) {
+    const state = fresh();
+    let draws = 0;
+    applyAction(state, { type: 'startBattle' }, START, () => {
+      draws += 1;
+      return (index + 0.5) / TACTICS.length;
+    });
+    assert.equal(state.battle.tactic, tactic);
+    assert.equal(draws, 1);
+    assert.equal(validateGame(state), true);
+  }
+
+  const state = fresh();
+  assert.throws(() => command(state, { type: 'tactic', value: 'rush' }), code('INVALID_ACTION'));
+  applyAction(state, { type: 'startBattle' }, START, () => 0);
+  assert.equal(state.battle.tactic, 'direct');
+  advanceGame(state, START + 60_000);
+  command(state, { type: 'newBattle' });
+  applyAction(state, { type: 'startBattle' }, state.updatedAt, () => 0.999);
+  assert.equal(state.battle.tactic, 'rush');
+  assert.equal(state.battle.wave, 2);
+  assert.equal(validateGame(state), true);
+});
+
 test('battle outcome is deterministic across polling rates and is rewarded once', () => {
   const oneStep = fresh();
-  command(oneStep, { type: 'tactic', value: 'left' });
-  command(oneStep, { type: 'startBattle' });
+  applyAction(oneStep, { type: 'startBattle' }, START, () => 0.25);
   const frequent = clone(oneStep);
   advanceGame(oneStep, START + 60_000);
   for (let ms = 137; ms < 60_000; ms += 137) advanceGame(frequent, START + ms);
@@ -179,11 +203,10 @@ test('battle outcome is deterministic across polling rates and is rewarded once'
   assert.equal(validateGame(oneStep), true);
 });
 
-test('combat locks tactics and formation; victory must be acknowledged before the next wave', () => {
+test('combat locks formation; victory must be acknowledged before the next wave', () => {
   const state = fresh();
   command(state, { type: 'startBattle' });
   for (const action of [
-    { type: 'tactic', value: 'rush' },
     { type: 'formation', unit: 'wolf', value: 'wide' },
     { type: 'build', building: 'quarry' },
     { type: 'train', id: 'wolf-alpha', path: 'leader' },
@@ -270,8 +293,7 @@ test('battle pauses migration, and late polling resumes it at the exact end of c
 test('resume abandons an unfinished battle without restoring damage or awarding XP and loot', () => {
   const state = fresh();
   command(state, { type: 'travel', destination: 'meadow' });
-  command(state, { type: 'tactic', value: 'right' });
-  command(state, { type: 'startBattle' });
+  applyAction(state, { type: 'startBattle' }, START, () => 0.5);
   advanceGame(state, START + 3000);
   const savedWolves = clone(state.wolves);
   const savedHerd = clone(state.herd);
@@ -456,7 +478,7 @@ test('invalid commands and clocks fail with stable machine codes', () => {
     () => command(state, { type: 'formation', unit: '__proto__', value: 'tight' }),
     code('INVALID_FORMATION'),
   );
-  assert.throws(() => command(state, { type: 'tactic', value: 'godmode' }), code('INVALID_TACTIC'));
+  assert.throws(() => command(state, { type: 'tactic', value: 'godmode' }), code('INVALID_ACTION'));
   assert.throws(
     () => command(state, { type: 'travel', destination: 'moon' }),
     code('INVALID_DESTINATION'),
