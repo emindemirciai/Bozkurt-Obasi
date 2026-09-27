@@ -18,11 +18,14 @@ Domains ekranında her alan adını ilgili **servise** bağlayın. Dokploy kendi
 
 ### Ortam ve giriş
 
+[Üretim ortamı örneği](../.env.production.example), yalnızca Compose'un değiştirilebilir alanlarını içerir. İçeriği Dokploy **Environment** bölümüne aktarın ve `ADMIN_PASSWORD` için gerçek, benzersiz bir parola yazın. Örnekte `ADMIN_PASSWORD=` bilerek boştur. Yer tutucu açıklamayı `=` sonrasına yazmayın: yereldeki Docker Compose v5.5.1, boş değerden sonra gelen `#` açıklamasını parola değeri olarak okudu. Boş parola yönetici girişini kapatır. `ADMIN_EMAIL=emindemirci.ai@gmail.com` örnekte kullanıcının giriş adresine ayarlanmıştır; anahtar verilmezse Compose `info@bozkurtobasi.com` kullanır. `NODE_ENV`, `ANALYZE_AUTH_MODE` ve `ANALYZE_DATA_DIR` Compose içinde sabittir. SMTP henüz uygulanmadığı için ortam örneğinde SMTP sırrı yoktur.
+
 Compose, ilettiğiniz `ANALYZE_SITE_ID`, `ANALYZE_SITE_NAME`, başlık/açıklama, `ANALYZE_ALLOWED_ORIGINS`, `ANALYZE_EVENT_SITES`, `ANALYZE_DATA_DIR=/app/data`, `ANALYZE_MAX_EVENTS=200000` ve `ANALYZE_GEO_LOOKUP=true` değerleri için varsayılanlar içerir. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` da tanımlıdır. Dokploy Environment bölümüne **gerçek yönetici parolasını** ekleyin:
 
 ```dotenv
-ADMIN_EMAIL=info@bozkurtobasi.com
-ADMIN_PASSWORD=<en az 12 karakterlik güçlü parola>
+# ## Dokploy'da en az 12 karakterlik guclu parola uretip bu bos degeri degistirin. ##
+ADMIN_EMAIL=emindemirci.ai@gmail.com
+ADMIN_PASSWORD=
 ```
 
 `ADMIN_EMAIL` isteğe bağlıdır; `ADMIN_PASSWORD` yönetim ve analiz girişi için zorunludur. Parola eksikse `/api/auth/login` 503 döner; oyun, API health ve analiz kolektörü yine çalışır. Giriş akışı: `POST /api/auth/login` bir bearer token üretir, `GET /api/admin/session` token'ı doğrular, `GET /api/admin/overview` oturum sayılarını verir. Analiz paneli aynı token'ı sunucu tarafında doğrular. Yönetici paneli TR/EN dil değiştirir. Parolayı kaynak dosyalarına veya ZIP'e yazmayın.
@@ -63,6 +66,8 @@ API yönetici oturumunda admin_unavailable (503) dönüyorsa Dokploy Environment
 ## English
 
 Create one Docker Compose application in Dokploy from the private [repository](https://github.com/emindemirciai/Bozkurt-Obasi), branch `main`. The screenshot's existing **Compose Path `./docker-compose.yml`** now works; `./compose.yml` contains the same stack. Map the apex and `www` to `web:3000`, `api.bozkurtobasi.com` to `api:3000`, `admin.bozkurtobasi.com` to `admin:3000`, and `analiz.bozkurtobasi.com` to `analyze:3000`. Add admin DNS, enable HTTPS, and redeploy after domain changes. Dokploy handles the reverse proxy; see its [Compose domain guide](https://docs.dokploy.com/docs/core/docker-compose/domains).
+
+Use the [production environment example](../.env.production.example) in Dokploy **Environment**; it includes only configurable Compose inputs. Replace its empty `ADMIN_PASSWORD=` with a real, unique secret in Dokploy. Keep comments on separate lines: local Docker Compose v5.5.1 interpreted an inline `#` after an empty value as literal password text. The example sets `ADMIN_EMAIL=emindemirci.ai@gmail.com` to the sign-in address; omitting it uses the Compose default `info@bozkurtobasi.com`. `NODE_ENV`, `ANALYZE_AUTH_MODE`, and `ANALYZE_DATA_DIR` are fixed in Compose. SMTP is not implemented, so no SMTP secret is requested.
 
 The supplied `ANALYZE_*` values are defaults in Compose, including the production origin list, 200,000-event limit, geo lookup, and `platform-admin` auth against `https://api.bozkurtobasi.com`. Add a strong **`ADMIN_PASSWORD` of at least 12 characters** in Dokploy; `ADMIN_EMAIL` defaults to `info@bozkurtobasi.com`. Without the password, gameplay and health endpoints work, but admin/analytics login returns unavailable. Never commit the secret. The API implements login, bearer session validation, logout, and protected guest-session counts. The analytics panel uses the same admin login.
 

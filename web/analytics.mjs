@@ -1,6 +1,6 @@
 // Analyze.Your.Site /api/track contract: cumulative updates reuse the pageview id.
 // Only named game screens are sent; saves, session cookies and URL parameters are excluded.
-const SCREENS = new Set(['village', 'battle', 'world', 'wolves', 'quests']);
+const SCREENS = new Set(['village', 'battle', 'world', 'wolves', 'quests', 'updates']);
 
 export function createAnalytics() {
   let config, active;

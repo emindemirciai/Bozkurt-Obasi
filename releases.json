@@ -1,0 +1,41 @@
+{
+  "version": "1.1.0",
+  "releases": [
+    {
+      "version": "1.1.0",
+      "date": "2026-09-26",
+      "changes": {
+        "tr": [
+          "Oyun, yönetim ve analiz ekranlarına açık/koyu tema seçimi eklendi.",
+          "Oyun içinde Türkçe ve İngilizce sürüm geçmişi açıldı; güncel sürüm arayüzde görünüyor.",
+          "Sayfa kaynağında telif sahibi ve MIT lisans bildirimi görünür hale getirildi.",
+          "Dört servisli Dokploy kurulumu için üretim ortamı örneği ve sürüm belgeleri güncellendi."
+        ],
+        "en": [
+          "Added light/dark theme selection to the game, admin, and analytics screens.",
+          "Added a Turkish/English release history in the game and displayed its current version.",
+          "Made the copyright holder and MIT license notice visible in page source.",
+          "Updated the production environment example and release documentation for the four-service Dokploy stack."
+        ]
+      }
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-09-25",
+      "changes": {
+        "tr": [
+          "Köy kurma, üretim, muhafız ve sürü savunması içeren oynanabilir web sürümü yayınlandı.",
+          "Savaş sırasında kurt ve çakal hareketleri ile savaş başında rastgele gelen çakal taktikleri eklendi.",
+          "Tek Compose içinde web, API, yönetim ve kullanıcının Analyze Your Site kaynağından uyarlanan analiz servisleri hazırlandı.",
+          "Türkçe/İngilizce arayüz, çevrimdışı index, testler, MIT lisansı ve temiz kaynak yedeği eklendi."
+        ],
+        "en": [
+          "Released a playable browser village builder with production, guardians, and herd defense.",
+          "Added wolf and jackal combat motion and a randomly chosen jackal tactic at battle start.",
+          "Prepared web, API, admin, and analytics services in one Compose stack, using the user's Analyze Your Site source.",
+          "Added Turkish/English UI, offline index, tests, MIT license, and a clean source backup."
+        ]
+      }
+    }
+  ]
+}

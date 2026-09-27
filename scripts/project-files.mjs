@@ -42,7 +42,11 @@ export async function projectFiles(directory = projectRoot, prefix = '') {
       if (relative === 'server/build' || relative === 'infrastructure/backups') continue;
       files.push(...(await projectFiles(path.join(directory, entry.name), `${relative}/`)));
     } else if (entry.isFile()) {
-      if (entry.name.startsWith('.env') && entry.name !== '.env.example') continue;
+      if (
+        entry.name.startsWith('.env') &&
+        !['.env.example', '.env.production.example'].includes(entry.name)
+      )
+        continue;
       if (excludedFiles.test(entry.name) || ['.DS_Store', 'Thumbs.db'].includes(entry.name))
         continue;
       files.push(relative);

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import WorldMap from "../components/WorldMap";
 import type { AnalyzeSitePublicConfig } from "../lib/siteConfig";
+import { useAnalyzeTheme } from "../lib/useAnalyzeTheme";
 
 type RangeType = "24h" | "7d" | "30d";
 type ThemeType = "dark" | "light";
@@ -80,6 +81,8 @@ const dictionary = {
     empty: "Henüz bir veri akışı bulunmuyor.",
     dark: "Koyu",
     light: "Açık",
+    switchDark: "Koyu temaya geç",
+    switchLight: "Açık temaya geç",
     loading: "Veriler güncelleniyor...",
     apiError: "API verisi alınamadı.",
   },
@@ -106,6 +109,8 @@ const dictionary = {
     empty: "No data stream found yet.",
     dark: "Dark",
     light: "Light",
+    switchDark: "Switch to dark theme",
+    switchLight: "Switch to light theme",
     loading: "Updating data...",
     apiError: "Could not fetch API data.",
   },
@@ -1101,11 +1106,10 @@ function LocationBreakdown({
 
 export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfig }) {
   const [range, setRange] = useState<RangeType>("24h");
-  const [theme, setTheme] = useState<ThemeType>("dark");
+  const { theme, ready: mounted, chooseTheme } = useAnalyzeTheme();
   const [language, setLanguage] = useState<LanguageType>("tr");
   const [rawEvents, setRawEvents] = useState<RawAnalyzeEvent[]>([]);
   const [now, setNow] = useState(() => new Date());
-  const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
@@ -1120,7 +1124,9 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
     window.location.href = '/login';
   }
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -1183,7 +1189,7 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
   const averageDuration =
     language === "tr" ? dashboardData.averageDurationTr : dashboardData.averageDurationEn;
 
-  if (!mounted) return <main className="min-h-screen bg-[#111216] px-5 py-10 text-white"><h1 className="mx-auto max-w-7xl text-3xl font-black">{site.dashboardTitle.tr}</h1></main>;
+  if (!mounted) return <main className="analyze-dashboard-pending min-h-screen px-5 py-10"><h1 className="mx-auto max-w-7xl text-3xl font-black">{site.dashboardTitle.tr}</h1></main>;
 
   return (
     <main
@@ -1221,7 +1227,10 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
               </button>
               )}
               <button
-                onClick={() => setTheme(isDark ? "light" : "dark")}
+                type="button"
+                onClick={() => chooseTheme(isDark ? "light" : "dark")}
+                aria-label={isDark ? t.switchLight : t.switchDark}
+                title={isDark ? t.switchLight : t.switchDark}
                 className={`rounded-xl border px-4 py-2 text-sm font-bold transition ${
                   isDark
                     ? "border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"

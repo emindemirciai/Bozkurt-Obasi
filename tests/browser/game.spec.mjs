@@ -98,6 +98,47 @@ test('battle reveals a random jackal tactic at start, animates both sides and re
   await expect(page.locator('.tactic-reveal')).toContainText('Revealed when battle begins');
   expect(errors).toEqual([]);
 });
+test('appearance persists and the bilingual release history remains readable on mobile', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  const lightBackground = await page
+    .locator('html')
+    .evaluate((node) => getComputedStyle(node).backgroundColor);
+  await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const darkBackground = await page
+    .locator('html')
+    .evaluate((node) => getComputedStyle(node).backgroundColor);
+  expect(darkBackground).not.toBe(lightBackground);
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByRole('button', { name: 'Açık temaya geç' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Yenilikler', exact: true })).toBeVisible();
+  await expect(page.locator('.release-card')).toHaveCount(2);
+  await expect(page.locator('.release-card').first()).toHaveAttribute(
+    'data-release-version',
+    '1.1.0',
+  );
+  await expect(page.locator('.release-card').first()).toContainText('tema seçimi');
+  await expect(page.locator('.release-card').last()).toContainText('Köy kurma');
+
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.getByRole('heading', { name: 'What’s new', exact: true })).toBeVisible();
+  await expect(page.locator('.release-card').first()).toContainText('light/dark theme');
+  await expect(page.locator('.release-card').last()).toContainText('village builder');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: 'artifacts/updates-dark-mobile.png', fullPage: true });
+
+  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
 test('server guest state survives browser reload and remains separate from the local village', async ({
   page,
 }) => {

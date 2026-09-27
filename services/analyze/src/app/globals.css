@@ -2,7 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #f8fafc;
-  color: #0f172a;
+:root {
+  color-scheme: light;
+  --analyze-page: #f8fafc;
+  --analyze-ink: #0f172a;
+  --analyze-surface: #ffffff;
+  --analyze-border: #cbd5e1;
+  --analyze-muted: #475569;
+  --analyze-input: #ffffff;
+  --analyze-notice: #ecfdf5;
+  --analyze-notice-border: #a7f3d0;
+  --analyze-notice-ink: #065f46;
+  --analyze-error: #b91c1c;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --analyze-page: #090a0e;
+  --analyze-ink: #f8fafc;
+  --analyze-surface: #111217;
+  --analyze-border: #3f3f46;
+  --analyze-muted: #a1a1aa;
+  --analyze-input: #050507;
+  --analyze-notice: #071e1b;
+  --analyze-notice-border: #134e4a;
+  --analyze-notice-ink: #d1fae5;
+  --analyze-error: #fda4af;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --analyze-page: #090a0e;
+    --analyze-ink: #f8fafc;
+    --analyze-surface: #111217;
+    --analyze-border: #3f3f46;
+    --analyze-muted: #a1a1aa;
+    --analyze-input: #050507;
+    --analyze-notice: #071e1b;
+    --analyze-notice-border: #134e4a;
+    --analyze-notice-ink: #d1fae5;
+    --analyze-error: #fda4af;
+  }
+}
+
+body,
+.analyze-login,
+.analyze-dashboard-pending {
+  background-color: var(--analyze-page);
+  color: var(--analyze-ink);
+}
+
+.analyze-login-card {
+  background-color: var(--analyze-surface);
+  border-color: var(--analyze-border);
+}
+
+.analyze-login-muted {
+  color: var(--analyze-muted);
+}
+
+.analyze-login-control {
+  border-color: var(--analyze-border);
+  color: var(--analyze-ink);
+}
+
+.analyze-login-control:hover {
+  border-color: #60a5fa;
+}
+
+.analyze-login-notice {
+  background-color: var(--analyze-notice);
+  border-color: var(--analyze-notice-border);
+  color: var(--analyze-notice-ink);
+}
+
+.analyze-login-input {
+  background-color: var(--analyze-input);
+  border-color: var(--analyze-border);
+  color: var(--analyze-ink);
+}
+
+.analyze-login-input:focus-visible {
+  border-color: #3b82f6;
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.analyze-login-error {
+  color: var(--analyze-error);
 }

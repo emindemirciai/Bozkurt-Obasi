@@ -1,15 +1,15 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-09-25. Ortam / Environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium.
+Tarih / Date: 2026-09-27. Ortam / Environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| `npm run check` | Geçti / Passed — 27 JS dosyası, 174 TR/EN oyun çeviri anahtarı, dört Compose servisi, MIT lisansı |
+| `npm run check` | Geçti / Passed — 27 JS dosyası, 183 TR/EN oyun çeviri anahtarı, dört Compose servisi, MIT lisansı |
 | `npm run format:check` | Geçti / Passed |
 | `npm test` | 34/34 — oyun motoru, SQLite, API, yönetici giriş/oturum/koruma/kalıcılık |
 | `npm run build` | Geçti / Passed — Vite üretim paketi |
 | `npm run build:preview` | Geçti / Passed — tek dosyalık `preview/index.html` |
-| `npm run test:e2e` | 14/14 — masaüstü/mobil oyun, savaş, kayıt, TR/EN, analitik gönderimi ve tercihleri |
+| `npm run test:e2e` | 16/16 — masaüstü/mobil oyun, savaş, kayıt, TR/EN, analitik gönderimi ve tercihleri |
 | Savaş ve çevrimdışı önizleme hedef testleri / Battle and offline preview targeted tests | 2/2 — rastgele çakal taktiği, hareketli sahne, SVG sürekliliği, tek dosyalık oyunda savaş / random jackal tactic, animation, stable SVG, offline battle |
 | Dört Docker imajı / Four Docker images | Geçti / Passed — `web`, `api`, `admin`, `analyze` derlendi |
 | `docker compose config --quiet` | Geçti / Passed — üretim ve yerel override |
@@ -40,3 +40,8 @@ The first analytics image build exposed an upstream React 19 / `react-simple-map
 Local tests do not establish live Dokploy DNS/TLS or the GitHub Actions result. Set `ADMIN_PASSWORD` in Dokploy to enable admin and analytics login. SMTP delivery is not implemented.
 
 In the 25 September live check, the API and analytics health endpoints returned HTTP 200; the API admin session returned 503 admin_unavailable, while the admin home page and /healthz returned 502. These deployment configuration issues remain open; follow the admin sign-in and 502 steps in the Dokploy guide.
+## v1.1.0 · 27 Eylül 2026 / 27 September 2026
+
+**TR:** Güncel `npm run verify` geçti: 27 JavaScript kaynak kontrolü, 183 TR/EN çeviri anahtarı, 34/34 birim/API testi, Vite üretim ve tek dosyalık çevrimdışı önizleme derlemesi, 16/16 Chromium tarayıcı testi. `npm run format:check` ve üretim/yerel `docker compose config --quiet` geçti. Dört Docker imajı (`web`, `api`, `admin`, `analyze`) yeniden derlendi; yerel dört servis sağlık/oyun duman testi geçti. Gerçek Chromium'da yönetim ve analiz girişlerinin açık/koyu tema ve TR/EN kontrolleri incelendi; analiz açık temasında giriş alanları ve düğmelerinin hesaplanmış renkleri ile ekran görüntüsü doğrulandı. Sayfa kaynağındaki MIT bildirimi ve çevrimdışı önizleme yeniden oluşturuldu. Kaynak sayımı: 133 dosyada 21.678 fiziksel satır, bunun 11.480 satırı aktif web kaynaklarıdır. Canlı Dokploy ayarları ve GitHub Actions sonucu ayrıca kontrol edilmelidir.
+
+**EN:** The current `npm run verify` passed: 27 JavaScript source checks, 183 TR/EN translation keys, 34/34 unit/API tests, production and standalone offline-preview builds, and 16/16 Chromium browser tests. `npm run format:check` and production/local `docker compose config --quiet` passed. All four Docker images (`web`, `api`, `admin`, `analyze`) were rebuilt, and the local four-service health/gameplay smoke passed. Real Chromium reviewed the admin and analytics sign-ins in light/dark themes and TR/EN; computed input/button colors and a screenshot confirmed the analytics light theme. The MIT page-source notice and offline preview were regenerated. Source count: 21,678 physical lines in 133 files, including 11,480 active web-source lines. Live Dokploy settings and the GitHub Actions result require separate verification.

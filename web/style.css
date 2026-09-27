@@ -2135,3 +2135,391 @@ footer > span:first-child {
     scroll-behavior: auto !important;
   }
 }
+
+/* Release history and the saved appearance preference. */
+.theme-toggle {
+  flex: 0 0 35px;
+  width: 35px;
+  height: 35px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #edf0e4;
+  color: #536e56;
+  font:
+    23px/1 Georgia,
+    serif;
+}
+.theme-toggle:hover {
+  background: #dfe8d5;
+}
+.release-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 34px;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #315942, #1d3a32);
+  color: #f2f5e9;
+}
+.release-intro .eyebrow {
+  color: #c9d9ae;
+}
+.release-intro h2 {
+  font:
+    31px Georgia,
+    serif;
+  margin: 10px 0 7px;
+}
+.release-intro p {
+  color: #d0dfd2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.release-intro > strong {
+  font:
+    39px Georgia,
+    serif;
+  white-space: nowrap;
+  color: #e9d39d;
+}
+.release-timeline {
+  list-style: none;
+  border-left: 2px solid #cbd9bf;
+  padding: 0 0 0 27px;
+  margin: 30px 0 50px 17px;
+}
+.release-card {
+  position: relative;
+  margin-bottom: 22px;
+}
+.release-marker {
+  position: absolute;
+  left: -36px;
+  top: 21px;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #f5f4ed;
+  border-radius: 50%;
+  background: #5c8c67;
+  box-shadow: 0 0 0 2px #8eaa84;
+}
+.release-card article {
+  padding: 24px 28px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbfcf5;
+}
+.release-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.release-card header > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.release-version {
+  font:
+    25px Georgia,
+    serif;
+  color: #34543f;
+}
+.release-latest {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #e3eddc;
+  color: #426949;
+  font-size: 10px;
+  font-weight: 650;
+}
+.release-card time {
+  color: #7f907f;
+  font-size: 11px;
+}
+.release-card ul {
+  margin: 18px 0 0;
+  padding-left: 22px;
+  color: #586e59;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.release-card li::marker {
+  color: #86a66f;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  color: #e7efe4;
+  background: #111d18;
+  --forest: #9ac6a0;
+  --muted: #a6b7a7;
+  --line: #324b3e;
+  --gold: #d9b774;
+}
+:root[data-theme='dark'] .rail {
+  background: #0b1913;
+  color: #c7d7c2;
+  border-right: 1px solid #314a39;
+}
+:root[data-theme='dark'] .nav-item,
+:root[data-theme='dark'] .rail-help {
+  color: #adc7ad;
+}
+:root[data-theme='dark'] .nav-item.active {
+  color: #f0dea9;
+  background: #ffffff12;
+}
+:root[data-theme='dark'] .topbar {
+  background: #192a22;
+}
+:root[data-theme='dark'] .wordmark span,
+:root[data-theme='dark'] .eyebrow,
+:root[data-theme='dark'] .resource-label,
+:root[data-theme='dark'] .resource strong small,
+:root[data-theme='dark'] .resource-rate small,
+:root[data-theme='dark'] .map-coordinates,
+:root[data-theme='dark'] .section-label,
+:root[data-theme='dark'] .muted,
+:root[data-theme='dark'] .cost,
+:root[data-theme='dark'] .build-card p,
+:root[data-theme='dark'] .quest-card p,
+:root[data-theme='dark'] .region-body p,
+:root[data-theme='dark'] .formation-label,
+:root[data-theme='dark'] .battle-help,
+:root[data-theme='dark'] .guardian-info > small,
+:root[data-theme='dark'] .guardian-info > span:last-child,
+:root[data-theme='dark'] .wolf-detail > p,
+:root[data-theme='dark'] .recovery-bar p,
+:root[data-theme='dark'] footer,
+:root[data-theme='dark'] .release-card time {
+  color: #afbfab;
+}
+:root[data-theme='dark'] .page-heading h1,
+:root[data-theme='dark'] .section-heading h2,
+:root[data-theme='dark'] .build-card h3,
+:root[data-theme='dark'] .quest-callout h3,
+:root[data-theme='dark'] .world-banner h2,
+:root[data-theme='dark'] .modal h2,
+:root[data-theme='dark'] .release-version {
+  color: #e8f0dd;
+}
+:root[data-theme='dark'] .page-heading p,
+:root[data-theme='dark'] .section-heading p,
+:root[data-theme='dark'] .world-banner p,
+:root[data-theme='dark'] .modal p,
+:root[data-theme='dark'] .weather span,
+:root[data-theme='dark'] .weather small {
+  color: #b4c6b1;
+}
+:root[data-theme='dark'] .connection,
+:root[data-theme='dark'] .language {
+  color: #d4e2ce;
+}
+:root[data-theme='dark'] .theme-toggle,
+:root[data-theme='dark'] .profile {
+  color: #e4d39d;
+  background: #2a4736;
+  border-color: #416449;
+}
+:root[data-theme='dark'] .theme-toggle:hover,
+:root[data-theme='dark'] .profile:hover {
+  background: #355640;
+}
+:root[data-theme='dark'] .resource-bar,
+:root[data-theme='dark'] .map-card,
+:root[data-theme='dark'] .detail-card,
+:root[data-theme='dark'] .build-card,
+:root[data-theme='dark'] .recovery-bar,
+:root[data-theme='dark'] .guardian-card,
+:root[data-theme='dark'] .region-card,
+:root[data-theme='dark'] .quest-card,
+:root[data-theme='dark'] .release-card article {
+  background: #1c2e25;
+  border-color: var(--line);
+}
+:root[data-theme='dark'] .map-toolbar {
+  background: #1c2e25;
+}
+:root[data-theme='dark'] .resource:not(:last-child):after,
+:root[data-theme='dark'] .detail-stats,
+:root[data-theme='dark'] .build-card-bottom,
+:root[data-theme='dark'] .training-row {
+  border-color: var(--line);
+  background-color: transparent;
+}
+:root[data-theme='dark'] .resource:not(:last-child):after {
+  background: var(--line);
+}
+:root[data-theme='dark'] .resource-icon,
+:root[data-theme='dark'] .guardian-portrait,
+:root[data-theme='dark'] .quest-icon,
+:root[data-theme='dark'] .modal-icon {
+  background: #294336;
+  color: #c7d2a7;
+}
+:root[data-theme='dark'] .scene-wrap {
+  background: #496650;
+}
+:root[data-theme='dark'] .landscape {
+  filter: brightness(0.75) saturate(0.85);
+}
+:root[data-theme='dark'] .map-chip,
+:root[data-theme='dark'] .map-location,
+:root[data-theme='dark'] .zoom-controls,
+:root[data-theme='dark'] .map-bottom-note,
+:root[data-theme='dark'] .subtle-count,
+:root[data-theme='dark'] .level-badge {
+  color: #d2dfbd;
+  background: #253f31e8;
+  border-color: #557255;
+}
+:root[data-theme='dark'] .icon-button {
+  color: #d4e7ca;
+}
+:root[data-theme='dark'] .icon-button:hover {
+  background: #3b5c45;
+}
+:root[data-theme='dark'] .button.primary {
+  background: #417450;
+  color: #ffffff;
+  border-color: #598963;
+}
+:root[data-theme='dark'] .button.primary:hover:not(:disabled) {
+  background: #4d865c;
+}
+:root[data-theme='dark'] .button.outline,
+:root[data-theme='dark'] .small-button {
+  border-color: #53735a;
+  color: #d4e7c4;
+  background: #284333;
+}
+:root[data-theme='dark'] .button.outline:hover:not(:disabled),
+:root[data-theme='dark'] .small-button:hover:not(:disabled) {
+  background: #385943;
+}
+:root[data-theme='dark'] .button.text-button {
+  color: #d0dfc3;
+}
+:root[data-theme='dark'] .quest-callout,
+:root[data-theme='dark'] .world-banner,
+:root[data-theme='dark'] .guardian-card.selected,
+:root[data-theme='dark'] .quest-complete {
+  background: #283d2d;
+  border-color: #486345;
+}
+:root[data-theme='dark'] .quest-callout p,
+:root[data-theme='dark'] .quest-callout button,
+:root[data-theme='dark'] .activity-card h3,
+:root[data-theme='dark'] .activity-line p,
+:root[data-theme='dark'] .activity-line time,
+:root[data-theme='dark'] .detail-stats span,
+:root[data-theme='dark'] .detail-stats strong,
+:root[data-theme='dark'] .map-toolbar > span,
+:root[data-theme='dark'] .battle-settings h3,
+:root[data-theme='dark'] .battle-count > span,
+:root[data-theme='dark'] .battle-count p,
+:root[data-theme='dark'] .quest-progress-label,
+:root[data-theme='dark'] .region-art,
+:root[data-theme='dark'] .journey-pill {
+  color: #bed0b0;
+}
+:root[data-theme='dark'] .tactic-reveal,
+:root[data-theme='dark'] .tactic-reveal.concealed,
+:root[data-theme='dark'] .tactic-reveal.revealed,
+:root[data-theme='dark'] .battle-status,
+:root[data-theme='dark'] .segmented button.chosen,
+:root[data-theme='dark'] .quest-tag,
+:root[data-theme='dark'] .release-latest,
+:root[data-theme='dark'] .journey-pill {
+  background: #304a36;
+  color: #d7e8c5;
+  border-color: #577755;
+}
+:root[data-theme='dark'] .segmented,
+:root[data-theme='dark'] .progress {
+  border-color: #46624c;
+  background: #253a2e;
+}
+:root[data-theme='dark'] .segmented button,
+:root[data-theme='dark'] .battle-elapsed {
+  color: #c0d3b1;
+}
+:root[data-theme='dark'] .region-art,
+:root[data-theme='dark'] .region-1,
+:root[data-theme='dark'] .region-2,
+:root[data-theme='dark'] .region-3 {
+  background: #324c3a;
+}
+:root[data-theme='dark'] .modal {
+  background: #203329;
+  border-color: #47624b;
+}
+:root[data-theme='dark'] .modal .modal-note {
+  background: #2d4735;
+  color: #cfdec3;
+}
+:root[data-theme='dark'] .release-timeline {
+  border-color: #53745a;
+}
+:root[data-theme='dark'] .release-marker {
+  border-color: #111d18;
+  background: #b3d08f;
+}
+:root[data-theme='dark'] .release-card ul {
+  color: #d0ddc6;
+}
+@media (max-width: 700px) {
+  .topbar-end {
+    gap: 8px;
+  }
+  .language {
+    padding-left: 8px;
+  }
+  .theme-toggle {
+    flex-basis: 30px;
+    width: 30px;
+    height: 30px;
+    font-size: 21px;
+  }
+  .nav-item {
+    font-size: 8px;
+  }
+  .release-intro {
+    padding: 23px 20px;
+  }
+  .release-intro h2 {
+    font-size: 25px;
+  }
+  .release-intro > strong {
+    font-size: 27px;
+  }
+  .release-timeline {
+    margin-left: 8px;
+    padding-left: 22px;
+  }
+  .release-marker {
+    left: -30px;
+  }
+  .release-card article {
+    padding: 18px;
+  }
+  .release-card header {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+@media (max-width: 380px) {
+  .wordmark {
+    font-size: 12px;
+    letter-spacing: 1.3px;
+  }
+  .wordmark span {
+    font-size: 6px;
+    letter-spacing: 2px;
+  }
+  .topbar {
+    padding: 0 12px;
+  }
+}

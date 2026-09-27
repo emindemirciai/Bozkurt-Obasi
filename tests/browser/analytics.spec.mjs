@@ -79,6 +79,17 @@ test('production screens send one upserted visit, cumulative duration, and no ga
   expect(rows.get(initial.id).duration).toBe(5);
 });
 
+test('release history is tracked as a named screen without private state', async ({ page }) => {
+  const events = await productionSite(page);
+  await page.goto(SITE);
+  await expect.poll(() => events.length).toBe(1);
+  await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
+  await expect.poll(() => events.length).toBe(3);
+  expect(events[2].body).toMatchObject({ path: '/updates', url: `${SITE}/updates` });
+  expect(events[2].body.visitorId).toBe(events[0].body.visitorId);
+  expect(JSON.stringify(events[2].body)).not.toMatch(/resources|wolves|revision/);
+});
+
 test('analytics failure does not interrupt gameplay', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

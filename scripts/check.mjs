@@ -79,6 +79,38 @@ const packageInfo = JSON.parse(await readFile(path.join(projectRoot, 'package.js
 const lock = JSON.parse(await readFile(path.join(projectRoot, 'package-lock.json'), 'utf8'));
 if (packageInfo.name !== lock.name || packageInfo.version !== lock.version)
   fail('Package and lockfile metadata differ.');
+const releases = JSON.parse(await readFile(path.join(projectRoot, 'releases.json'), 'utf8'));
+if (
+  releases.version !== packageInfo.version ||
+  releases.releases?.[0]?.version !== packageInfo.version
+)
+  fail('Current release, package, and lockfile versions differ.');
+const seenVersions = new Set();
+const changelog = await readFile(path.join(projectRoot, 'CHANGELOG.md'), 'utf8');
+for (const release of releases.releases) {
+  if (seenVersions.has(release.version) || !/^\d+\.\d+\.\d+$/.test(release.version))
+    fail('Duplicate or invalid release version.');
+  seenVersions.add(release.version);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(release.date)) fail('Invalid release date: ' + release.version);
+  if (!changelog.includes(`## v${release.version} — ${release.date}`))
+    fail('Changelog entry missing: ' + release.version);
+  for (const language of ['tr', 'en']) {
+    if (!Array.isArray(release.changes?.[language]) || release.changes[language].length === 0)
+      fail('Release translation missing: ' + release.version + ' ' + language);
+    if (release.changes[language].some((item) => typeof item !== 'string' || !item.trim()))
+      fail('Empty release change: ' + release.version + ' ' + language);
+  }
+}
+const environment = await readFile(path.join(projectRoot, '.env.production.example'), 'utf8');
+const composeInputs = [...compose.matchAll(/\$\{([A-Z][A-Z0-9_]*):-/g)].map((match) => match[1]);
+const exampleInputs = [...environment.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1]);
+if (
+  JSON.stringify([...new Set(composeInputs)].sort()) !==
+  JSON.stringify([...new Set(exampleInputs)].sort())
+)
+  fail('Production environment example must list exactly the configurable Compose inputs.');
+if (!/^ADMIN_PASSWORD=$/m.test(environment))
+  fail('Production environment example must not include a password or inline placeholder.');
 console.log(
   `Checks passed: ${javascript.length} JavaScript files; ${turkish.length} TR/EN translation keys; Docker sources; persistent single-replica compose; lockfile metadata.`,
 );

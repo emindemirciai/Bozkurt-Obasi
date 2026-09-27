@@ -11,6 +11,7 @@ import {
   getUpgradeCost,
 } from '../shared/game.mjs';
 import { translations } from './i18n.mjs';
+import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
 import { createAnalytics } from './analytics.mjs';
 
@@ -34,6 +35,8 @@ const write = (key, value) => {
   }
 };
 let language = read('bozkurt.language') === 'en' ? 'en' : 'tr';
+let theme = read('bozkurt.theme') === 'dark' ? 'dark' : 'light';
+document.documentElement.dataset.theme = theme;
 let state = loadLocal();
 let mode = 'local',
   view = 'village',
@@ -171,18 +174,19 @@ function render(restoreFocus) {
   const active = document.activeElement;
   const focusId = restoreFocus || active?.id;
   document.documentElement.lang = language;
+  document.documentElement.dataset.theme = theme;
   document.title = `Bozkurt Obası: Ay-Yıldız Nöbeti · ${t(view)}`;
   analytics.view(view);
-  const navigation = ['village', 'battle', 'world', 'wolves', 'quests'];
+  const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'updates'];
   root.innerHTML = `<div class="game-shell">
     <nav class="rail" aria-label="${t('village')}"><a href="#village" class="brand-mark" aria-label="Bozkurt Obası: Ay-Yıldız Nöbeti"><svg viewBox="0 0 42 42"><path d="M26 6a16 16 0 1 0 0 30 15 15 0 0 1 0-30" fill="currentColor"/><path d="m29 15 2 4 5 .5-3.7 3.2 1.2 4.8-4.5-2.5-4.3 2.5 1-4.8-3.7-3.2 5-.5Z" fill="currentColor"/></svg></a>
-    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
-    <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v1.0</span></div></nav>
-    <div class="workspace"><header class="topbar"><div class="wordmark">BOZKURT OBASI <span>AY-YILDIZ NÖBETİ</span></div><div class="topbar-end"><button class="connection" data-action="online"><i class="status-dot ${mode === 'online' ? 'live' : ''}"></i>${t(mode)}${icon('cloud', 16)}</button><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="profile" data-action="help" aria-label="${t('help')}">${icon('wolves', 23)}</button></div></header>
+    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
+    <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
+    <div class="workspace"><header class="topbar"><div class="wordmark">BOZKURT OBASI <span>AY-YILDIZ NÖBETİ</span></div><div class="topbar-end"><button class="connection" data-action="online"><i class="status-dot ${mode === 'online' ? 'live' : ''}"></i>${t(mode)}${icon('cloud', 16)}</button><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button><button class="profile" data-action="help" aria-label="${t('help')}">${icon('wolves', 23)}</button></div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${number(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
-    ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : questsView()}
-    <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a></span></footer></main></div></div>
+    ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : updatesView()}
+    <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
   identifyControls();
   renderedSignature = interfaceSignature();
@@ -304,6 +308,51 @@ function worldView() {
 
 function questsView() {
   return `<div class="quest-grid">${state.quests.map((q, i) => `<article class="quest-card ${q.claimed ? 'quest-complete' : ''}"><div class="quest-number">0${i + 1}</div><div class="quest-icon">${icon(['village', 'feed', 'battle', 'wolves'][i], 34)}</div><span class="quest-tag">${t(q.claimed ? 'claimed' : 'inProgress')}</span><h2>${t(q.id)}</h2><p>${t(`${q.id}Desc`)}</p><div class="quest-progress-label"><span>${t('quests')}</span><strong>${q.progress} / ${q.target}</strong></div>${progress(q.progress, q.target)}${button((q.claimed ? icon('check', 17) : icon('flag', 17)) + t(q.claimed ? 'claimed' : 'claim'), 'claimQuest', 'button ' + (q.claimed ? 'outline' : 'primary'), q.claimed || q.progress < q.target || busy, `data-id="${q.id}"`)}</article>`).join('')}</div>`;
+}
+
+function updatesView() {
+  const releases = [...releaseNotes.releases].sort((a, b) => b.date.localeCompare(a.date));
+  return (
+    '<section class="release-intro"><div><span class="eyebrow">' +
+    t('updatesEyebrow') +
+    '</span><h2>' +
+    t('currentVersion') +
+    '</h2><p>' +
+    t('updatesIntro') +
+    '</p></div><strong>v' +
+    escape(releaseNotes.version) +
+    '</strong></section>' +
+    '<ol class="release-timeline" aria-label="' +
+    t('updatesHistory') +
+    '">' +
+    releases
+      .map((release) => {
+        const date = new Date(release.date + 'T12:00:00Z').toLocaleDateString(
+          language === 'tr' ? 'tr-TR' : 'en-US',
+          { year: 'numeric', month: 'long', day: 'numeric' },
+        );
+        const changes = release.changes?.[language] || [];
+        return (
+          '<li class="release-card" data-release-version="' +
+          escape(release.version) +
+          '"><div class="release-marker" aria-hidden="true"></div><article><header><div><span class="release-version">v' +
+          escape(release.version) +
+          '</span>' +
+          (release.version === releaseNotes.version
+            ? '<span class="release-latest">' + t('latestRelease') + '</span>'
+            : '') +
+          '</div><time datetime="' +
+          escape(release.date) +
+          '">' +
+          escape(date) +
+          '</time></header><ul>' +
+          changes.map((change) => '<li>' + escape(change) + '</li>').join('') +
+          '</ul></article></li>'
+        );
+      })
+      .join('') +
+    '</ol>'
+  );
 }
 
 function modalView() {
@@ -439,6 +488,13 @@ root.addEventListener('click', async (event) => {
     language = language === 'tr' ? 'en' : 'tr';
     write('bozkurt.language', language);
     notice = '';
+    render();
+    return;
+  }
+  if (a === 'theme') {
+    theme = theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = theme;
+    write('bozkurt.theme', theme);
     render();
     return;
   }

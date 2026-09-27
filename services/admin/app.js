@@ -16,6 +16,7 @@ const dictionary = {
     network: 'Sunucuya ulaşılamadı. Biraz sonra tekrar deneyin.',
     throttled: 'Çok sayıda hatalı deneme. 10 dakika sonra tekrar deneyin.',
     updated: 'Son güncelleme: ',
+    switchToLight: 'Aydınlık görünüme geç', switchToDark: 'Karanlık görünüme geç',
   },
   en: {
     subtitle: 'Build your village. Guard your herd.', eyebrow: 'ADMIN CENTER',
@@ -34,6 +35,7 @@ const dictionary = {
     network: 'Could not reach the server. Please try again later.',
     throttled: 'Too many failed attempts. Try again in 10 minutes.',
     updated: 'Last updated: ',
+    switchToLight: 'Switch to light mode', switchToDark: 'Switch to dark mode',
   },
 };
 const elements = {
@@ -45,6 +47,21 @@ const elements = {
 };
 let language = localStorage.getItem('bozkurt_admin_language') === 'en' ? 'en' : 'tr';
 let token = sessionStorage.getItem('bozkurt_admin_token') || '';
+const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+let theme = localStorage.getItem('bozkurt_admin_theme');
+if (theme !== 'dark' && theme !== 'light') theme = themeMedia.matches ? 'dark' : 'light';
+
+function applyTheme() {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+  const label = dictionary[language][theme === 'dark' ? 'switchToLight' : 'switchToDark'];
+  const button = document.getElementById('theme');
+  button.textContent = theme === 'dark' ? '☀' : '☾';
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+  button.setAttribute('aria-pressed', String(theme === 'dark'));
+  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0b151b' : '#f5f2e9';
+}
 
 function translate() {
   document.documentElement.lang = language;
@@ -52,7 +69,10 @@ function translate() {
   for (const element of document.querySelectorAll('[data-i18n]')) {
     element.textContent = dictionary[language][element.dataset.i18n];
   }
-  document.getElementById('language').textContent = language === 'tr' ? 'EN' : 'TR';
+  const languageButton = document.getElementById('language');
+  languageButton.textContent = language === 'tr' ? 'EN' : 'TR';
+  languageButton.setAttribute('aria-label', language === 'tr' ? 'Switch to English' : 'Türkçeye geç');
+  applyTheme();
 }
 function message(key) {
   elements.message.textContent = key ? dictionary[language][key] : '';
@@ -100,6 +120,16 @@ async function refresh() {
     message('network');
   }
 }
+document.getElementById('theme').addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('bozkurt_admin_theme', theme);
+  applyTheme();
+});
+themeMedia.addEventListener('change', () => {
+  if (localStorage.getItem('bozkurt_admin_theme')) return;
+  theme = themeMedia.matches ? 'dark' : 'light';
+  applyTheme();
+});
 document.getElementById('language').addEventListener('click', () => {
   language = language === 'tr' ? 'en' : 'tr';
   localStorage.setItem('bozkurt_admin_language', language);

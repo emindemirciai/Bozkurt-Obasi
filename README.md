@@ -4,6 +4,8 @@
 
 **EN:** “Build your village. Guard your herd.” A browser village builder and herd defense game. Wolves and the herd face the jackals in battle.
 
+**Güncel sürüm / Current version: v1.1.0** · [Sürüm geçmişi / Changelog](CHANGELOG.md)
+
 [Çevrimdışı oynanabilir önizleme / Offline playable preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
 ## Türkçe
@@ -20,7 +22,7 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Oyun yerel köyle başlar; “Sunucuya bağlan” ayrı bir çevrim içi misafir köyü oluşturur. Yerel ve sunucu kayıtları birbirine aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Arayüz Türkçe/İngilizcedir. Bu ilk oynanabilir web sürümünde PvP, arkadaş/sohbet, hesap kurtarma ve ödeme yoktur. Misafir köyü 30 günlük tarayıcı çerezine bağlıdır; çerez silinirse başka cihazdan geri getirilemez.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ve açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** bölümü v1.1.0 ve önceki değişiklikleri gösterir. Bu ilk oynanabilir web sürümünde PvP, arkadaş/sohbet, hesap kurtarma ve ödeme yoktur. Misafir köyü 30 günlük tarayıcı çerezine bağlıdır; çerez silinirse başka cihazdan geri getirilemez.
 
 ### Tek Dokploy Compose, dört servis
 
@@ -33,7 +35,7 @@ Dokploy'da depo `main` dalını bağlayın. Ekrandaki **Compose Path = `./docker
 | `admin.bozkurtobasi.com` | `admin` | 3000 | İki dilli yönetim paneli; DNS kaydı eklenmeli |
 | `analiz.bozkurtobasi.com` | `analyze` | 3000 | Trafik kolektörü ve analiz paneli |
 
-Dokploy ortamında **`ADMIN_PASSWORD` değerini en az 12 karakterlik güçlü bir sır** olarak tanımlayın. Varsayılan yönetici e-postası `info@bozkurtobasi.com`; `ADMIN_EMAIL` ile değiştirilebilir. Parola olmadan oyun ve sağlık kontrolleri çalışır, ancak yönetim/analiz girişi kapalı kalır. Parolayı Git'e, ZIP'e veya ekran görüntüsüne koymayın. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` Compose'da hazırdır. Verdiğiniz diğer `ANALYZE_*` varsayılanları da [Compose dosyasında](compose.yml) tanımlıdır. Domain değişikliklerinden sonra Dokploy'da yeniden dağıtın.
+Güncel [üretim ortamı örneğini](.env.production.example) Dokploy Environment için temel alın. Örnek, yalnızca Compose tarafından okunan değiştirilebilir anahtarları içerir; gerçek sır içermez. **`ADMIN_PASSWORD` değerini en az 12 karakterlik güçlü bir sır** olarak Dokploy'da tanımlayın. Compose'un varsayılan yönetici e-postası `info@bozkurtobasi.com`; örnek üretim ortamı, girişte kullanılan `emindemirci.ai@gmail.com` adresini `ADMIN_EMAIL` olarak ayarlar. Parola olmadan oyun ve sağlık kontrolleri çalışır, ancak yönetim/analiz girişi kapalı kalır. Parolayı Git'e, ZIP'e veya ekran görüntüsüne koymayın. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` Compose'da hazırdır. Verdiğiniz diğer `ANALYZE_*` varsayılanları da [Compose dosyasında](compose.yml) tanımlıdır. Domain değişikliklerinden sonra Dokploy'da yeniden dağıtın.
 
 Yönetici veya analiz girişinde admin_unavailable (503) görülürse Dokploy Environment bölümünde **ADMIN_PASSWORD** değerinin en az 12 karakter olduğunu ve **ADMIN_EMAIL** değerinin girişte kullanılacak adresle eşleştiğini doğrulayın; ardından Compose uygulamasını yeniden dağıtarak API servisini güncelleyin. **admin.bozkurtobasi.com** 502 dönerse Domains kaydının **admin:3000** servisine bağlı olduğunu kontrol edin; admin konteynerinin durumunu, /healthz sağlık kontrolünü ve Dokploy loglarını inceleyin.
 
@@ -59,13 +61,13 @@ Portlar: oyun <http://127.0.0.1:3000>, API <http://127.0.0.1:3001>, yönetim <ht
 
 Download and open [`preview/index.html`](preview/index.html) in a browser for the self-contained offline game. GitHub's file viewer cannot run it. For the persistent SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>. “Connect to server” starts a separate guest village; local saves are not uploaded.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics randomly selected when combat begins, animated wave combat, four regions, and quests. It supports Turkish and English. PvP, chat, recoverable accounts, and payments are not yet included. Guest progress depends on a 30-day browser cookie.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics randomly selected when combat begins, animated wave combat, four regions, and quests. The game, admin and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.1.0 and earlier changes. PvP, chat, recoverable accounts, and payments are not yet included. Guest progress depends on a 30-day browser cookie.
 
 ### Four services in one Dokploy Compose stack
 
 Connect the private repository's `main` branch and keep the existing **Compose Path `./docker-compose.yml`**. `./compose.yml` is an identical alternative. Map both game domains to `web:3000`, `api.bozkurtobasi.com` to `api:3000`, `admin.bozkurtobasi.com` to `admin:3000`, and `analiz.bozkurtobasi.com` to `analyze:3000`. Add DNS for the admin subdomain before using it. Redeploy after changing domains.
 
-Set **`ADMIN_PASSWORD` to a strong secret of at least 12 characters** in Dokploy. The default email is `info@bozkurtobasi.com`, overridable with `ADMIN_EMAIL`. Without the password, gameplay and health checks work, but admin and analytics login cannot succeed. Do not commit the secret. The supplied `ANALYZE_*` defaults and platform-admin/API URL are already in [`compose.yml`](compose.yml). `game-data` holds SQLite game progress; `analyze-data` holds analytics events. Back up both separately and keep one replica for the SQLite services. SMTP sending and password recovery are not implemented.
+Use the current [production environment example](.env.production.example) as the starting point in Dokploy Environment. It contains only configurable keys consumed by Compose and no real secrets. Set **`ADMIN_PASSWORD` to a strong secret of at least 12 characters** in Dokploy. Compose defaults to `info@bozkurtobasi.com`; the example sets `ADMIN_EMAIL=emindemirci.ai@gmail.com` to match the sign-in address. Without the password, gameplay and health checks work, but admin and analytics login cannot succeed. Do not commit the secret. The supplied `ANALYZE_*` defaults and platform-admin/API URL are already in [`compose.yml`](compose.yml). `game-data` holds SQLite game progress; `analyze-data` holds analytics events. Back up both separately and keep one replica for the SQLite services. SMTP sending and password recovery are not implemented.
 
 If admin or analytics sign-in returns admin_unavailable (503), verify that **ADMIN_PASSWORD** has at least 12 characters and **ADMIN_EMAIL** matches the intended sign-in address in Dokploy Environment; redeploy the Compose application so the API receives them. If **admin.bozkurtobasi.com** returns 502, check that its Domains entry targets **admin:3000**, then inspect the admin container status, /healthz check and Dokploy logs.
 
@@ -88,6 +90,8 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 | `services/analyze/` | MIT lisanslı analiz paneli ve kolektör / MIT analytics dashboard and collector |
 | `tests/`, `scripts/` | Test, önizleme, ölçüm ve ZIP / Tests, preview, metrics, and ZIP |
 | `preview/index.html` | Tek dosyalık oynanabilir oyun / Standalone playable game |
+| `releases.json`, `CHANGELOG.md` | İki dilli sürüm kayıtları / Bilingual release history |
+| `.env.production.example` | Dokploy üretim ortamı örneği / Production environment example |
 | `Assets/`, `client/`, `infrastructure/` | Korunan Unity dönemi kaynakları / Preserved Unity-era sources |
 
 ## Kaynak satırları / Source line counts
@@ -95,20 +99,20 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 <!-- metrics:start -->
 | Kapsam / Scope | Dosya / Files | Satır / Lines |
 | --- | ---: | ---: |
-| Web istemci / Web client | 6 | 3395 |
+| Web istemci / Web client | 6 | 3887 |
 | Web sunucu / Web server | 4 | 721 |
-| Dağıtım servisleri / Deployment services | 29 | 3762 |
+| Dağıtım servisleri / Deployment services | 30 | 4047 |
 | Paylaşılan oyun / Shared game | 1 | 718 |
-| Web test ve araçlar / Web tests and tools | 17 | 2017 |
+| Web test ve araçlar / Web tests and tools | 17 | 2107 |
 | Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **132** | **20811** |
+| **Toplam / Total** | **133** | **21678** |
 
-Aktif web kaynakları / Active web source: **10613** satır / lines.
+Aktif web kaynakları / Active web source: **11480** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 
 ## Lisans / License
 
-Bu depo [MIT lisansı](LICENSE) altındadır. Analiz servisinin özgün MIT telif bildirimi [`services/analyze/LICENSE`](services/analyze/LICENSE) içinde korunur; [kaynak bildirimi](docs/ANALYZE-SOURCE.md). Üçüncü taraf bağımlılıkların kendi lisansları geçerlidir.
+Bu depo [MIT lisansı](LICENSE) altındadır. © 2026 Emin DEMİRCİ ve MIT bildirimi sayfa kaynağında görülebilir. MIT lisansı kullanıma, değiştirmeye ve dağıtıma izin verir; telif ve izin bildirimi kopyalarda korunmalıdır. Bildirimi kaldırmak veya lisans koşulları dışında davranmak hak ihlaline yol açabilir. Analiz servisinin özgün MIT telif bildirimi [`services/analyze/LICENSE`](services/analyze/LICENSE) içinde korunur; [kaynak bildirimi](docs/ANALYZE-SOURCE.md). Üçüncü taraf bağımlılıkların kendi lisansları geçerlidir.
 
-This repository is licensed under [MIT](LICENSE). The analytics service retains its original MIT notice in [`services/analyze/LICENSE`](services/analyze/LICENSE); see the [source notice](docs/ANALYZE-SOURCE.md). Third-party dependencies retain their respective licenses.
+This repository is licensed under [MIT](LICENSE). The © 2026 Emin DEMİRCİ and MIT notice is visible in page source. MIT permits use, modification, and redistribution provided the copyright and permission notice is retained in copies. Removing the notice or acting outside the license terms may infringe rights. The analytics service retains its original MIT notice in [`services/analyze/LICENSE`](services/analyze/LICENSE); see the [source notice](docs/ANALYZE-SOURCE.md). Third-party dependencies retain their respective licenses.
