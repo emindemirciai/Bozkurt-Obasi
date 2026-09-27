@@ -11,6 +11,7 @@ const result = await build({
     target: 'es2022',
     minify: true,
     cssCodeSplit: false,
+    assetsInlineLimit: 1024 * 1024,
     lib: { entry: resolve('web/main.mjs'), name: 'Bozkurt', formats: ['iife'] },
   },
 });

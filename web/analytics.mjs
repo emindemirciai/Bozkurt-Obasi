@@ -1,10 +1,10 @@
 // Analyze.Your.Site /api/track contract: cumulative updates reuse the pageview id.
 // Only named game screens are sent; saves, session cookies and URL parameters are excluded.
-const SCREENS = new Set(['village', 'battle', 'world', 'wolves', 'quests', 'updates']);
+const SCREENS = new Set(['home', 'village', 'battle', 'world', 'wolves', 'quests', 'updates']);
 
 export function createAnalytics() {
   let config, active;
-  let currentScreen = 'village';
+  let currentScreen = 'home';
   let visitorId, sessionId;
   let pending = Promise.resolve();
   const optedOut = () => navigator.doNotTrack === '1' || navigator.globalPrivacyControl === true;

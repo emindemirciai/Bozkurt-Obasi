@@ -5,6 +5,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY index.html vite.config.mjs releases.json ./
 COPY web ./web
+COPY public ./public
 COPY shared ./shared
 RUN npm run build
 

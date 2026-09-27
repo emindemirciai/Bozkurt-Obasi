@@ -32,7 +32,7 @@ test('disconnect ignores a delayed online poll and cannot overwrite the local vi
   );
   const poll = heldPoll(page, online, 2);
   await poll.installed;
-  await page.goto('/');
+  await page.goto('/#village');
   await connect(page);
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
   await page.locator('.connection').click();
@@ -70,7 +70,7 @@ test('a user action waits for polling and sends its latest revision exactly once
     applyAction(online, request.action, START);
     await route.fulfill(json({ state: online, revision: 5 }));
   });
-  await page.goto('/');
+  await page.goto('/#village');
   await connect(page);
   await page.clock.fastForward(1000);
   await poll.started;
@@ -98,7 +98,7 @@ test('invalid successful API responses leave the local game and connection mode 
     { state: { ...online, resources: {} }, revision: 1, mode: 'online' },
   ];
   await page.route('**/api/session', (route) => route.fulfill(json(responses.shift())));
-  await page.goto('/');
+  await page.goto('/#village');
   await page.locator('.connection').click();
   for (let attempt = 0; attempt < 3; attempt++) {
     await page.getByRole('button', { name: 'Sunucuya bağlan', exact: true }).click();
@@ -121,7 +121,7 @@ test('passive production unlocks construction without navigating or clicking', a
     (state) => localStorage.setItem('bozkurt.web.v1', JSON.stringify(state)),
     saved,
   );
-  await page.goto('/');
+  await page.goto('/#village');
   const quarry = page
     .locator('.buildings-grid')
     .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true });
@@ -136,7 +136,7 @@ test('battle refresh preserves keyboard focus and leaves an open modal untouched
   page,
 }) => {
   await page.clock.install({ time: new Date(START) });
-  await page.goto('/');
+  await page.goto('/#village');
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   await page.getByRole('button', { name: 'Savaşı başlat', exact: true }).click();
   const language = page.getByRole('button', { name: 'Switch to English', exact: true });

@@ -41,7 +41,7 @@ test('production screens send one upserted visit, cumulative duration, and no ga
 }) => {
   await page.clock.install();
   const events = await productionSite(page);
-  await page.goto(`${SITE}/?token=private-value#secret`);
+  await page.goto(`${SITE}/?token=private-value#village`);
   await expect.poll(() => events.length).toBe(1);
   const initial = events[0].body;
   expect(initial).toMatchObject({
@@ -81,7 +81,7 @@ test('production screens send one upserted visit, cumulative duration, and no ga
 
 test('release history is tracked as a named screen without private state', async ({ page }) => {
   const events = await productionSite(page);
-  await page.goto(SITE);
+  await page.goto(`${SITE}/#village`);
   await expect.poll(() => events.length).toBe(1);
   await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
   await expect.poll(() => events.length).toBe(3);
@@ -90,11 +90,23 @@ test('release history is tracked as a named screen without private state', async
   expect(JSON.stringify(events[2].body)).not.toMatch(/resources|wolves|revision/);
 });
 
+test('landing and guest play are distinct anonymous pageviews', async ({ page }) => {
+  const events = await productionSite(page);
+  await page.goto(SITE);
+  await expect.poll(() => events.length).toBe(1);
+  expect(events[0].body).toMatchObject({ path: '/home', url: `${SITE}/home` });
+  await page.getByRole('button', { name: 'Oynamaya başla' }).click();
+  await expect.poll(() => events.length).toBe(3);
+  expect(events[2].body).toMatchObject({ path: '/village', url: `${SITE}/village` });
+  expect(events[2].body.visitorId).toBe(events[0].body.visitorId);
+  expect(JSON.stringify(events[2].body)).not.toMatch(/resources|wolves|revision/);
+});
+
 test('analytics failure does not interrupt gameplay', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await productionSite(page, { fail: true });
-  await page.goto(SITE);
+  await page.goto(`${SITE}/#village`);
   await page
     .locator('.buildings-grid')
     .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
@@ -111,7 +123,7 @@ for (const preference of ['doNotTrack', 'globalPrivacyControl']) {
       preference,
     );
     const events = await productionSite(page);
-    await page.goto(SITE);
+    await page.goto(`${SITE}/#village`);
     await page.getByRole('button', { name: 'Savunma', exact: true }).click();
     await expect(page.locator('.map-title')).toContainText('Savunma hattı');
     expect(events).toHaveLength(0);
@@ -124,7 +136,7 @@ test('localhost never sends analytics traffic', async ({ page }) => {
   page.on('request', (request) => {
     if (request.url().includes('analiz.bozkurtobasi.com')) requests.push(request.url());
   });
-  await page.goto('/');
+  await page.goto('/#village');
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => localStorage.getItem('bozkurt.analytics.visitor'))).toBeNull();

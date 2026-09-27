@@ -72,6 +72,13 @@ for (const file of [
 ]) {
   await access(path.join(projectRoot, file)).catch(() => fail('Service source missing: ' + file));
 }
+const webDockerfile = await readFile(path.join(projectRoot, 'services/web/Dockerfile'), 'utf8');
+if (!dockerfile.includes('COPY public ./public') || !webDockerfile.includes('COPY public ./public'))
+  fail('Both production images must include public privacy and terms pages.');
+for (const file of ['public/privacy.html', 'public/terms.html', 'web/assets/hero-bozkurt.webp'])
+  await access(path.join(projectRoot, file)).catch(() =>
+    fail('Public homepage asset missing: ' + file),
+  );
 const license = await readFile(path.join(projectRoot, 'LICENSE'), 'utf8');
 if (!license.startsWith('MIT License') || !license.includes('Permission is hereby granted'))
   fail('Root MIT license missing.');
@@ -109,6 +116,8 @@ if (
   JSON.stringify([...new Set(exampleInputs)].sort())
 )
   fail('Production environment example must list exactly the configurable Compose inputs.');
+if (!/^GOOGLE_CLIENT_SECRET=$/m.test(environment))
+  fail('Production environment example must not include a Google client secret.');
 if (!/^ADMIN_PASSWORD=$/m.test(environment))
   fail('Production environment example must not include a password or inline placeholder.');
 console.log(

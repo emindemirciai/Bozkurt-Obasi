@@ -1,4 +1,6 @@
 import './style.css';
+import heroImage from './assets/hero-bozkurt.webp';
+import googleIcon from './assets/google-g.png';
 import {
   createGame,
   advanceGame,
@@ -18,6 +20,16 @@ import { createAnalytics } from './analytics.mjs';
 const analytics = createAnalytics();
 
 const SAVE_KEY = 'bozkurt.web.v1';
+const GAME_VIEWS = new Set(['village', 'battle', 'world', 'wolves', 'quests', 'updates']);
+const initialView = GAME_VIEWS.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
+const privacyHref = location.protocol === 'file:' ? '../public/privacy.html' : '/privacy.html';
+const termsHref = location.protocol === 'file:' ? '../public/terms.html' : '/terms.html';
+let auth = {
+  loading: location.protocol !== 'file:',
+  enabled: false,
+  authenticated: false,
+  user: null,
+};
 let storageOk = true;
 const read = (key) => {
   try {
@@ -39,7 +51,7 @@ let theme = read('bozkurt.theme') === 'dark' ? 'dark' : 'light';
 document.documentElement.dataset.theme = theme;
 let state = loadLocal();
 let mode = 'local',
-  view = 'village',
+  view = initialView,
   selected = 'building-hall',
   selectedWolf = 'wolf-alpha',
   modal = '',
@@ -170,23 +182,117 @@ function identifyControls() {
   }
 }
 
+function navigate(next) {
+  if (next !== 'home' && !GAME_VIEWS.has(next)) return;
+  view = next;
+  zoom = 1;
+  modal = '';
+  const target = next === 'home' ? `${location.pathname}${location.search}` : `#${next}`;
+  history.pushState(null, '', target);
+  render();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function googleControl() {
+  if (auth.authenticated) {
+    const name = auth.user?.name || auth.user?.email || t('googleAccount');
+    return `<div class="landing-account"><span class="landing-avatar" aria-hidden="true">${escape(name.slice(0, 1).toLocaleUpperCase(language))}</span><span><strong>${escape(name)}</strong><small>${t('accountReady')}</small></span>${button(t('manageAccount'), 'account', 'landing-account-manage')}</div>`;
+  }
+  if (!auth.enabled) {
+    return `<div class="landing-google-unavailable"><button class="landing-google" disabled><img class="google-g" src="${googleIcon}" alt="" aria-hidden="true">${t('googleSignIn')}</button><small>${t(auth.loading ? 'googleChecking' : 'googleUnavailable')}</small></div>`;
+  }
+  return `<a class="landing-google" href="/api/auth/google/start"><img class="google-g" src="${googleIcon}" alt="" aria-hidden="true">${t('googleSignIn')}</a>`;
+}
+
+function landingView() {
+  return `<div class="landing-shell">
+    <header class="landing-header"><button class="landing-brand" data-action="home" aria-label="${t('landingHome')}"><span class="landing-brand-symbol" aria-hidden="true">☾✦</span><span>BOZKURT <b>OBASI</b><small>AY-YILDIZ NÖBETİ</small></span></button>
+      <nav class="landing-nav" aria-label="${t('landingNavigation')}"><button data-action="scroll" data-target="landing-story">${t('landingStoryNav')}</button><button data-action="scroll" data-target="landing-features">${t('landingFeaturesNav')}</button><button data-action="updates">${t('updates')}</button></nav>
+      <div class="landing-header-actions"><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(t('landingEnter'), 'play', 'landing-header-play')}</div>
+    </header>
+    <main class="landing-main"><section class="landing-hero" aria-labelledby="landing-title"><img class="landing-hero-art" src="${heroImage}" alt="${t('landingHeroAlt')}" fetchpriority="high"><div class="landing-hero-shade"></div><div class="landing-hero-content"><span class="landing-kicker"><i></i>${t('landingKicker')}</span><h1 id="landing-title">${t('landingTitleLine1')}<em>${t('landingTitleLine2')}</em></h1><p>${t('landingLead')}</p><div class="landing-hero-actions">${button(t('landingPlay') + icon('arrow', 19), 'play', 'landing-play')}${googleControl()}</div><span class="landing-hero-hint">${t('landingGuestHint')}</span></div><div class="landing-hero-caption"><span>01 / 03</span><span>${t('landingSceneCaption')}</span></div></section>
+    <section class="landing-intro" id="landing-story"><div class="landing-intro-copy"><span class="landing-section-label">${t('landingChapterOne')}</span><h2>${t('landingStoryTitle')}</h2><p>${t('landingStoryText')}</p><div class="landing-story-pills"><span>${icon('village', 17)}${t('landingPillBuild')}</span><span>${icon('wolves', 17)}${t('landingPillGuard')}</span><span>${icon('world', 17)}${t('landingPillExplore')}</span></div></div><div class="landing-intro-art" aria-hidden="true"><div class="landing-art-moon">☾</div><div class="landing-art-building">${miniBuilding('hall')}</div><svg class="landing-art-wolf" viewBox="-60 -45 120 90">${wolfArt('#536e65', 1.2, 1)}</svg><span class="landing-art-horizon"></span></div></section>
+    <section class="landing-features" id="landing-features"><div class="landing-section-heading"><span class="landing-section-label">${t('landingChapterTwo')}</span><h2>${t('landingFeaturesTitle')}</h2><p>${t('landingFeaturesLead')}</p></div><div class="landing-feature-grid"><article class="landing-feature"><span class="landing-feature-number">01</span><div class="landing-feature-art building">${miniBuilding('watchtower')}</div><h3>${t('landingBuildTitle')}</h3><p>${t('landingBuildText')}</p></article><article class="landing-feature"><span class="landing-feature-number">02</span><div class="landing-feature-art wolf"><svg viewBox="-60 -45 120 90" aria-hidden="true">${wolfArt('#5b716a', 1.35, 1)}</svg></div><h3>${t('landingDefendTitle')}</h3><p>${t('landingDefendText')}</p></article><article class="landing-feature"><span class="landing-feature-number">03</span><div class="landing-feature-art horizon"><span class="landing-feature-sun"></span><span class="landing-feature-hill first"></span><span class="landing-feature-hill second"></span>${icon('world', 42)}</div><h3>${t('landingExploreTitle')}</h3><p>${t('landingExploreText')}</p></article></div></section>
+    <section class="landing-finale"><span class="landing-section-label">${t('landingFinalKicker')}</span><h2>${t('landingFinalTitle')}</h2><p>${t('landingFinalText')}</p>${button(t('landingEnter') + icon('arrow', 18), 'play', 'landing-play')}</section></main>
+    <footer class="landing-footer"><span>© 2026 Emin DEMİRCİ · Bozkurt Obası · MIT</span><nav aria-label="${t('landingFooterNav')}"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a><button data-action="updates">${t('updates')}</button><a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a></nav><span>v${escape(releaseNotes.version)}</span></footer></div><div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
+}
+
+async function refreshGoogleAuth() {
+  if (location.protocol === 'file:') {
+    auth = { loading: false, enabled: false, authenticated: false, user: null };
+    render();
+    return;
+  }
+  try {
+    const response = await fetch('/api/auth/google/status', {
+      credentials: 'same-origin',
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) throw new Error('status_failed');
+    const result = await response.json();
+    auth = {
+      loading: false,
+      enabled: result.enabled === true,
+      authenticated: result.authenticated === true,
+      user: result.authenticated ? result.user : null,
+      reason: result.reason,
+    };
+  } catch {
+    auth = { loading: false, enabled: false, authenticated: false, user: null };
+  }
+  render();
+}
+
+async function initGoogleAuth() {
+  await refreshGoogleAuth();
+  const result = new URL(location.href).searchParams.get('auth');
+  if (result) {
+    const url = new URL(location.href);
+    url.searchParams.delete('auth');
+    history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    if (result === 'success' && auth.authenticated) toast('googleWelcome');
+    else if (result === 'cancelled') toast('googleCancelled');
+  }
+  if (!auth.authenticated) return;
+  const generation = ++sessionGeneration;
+  try {
+    await api('session', {}, generation);
+    mode = 'online';
+    render();
+  } catch (error) {
+    if (error.code !== 'obsolete_response') toast('googleGameUnavailable');
+  }
+}
+
 function render(restoreFocus) {
   const active = document.activeElement;
   const focusId = restoreFocus || active?.id;
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
-  document.title = `Bozkurt Obası: Ay-Yıldız Nöbeti · ${t(view)}`;
+  document.title =
+    view === 'home'
+      ? 'Bozkurt Obası: Ay-Yıldız Nöbeti'
+      : `Bozkurt Obası: Ay-Yıldız Nöbeti · ${t(view)}`;
   analytics.view(view);
+  if (view === 'home') {
+    root.innerHTML = landingView();
+    identifyControls();
+    renderedSignature = interfaceSignature();
+    renderNotice();
+    if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
+    if (modal) document.querySelector('[role="dialog"] button')?.focus({ preventScroll: true });
+    return;
+  }
   const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'updates'];
   root.innerHTML = `<div class="game-shell">
-    <nav class="rail" aria-label="${t('village')}"><a href="#village" class="brand-mark" aria-label="Bozkurt Obası: Ay-Yıldız Nöbeti"><svg viewBox="0 0 42 42"><path d="M26 6a16 16 0 1 0 0 30 15 15 0 0 1 0-30" fill="currentColor"/><path d="m29 15 2 4 5 .5-3.7 3.2 1.2 4.8-4.5-2.5-4.3 2.5 1-4.8-3.7-3.2 5-.5Z" fill="currentColor"/></svg></a>
+    <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}"><svg viewBox="0 0 42 42"><path d="M26 6a16 16 0 1 0 0 30 15 15 0 0 1 0-30" fill="currentColor"/><path d="m29 15 2 4 5 .5-3.7 3.2 1.2 4.8-4.5-2.5-4.3 2.5 1-4.8-3.7-3.2 5-.5Z" fill="currentColor"/></svg></a>
     <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
-    <div class="workspace"><header class="topbar"><div class="wordmark">BOZKURT OBASI <span>AY-YILDIZ NÖBETİ</span></div><div class="topbar-end"><button class="connection" data-action="online"><i class="status-dot ${mode === 'online' ? 'live' : ''}"></i>${t(mode)}${icon('cloud', 16)}</button><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button><button class="profile" data-action="help" aria-label="${t('help')}">${icon('wolves', 23)}</button></div></header>
+    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="home" title="${t('landingHome')}">BOZKURT OBASI <span>AY-YILDIZ NÖBETİ</span></button><div class="topbar-end"><button class="connection" data-action="online"><i class="status-dot ${mode === 'online' ? 'live' : ''}"></i>${t(mode)}${icon('cloud', 16)}</button><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${auth.authenticated ? button(icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`) : `<button class="profile" data-action="help" aria-label="${t('help')}">${icon('wolves', 23)}</button>`}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${number(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
     ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : updatesView()}
-    <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a></span></footer></main></div></div>
+    <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="${privacyHref}">${t('privacyPolicy')}</a> · <a href="${termsHref}">${t('termsOfUse')}</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
   identifyControls();
   renderedSignature = interfaceSignature();
@@ -357,6 +463,9 @@ function updatesView() {
 
 function modalView() {
   if (!modal) return '';
+  if (modal === 'account') {
+    return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t('googleAccount')}</h2><p>${escape(auth.user?.name || auth.user?.email || '')}</p><p class="modal-note">${escape(auth.user?.email || '')}</p>${button(t('googleLogout'), 'googleLogout', 'button outline', busy)}<div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
+  }
   const online = modal === 'online';
   return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon(online ? 'cloud' : 'wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI · AY-YILDIZ NÖBETİ</div><h2 id="modal-title">${t(online ? 'onlineTitle' : 'helpTitle')}</h2><p>${t(online ? 'onlineDesc' : 'helpText')}</p><p class="modal-note">${t(online ? 'onlineNote' : 'helpOffline')}</p>${online ? button(t(mode === 'online' ? 'disconnect' : 'connect') + icon('arrow', 18), mode === 'online' ? 'disconnect' : 'connect', 'button primary', busy) : button(t('understood') + icon('arrow', 18), 'close', 'button primary')}${button(icon('save', 16) + t('exportSave'), 'exportSave', 'button text-button')}</section></div>`;
 }
@@ -456,14 +565,11 @@ root.addEventListener('click', async (event) => {
   if (!target || target.disabled) return;
   if (target.matches('a.brand-mark')) {
     event.preventDefault();
-    view = 'village';
-    render();
+    navigate('home');
     return;
   }
   if (target.dataset.view) {
-    view = target.dataset.view;
-    zoom = 1;
-    render();
+    navigate(target.dataset.view);
     return;
   }
   if (target.dataset.wolf) {
@@ -484,6 +590,47 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const a = target.dataset.action;
+  if (a === 'scroll') {
+    document.getElementById(target.dataset.target)?.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  if (a === 'home' || a === 'play' || a === 'updates') {
+    navigate(a === 'home' ? 'home' : a === 'play' ? 'village' : 'updates');
+    return;
+  }
+  if (a === 'account') {
+    modal = 'account';
+    render();
+    return;
+  }
+  if (a === 'googleLogout') {
+    if (busy) return;
+    busy = true;
+    render();
+    try {
+      const response = await fetch('/api/auth/google/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!response.ok) throw new Error('auth_request_failed');
+      sessionGeneration++;
+      polling = null;
+      mode = 'local';
+      state = loadLocal();
+      modal = '';
+      await refreshGoogleAuth();
+      toast('googleLoggedOut');
+    } catch {
+      toast('failed');
+    } finally {
+      busy = false;
+      render();
+    }
+    return;
+  }
   if (a === 'language') {
     language = language === 'tr' ? 'en' : 'tr';
     write('bozkurt.language', language);
@@ -617,6 +764,10 @@ setInterval(async () => {
   if (mode === 'online') await pollOnline();
   else advanceGame(state, Date.now());
   if (generation !== sessionGeneration || busy) return;
+  if (view === 'home') {
+    renderNotice();
+    return;
+  }
   if (interfaceSignature() !== renderedSignature && !modal) {
     if (view !== 'battle' || !refreshBattleView()) {
       render();
@@ -643,7 +794,13 @@ setInterval(async () => {
 }, 1000);
 setInterval(saveLocal, 20_000);
 window.addEventListener('pagehide', saveLocal);
+window.addEventListener('popstate', () => {
+  view = GAME_VIEWS.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
+  modal = '';
+  render();
+});
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) saveLocal();
 });
 render();
+void initGoogleAuth();

@@ -9,6 +9,7 @@ services:
     environment:
       TRUST_PROXY: "false"
       ANALYZE_ENABLED: "false"
+      GOOGLE_REDIRECT_URIS: "http://127.0.0.1:3000/api/auth/google/callback"
   admin:
     ports:
       - "127.0.0.1:3002:3000"

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { createAdminRoutes } from './admin.mjs';
+import { appendCookie, createGoogleRoutes, googleAuthConfig } from './google.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
@@ -121,13 +122,20 @@ function checkMutation(request, trustProxy) {
     throw new HttpError(403, 'origin_rejected');
   const origin = request.headers.origin;
   if (!origin) return; // CLI clients do not send Origin. Browser cookie requests are checked above and below.
-  const host = (trustProxy && forwardedHeader(request, 'x-forwarded-host')) || request.headers.host;
   try {
-    const expected = new URL(`${secureRequest(request, trustProxy) ? 'https' : 'http'}://${host}`)
-      .origin;
+    const expected = requestOrigin(request, trustProxy);
     const supplied = new URL(origin);
     if (supplied.origin !== expected || supplied.href !== `${supplied.origin}/`)
       throw new Error('mismatch');
+  } catch {
+    throw new HttpError(403, 'origin_rejected');
+  }
+}
+
+function requestOrigin(request, trustProxy) {
+  const host = (trustProxy && forwardedHeader(request, 'x-forwarded-host')) || request.headers.host;
+  try {
+    return new URL(`${secureRequest(request, trustProxy) ? 'https' : 'http'}://${host}`).origin;
   } catch {
     throw new HttpError(403, 'origin_rejected');
   }
@@ -246,6 +254,10 @@ export function createApp({
   analytics = { enabled: false },
   adminEmail = process.env.ADMIN_EMAIL,
   adminPassword = process.env.ADMIN_PASSWORD,
+  googleClientId = process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret = process.env.GOOGLE_CLIENT_SECRET,
+  googleRedirectUris = process.env.GOOGLE_REDIRECT_URIS,
+  googleFetch = globalThis.fetch,
 } = {}) {
   const { config: publicAnalytics, endpointOrigin: analyticsOrigin } =
     publicAnalyticsConfig(analytics);
@@ -264,10 +276,29 @@ export function createApp({
     );
     CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions (expires_at);
   `);
+  if (
+    !database
+      .prepare('PRAGMA table_info(sessions)')
+      .all()
+      .some((column) => column.name === 'account_sub')
+  )
+    database.exec('ALTER TABLE sessions ADD COLUMN account_sub TEXT');
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS google_accounts (
+      sub TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      state_json TEXT NOT NULL,
+      revision INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS sessions_account ON sessions (account_sub);
+  `);
   const statements = {
     health: database.prepare('SELECT 1 AS ready'),
     get: database.prepare(
-      'SELECT state_json, revision, expires_at FROM sessions WHERE token_hash = ?',
+      'SELECT state_json, revision, expires_at, account_sub FROM sessions WHERE token_hash = ?',
     ),
     insert: database.prepare(
       'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at) VALUES (?, ?, 0, ?, ?, ?)',
@@ -276,6 +307,28 @@ export function createApp({
       'UPDATE sessions SET state_json = ?, revision = ?, updated_at = ? WHERE token_hash = ?',
     ),
     cleanup: database.prepare('DELETE FROM sessions WHERE expires_at <= ?'),
+    insertAccountSession: database.prepare(
+      'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at, account_sub) VALUES (?, ?, 0, ?, ?, ?, ?)',
+    ),
+    bindAccount: database.prepare(
+      'UPDATE sessions SET token_hash = ?, account_sub = ?, updated_at = ?, expires_at = ? WHERE token_hash = ?',
+    ),
+    touchAccountSession: database.prepare(
+      'UPDATE sessions SET updated_at = ? WHERE token_hash = ?',
+    ),
+    removeSession: database.prepare('DELETE FROM sessions WHERE token_hash = ?'),
+    accountGet: database.prepare(
+      'SELECT sub, email, display_name, state_json, revision FROM google_accounts WHERE sub = ?',
+    ),
+    accountInsert: database.prepare(
+      'INSERT INTO google_accounts (sub, email, display_name, state_json, revision, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
+    ),
+    accountProfile: database.prepare(
+      'UPDATE google_accounts SET email = ?, display_name = ?, updated_at = ? WHERE sub = ?',
+    ),
+    accountSave: database.prepare(
+      'UPDATE google_accounts SET state_json = ?, revision = ?, updated_at = ? WHERE sub = ? AND revision = ?',
+    ),
   };
   const adminRoutes = createAdminRoutes(database, {
     email: adminEmail,
@@ -313,21 +366,120 @@ export function createApp({
     const hash = sessionHash(request);
     const row = hash ? statements.get.get(hash) : null;
     if (!row || row.expires_at <= now) return null;
-    const state = JSON.parse(row.state_json);
+    const account = row.account_sub ? statements.accountGet.get(row.account_sub) : null;
+    if (row.account_sub && !account) throw new Error('Orphaned Google game session');
+    const serialized = account ? account.state_json : row.state_json;
+    const state = JSON.parse(serialized);
     if (!validateGame(state)) throw new Error('Invalid persisted game');
-    return { hash, state, revision: row.revision, serialized: row.state_json };
+    return {
+      hash,
+      state,
+      revision: account ? account.revision : row.revision,
+      serialized,
+      accountSub: row.account_sub,
+      account,
+    };
   }
 
   function persist(session, now, force = false) {
     if (!validateGame(session.state)) throw new Error('Invalid game transition');
     const serialized = JSON.stringify(session.state);
     if (force || serialized !== session.serialized) {
-      session.revision += 1;
-      statements.update.run(serialized, session.revision, now, session.hash);
+      const previousRevision = session.revision;
+      session.revision++;
+      if (session.accountSub) {
+        const result = statements.accountSave.run(
+          serialized,
+          session.revision,
+          now,
+          session.accountSub,
+          previousRevision,
+        );
+        if (result.changes !== 1) throw new HttpError(409, 'stale_revision');
+        statements.touchAccountSession.run(now, session.hash);
+      } else {
+        statements.update.run(serialized, session.revision, now, session.hash);
+      }
       session.serialized = serialized;
     }
     return { state: session.state, revision: session.revision };
   }
+
+  const googleConfig = googleAuthConfig({
+    clientId: googleClientId,
+    clientSecret: googleClientSecret,
+    redirectUris: googleRedirectUris,
+  });
+  const googleRoutes = createGoogleRoutes(database, {
+    config: googleConfig,
+    fetchImpl: googleFetch,
+    HttpError,
+    json,
+    checkMutation,
+    readJson,
+    trustProxy,
+    requestOrigin,
+    secureRequest,
+    sessionHash,
+    getSession: loadSession,
+    publicUser: (session) =>
+      session?.account
+        ? { name: session.account.display_name, email: session.account.email }
+        : null,
+    completeLogin(request, response, identity, now) {
+      const current = loadSession(request, now);
+      if (current?.accountSub && current.accountSub !== identity.sub)
+        throw new HttpError(409, 'google_account_conflict');
+      const existing = statements.accountGet.get(identity.sub);
+      const state = current?.state ?? createGame(now);
+      if (!validateGame(state)) throw new Error('Invalid game to link');
+      if (!existing && current && !current.accountSub) resumeGame(state, now);
+      const token = randomBytes(32).toString('base64url');
+      const hash = createHash('sha256').update(token).digest('hex');
+      database.exec('BEGIN IMMEDIATE');
+      try {
+        if (existing) {
+          statements.accountProfile.run(identity.email, identity.name, now, identity.sub);
+        } else {
+          statements.accountInsert.run(
+            identity.sub,
+            identity.email,
+            identity.name,
+            JSON.stringify(state),
+            now,
+            now,
+          );
+        }
+        if (current) {
+          statements.bindAccount.run(hash, identity.sub, now, now + SESSION_AGE_MS, current.hash);
+        } else {
+          statements.insertAccountSession.run(
+            hash,
+            existing ? existing.state_json : JSON.stringify(state),
+            now,
+            now,
+            now + SESSION_AGE_MS,
+            identity.sub,
+          );
+        }
+        database.exec('COMMIT');
+      } catch (error) {
+        database.exec('ROLLBACK');
+        throw error;
+      }
+      appendCookie(
+        response,
+        `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
+      );
+    },
+    logout(request, response, session) {
+      statements.removeSession.run(session.hash);
+      appendCookie(
+        response,
+        `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
+      );
+    },
+  });
 
   const server = createServer(async (request, response) => {
     securityHeaders(response, analyticsOrigin);
@@ -342,6 +494,7 @@ export function createApp({
       const now = Math.floor(clock());
       allowRequest(request, now);
       if (await adminRoutes.handle(request, response, pathname, now)) return;
+      if (await googleRoutes.handle(request, response, pathname, now)) return;
       if (pathname === '/api/config' && request.method === 'GET') {
         return json(response, 200, { analytics: publicAnalytics }, { 'Cache-Control': 'no-store' });
       }

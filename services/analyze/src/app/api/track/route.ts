@@ -213,6 +213,7 @@ async function geoFromIpWhoIs(ip: string): Promise<NormalizedGeo | null> {
   try {
     const response = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, {
       cache: "no-store",
+      signal: AbortSignal.timeout(2000),
       headers: { "User-Agent": "AnalyzeYourSite/1.0" },
     });
     if (!response.ok) return null;
@@ -245,40 +246,6 @@ async function geoFromIpWhoIs(ip: string): Promise<NormalizedGeo | null> {
   }
 }
 
-// Yedek sağlayıcı: ip-api.com (anahtarsız, yüksek isabet)
-async function geoFromIpApi(ip: string): Promise<NormalizedGeo | null> {
-  try {
-    const response = await fetch(
-      `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,region,regionName,city,lat,lon,timezone`,
-      { cache: "no-store" }
-    );
-    if (!response.ok) return null;
-
-    const data = (await response.json()) as Record<string, unknown>;
-    if (data.status !== "success") return null;
-
-    const iso2 = String(data.countryCode || "").toUpperCase();
-    if (!iso2) return null;
-
-    return {
-      countryIso2: iso2,
-      countryName: typeof data.country === "string" ? data.country : "",
-      city: typeof data.city === "string" ? data.city : undefined,
-      region:
-        typeof data.regionName === "string"
-          ? data.regionName
-          : typeof data.region === "string"
-            ? data.region
-            : undefined,
-      latitude: toNumber(data.lat),
-      longitude: toNumber(data.lon),
-      timezone: typeof data.timezone === "string" ? data.timezone : undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
 async function lookupGeoByIp(ip: string): Promise<{
   countryIso2: string;
   countryNumericCode: string;
@@ -293,7 +260,7 @@ async function lookupGeoByIp(ip: string): Promise<{
     return { countryIso2: "", countryNumericCode: "", country: "Unknown" };
   }
 
-  const geo = (await geoFromIpWhoIs(ip)) || (await geoFromIpApi(ip));
+  const geo = await geoFromIpWhoIs(ip);
 
   if (!geo || !geo.countryIso2) {
     return { countryIso2: "", countryNumericCode: "", country: "Unknown" };

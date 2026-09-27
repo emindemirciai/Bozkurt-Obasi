@@ -8,7 +8,7 @@ test('village construction, quest reward, training and TR/EN work without runtim
 }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/#village');
   await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
   await mkdir('artifacts', { recursive: true });
   await page.screenshot({ path: 'artifacts/village-desktop.png', fullPage: true });
@@ -28,6 +28,8 @@ test('village construction, quest reward, training and TR/EN work without runtim
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await expect(page.getByRole('heading', { name: 'Guardians', exact: true })).toBeVisible();
   await page.reload();
+  await expect(page.getByRole('heading', { name: 'Guardians', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Homeland', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Welcome to your homeland.' })).toBeVisible();
   await expect(page.locator('.map-chip')).toHaveText('5 buildings');
   expect(errors).toEqual([]);
@@ -39,7 +41,7 @@ test('battle reveals a random jackal tactic at start, animates both sides and re
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.clock.install();
-  await page.goto('/');
+  await page.goto('/#village');
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   await expect(page.locator('.tactic-reveal')).toContainText('Savaş başlayınca belli olacak');
   await expect(page.locator('.tactic-list')).toHaveCount(0);
@@ -101,7 +103,7 @@ test('battle reveals a random jackal tactic at start, animates both sides and re
 test('appearance persists and the bilingual release history remains readable on mobile', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#village');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   const lightBackground = await page
     .locator('html')
@@ -118,17 +120,19 @@ test('appearance persists and the bilingual release history remains readable on 
 
   await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Yenilikler', exact: true })).toBeVisible();
-  await expect(page.locator('.release-card')).toHaveCount(2);
+  await expect(page.locator('.release-card')).toHaveCount(3);
   await expect(page.locator('.release-card').first()).toHaveAttribute(
     'data-release-version',
-    '1.1.0',
+    '1.2.0',
   );
-  await expect(page.locator('.release-card').first()).toContainText('tema seçimi');
+  await expect(page.locator('.release-card').first()).toContainText('Görselli ana sayfa');
+  await expect(page.locator('.release-card').nth(1)).toContainText('tema seçimi');
   await expect(page.locator('.release-card').last()).toContainText('Köy kurma');
 
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await expect(page.getByRole('heading', { name: 'What’s new', exact: true })).toBeVisible();
-  await expect(page.locator('.release-card').first()).toContainText('light/dark theme');
+  await expect(page.locator('.release-card').first()).toContainText('visual homepage');
+  await expect(page.locator('.release-card').nth(1)).toContainText('light/dark theme');
   await expect(page.locator('.release-card').last()).toContainText('village builder');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -142,7 +146,7 @@ test('appearance persists and the bilingual release history remains readable on 
 test('server guest state survives browser reload and remains separate from the local village', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#village');
   await page.getByRole('button', { name: 'Yerel kayıt', exact: true }).click();
   await page.getByRole('button', { name: 'Sunucuya bağlan' }).click();
   await expect(page.locator('.connection')).toContainText('Çevrim içi');
@@ -165,14 +169,14 @@ test('mobile layout, modal keyboard dismissal and offline file preview', async (
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await page.goto('/#village');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: 'artifacts/village-mobile.png', fullPage: true });
   await page.locator('.profile').click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.goto(pathToFileURL(resolve('preview/index.html')).href);
+  await page.goto(pathToFileURL(resolve('preview/index.html')).href + '#village');
   await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
   await page
     .locator('.buildings-grid')

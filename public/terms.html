@@ -1,0 +1,168 @@
+<!doctype html>
+<!--
+MIT License
+
+Copyright (c) 2026 Emin DEMİRCİ
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="author" content="Emin DEMİRCİ">
+  <meta name="copyright" content="© 2026 Emin DEMİRCİ · MIT License">
+  <meta name="description" content="Bozkurt Obası kullanım koşulları / terms of use for the online village game.">
+  <link rel="canonical" href="https://bozkurtobasi.com/terms.html">
+  <title>Kullanım Koşulları / Terms of Use · Bozkurt Obası</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-synthesis: none; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .shell {
+      --page: #f7f6ee; --surface: #fffdf7; --surface-strong: #edf1e7; --ink: #1d302a;
+      --muted: #61736a; --border: #d8dfd1; --accent: #1f6547; --accent-ink: #fff;
+      --leaf: #9fc2a6; --focus: #df8f38;
+      min-height: 100vh; color: var(--ink);
+      background: radial-gradient(circle at 96% 0%, #c9d9bb 0, transparent 31rem),
+        radial-gradient(circle at 0% 35%, #e5e8d2 0, transparent 24rem), var(--page);
+    }
+    #theme-dark:checked ~ .shell {
+      --page: #0c1918; --surface: #142724; --surface-strong: #1a3430; --ink: #ecf3e8;
+      --muted: #b1c2b8; --border: #37554c; --accent: #aed5ad; --accent-ink: #103025;
+      --leaf: #5b846d; --focus: #ffc171;
+      background: radial-gradient(circle at 96% 0%, #214136 0, transparent 31rem),
+        radial-gradient(circle at 0% 35%, #1a3029 0, transparent 24rem), var(--page);
+    }
+    a { color: var(--accent); text-underline-offset: .18em; }
+    a:hover { text-decoration-thickness: .12em; }
+    a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .wrap { width: min(100% - 2rem, 1050px); margin: auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1.25rem 0; }
+    .brand { display: inline-flex; align-items: center; gap: .72rem; color: var(--ink); font-size: .94rem; font-weight: 800; letter-spacing: .08em; text-decoration: none; text-transform: uppercase; }
+    .mark { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border: 1px solid var(--border); border-radius: .85rem; background: var(--surface); color: var(--accent); font-size: 1.35rem; }
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; }
+    .control { display: inline-flex; align-items: center; gap: .15rem; padding: .25rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+    .control label { display: inline-flex; justify-content: center; min-width: 2.6rem; padding: .42rem .62rem; border-radius: 999px; color: var(--muted); font-size: .78rem; font-weight: 800; cursor: pointer; user-select: none; }
+    #lang-tr:checked ~ .shell label[for="lang-tr"], #lang-en:checked ~ .shell label[for="lang-en"],
+    #theme-light:checked ~ .shell label[for="theme-light"], #theme-dark:checked ~ .shell label[for="theme-dark"] { background: var(--accent); color: var(--accent-ink); }
+    #lang-tr:focus-visible ~ .shell label[for="lang-tr"], #lang-en:focus-visible ~ .shell label[for="lang-en"],
+    #theme-light:focus-visible ~ .shell label[for="theme-light"], #theme-dark:focus-visible ~ .shell label[for="theme-dark"] { outline: 3px solid var(--focus); outline-offset: 2px; }
+    [data-l10n="en"] { display: none; }
+    #lang-en:checked ~ .shell [data-l10n="tr"] { display: none; }
+    #lang-en:checked ~ .shell [data-l10n="en"] { display: revert; }
+    .hero { position: relative; overflow: hidden; padding: clamp(2rem, 6vw, 5rem); border: 1px solid var(--border); border-radius: 1.6rem;
+      background: linear-gradient(112deg, var(--surface) 0%, var(--surface) 55%, transparent 100%), radial-gradient(circle at 83% 52%, var(--leaf), transparent 38%), var(--surface-strong);
+      box-shadow: 0 16px 60px #12261b0d; }
+    .hero::after { content: "✦"; position: absolute; right: 7%; bottom: -5.5rem; color: var(--accent); opacity: .13; font-size: clamp(14rem, 38vw, 27rem); line-height: 1; pointer-events: none; }
+    .eyebrow { display: inline-block; margin-bottom: .8rem; color: var(--accent); font-size: .74rem; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; }
+    h1 { position: relative; z-index: 1; max-width: 18ch; margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.5rem, 7vw, 5rem); letter-spacing: -.055em; line-height: 1.04; }
+    .hero p { position: relative; z-index: 1; max-width: 60ch; margin: 1.35rem 0 0; color: var(--muted); font-size: clamp(1rem, 1.7vw, 1.16rem); line-height: 1.75; }
+    .update { display: inline-flex; align-items: center; gap: .45rem; margin-top: 1.7rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: .78rem; font-weight: 650; }
+    .content { display: grid; grid-template-columns: minmax(0,1fr) 240px; gap: clamp(1rem, 4vw, 3rem); padding: 2.4rem 0 5rem; }
+    .policy { min-width: 0; }
+    .policy section { padding: 1.65rem 0; border-bottom: 1px solid var(--border); }
+    .policy section:first-child { padding-top: 0; }
+    .policy section:last-child { border-bottom: 0; }
+    .policy h2 { margin: 0 0 .75rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.35rem, 2.5vw, 1.75rem); letter-spacing: -.025em; }
+    .policy p, .policy li { max-width: 73ch; color: var(--muted); font-size: .96rem; line-height: 1.8; }
+    .policy p { margin: .62rem 0; }
+    .policy ul { margin: .7rem 0 0; padding-left: 1.4rem; }
+    .policy strong { color: var(--ink); }
+    aside { align-self: start; position: sticky; top: 1.5rem; }
+    .card { padding: 1.35rem; border: 1px solid var(--border); border-radius: 1.1rem; background: var(--surface); }
+    .card h2 { margin: 0 0 .65rem; font-size: 1rem; }
+    .card p { color: var(--muted); font-size: .88rem; line-height: 1.65; }
+    .card a { overflow-wrap: anywhere; font-size: .9rem; font-weight: 700; }
+    .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1.3rem 0 2.2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .82rem; }
+    .foot a { font-weight: 750; }
+    @media (max-width: 760px) { .content { grid-template-columns: 1fr; padding-top: 1.8rem; } aside { position: static; } }
+    @media (max-width: 480px) { .topbar { align-items: flex-start; } .controls { width: 100%; justify-content: space-between; } .hero { padding: 2rem 1.3rem; } }
+  </style>
+</head>
+<body>
+  <input class="sr-only" id="lang-tr" type="radio" name="language" aria-label="Türkçe" checked>
+  <input class="sr-only" id="lang-en" type="radio" name="language" aria-label="English">
+  <input class="sr-only" id="theme-light" type="radio" name="theme" aria-label="Açık tema / Light theme" checked>
+  <input class="sr-only" id="theme-dark" type="radio" name="theme" aria-label="Koyu tema / Dark theme">
+  <div class="shell">
+    <div class="wrap">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Bozkurt Obası ana sayfa / Bozkurt Obası home"><span class="mark" aria-hidden="true">✦</span> Bozkurt Obası</a>
+        <div class="controls">
+          <div class="control" role="group" aria-label="Dil / Language"><label for="lang-tr">TR</label><label for="lang-en">EN</label></div>
+          <div class="control" role="group" aria-label="Tema / Theme"><label for="theme-light" title="Açık tema / Light theme">☀</label><label for="theme-dark" title="Koyu tema / Dark theme">☾</label></div>
+        </div>
+      </header>
+      <div class="hero">
+        <span class="eyebrow">BOZKURT OBASI · TERMS</span>
+        <h1 data-l10n="tr" lang="tr">Kullanım koşulları</h1>
+        <h1 data-l10n="en" lang="en">Terms of use</h1>
+        <p data-l10n="tr" lang="tr">Bozkurt Obası'nı oynarken geçerli temel kullanım kuralları. Oyun yerel misafir modu, isteğe bağlı sunucu köyü ve yapılandırıldığında Google ile giriş sunar.</p>
+        <p data-l10n="en" lang="en">The basic rules for playing Bozkurt Obası. The game offers local guest play, an optional server village, and Google sign-in when configured.</p>
+        <span class="update" data-l10n="tr" lang="tr">Son güncelleme · 27 Eylül 2026</span>
+        <span class="update" data-l10n="en" lang="en">Last updated · 27 September 2026</span>
+      </div>
+      <main class="content">
+        <article class="policy" data-l10n="tr" lang="tr">
+          <section><h2>Hizmet</h2>
+            <p>Bozkurt Obası: Ay-Yıldız Nöbeti, köy kurma ve savunma temalı bir tarayıcı oyunudur. Yerel misafir oyunu hesabınız olmadan çalışır. Sunucuya bağlanma ayrı bir köy oluşturur; Google ile giriş kullanıma açıldığında bir sunucu köyünü hesabınıza bağlayabilir. Şu anda gerçek para ödemesi veya oyun içi satın alma sunulmuyor.</p>
+          </section>
+          <section><h2>Oynama ve hesap kullanımı</h2>
+            <p>Hizmeti kullanırken başkalarının oturumlarına erişmeye, sunucunun çalışmasını bozmaya, otomatik isteklerle sistemi aşırı yüklemeye veya güvenlik kontrollerini aşmaya çalışmayın. Hesap giriş bilgilerinizi koruyun. Bir cihazda tarayıcı verilerini silmek yerel köy kaydınızı kaldırabilir; sunucu misafir oturumu da çerez süresi dolunca erişilemez hale gelebilir.</p>
+          </section>
+          <section><h2>Oyun verileri ve erişilebilirlik</h2>
+            <p>Oyun geliştirme aşamasındadır; içerik ve kurallar zamanla değişebilir. Planlı bakım veya teknik sorunlar sırasında sunucu erişimi kesilebilir. Yerel kayıtlar kendi tarayıcınızda, sunucu kayıtları ise sunucu veritabanında tutulur. Kayıt ve kimlik verilerinin işlenmesi için <a href="/privacy.html">gizlilik bildirimini</a> okuyun.</p>
+          </section>
+          <section><h2>Yazılım lisansı ve marka</h2>
+            <p>Bu projenin kaynak kodu, depo içindeki telif ve izin bildirimlerinin korunması koşuluyla <strong>MIT Lisansı</strong> altında sunulur. Kullanılan üçüncü taraf bileşenlerin kendi lisansları geçerlidir. Bozkurt Obası adı ve oyundaki özgün içerik için kullanım izni çıkarımı yapmadan önce ilgili hakları kontrol edin.</p>
+          </section>
+          <section><h2>İletişim ve güncellemeler</h2>
+            <p>Oyun veya bu koşullarla ilgili sorularınızı <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a> adresine gönderebilirsiniz. Koşullar değişirse güncel metin ve tarihi bu sayfada yayımlanır.</p>
+          </section>
+        </article>
+        <article class="policy" data-l10n="en" lang="en">
+          <section><h2>The service</h2>
+            <p>Bozkurt Obası: Ay-Yıldız Nöbeti is a browser game about building and defending a village. Local guest play works without an account. Connecting to the server creates a separate village; when Google sign-in is enabled, you can link a server village to your account. There are currently no real-money payments or in-game purchases.</p>
+          </section>
+          <section><h2>Playing and using an account</h2>
+            <p>Do not attempt to access another person's session, disrupt the server, overload it with automated requests, or bypass security controls. Keep your sign-in access secure. Clearing browser data on a device can remove a local village save; a server guest session may also become inaccessible after its cookie expires.</p>
+          </section>
+          <section><h2>Game data and availability</h2>
+            <p>The game is in development, and its content and rules may change. Server access may be interrupted for maintenance or technical reasons. Local saves remain in your browser, while server saves are kept in the server database. Read the <a href="/privacy.html">privacy notice</a> for details on save and identity data.</p>
+          </section>
+          <section><h2>Software license and branding</h2>
+            <p>This project's source code is available under the <strong>MIT License</strong>, provided the copyright and permission notices in copies are retained. Third-party components have their own licenses.</p>
+          </section>
+          <section><h2>Contact and changes</h2>
+            <p>Send questions about the game or these terms to <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a>. If the terms change, the current text and its update date will appear on this page.</p>
+          </section>
+        </article>
+        <aside>
+          <div class="card" data-l10n="tr" lang="tr"><h2>Gizlilik hakkında</h2><p>Verilerin nerede tutulduğunu ve seçeneklerinizi öğrenin.</p><a href="/privacy.html">Gizlilik bildirimini oku ↗</a></div>
+          <div class="card" data-l10n="en" lang="en"><h2>About privacy</h2><p>Learn where data is kept and what choices you have.</p><a href="/privacy.html">Read the privacy notice ↗</a></div>
+        </aside>
+      </main>
+      <footer class="foot"><span>© 2026 Emin DEMİRCİ · MIT License</span><a href="/privacy.html"><span data-l10n="tr" lang="tr">Gizlilik bildirimi</span><span data-l10n="en" lang="en">Privacy notice</span></a><a href="/"><span data-l10n="tr" lang="tr">← Ana sayfaya dön</span><span data-l10n="en" lang="en">← Back to home</span></a></footer>
+    </div>
+  </div>
+</body>
+</html>

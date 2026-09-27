@@ -1,6 +1,24 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "releases": [
+    {
+      "version": "1.2.0",
+      "date": "2026-09-27",
+      "changes": {
+        "tr": [
+          "Görselli ana sayfa, oba hikâyesi ve oyuna hızlı giriş eklendi.",
+          "Google ile güvenli giriş, sunucu köyünü hesaba bağlama ve cihazlar arası devam etme hazırlandı.",
+          "Türkçe/İngilizce gizlilik bildirimi ve kullanım koşulları eklendi.",
+          "Analiz konum sorgusundaki şifresiz HTTP yedeği kaldırıldı; Dokploy OAuth ayarları eklendi."
+        ],
+        "en": [
+          "Added a visual homepage, village story, and direct entry to the game.",
+          "Prepared secure Google sign-in, server-village account linking, and cross-device progress.",
+          "Added Turkish/English privacy notice and terms of use.",
+          "Removed the analytics geolocation plaintext HTTP fallback and added Dokploy OAuth settings."
+        ]
+      }
+    },
     {
       "version": "1.1.0",
       "date": "2026-09-26",

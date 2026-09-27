@@ -29,7 +29,7 @@ for (const file of await projectFiles()) {
   const content = await readFile(path.join(projectRoot, file), 'utf8');
   const lines = content === '' ? 0 : content.split('\n').length - Number(content.endsWith('\n'));
   const group =
-    file.startsWith('web/') || file === 'index.html'
+    file.startsWith('web/') || file.startsWith('public/') || file === 'index.html'
       ? 'web'
       : file.startsWith('services/')
         ? 'services'
