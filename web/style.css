@@ -2614,40 +2614,29 @@ footer > span:first-child {
   width: 34px;
   height: 34px;
 }
-.landing-header-play {
-  min-height: 40px;
-  padding: 0 20px;
-  border-radius: 7px;
-  background: #315a43;
-  color: #fff8e4;
-  font-size: 11px;
-  font-weight: 700;
-}
-.landing-header-play:hover {
-  background: #244a37;
-}
 .landing-main {
   max-width: none;
   margin: 0;
   padding: 0;
 }
 .landing-hero {
-  min-height: min(650px, 64vw);
+  width: 100%;
+  min-height: 650px;
+  aspect-ratio: 1672 / 941;
   position: relative;
-  display: grid;
-  grid-template-columns: 42% 58%;
+  display: flex;
+  align-items: center;
   overflow: hidden;
   background: #152f28;
   color: #fff8e8;
 }
 .landing-hero-art {
-  grid-column: 2;
-  grid-row: 1;
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  min-height: 650px;
-  object-fit: cover;
-  object-position: 65% center;
+  object-fit: contain;
 }
 .landing-hero-shade {
   position: absolute;
@@ -2655,17 +2644,13 @@ footer > span:first-child {
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    #142e27 0%,
-    #142e27 34%,
-    rgba(20, 46, 39, 0.87) 44%,
-    rgba(20, 46, 39, 0.22) 61%,
-    transparent 78%
+    rgba(20, 46, 39, 0.88) 0%,
+    rgba(20, 46, 39, 0.7) 22%,
+    rgba(20, 46, 39, 0.24) 49%,
+    transparent 72%
   );
 }
 .landing-hero-content {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  align-self: center;
   position: relative;
   z-index: 1;
   max-width: 720px;
@@ -3111,16 +3096,24 @@ footer > span:first-child {
     display: none;
   }
   .landing-hero {
-    min-height: 590px;
-  }
-  .landing-hero-art {
-    min-height: 590px;
+    min-height: 0;
   }
   .landing-hero-content {
-    padding-left: 6vw;
+    padding: 22px 6vw;
   }
   .landing-hero h1 {
-    font-size: clamp(52px, 7vw, 72px);
+    font-size: clamp(46px, 6.5vw, 66px);
+    margin: 14px 0 16px;
+  }
+  .landing-hero-content > p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .landing-hero-actions {
+    margin-top: 18px;
+  }
+  .landing-hero-hint {
+    margin-top: 14px;
   }
 }
 @media (max-width: 700px) {
@@ -3154,20 +3147,20 @@ footer > span:first-child {
     height: 30px;
     font-size: 18px;
   }
-  .landing-header-play {
-    display: none;
-  }
   .landing-hero {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    aspect-ratio: auto;
   }
   .landing-hero-art {
     order: 2;
+    position: relative;
     min-height: 0;
     width: 100%;
+    height: auto;
     aspect-ratio: 1672 / 941;
-    object-fit: cover;
+    object-fit: contain;
   }
   .landing-hero-shade {
     display: none;

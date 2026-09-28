@@ -33,17 +33,22 @@ async function main() {
   assert.equal(adminPage.status, 200);
   assert.match(await adminPage.text(), /Bozkurt Obası/);
   assert.equal((await fetch(base.analyze + '/login')).status, 200);
+  const google = await json(base.web + '/api/auth/google/status');
+  assert.equal(google.response.status, 200);
+  assert.equal(typeof google.data.enabled, 'boolean');
+  assert.equal(google.data.authenticated, false);
   const game = await json(base.web + '/api/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: '{}',
   });
-  assert.equal(game.response.status, 200);
-  assert.equal(game.data.mode, 'online');
+  assert.equal(game.response.status, 401);
+  assert.equal(game.response.headers.get('set-cookie'), null);
+  assert.equal((await fetch(base.web + '/api/state')).status, 401);
   assert.equal((await fetch(base.admin + '/api/admin/session')).status, password ? 401 : 503);
   if (!password) {
     console.log(
-      'Four-service health and gameplay passed. Set ADMIN_PASSWORD for authenticated panel smoke.',
+      'Four-service health and Google login gate passed. Set ADMIN_PASSWORD for authenticated panel smoke.',
     );
     return;
   }
@@ -62,7 +67,7 @@ async function main() {
   assert.equal(session.response.status, 200);
   const overview = await json(base.admin + '/api/admin/overview', { headers: authorization });
   assert.equal(overview.response.status, 200);
-  assert.ok(overview.data.totalPlayers >= 1);
+  assert.ok(overview.data.totalPlayers >= 0);
   const panelLogin = await json(base.analyze + '/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -115,7 +120,7 @@ async function main() {
   assert.equal(events.data.events.filter((item) => item.id === id).length, 1);
   assert.equal(events.data.events.find((item) => item.id === id).duration, 7);
   console.log(
-    'Four-service game, admin auth, analytics auth, tracking, and duration smoke passed.',
+    'Four-service Google login gate, admin auth, analytics auth, tracking, and duration smoke passed.',
   );
 }
 await main();

@@ -4,15 +4,15 @@
 
 **EN:** “Build your village. Guard your herd.” A browser village builder and herd defense game. Wolves and the herd face the jackals in battle.
 
-**Güncel sürüm / Current version: v1.2.0** · [Sürüm geçmişi / Changelog](CHANGELOG.md)
+**Güncel sürüm / Current version: v1.2.1** · [Sürüm geçmişi / Changelog](CHANGELOG.md)
 
-[Çevrimdışı oynanabilir önizleme / Offline playable preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
+[Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
 ## Türkçe
 
-### Hemen oyna
+### Ana sayfayı önizle ve oyuna giriş yap
 
-[`preview/index.html`](preview/index.html) dosyasını indirip tarayıcıda açın; internet veya sunucu gerektirmez. Bu dosya yerel kayıt kullanan tek dosyalık oyun önizlemesidir. GitHub dosya görüntüleyicisi oyunu çalıştırmaz. Node.js 24 ile yerel API ve kalıcı SQLite kullanmak için:
+[`preview/index.html`](preview/index.html) dosyasını indirip tarayıcıda açın; internet veya sunucu gerektirmeyen, tek dosyalık **görsel ana sayfa önizlemesidir**. Oyun ekranları bu dosyada açılmaz. GitHub dosya görüntüleyicisi etkileşimli önizlemeyi çalıştırmaz. Node.js 24 ile yerel API ve kalıcı SQLite kullanmak için:
 
 ```bash
 npm ci
@@ -20,9 +20,9 @@ npm run build
 npm start
 ```
 
-Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfadaki **Oynamaya başla** düğmesiyle köye girin; oyun sekmeleri URL karmasında kalır ve yenilemeden sonra açılır. Yerel köy tarayıcıda saklanır. **Sunucuya bağlan** ayrı bir çevrim içi misafir köyü oluşturur; Google girişi yapılandırıldığında bu sunucu köyünü hesabınıza bağlar ve başka cihazda açar. Yerel köy otomatik aktarılmaz.
+Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli Google oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Önce [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md), ardından ana sayfadan Google ile giriş yapın. Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** v1.2.0 ve önceki değişiklikleri gösterir. Google girişi yalnızca Google Cloud istemcisi ve Dokploy ortamı ayarlandıktan sonra etkinleşir; ayarsızken misafir oyununa devam edilir. PvP, arkadaş/sohbet, parola sıfırlama ve ödeme henüz yoktur. Google hesabına bağlanmayan sunucu misafir köyüne erişim 30 günlük tarayıcı çerezine bağlıdır.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** v1.2.1 ve önceki değişiklikleri gösterir. Google Cloud istemcisi ve Dokploy ortamı ayarlanana kadar giriş kapalıdır ve oyun erişimi sağlanmaz. PvP, arkadaş/sohbet, parola sıfırlama ve ödeme henüz yoktur.
 
 ### Tek Dokploy Compose, dört servis
 
@@ -37,7 +37,7 @@ Dokploy'da depo `main` dalını bağlayın. Ekrandaki **Compose Path = `./docker
 
 Güncel [üretim ortamı örneğini](.env.production.example) Dokploy Environment için temel alın. Örnek, yalnızca Compose tarafından okunan değiştirilebilir anahtarları içerir; gerçek sır içermez. **`ADMIN_PASSWORD` değerini en az 12 karakterlik güçlü bir sır** olarak Dokploy'da tanımlayın. Compose'un varsayılan yönetici e-postası `info@bozkurtobasi.com`; örnek üretim ortamı, girişte kullanılan `emindemirci.ai@gmail.com` adresini `ADMIN_EMAIL` olarak ayarlar. Parola olmadan oyun ve sağlık kontrolleri çalışır, ancak yönetim/analiz girişi kapalı kalır. Parolayı Git'e, ZIP'e veya ekran görüntüsüne koymayın. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` Compose'da hazırdır. Verdiğiniz diğer `ANALYZE_*` varsayılanları da [Compose dosyasında](compose.yml) tanımlıdır. Domain değişikliklerinden sonra Dokploy'da yeniden dağıtın.
 
-Google ile girişi açmak için Google Cloud Console içinde **Web application** OAuth istemcisi oluşturup `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` değerlerini Dokploy Environment bölümüne ekleyin. `GOOGLE_REDIRECT_URIS` tam olarak `https://bozkurtobasi.com/api/auth/google/callback,https://www.bozkurtobasi.com/api/auth/google/callback` olmalı ve her iki adres Google istemcisinde izinli yönlendirme URI olarak kayıtlı olmalıdır. Anasayfadaki [gizlilik bildirimi](public/privacy.html) ve [kullanım koşulları](public/terms.html) Google marka ekranına eklenmelidir. Adımlar [Google giriş rehberinde](docs/GOOGLE-SIGNIN.md). Bu anahtarlar boşken Google düğmesi dürüstçe kullanılamaz görünür; misafir oyunu çalışır.
+Google ile girişi açmak için Google Cloud Console içinde **Web application** OAuth istemcisi oluşturup `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` değerlerini Dokploy Environment bölümüne ekleyin. `GOOGLE_REDIRECT_URIS` tam olarak `https://bozkurtobasi.com/api/auth/google/callback,https://www.bozkurtobasi.com/api/auth/google/callback` olmalı ve her iki adres Google istemcisinde izinli yönlendirme URI olarak kayıtlı olmalıdır. Anasayfadaki [gizlilik bildirimi](public/privacy.html) ve [kullanım koşulları](public/terms.html) Google marka ekranına eklenmelidir. Adımlar [Google giriş rehberinde](docs/GOOGLE-SIGNIN.md). Bu anahtarlar boşken Google düğmesi kullanılamaz görünür ve oyun kapalı kalır; yalnızca açık ana sayfa ile bilgi sayfaları görüntülenir.
 
 Yönetici veya analiz girişinde admin_unavailable (503) görülürse Dokploy Environment bölümünde **ADMIN_PASSWORD** değerinin en az 12 karakter olduğunu ve **ADMIN_EMAIL** değerinin girişte kullanılacak adresle eşleştiğini doğrulayın; ardından Compose uygulamasını yeniden dağıtarak API servisini güncelleyin. **admin.bozkurtobasi.com** 502 dönerse Domains kaydının **admin:3000** servisine bağlı olduğunu kontrol edin; admin konteynerinin durumunu, /healthz sağlık kontrolünü ve Dokploy loglarını inceleyin.
 
@@ -53,17 +53,17 @@ Portlar: oyun <http://127.0.0.1:3000>, API <http://127.0.0.1:3001>, yönetim <ht
 
 ### Trafik ve doğrulama
 
-Üretimde oyun, `GET /api/config` üzerinden izinli kolektör adresini alır ve ana sayfa/köy/savaş/dünya/kurt/görev ekran görüntüleme ve süre olaylarını `https://analiz.bozkurtobasi.com/api/track` adresine gönderir. Oyun kaydı, kaynaklar, URL parametreleri ve misafir çerezi gönderilmez. DNT/GPC tercihleri dikkate alınır; çevrimdışı/yerel oyun trafik üretmez. `ANALYZE_GEO_LOOKUP=true` etkinse IP konumu HTTPS üzerinden ipwho.is ile çözümlenebilir; [gizlilik bildirimi](public/privacy.html) bunu açıklar.
+Üretimde oyun, `GET /api/config` üzerinden izinli kolektör adresini alır ve ana sayfa/köy/savaş/dünya/kurt/görev ekran görüntüleme ve süre olaylarını `https://analiz.bozkurtobasi.com/api/track` adresine gönderir. Oyun kaydı, kaynaklar, URL parametreleri ve oturum çerezi gönderilmez. DNT/GPC tercihleri dikkate alınır; çevrimdışı/yerel önizleme trafik üretmez. `ANALYZE_GEO_LOOKUP=true` etkinse IP konumu HTTPS üzerinden ipwho.is ile çözümlenebilir; [gizlilik bildirimi](public/privacy.html) bunu açıklar.
 
 `npm run verify` kaynak kontrolü, motor/API testleri, üretim ve tek dosya derlemesi, tarayıcı testlerini çalıştırır. `npm run count:lines` aşağıdaki sayımı yeniler; `npm run backup` `artifacts/` altında temiz kaynak ZIP'i ve SHA-256 dosyası oluşturur. ZIP oyuncu veritabanlarını, sırları, bağımlılıkları veya Git geçmişini içermez. Güncel sonuçlar [doğrulama kaydında](docs/WEB-VALIDATION.md).
 
 ## English
 
-### Play now
+### Preview the homepage and sign in to play
 
-Download and open [`preview/index.html`](preview/index.html) in a browser for the self-contained offline homepage and game. GitHub file preview cannot run it. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000> and select **Play now**. The browser-local village and the separate server guest village are not merged automatically.
+Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, [configure Google OAuth](docs/GOOGLE-SIGNIN.md), and sign in from the homepage. The homepage and information pages are public; **the village and every other game screen require a valid Google session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.2.0 and earlier updates. Once Google Cloud credentials are configured in Dokploy, sign-in links a server village to an account for cross-device play; guest play stays available without it. PvP, chat, password recovery, and payments are not yet included. Unlinked server guest progress depends on a 30-day browser cookie.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.2.1 and earlier updates. Until Google Cloud credentials are configured in Dokploy, sign-in and game access remain unavailable. PvP, chat, password recovery, and payments are not yet included.
 
 ### Four services in one Dokploy Compose stack
 
@@ -71,7 +71,7 @@ Connect the private repository's `main` branch and keep the existing **Compose P
 
 Use the current [production environment example](.env.production.example) as the starting point in Dokploy Environment. It contains only configurable keys consumed by Compose and no real secrets. Set **`ADMIN_PASSWORD` to a strong secret of at least 12 characters** in Dokploy. Compose defaults to `info@bozkurtobasi.com`; the example sets `ADMIN_EMAIL=emindemirci.ai@gmail.com` to match the sign-in address. Without the password, gameplay and health checks work, but admin and analytics login cannot succeed. Do not commit the secret. The supplied `ANALYZE_*` defaults and platform-admin/API URL are already in [`compose.yml`](compose.yml). `game-data` holds SQLite game progress; `analyze-data` holds analytics events. Back up both separately and keep one replica for the SQLite services. SMTP sending and password recovery are not implemented.
 
-To enable Google sign-in, create a **Web application** OAuth client in Google Cloud Console and set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Dokploy Environment. Register both exact callback URLs listed in `GOOGLE_REDIRECT_URIS` with Google, and add the [privacy notice](public/privacy.html) and [terms](public/terms.html) to the OAuth branding setup. Follow the [Google sign-in guide](docs/GOOGLE-SIGNIN.md). With empty credentials, the button correctly reports that sign-in is unavailable while guest play works.
+To enable Google sign-in and game access, create a **Web application** OAuth client in Google Cloud Console and set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Dokploy Environment. Register both exact callback URLs listed in `GOOGLE_REDIRECT_URIS` with Google, and add the [privacy notice](public/privacy.html) and [terms](public/terms.html) to the OAuth branding setup. Follow the [Google sign-in guide](docs/GOOGLE-SIGNIN.md). With empty credentials, the button correctly reports that sign-in is unavailable and the game stays closed.
 
 If admin or analytics sign-in returns admin_unavailable (503), verify that **ADMIN_PASSWORD** has at least 12 characters and **ADMIN_EMAIL** matches the intended sign-in address in Dokploy Environment; redeploy the Compose application so the API receives them. If **admin.bozkurtobasi.com** returns 502, check that its Domains entry targets **admin:3000**, then inspect the admin container status, /healthz check and Dokploy logs.
 
@@ -79,9 +79,9 @@ For a local four-service preview, run `docker compose -f compose.yml -f compose.
 
 ### Traffic, checks and backup
 
-On production HTTPS, the game sends screen views and cumulative duration for home, village, battle, world, wolves, and quests to the bundled analytics collector. Payloads omit saves, resources, URL parameters, and guest cookies. DNT/GPC are honored; local/offline play sends nothing. When enabled, geo lookup can send visitor IPs to ipwho.is over HTTPS, as described in the [privacy notice](public/privacy.html).
+On production HTTPS, the site sends screen views and cumulative duration for home, village, battle, world, wolves, and quests to the bundled analytics collector. Payloads omit saves, resources, URL parameters, and session cookies. DNT/GPC are honored; the local/offline visual preview sends nothing. When enabled, geo lookup can send visitor IPs to ipwho.is over HTTPS, as described in the [privacy notice](public/privacy.html).
 
-Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run count:lines` to refresh the table below and `npm run backup` for a clean source ZIP and SHA-256 sidecar in `artifacts/`. The ZIP includes the playable preview but excludes player data, secrets, dependencies, production build directories, and Git history. See the [validation record](docs/WEB-VALIDATION.md) and [deployment guide](docs/WEB-DEPLOYMENT.md).
+Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run count:lines` to refresh the table below and `npm run backup` for a clean source ZIP and SHA-256 sidecar in `artifacts/`. The ZIP includes the visual preview but excludes player data, secrets, dependencies, production build directories, and Git history. See the [validation record](docs/WEB-VALIDATION.md) and [deployment guide](docs/WEB-DEPLOYMENT.md).
 
 ## Depo yapısı / Repository layout
 
@@ -94,7 +94,7 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 | `services/admin/` | İki dilli yönetim arayüzü / Bilingual admin UI |
 | `services/analyze/` | MIT lisanslı analiz paneli ve kolektör / MIT analytics dashboard and collector |
 | `tests/`, `scripts/` | Test, önizleme, ölçüm ve ZIP / Tests, preview, metrics, and ZIP |
-| `preview/index.html` | Görselli ana sayfa ve tek dosyalık oynanabilir oyun / Visual homepage and standalone playable game |
+| `preview/index.html` | Tek dosyalık görsel ana sayfa önizlemesi; oyun için Google girişi gerekir / Standalone visual homepage preview; game requires Google sign-in |
 | `releases.json`, `CHANGELOG.md` | İki dilli sürüm kayıtları / Bilingual release history |
 | `.env.production.example` | Dokploy üretim ortamı örneği / Production environment example |
 | `docs/GOOGLE-SIGNIN.md` | İki dilli Google OAuth kurulumu / Bilingual Google OAuth setup |
@@ -105,15 +105,15 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 <!-- metrics:start -->
 | Kapsam / Scope | Dosya / Files | Satır / Lines |
 | --- | ---: | ---: |
-| Web istemci / Web client | 8 | 5220 |
-| Web sunucu / Web server | 5 | 1231 |
+| Web istemci / Web client | 8 | 5150 |
+| Web sunucu / Web server | 5 | 1215 |
 | Dağıtım servisleri / Deployment services | 30 | 4014 |
 | Paylaşılan oyun / Shared game | 1 | 718 |
-| Web test ve araçlar / Web tests and tools | 19 | 2587 |
+| Web test ve araçlar / Web tests and tools | 20 | 2752 |
 | Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **138** | **23968** |
+| **Toplam / Total** | **139** | **24047** |
 
-Aktif web kaynakları / Active web source: **13770** satır / lines.
+Aktif web kaynakları / Active web source: **13849** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

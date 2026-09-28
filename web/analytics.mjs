@@ -4,7 +4,8 @@ const SCREENS = new Set(['home', 'village', 'battle', 'world', 'wolves', 'quests
 
 export function createAnalytics() {
   let config, active;
-  let currentScreen = 'home';
+  // The UI chooses a screen after resolving authentication.
+  let currentScreen;
   let visitorId, sessionId;
   let pending = Promise.resolve();
   const optedOut = () => navigator.doNotTrack === '1' || navigator.globalPrivacyControl === true;

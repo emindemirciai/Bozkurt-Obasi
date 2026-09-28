@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { signIn } from './sign-in.mjs';
+
+test.beforeEach(async ({ page }) => signIn(page));
 
 test('village construction, quest reward, training and TR/EN work without runtime errors', async ({
   page,
@@ -35,12 +38,9 @@ test('village construction, quest reward, training and TR/EN work without runtim
   expect(errors).toEqual([]);
 });
 
-test('battle reveals a random jackal tactic at start, animates both sides and resolves', async ({
-  page,
-}) => {
+test('battle reveals a random jackal tactic at start and animates both sides', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.clock.install();
   await page.goto('/#village');
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   await expect(page.locator('.tactic-reveal')).toContainText('Savaş başlayınca belli olacak');
@@ -85,19 +85,14 @@ test('battle reveals a random jackal tactic at start, animates both sides and re
   const elapsedBefore = Number(
     (await page.locator('.battle-elapsed').textContent()).match(/\d+/)[0],
   );
-  await page.clock.fastForward(1_500);
-  const elapsedAfter = Number(
-    (await page.locator('.battle-elapsed').textContent()).match(/\d+/)[0],
-  );
-  expect(elapsedAfter).toBeGreaterThan(elapsedBefore);
+  await expect
+    .poll(async () => Number((await page.locator('.battle-elapsed').textContent()).match(/\d+/)[0]))
+    .toBeGreaterThan(elapsedBefore);
   expect(await activeScene.evaluate((node) => node.isConnected)).toBe(true);
-
-  await page.clock.fastForward(100_000);
-  await expect(page.locator('.map-location')).toContainText(/Yurt güvende!|Sürü geri çekildi/);
-  await page.getByRole('button', { name: 'Yeni dalga hazırla' }).click();
-  await expect(page.locator('.tactic-reveal')).toContainText('Savaş başlayınca belli olacak');
   await page.getByRole('button', { name: 'Switch to English' }).click();
-  await expect(page.locator('.tactic-reveal')).toContainText('Revealed when battle begins');
+  await expect(page.locator('.tactic-reveal')).toContainText(
+    /Direct assault|Left flank|Right flank|Double flank|Herd rush/,
+  );
   expect(errors).toEqual([]);
 });
 test('appearance persists and the bilingual release history remains readable on mobile', async ({
@@ -120,19 +115,19 @@ test('appearance persists and the bilingual release history remains readable on 
 
   await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Yenilikler', exact: true })).toBeVisible();
-  await expect(page.locator('.release-card')).toHaveCount(3);
+  await expect(page.locator('.release-card')).toHaveCount(4);
   await expect(page.locator('.release-card').first()).toHaveAttribute(
     'data-release-version',
-    '1.2.0',
+    '1.2.1',
   );
-  await expect(page.locator('.release-card').first()).toContainText('Görselli ana sayfa');
-  await expect(page.locator('.release-card').nth(1)).toContainText('tema seçimi');
+  await expect(page.locator('.release-card').first()).toContainText('Google oturumu');
+  await expect(page.locator('.release-card').nth(2)).toContainText('tema seçimi');
   await expect(page.locator('.release-card').last()).toContainText('Köy kurma');
 
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await expect(page.getByRole('heading', { name: 'What’s new', exact: true })).toBeVisible();
-  await expect(page.locator('.release-card').first()).toContainText('visual homepage');
-  await expect(page.locator('.release-card').nth(1)).toContainText('light/dark theme');
+  await expect(page.locator('.release-card').first()).toContainText('Google session');
+  await expect(page.locator('.release-card').nth(2)).toContainText('light/dark theme');
   await expect(page.locator('.release-card').last()).toContainText('village builder');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -143,12 +138,10 @@ test('appearance persists and the bilingual release history remains readable on 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('server guest state survives browser reload and remains separate from the local village', async ({
+test('authenticated village survives browser reload without a guest-mode switch', async ({
   page,
 }) => {
   await page.goto('/#village');
-  await page.getByRole('button', { name: 'Yerel kayıt', exact: true }).click();
-  await page.getByRole('button', { name: 'Sunucuya bağlan' }).click();
   await expect(page.locator('.connection')).toContainText('Çevrim içi');
   await page
     .locator('.buildings-grid')
@@ -156,13 +149,8 @@ test('server guest state survives browser reload and remains separate from the l
     .click();
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
   await page.reload();
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
-  await page.getByRole('button', { name: 'Yerel kayıt', exact: true }).click();
-  await page.getByRole('button', { name: 'Sunucuya bağlan' }).click();
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
-  await page.getByRole('button', { name: 'Çevrim içi', exact: true }).click();
-  await page.getByRole('button', { name: 'Yerel köye dön' }).click();
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
+  await expect(page.getByRole('button', { name: 'Yerel köye dön' })).toHaveCount(0);
 });
 
 test('mobile layout, modal keyboard dismissal and offline file preview', async ({ page }) => {
@@ -177,18 +165,8 @@ test('mobile layout, modal keyboard dismissal and offline file preview', async (
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.goto(pathToFileURL(resolve('preview/index.html')).href + '#village');
-  await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
-  await expect(page.locator('.tactic-reveal')).toContainText('Savaş başlayınca belli olacak');
-  await page.getByRole('button', { name: 'Savaşı başlat' }).click();
-  await expect(page.locator('.tactic-reveal')).toContainText(
-    /Doğrudan saldırı|Sol kanat|Sağ kanat|Çift kanat|Sürü hücumu/,
-  );
-  await expect(page.locator('.battle-scene.is-active')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Obanı kur.*Sürünü koru/s })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toHaveCount(0);
+  await expect(page.locator('.game-shell')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

@@ -1,6 +1,24 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "releases": [
+    {
+      "version": "1.2.1",
+      "date": "2026-09-28",
+      "changes": {
+        "tr": [
+          "Ana sayfadaki oba görseli, görsel alanının tamamına yayılarak sahnenin bütünü görünür hale getirildi.",
+          "Üst menüdeki Obaya gir düğmesi kaldırıldı; köy ve diğer oyun ekranları Google oturumu açılmadan erişilemez oldu.",
+          "Google yapılandırılmadığında oyun erişimi kapalı tutulur; çevrimdışı index yalnızca görsel ana sayfa önizlemesi sunar.",
+          "Oyun API'sinde oturumsuz erişim engeli ve çıkış sırasında geciken yanıtlar test edildi; analiz oturum çözümlemesini bekler."
+        ],
+        "en": [
+          "Expanded the village artwork across the full hero area so the complete scene is visible.",
+          "Removed the header's village button and required a Google session for the village and all other game screens.",
+          "When Google is unconfigured, game access stays closed; the offline index offers a visual homepage preview only.",
+          "Tested unauthenticated game API denial and delayed responses after logout; analytics waits for session resolution."
+        ]
+      }
+    },
     {
       "version": "1.2.0",
       "date": "2026-09-27",

@@ -102,6 +102,7 @@ async function fixture(t, overrides = {}) {
   const base = `http://127.0.0.1:${port}`;
   return {
     provider,
+    dbPath: settings.dbPath,
     async request(path, { method = 'GET', cookies = [], body, headers = {} } = {}) {
       return fetch(`${base}${path}`, {
         method,
@@ -156,6 +157,15 @@ test('Google settings fail closed when credentials or redirect origins are missi
   const start = await api.request('/api/auth/google/start');
   assert.equal(start.status, 503);
   assert.deepEqual(await start.json(), { error: 'google_auth_unavailable' });
+  for (const [path, method, body] of [
+    ['/api/session', 'POST', {}],
+    ['/api/state', 'GET', undefined],
+    ['/api/action', 'POST', { action: { type: 'collect' }, revision: 0 }],
+  ]) {
+    const blocked = await api.request(path, { method, body });
+    assert.equal(blocked.status, 401);
+    assert.deepEqual(await blocked.json(), { error: 'google_session_required' });
+  }
   assert.equal(api.provider.calls.length, 0);
 });
 
@@ -194,21 +204,45 @@ test('existing guest SQLite saves migrate without losing progress', async (t) =>
   const response = await fetch(`http://127.0.0.1:${port}/api/state`, {
     headers: { Cookie: `bozkurt_session=${token}` },
   });
-  assert.equal(response.status, 200);
-  assert.deepEqual((await response.json()).state, state);
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { error: 'google_session_required' });
 });
 
-test('Google login claims guest village and resumes it after restart and from another device', async (t) => {
+test('Google login claims a legacy guest village and resumes it across devices', async (t) => {
   const api = await fixture(t);
-  const guestResponse = await api.request('/api/session', { method: 'POST', body: {} });
-  const guestCookie = cookie(guestResponse, 'bozkurt_session');
-  const guest = await guestResponse.json();
-  const builtResponse = await api.request('/api/action', {
-    method: 'POST',
-    cookies: [guestCookie],
-    body: { action: { type: 'build', building: 'quarry' }, revision: guest.revision },
-  });
-  const built = await builtResponse.json();
+  const token = 'a'.repeat(43);
+  const guestCookie = `bozkurt_session=${token}`;
+  const built = createGame(NOW);
+  built.resources.wood += 17;
+  const database = new DatabaseSync(api.dbPath);
+  database
+    .prepare(
+      'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at) VALUES (?, ?, 0, ?, ?, ?)',
+    )
+    .run(
+      createHash('sha256').update(token).digest('hex'),
+      JSON.stringify(built),
+      NOW,
+      NOW,
+      NOW + 86400000,
+    );
+  database.close();
+  assert.equal(
+    (await api.request('/api/session', { method: 'POST', cookies: [guestCookie], body: {} }))
+      .status,
+    401,
+  );
+  assert.equal((await api.request('/api/state', { cookies: [guestCookie] })).status, 401);
+  assert.equal(
+    (
+      await api.request('/api/action', {
+        method: 'POST',
+        cookies: [guestCookie],
+        body: { action: { type: 'collect' }, revision: 0 },
+      })
+    ).status,
+    401,
+  );
   const started = await api.start([guestCookie]);
   const callback = await api.callback(started, [guestCookie]);
   assert.equal(callback.status, 303);
@@ -224,7 +258,7 @@ test('Google login claims guest village and resumes it after restart and from an
     user: { name: 'Wolf Keeper', email: 'wolf@example.com' },
   });
   const linked = await (await api.request('/api/state', { cookies: [accountCookie] })).json();
-  assert.deepEqual(linked.state, built.state);
+  assert.deepEqual(linked.state, built);
   await api.restart();
   const resumed = await (
     await api.request('/api/session', {
@@ -233,13 +267,13 @@ test('Google login claims guest village and resumes it after restart and from an
       body: {},
     })
   ).json();
-  assert.deepEqual(resumed.state, built.state);
+  assert.deepEqual(resumed.state, built);
   const another = await api.start();
   const secondCallback = await api.callback(another);
   const secondCookie = cookie(secondCallback, 'bozkurt_session');
   assert.ok(secondCookie);
   const secondState = await (await api.request('/api/state', { cookies: [secondCookie] })).json();
-  assert.deepEqual(secondState.state, built.state);
+  assert.deepEqual(secondState.state, built);
   const changed = await api.request('/api/action', {
     method: 'POST',
     cookies: [secondCookie],

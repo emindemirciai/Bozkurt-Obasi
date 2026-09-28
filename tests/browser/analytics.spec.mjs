@@ -1,14 +1,26 @@
 import { test, expect } from '@playwright/test';
+import { signIn } from './sign-in.mjs';
 
 const SITE = 'https://bozkurtobasi.com';
 const COLLECTOR = 'https://analiz.bozkurtobasi.com/api/track';
 
 async function productionSite(page, options = {}) {
   const events = [];
+  if (options.authenticated !== false) await signIn(page);
+  const cookies = await page.context().cookies('http://127.0.0.1:4173');
+  const cookieHeader = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
   await page.route(`${SITE}/**`, async (route) => {
     const url = new URL(route.request().url());
+    const headers = { ...route.request().headers() };
+    delete headers.host;
+    delete headers.cookie;
+    if (headers.origin) headers.origin = 'http://127.0.0.1:4173';
+    if (headers.referer) headers.referer = 'http://127.0.0.1:4173/';
+    // Bridge only this test's authenticated local API session into the mocked site.
+    if (cookieHeader) headers.cookie = cookieHeader;
     const response = await route.fetch({
       url: `http://127.0.0.1:4173${url.pathname}${url.search}`,
+      headers,
     });
     await route.fulfill({ response });
   });
@@ -90,16 +102,28 @@ test('release history is tracked as a named screen without private state', async
   expect(JSON.stringify(events[2].body)).not.toMatch(/resources|wolves|revision/);
 });
 
-test('landing and guest play are distinct anonymous pageviews', async ({ page }) => {
+test('landing and authenticated play are distinct anonymous analytics pageviews', async ({
+  page,
+}) => {
   const events = await productionSite(page);
   await page.goto(SITE);
   await expect.poll(() => events.length).toBe(1);
   expect(events[0].body).toMatchObject({ path: '/home', url: `${SITE}/home` });
-  await page.getByRole('button', { name: 'Oynamaya başla' }).click();
+  await page.getByRole('button', { name: 'Oynamaya başla' }).first().click();
   await expect.poll(() => events.length).toBe(3);
   expect(events[2].body).toMatchObject({ path: '/village', url: `${SITE}/village` });
   expect(events[2].body.visitorId).toBe(events[0].body.visitorId);
   expect(JSON.stringify(events[2].body)).not.toMatch(/resources|wolves|revision/);
+});
+
+test('an unauthenticated deep link records only the public homepage', async ({ page }) => {
+  const events = await productionSite(page, { authenticated: false });
+  await page.goto(`${SITE}/#village`);
+  await expect.poll(() => events.length).toBe(1);
+  expect(events[0].body.path).toBe('/home');
+  await expect(page.locator('.game-shell')).toHaveCount(0);
+  await expect(page.locator('[data-action="play"]')).toHaveCount(0);
+  expect(JSON.stringify(events[0].body)).not.toMatch(/resources|wolves|revision|example.com/);
 });
 
 test('analytics failure does not interrupt gameplay', async ({ page }) => {
@@ -136,6 +160,7 @@ test('localhost never sends analytics traffic', async ({ page }) => {
   page.on('request', (request) => {
     if (request.url().includes('analiz.bozkurtobasi.com')) requests.push(request.url());
   });
+  await signIn(page);
   await page.goto('/#village');
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   expect(requests).toEqual([]);

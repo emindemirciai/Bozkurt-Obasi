@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.2.1 — 2026-09-28
+
+**TR**
+- Oyun API'sinde oturumsuz erişim engeli ve çıkış sırasında geciken yanıtlar test edildi; analiz oturum çözümlemesini bekler.
+- Ana sayfa görseli, sahne bütünüyle görünür olacak şekilde ana görsel alanına yayıldı.
+- Üst menüdeki **Obaya gir** düğmesi kaldırıldı. Köy ve diğer oyun ekranları, doğrudan URL ile açıldığında da geçerli Google oturumu gerektirir.
+- Google istemcisi yapılandırılmadan oyun açılmaz; çevrimdışı `preview/index.html` yalnızca görsel ana sayfa önizlemesi sunar.
+
+**EN**
+- Tested unauthenticated game API denial and delayed responses after logout; analytics waits for session resolution.
+- Expanded the homepage artwork across the hero area so the entire scene remains visible.
+- Removed the header **Enter village** button. The village and other game screens now require a valid Google session, including direct URL visits.
+- Game access remains closed until the Google client is configured; offline `preview/index.html` provides a visual homepage preview only.
+
 ## v1.2.0 — 2026-09-27
 
 **TR**

@@ -300,13 +300,9 @@ export function createApp({
     get: database.prepare(
       'SELECT state_json, revision, expires_at, account_sub FROM sessions WHERE token_hash = ?',
     ),
-    insert: database.prepare(
-      'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at) VALUES (?, ?, 0, ?, ?, ?)',
-    ),
     update: database.prepare(
       'UPDATE sessions SET state_json = ?, revision = ?, updated_at = ? WHERE token_hash = ?',
     ),
-    cleanup: database.prepare('DELETE FROM sessions WHERE expires_at <= ?'),
     insertAccountSession: database.prepare(
       'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at, account_sub) VALUES (?, ?, 0, ?, ?, ?, ?)',
     ),
@@ -317,6 +313,7 @@ export function createApp({
       'UPDATE sessions SET updated_at = ? WHERE token_hash = ?',
     ),
     removeSession: database.prepare('DELETE FROM sessions WHERE token_hash = ?'),
+    cleanup: database.prepare('DELETE FROM sessions WHERE expires_at <= ?'),
     accountGet: database.prepare(
       'SELECT sub, email, display_name, state_json, revision FROM google_accounts WHERE sub = ?',
     ),
@@ -363,6 +360,10 @@ export function createApp({
   }
 
   function loadSession(request, now) {
+    if (now - lastCleanup >= 60_000) {
+      statements.cleanup.run(now);
+      lastCleanup = now;
+    }
     const hash = sessionHash(request);
     const row = hash ? statements.get.get(hash) : null;
     if (!row || row.expires_at <= now) return null;
@@ -502,31 +503,14 @@ export function createApp({
         checkMutation(request, trustProxy);
         const body = await readJson(request);
         if (Object.keys(body).length) throw new HttpError(400, 'unexpected_fields');
-        let session = loadSession(request, now);
-        if (session) {
-          resumeGame(session.state, now);
-        } else {
-          if (now - lastCleanup >= 60_000) {
-            statements.cleanup.run(now);
-            lastCleanup = now;
-          }
-          const token = randomBytes(32).toString('base64url');
-          const hash = createHash('sha256').update(token).digest('hex');
-          const state = createGame(now);
-          if (!validateGame(state)) throw new Error('Invalid initial game');
-          const serialized = JSON.stringify(state);
-          statements.insert.run(hash, serialized, now, now, now + SESSION_AGE_MS);
-          session = { hash, state, serialized, revision: 0 };
-          response.setHeader(
-            'Set-Cookie',
-            `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
-          );
-        }
+        const session = loadSession(request, now);
+        if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
+        resumeGame(session.state, now);
         return json(response, 200, { ...persist(session, now), mode: 'online' });
       }
       if (pathname === '/api/state' && request.method === 'GET') {
         const session = loadSession(request, now);
-        if (!session) throw new HttpError(401, 'session_required');
+        if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
         advanceGame(session.state, now);
         return json(response, 200, persist(session, now));
       }
@@ -545,7 +529,7 @@ export function createApp({
           throw new HttpError(400, 'invalid_action_request');
         }
         const session = loadSession(request, now);
-        if (!session) throw new HttpError(401, 'session_required');
+        if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
         if (body.revision !== session.revision) {
           advanceGame(session.state, now);
           return json(response, 409, { error: 'stale_revision', ...persist(session, now) });

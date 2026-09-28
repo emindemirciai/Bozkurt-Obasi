@@ -2,7 +2,7 @@ import { build } from 'vite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-// A real playable bundle, inlined so file:// works without a web server or network.
+// Inlined visual landing preview for file://; village entry still requires server-side Google sign-in.
 const result = await build({
   configFile: false,
   logLevel: 'warn',
@@ -30,4 +30,4 @@ if (!legalNotice?.includes('MIT License')) throw new Error('MIT source notice is
 const html = `<!doctype html>${legalNotice}<html lang="tr"><head><meta charset="UTF-8"><meta name="author" content="Emin DEMİRCİ"><meta name="copyright" content="Copyright © 2026 Emin DEMİRCİ; MIT License"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#203e35"><meta name="description" content="Bozkurt Obası: Ay-Yıldız Nöbeti — obanı kur, sürünü koru."><title>Bozkurt Obası: Ay-Yıldız Nöbeti · Önizleme</title><style>${css}</style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
 await writeFile('preview/index.html', html, 'utf8');
-console.log(`Playable offline preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);
+console.log(`Offline visual preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);

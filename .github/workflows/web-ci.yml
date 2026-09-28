@@ -33,7 +33,7 @@ jobs:
         run: npm test
       - name: Production build
         run: npm run build
-      - name: Offline single-file preview
+      - name: Standalone landing preview
         run: npm run build:preview
       - name: Install browser for end-to-end checks
         run: npx playwright install --with-deps chromium
@@ -82,7 +82,7 @@ jobs:
           tags: bozkurt-obasi:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Container health and persistent gameplay smoke
+      - name: Container health and sign-in gate smoke
         run: node scripts/container-smoke.mjs bozkurt-obasi:ci
 
       - name: Build all Dokploy services

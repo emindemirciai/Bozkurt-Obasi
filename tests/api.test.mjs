@@ -4,8 +4,10 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { DatabaseSync } from 'node:sqlite';
+import { createHash, randomBytes } from 'node:crypto';
 import { createApp } from '../server/web/app.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
+import { createGame } from '../shared/game.mjs';
 
 async function fixture(t, options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'bozkurt-api-'));
@@ -23,6 +25,7 @@ async function fixture(t, options = {}) {
   let app = createApp(settings);
   let address = await app.listen();
   let base = `http://127.0.0.1:${address.port}`;
+  let accounts = 0;
   t.after(async () => {
     await app.close();
     await rm(root, { recursive: true, force: true });
@@ -42,6 +45,32 @@ async function fixture(t, options = {}) {
       });
     },
     async session(cookie) {
+      if (!cookie) {
+        const token = randomBytes(32).toString('base64url');
+        const sub = `api-test-${++accounts}`;
+        const now = settings.clock();
+        const state = JSON.stringify(createGame(now));
+        const database = new DatabaseSync(settings.dbPath);
+        database
+          .prepare(
+            'INSERT INTO google_accounts (sub, email, display_name, state_json, revision, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
+          )
+          .run(sub, `${sub}@example.com`, 'Player One', state, now, now);
+        database
+          .prepare(
+            'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at, account_sub) VALUES (?, ?, 0, ?, ?, ?, ?)',
+          )
+          .run(
+            createHash('sha256').update(token).digest('hex'),
+            state,
+            now,
+            now,
+            now + 86_400_000,
+            sub,
+          );
+        database.close();
+        cookie = `bozkurt_session=${token}`;
+      }
       const response = await this.request('/api/session', { method: 'POST', body: {}, cookie });
       assert.equal(response.status, 200);
       return {
@@ -143,15 +172,14 @@ test('enabled analytics rejects unsafe or malformed environment values', () => {
   }
 });
 
-test('guest session persists across restart and remains isolated from other guests', async (t) => {
+test('Google account session persists across restart and remains isolated from other accounts', async (t) => {
   const api = await fixture(t);
   const first = await api.session();
   const second = await api.session();
   assert.notEqual(first.cookie, second.cookie);
   assert.equal(first.data.mode, 'online');
   assert.equal(first.data.revision, 0);
-  assert.match(first.response.headers.get('set-cookie'), /HttpOnly; SameSite=Lax/);
-  assert.doesNotMatch(first.response.headers.get('set-cookie'), /; Secure/);
+  assert.equal(first.response.headers.get('set-cookie'), null);
 
   const action = await api.request('/api/action', {
     method: 'POST',
@@ -172,8 +200,11 @@ test('guest session persists across restart and remains isolated from other gues
   assert.equal(resumed.response.headers.get('set-cookie'), null);
 });
 
-test('state and action endpoints require a valid session; clients cannot upload saves', async (t) => {
+test('game endpoints require an authenticated account; clients cannot upload saves', async (t) => {
   const api = await fixture(t);
+  const unauthorized = await api.request('/api/session', { method: 'POST', body: {} });
+  assert.equal(unauthorized.status, 401);
+  assert.deepEqual(await unauthorized.json(), { error: 'google_session_required' });
   assert.equal((await api.request('/api/state')).status, 401);
   assert.equal((await api.request('/api/state', { cookie: 'bozkurt_session=forged' })).status, 401);
   const uploaded = await api.request('/api/session', {
@@ -215,7 +246,7 @@ test('invalid stored state is rejected instead of being accepted or silently res
   const guest = await api.session();
   const database = new DatabaseSync(api.dbPath);
   database
-    .prepare('UPDATE sessions SET state_json = ?')
+    .prepare('UPDATE google_accounts SET state_json = ?')
     .run(JSON.stringify({ version: 1, resources: { wood: -999 } }));
   database.close();
   const response = await api.request('/api/state', { cookie: guest.cookie });
@@ -247,12 +278,13 @@ test('same origin and JSON guards block cross-site state mutations', async (t) =
   const valid = await api.request('/api/session', {
     method: 'POST',
     body: {},
+    cookie: (await api.session()).cookie,
     headers: { Origin: api.base },
   });
   assert.equal(valid.status, 200);
 });
 
-test('proxy HTTPS is opt-in and sets Secure on guest cookies', async (t) => {
+test('trusted proxy headers never create a guest gameplay cookie', async (t) => {
   const api = await fixture(t, { trustProxy: true });
   const response = await api.request('/api/session', {
     method: 'POST',
@@ -263,8 +295,8 @@ test('proxy HTTPS is opt-in and sets Secure on guest cookies', async (t) => {
       Origin: 'https://game.example',
     },
   });
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get('set-cookie'), /; Secure/);
+  assert.equal(response.status, 401);
+  assert.equal(response.headers.get('set-cookie'), null);
 });
 
 test('stale revisions cannot overwrite a newer action', async (t) => {

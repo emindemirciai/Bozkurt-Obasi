@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { DatabaseSync } from 'node:sqlite';
 import { createApp } from '../server/web/app.mjs';
+import { createGame } from '../shared/game.mjs';
 
 async function fixture(t, options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'bozkurt-admin-'));
@@ -18,6 +20,16 @@ async function fixture(t, options = {}) {
     await rm(root, { recursive: true, force: true });
   });
   return {
+    seedLegacyPlayer() {
+      const now = settings.clock?.() ?? Date.now();
+      const database = new DatabaseSync(settings.dbPath);
+      database
+        .prepare(
+          'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at) VALUES (?, ?, 0, ?, ?, ?)',
+        )
+        .run('a'.repeat(64), JSON.stringify(createGame(now)), now, now, now + 86_400_000);
+      database.close();
+    },
     async request(path, { method = 'GET', body, token, headers = {} } = {}) {
       return fetch('http://127.0.0.1:' + address.port + path, {
         method,
@@ -76,7 +88,8 @@ test('admin login, protected overview, restart, expiry and logout', async (t) =>
   const overview = await api.request('/api/admin/overview', { token });
   assert.deepEqual(await overview.json(), { totalPlayers: 0, activePlayers: 0, generatedAt: now });
   const guest = await api.request('/api/session', { method: 'POST', body: {} });
-  assert.equal(guest.status, 200);
+  assert.equal(guest.status, 401);
+  api.seedLegacyPlayer();
   const updated = await api.request('/api/admin/overview', { token });
   assert.equal((await updated.json()).totalPlayers, 1);
   await api.restart();

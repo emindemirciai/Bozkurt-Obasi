@@ -116,25 +116,25 @@ SOFTWARE.
         <span class="eyebrow">BOZKURT OBASI · PRIVACY</span>
         <h1 data-l10n="tr" lang="tr">Gizlilik bildirimi</h1>
         <h1 data-l10n="en" lang="en">Privacy notice</h1>
-        <p data-l10n="tr" lang="tr">Obanı kurarken hangi verilerin tarayıcında, oyun sunucusunda ve trafik analizinde işlendiğini açıkça anlatıyoruz. Google ile giriş isteğe bağlıdır; yerel misafir oyunu için hesap gerekmez.</p>
-        <p data-l10n="en" lang="en">This explains what the game keeps in your browser, on the game server, and in traffic analytics. Google sign-in is optional; local guest play does not require an account.</p>
-        <span class="update" data-l10n="tr" lang="tr">Son güncelleme · 27 Eylül 2026</span>
-        <span class="update" data-l10n="en" lang="en">Last updated · 27 September 2026</span>
+        <p data-l10n="tr" lang="tr">Obanı kurarken hangi verilerin tarayıcında, oyun sunucusunda ve trafik analizinde işlendiğini açıklıyoruz. Oyuna giriş için Google hesabı gerekir; ana sayfa ve bu bildirim herkese açıktır.</p>
+        <p data-l10n="en" lang="en">This explains what the game keeps in your browser, on the game server, and in traffic analytics. A Google account is required to play; the homepage and this notice remain public.</p>
+        <span class="update" data-l10n="tr" lang="tr">Son güncelleme · 28 Eylül 2026</span>
+        <span class="update" data-l10n="en" lang="en">Last updated · 28 September 2026</span>
       </div>
       <main class="content">
         <article class="policy" data-l10n="tr" lang="tr">
           <section><h2>Kapsam ve iletişim</h2>
             <p>Bu bildirim <strong>bozkurtobasi.com</strong> üzerindeki Bozkurt Obası oyunu, oyun API'si ve bağlı trafik analizi için geçerlidir. Proje sahibi ve iletişim adresi: <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a>.</p>
           </section>
-          <section><h2>Yerel oyun ve sunucu köyü</h2>
+          <section><h2>Oyun kaydı ve önceki misafir verileri</h2>
             <ul>
-              <li><strong>Yerel misafir oyunu:</strong> Oyun durumu, dil ve tema tercihleri tarayıcının yerel depolamasında tutulur. Çevrimdışı yerel oyun kaydı otomatik olarak sunucuya yüklenmez.</li>
-              <li><strong>Sunucuya bağlanma:</strong> Bu seçeneği kullandığınızda ayrı bir misafir köyü, oyun durumu ve değişiklik sürümü SQLite veritabanında tutulur. Tarayıcıya HttpOnly özellikli bir oturum çerezi verilir; çerezin geçerlilik süresi 30 gündür. Süresi dolan oturum kayıtları sunucu temizliği sırasında kaldırılır.</li>
-              <li>Köy durumu; kaynaklar, yapılar, muhafızlar, savaşlar ve görevler gibi oyun ilerlemesini içerir. Yerel ve sunucu kayıtları ayrı tutulur.</li>
+              <li><strong>Google hesabına bağlı köy:</strong> Oyuna erişmek için Google ile giriş gerekir. Köy durumu ve değişiklik sürümü SQLite veritabanında tutulur. Köy durumu kaynakları, yapıları, muhafızları, savaşları ve görevleri içerir. Tarayıcıya HttpOnly özellikli oturum çerezi verilir; geçerlilik süresi 30 gündür.</li>
+              <li><strong>Önceki misafir verileri:</strong> Önceki sürümden kalan sunucu misafir köyü ve geçerli çerezi varsa ilk Google girişinde hesaba bağlanabilir. Yeni misafir oyun oturumu açılmaz. Daha önce tarayıcıda tutulmuş yerel oyun kaydı kendiliğinden sunucuya yüklenmez.</li>
+              <li>Dil ve tema tercihleri tarayıcının yerel depolamasında kalabilir. Süresi dolan sunucu oturum kayıtları sunucu temizliği sırasında kaldırılır.</li>
             </ul>
           </section>
           <section><h2>Google ile giriş</h2>
-            <p>Google ile giriş yapmayı seçerseniz kimlik doğrulaması Google üzerinden gerçekleşir. Oyun, Google hesabınızın <strong>benzersiz hesap kimliğini, e-posta adresini ve görünen adını</strong> alır; bunları köyünüzü hesabınıza bağlamak ve sonraki oturumlarda açmak için sunucuda tutar. Google parolanız oyuna verilmez. Yerel tarayıcı kaydınız Google girişiyle otomatik olarak yüklenmez.</p>
+            <p>Oyuna erişmek için gereken kimlik doğrulaması Google üzerinden gerçekleşir. Oyun, Google hesabınızın <strong>benzersiz hesap kimliğini, e-posta adresini ve görünen adını</strong> alır; bunları köyünüzü hesabınıza bağlamak ve sonraki oturumlarda açmak için sunucuda tutar. Google parolanız oyuna verilmez. Önceki yerel tarayıcı kaydınız Google girişiyle otomatik olarak yüklenmez.</p>
           </section>
           <section><h2>Trafik analizi</h2>
             <p>Canlı HTTPS sitede etkinleştirilen analiz; ana sayfa, köy, savaş, dünya, kurtlar, görevler ve sürüm geçmişi ekranlarının görüntülenme sayısını ve görünür kalma süresini ölçer. Olaylar rastgele ziyaretçi ve oturum kimlikleri, ekran yolu, yönlendiren sitenin kökeni, tarayıcı bilgisi, dil, saat dilimi ve ekran boyutu içerebilir. Ziyaretçi kimliği tarayıcının yerel depolamasında, oturum kimliği sekme oturumu depolamasında tutulur. <strong>Köy kaydı, kaynaklar, URL parametreleri, Google profil bilgisi ve oyun oturum çerezi</strong> analiz olayına eklenmez.</p>
@@ -142,7 +142,7 @@ SOFTWARE.
           </section>
           <section><h2>Hizmetler ve saklama</h2>
             <p>Google ile girişte Google kimlik hizmeti kullanılır. Konum çözümlemesi etkinse analiz sunucusu IP sorgusu için <strong>ipwho.is</strong> hizmetini kullanabilir. Altyapı ve ters vekil sunucuları teknik erişim kayıtları işleyebilir.</p>
-            <p>Yerel kayıtlar tarayıcı verisi temizlenene kadar kalabilir. Sunucu misafir çerezi 30 gün geçerlidir; bağlı hesap verisi, silme talebinin sonuçlandırılmasına kadar tutulabilir. Analiz olayları takvim temelli sabit bir süre yerine yapılandırılmış kayıt sayısı üst sınırına göre tutulur; sınır aşılınca eski olaylar çıkarılır. Bu nedenle tüm veri türleri için tek bir kesin silinme tarihi veremeyiz.</p>
+            <p>Önceki yerel kayıtlar tarayıcı verisi temizlenene kadar kalabilir. Oyun oturumu çerezi 30 gün geçerlidir; Google hesabına bağlı veri, silme talebinin sonuçlandırılmasına kadar tutulabilir. Analiz olayları takvim temelli sabit bir süre yerine yapılandırılmış kayıt sayısı üst sınırına göre tutulur; sınır aşılınca eski olaylar çıkarılır. Bu nedenle tüm veri türleri için tek bir kesin silinme tarihi veremeyiz.</p>
           </section>
           <section><h2>Seçimleriniz ve veri talepleri</h2>
             <p>Tarayıcınızdan yerel kayıtları ve çerezleri temizleyebilirsiniz. Analiz için DNT veya GPC sinyalini etkinleştirebilirsiniz. Google hesabıyla bağlantılı verileriniz için erişim veya silme talebini <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a> adresine iletebilirsiniz. Analiz olayları Google hesabına bağlanmadığından hesabınız üzerinden belirli bir olayı tespit etmek mümkün olmayabilir.</p>
@@ -152,15 +152,15 @@ SOFTWARE.
           <section><h2>Scope and contact</h2>
             <p>This notice covers the Bozkurt Obası game at <strong>bozkurtobasi.com</strong>, its game API, and connected traffic analytics. Project contact: <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a>.</p>
           </section>
-          <section><h2>Local play and server village</h2>
+          <section><h2>Game saves and earlier guest data</h2>
             <ul>
-              <li><strong>Local guest play:</strong> The game state and your language and theme choices stay in browser local storage. The offline local save is not uploaded to the server automatically.</li>
-              <li><strong>Connect to server:</strong> This creates a separate guest village. Game state and a revision number are stored in SQLite. Your browser receives an HTTP-only session cookie valid for 30 days. Expired session records are removed during server cleanup.</li>
-              <li>Village state includes progress such as resources, buildings, guardians, battles, and quests. Local and server saves are separate.</li>
+              <li><strong>Google-linked village:</strong> Google sign-in is required for game access. Village state and a revision number are stored in SQLite. The state covers resources, buildings, guardians, battles, and quests. Your browser receives an HTTP-only session cookie valid for 30 days.</li>
+              <li><strong>Earlier guest data:</strong> A server guest village from an earlier version can be linked on first Google sign-in if its cookie is still valid. New guest game sessions are not offered. An earlier browser-local game save is not automatically uploaded to the server.</li>
+              <li>Language and theme preferences may remain in browser local storage. Expired server session records are removed during server cleanup.</li>
             </ul>
           </section>
           <section><h2>Google sign-in</h2>
-            <p>If you choose Google sign-in, Google authenticates you. The game receives and stores your <strong>unique Google account ID, email address, and display name</strong> to link and reopen your village. The game does not receive your Google password. Your local browser save is not uploaded automatically by signing in.</p>
+            <p>Google authenticates you for game access. The game receives and stores your <strong>unique Google account ID, email address, and display name</strong> to link and reopen your village. The game does not receive your Google password. An earlier browser-local save is not uploaded automatically by signing in.</p>
           </section>
           <section><h2>Traffic analytics</h2>
             <p>When enabled on the live HTTPS site, analytics measures views and visible time for the home page, village, battle, world, wolves, quests, and release history screens. Events may include random visitor and session IDs, screen path, referring site origin, browser details, language, time zone, and screen size. The visitor ID is kept in browser local storage, and the session ID in tab session storage. <strong>Village saves, resources, URL parameters, Google profile details, and game session cookies</strong> are not added to analytics events.</p>
@@ -168,7 +168,7 @@ SOFTWARE.
           </section>
           <section><h2>Services and retention</h2>
             <p>Google's identity service is used when you sign in with Google. If geolocation is enabled, the analytics server may query <strong>ipwho.is</strong> with an IP address. Infrastructure and reverse proxies may process technical access logs.</p>
-            <p>Local saves may remain until you clear browser data. A guest server cookie is valid for 30 days; linked account data may remain pending a deletion request. Analytics uses a configurable maximum number of stored events rather than a fixed calendar retention period; older events drop when that limit is exceeded. We therefore do not state one exact deletion date for every data type.</p>
+            <p>Earlier local saves may remain until you clear browser data. The game session cookie is valid for 30 days; Google-linked account data may remain pending a deletion request. Analytics uses a configurable maximum number of stored events rather than a fixed calendar retention period; older events drop when that limit is exceeded. We therefore do not state one exact deletion date for every data type.</p>
           </section>
           <section><h2>Your choices and data requests</h2>
             <p>You can clear local saves and cookies in your browser. You can enable DNT or GPC for analytics. To request access to or deletion of data linked to your Google account, contact <a href="mailto:info@bozkurtobasi.com">info@bozkurtobasi.com</a>. Analytics events are not linked to your Google account, so it may not be possible to identify a particular event by account.</p>

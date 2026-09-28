@@ -3,16 +3,17 @@ import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createGame } from '../../shared/game.mjs';
+import { signIn } from './sign-in.mjs';
 
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
 
-test('visual homepage introduces the game and keeps language, theme and play navigation', async ({
-  page,
-}) => {
+test('visual homepage gates game navigation until Google sign-in', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /Obanı kur.*Sürünü koru/s })).toBeVisible();
+  await expect(page.locator('.landing-header [data-action="play"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="play"]')).toHaveCount(0);
   await expect
     .poll(() => page.locator('.landing-hero-art').evaluate((image) => image.naturalWidth))
     .toBeGreaterThan(0);
@@ -36,7 +37,13 @@ test('visual homepage introduces the game and keeps language, theme and play nav
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await page.getByRole('button', { name: 'Start playing' }).click();
+  await page.goto('/#village');
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { name: 'Welcome to your homeland.' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Start playing' })).toHaveCount(0);
+  await signIn(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Start playing' }).first().click();
   await expect(page.getByRole('heading', { name: 'Welcome to your homeland.' })).toBeVisible();
   await expect(page).toHaveURL(/#village$/);
   await page.getByRole('button', { name: /BOZKURT OBASI/ }).click();
@@ -73,7 +80,7 @@ test('Google sign-in is honest when unavailable and account logout works when co
   });
 
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Google ile giriş yap' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Google ile giriş yap' }).first()).toBeDisabled();
   await expect
     .poll(() =>
       page
@@ -83,19 +90,19 @@ test('Google sign-in is honest when unavailable and account logout works when co
     )
     .toBeGreaterThan(0);
 
-  await expect(page.locator('.landing-google-unavailable')).toContainText(
-    'Misafir olarak oynayabilirsin.',
+  await expect(page.locator('.landing-google-unavailable').first()).toContainText(
+    'Oyun için giriş gereklidir.',
   );
   enabled = true;
   authenticated = true;
   await page.goto('/?auth=success');
-  await expect(page.getByText('Player One')).toBeVisible();
+  await expect(page.getByText('Player One').first()).toBeVisible();
   await expect.poll(() => sessionCalls).toBe(1);
   await expect(page).not.toHaveURL(/auth=success/);
-  await page.getByRole('button', { name: 'Hesabı yönet' }).click();
+  await page.getByRole('button', { name: 'Hesabı yönet' }).first().click();
   await expect(page.getByRole('dialog')).toContainText('player@example.com');
   await page.getByRole('button', { name: 'Çıkış yap' }).click();
-  await expect(page.getByRole('link', { name: 'Google ile giriş yap' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Google ile giriş yap' }).first()).toHaveAttribute(
     'href',
     '/api/auth/google/start',
   );
@@ -127,7 +134,7 @@ test('mobile homepage scroll survives passive game updates and offline preview s
   await expect
     .poll(() => page.locator('.landing-hero-art').evaluate((image) => image.naturalWidth))
     .toBeGreaterThan(0);
-  await expect(page.getByRole('button', { name: 'Google ile giriş yap' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Google ile giriş yap' }).first()).toBeDisabled();
   await expect
     .poll(() =>
       page
@@ -137,6 +144,8 @@ test('mobile homepage scroll survives passive game updates and offline preview s
     )
     .toBeGreaterThan(0);
 
-  await page.getByRole('button', { name: 'Oynamaya başla' }).click();
-  await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Oynamaya başla' })).toHaveCount(0);
+  await page.goto(pathToFileURL(resolve('preview/index.html')).href + '#village');
+  await expect(page.getByRole('heading', { name: /Obanı kur.*Sürünü koru/s })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toHaveCount(0);
 });

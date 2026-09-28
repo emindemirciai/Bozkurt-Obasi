@@ -55,50 +55,41 @@ try {
   const page = await fetch(baseUrl);
   assert.equal(page.status, 200, 'Production HTML must load.');
   assert.match(await page.text(), /<html/i);
+  const authResponse = await fetch(`${baseUrl}/api/auth/google/status`);
+  assert.equal(authResponse.status, 200, 'Google sign-in status must load.');
+  assert.deepEqual(await authResponse.json(), {
+    enabled: false,
+    authenticated: false,
+    reason: 'not_configured',
+  });
   const sessionResponse = await fetch(`${baseUrl}/api/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: '{}',
   });
-  assert.equal(sessionResponse.status, 200, 'Guest session must be created.');
-  const cookie = sessionResponse.headers.get('set-cookie')?.split(';')[0];
-  assert.ok(cookie, 'Session cookie must be returned.');
-  const session = await sessionResponse.json();
+  assert.equal(sessionResponse.status, 401, 'A guest must not reach the village.');
+  assert.equal(
+    sessionResponse.headers.get('set-cookie'),
+    null,
+    'A guest cookie must not be created.',
+  );
   const mutationResponse = await fetch(`${baseUrl}/api/action`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Cookie: cookie },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       action: { type: 'build', building: 'quarry' },
-      revision: session.revision,
+      revision: 0,
     }),
   });
-  assert.equal(
-    mutationResponse.status,
-    200,
-    `Build action failed: ${await mutationResponse.clone().text()}`,
-  );
-  const saved = await mutationResponse.json();
-  assert.ok(
-    saved.state.buildings.some(
-      (building) => building.id === 'building-quarry' && building.level === 1,
-    ),
-    'Quarry must be constructed.',
-  );
+  assert.equal(mutationResponse.status, 401, 'A guest must not mutate a village.');
   docker(['restart', name]);
   // Docker may allocate a different ephemeral host port after a restart.
   baseUrl = containerUrl();
   await waitForHealth(baseUrl);
-  const restoredResponse = await fetch(`${baseUrl}/api/state`, { headers: { Cookie: cookie } });
-  assert.equal(restoredResponse.status, 200, 'Guest session must survive container restart.');
-  const restored = await restoredResponse.json();
-  assert.deepEqual(
-    restored.state.buildings,
-    saved.state.buildings,
-    'Buildings must survive restart.',
-  );
-  assert.ok(restored.revision >= saved.revision, 'Revision must survive restart.');
+  const restoredResponse = await fetch(`${baseUrl}/api/state`);
+  assert.equal(restoredResponse.status, 401, 'The village gate must survive container restart.');
   console.log(
-    'Container smoke passed: non-root read-only runtime, HTTP health, production HTML, guest session, server action, persistent SQLite after restart.',
+    'Container smoke passed: non-root read-only runtime, HTTP health, production HTML, Google status, guest access denied before and after restart.',
   );
 } catch (error) {
   if (created) console.error(docker(['logs', name], true));

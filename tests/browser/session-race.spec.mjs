@@ -1,14 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { createGame, applyAction } from '../../shared/game.mjs';
+import { createGame, applyAction, advanceGame } from '../../shared/game.mjs';
+import { signIn } from './sign-in.mjs';
 
 const START = Date.UTC(2026, 8, 21, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
-
-async function connect(page) {
-  await page.locator('.connection').click();
-  await page.getByRole('button', { name: 'Sunucuya bağlan', exact: true }).click();
-  await expect(page.locator('.connection')).toContainText('Çevrim içi');
-}
 
 function heldPoll(page, state, revision) {
   const started = Promise.withResolvers();
@@ -21,9 +16,29 @@ function heldPoll(page, state, revision) {
   return { installed, started: started.promise, release: release.resolve };
 }
 
-test('disconnect ignores a delayed online poll and cannot overwrite the local village', async ({
+async function mockVillage(page, state) {
+  let revision = 0;
+  await page.route('**/api/session', (route) =>
+    route.fulfill(json({ state, revision, mode: 'online' })),
+  );
+  await page.route('**/api/state', async (route) => {
+    advanceGame(state, await page.evaluate(() => Date.now()));
+    await route.fulfill(json({ state, revision: ++revision }));
+  });
+  await page.route('**/api/action', async (route) => {
+    applyAction(
+      state,
+      route.request().postDataJSON().action,
+      await page.evaluate(() => Date.now()),
+    );
+    await route.fulfill(json({ state, revision: ++revision }));
+  });
+}
+
+test('logout ignores a delayed poll and never opens or writes a guest village', async ({
   page,
 }) => {
+  await signIn(page);
   await page.clock.install({ time: new Date(START) });
   const online = createGame(START);
   applyAction(online, { type: 'build', building: 'quarry' }, START);
@@ -33,29 +48,28 @@ test('disconnect ignores a delayed online poll and cannot overwrite the local vi
   const poll = heldPoll(page, online, 2);
   await poll.installed;
   await page.goto('/#village');
-  await connect(page);
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
-  await page.locator('.connection').click();
+  await page.locator('.profile').click();
   await page.clock.fastForward(1000);
   await poll.started;
-  await page.getByRole('button', { name: 'Yerel köye dön', exact: true }).click();
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
+  await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
+  await expect(page.locator('.game-shell')).toHaveCount(0);
   const completed = page.waitForResponse('**/api/state');
   poll.release();
   await (await completed).finished();
   await page.clock.fastForward(20_000);
-  await expect(page.locator('.connection')).toContainText('Yerel kayıt');
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
-  expect(
-    await page.evaluate(() => JSON.parse(localStorage.getItem('bozkurt.web.v1')).buildings.length),
-  ).toBe(4);
-  await page.reload();
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
+  await expect(page.getByRole('heading', { name: /Obanı kur.*Sürünü koru/s })).toBeVisible();
+  await expect(page.locator('[data-action="play"]')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('bozkurt.web.v1'))).toBeNull();
+  await page.goto('/#village');
+  await expect(page).toHaveURL('/');
+  await expect(page.locator('.game-shell')).toHaveCount(0);
 });
 
 test('a user action waits for polling and sends its latest revision exactly once', async ({
   page,
 }) => {
+  await signIn(page);
   await page.clock.install({ time: new Date(START) });
   const online = createGame(START);
   const actions = [];
@@ -71,56 +85,56 @@ test('a user action waits for polling and sends its latest revision exactly once
     await route.fulfill(json({ state: online, revision: 5 }));
   });
   await page.goto('/#village');
-  await connect(page);
+  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
   await page.clock.fastForward(1000);
   await poll.started;
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Savaşı başlat', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Ana Yurt', exact: true }).click();
-  const quarry = page
+  await page
     .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true });
-  await quarry.click();
+    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
+    .click();
   expect(actions).toHaveLength(0);
   poll.release();
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
   expect(actions).toEqual([{ action: { type: 'build', building: 'quarry' }, revision: 4 }]);
 });
 
-test('invalid successful API responses leave the local game and connection mode intact', async ({
+test('invalid successful village responses keep the game closed without a local fallback', async ({
   page,
 }) => {
+  await signIn(page);
   const online = createGame(Date.now());
-  applyAction(online, { type: 'build', building: 'quarry' }, online.updatedAt);
   const responses = [
     { revision: 1, mode: 'online' },
     { state: online, revision: '1', mode: 'online' },
     { state: { ...online, resources: {} }, revision: 1, mode: 'online' },
   ];
-  await page.route('**/api/session', (route) => route.fulfill(json(responses.shift())));
-  await page.goto('/#village');
-  await page.locator('.connection').click();
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await page.getByRole('button', { name: 'Sunucuya bağlan', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Sunucuya bağlan', exact: true })).toBeEnabled();
-    await expect(page.locator('.connection')).toContainText('Yerel kayıt');
-    await expect(page.locator('.map-chip')).toHaveText('4 yapı');
+  let calls = 0;
+  await page.route('**/api/session', (route) => {
+    calls++;
+    return route.fulfill(json(responses.shift()));
+  });
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt === 1) await page.goto('/#village');
+    else await page.reload();
+    await expect.poll(() => calls).toBe(attempt);
+    await expect(page.locator('.game-shell')).toHaveCount(0);
+    await expect(page.locator('[data-action="play"]')).toHaveCount(0);
+    await expect(page.locator('#notice')).toContainText('sunucu köyü');
   }
   expect(responses).toHaveLength(0);
-  expect(
-    await page.evaluate(() => JSON.parse(localStorage.getItem('bozkurt.web.v1')).buildings.length),
-  ).toBe(4);
+  expect(await page.evaluate(() => localStorage.getItem('bozkurt.web.v1'))).toBeNull();
 });
 
-test('passive production unlocks construction without navigating or clicking', async ({ page }) => {
+test('server production unlocks construction without navigating or clicking', async ({ page }) => {
+  await signIn(page);
   await page.clock.install({ time: new Date(START) });
-  const saved = createGame(START);
-  saved.resources.wood = 69;
-  saved.resources.stone = 30;
-  await page.addInitScript(
-    (state) => localStorage.setItem('bozkurt.web.v1', JSON.stringify(state)),
-    saved,
-  );
+  const state = createGame(START);
+  state.resources.wood = 69;
+  state.resources.stone = 30;
+  await mockVillage(page, state);
   await page.goto('/#village');
   const quarry = page
     .locator('.buildings-grid')
@@ -132,10 +146,12 @@ test('passive production unlocks construction without navigating or clicking', a
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
 });
 
-test('battle refresh preserves keyboard focus and leaves an open modal untouched', async ({
+test('battle refresh preserves keyboard focus and leaves an open account modal untouched', async ({
   page,
 }) => {
+  await signIn(page);
   await page.clock.install({ time: new Date(START) });
+  await mockVillage(page, createGame(START));
   await page.goto('/#village');
   await page.getByRole('button', { name: 'Savunma', exact: true }).click();
   await page.getByRole('button', { name: 'Savaşı başlat', exact: true }).click();
@@ -144,8 +160,8 @@ test('battle refresh preserves keyboard focus and leaves an open modal untouched
   await page.clock.fastForward(2000);
   await expect(language).toBeFocused();
   await page.locator('.profile').click();
-  const exportButton = page.getByRole('button', { name: 'Yerel kayıt yedeği', exact: true });
-  await exportButton.focus();
+  const logout = page.getByRole('button', { name: 'Çıkış yap', exact: true });
+  await logout.focus();
   await page.clock.fastForward(2000);
-  await expect(exportButton).toBeFocused();
+  await expect(logout).toBeFocused();
 });
