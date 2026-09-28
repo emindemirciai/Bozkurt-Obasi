@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.2.4 — 2026-09-28
+
+**TR**
+
+- Ana sayfa görselinde beş muhafız kurt, obanın önünde sürüyü hilal düzeninde koruyacak şekilde yerleştirildi; yüzleri çakallara dönük kaldı.
+- Dağlar, göl, gün batımı ve oba arka planı korundu; görselin 1672×941 ölçüsü, TR/EN eşit boyutları ve ilk ekrandaki Google girişi değişmedi.
+
+**EN**
+
+- Repositioned five guardian wolves in the homepage artwork into a crescent in front of the camp, protecting the herd and facing the jackals.
+- Preserved the mountains, lake, sunset and camp background; retained the 1672×941 artwork size, equal TR/EN layout and first-screen Google sign-in.
+
 ## v1.2.3 — 2026-09-28
 
 **TR**

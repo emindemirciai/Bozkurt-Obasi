@@ -12,7 +12,8 @@ export const translations = {
     landingTitleLine2: 'Sürünü koru.',
     landingLead:
       'Kendi yurdunu büyüt, muhafız kurtlarını eğit ve çakallara karşı ay-yıldız düzeninde savunma kur.',
-    landingHeroAlt: 'Bozkırda sürüsünü koruyan kurtlar, karşılarındaki çakallara bakıyor.',
+    landingHeroAlt:
+      'Obanın önünde sürüyü hilal düzeninde koruyan kurtlar, karşılarındaki çakallara bakıyor.',
     landingSceneCaption: 'Bir oba. Bir sürü. Ortak bir yurt.',
     landingGuestHint: 'Obana ulaşmak için Google hesabınla giriş yap.',
     landingChapterOne: '01 / YURDUN HİKÂYESİ',
@@ -243,7 +244,8 @@ export const translations = {
     landingTitleLine2: 'Protect your herd.',
     landingLead:
       'Grow your homeland, train your guardian wolves and hold the crescent and star against the jackals.',
-    landingHeroAlt: 'Wolves protecting their herd on the steppe face the jackals ahead.',
+    landingHeroAlt:
+      'Wolves guard the herd in a crescent formation in front of the camp, facing the jackals ahead.',
     landingSceneCaption: 'One camp. One herd. One homeland.',
     landingGuestHint: 'Sign in with your Google account to enter your village.',
     landingChapterOne: '01 / THE HOMELAND',

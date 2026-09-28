@@ -1,10 +1,12 @@
 # Bozkurt Obası: Ay-Yıldız Nöbeti
 
-**TR:** “Obanı kur, sürünü koru.” Tarayıcıda oynanabilen köy kurma ve sürü savunma oyunu. Kurtlar ve sürü savaşta çakallara bakar.
+**TR:** “Obanı kur, sürünü koru.” Tarayıcıda oynanabilen köy kurma ve sürü savunma oyunu. Kurtlar ve sürü savaşta çakallara bakar. Ana sayfa görselinde beş kurt, obanın önünde sürüyü doğal bir hilal düzeninde korur; dağlar, göl ve gün batımı arka planı korunur.
 
-**EN:** “Build your village. Guard your herd.” A browser village builder and herd defense game. Wolves and the herd face the jackals in battle.
+**EN:** “Build your village. Guard your herd.” A browser village builder and herd defense game. Wolves and the herd face the jackals in battle. The homepage artwork shows five wolves guarding the herd in a natural crescent in front of the camp, retaining the mountain, lake and sunset background.
 
-**Güncel sürüm / Current version: v1.2.3** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
+[Görsel düzenleme kaydı ve tam istem / Artwork edit record and exact prompt](docs/HERO-ART.md)
+
+**Güncel sürüm / Current version: v1.2.4** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
 
 [Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
@@ -28,7 +30,7 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli Google oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Önce [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md), ardından ana sayfadan Google ile giriş yapın. Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** v1.2.3 ve önceki değişiklikleri gösterir. Google Cloud istemcisi ve Dokploy ortamı ayarlanana kadar giriş kapalıdır ve oyun erişimi sağlanmaz. PvP, arkadaş/sohbet, parola sıfırlama ve ödeme henüz yoktur.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** v1.2.4 ve önceki değişiklikleri gösterir. Google Cloud istemcisi ve Dokploy ortamı ayarlanana kadar giriş kapalıdır ve oyun erişimi sağlanmaz. PvP, arkadaş/sohbet, parola sıfırlama ve ödeme henüz yoktur.
 
 ### Tek Dokploy Compose, dört servis
 
@@ -75,7 +77,7 @@ Run `npm run release:version -- patch --tr "Türkçe değişiklik notu" --en "En
 
 Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, [configure Google OAuth](docs/GOOGLE-SIGNIN.md), and sign in from the homepage. The homepage and information pages are public; **the village and every other game screen require a valid Google session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.2.3 and earlier updates. Until Google Cloud credentials are configured in Dokploy, sign-in and game access remain unavailable. PvP, chat, password recovery, and payments are not yet included.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.2.4 and earlier updates. Until Google Cloud credentials are configured in Dokploy, sign-in and game access remain unavailable. PvP, chat, password recovery, and payments are not yet included.
 
 ### Four services in one Dokploy Compose stack
 
@@ -118,15 +120,15 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 
 | Kapsam / Scope                                     | Dosya / Files | Satır / Lines |
 | -------------------------------------------------- | ------------: | ------------: |
-| Web istemci / Web client                           |             8 |          5154 |
+| Web istemci / Web client                           |             8 |          5156 |
 | Web sunucu / Web server                            |             5 |          1215 |
 | Dağıtım servisleri / Deployment services           |            30 |          4014 |
 | Paylaşılan oyun / Shared game                      |             1 |           718 |
 | Web test ve araçlar / Web tests and tools          |            26 |          4448 |
 | Korunan Unity kaynakları / Preserved Unity sources |            75 |         10198 |
-| **Toplam / Total**                                 |       **145** |     **25747** |
+| **Toplam / Total**                                 |       **145** |     **25749** |
 
-Aktif web kaynakları / Active web source: **15549** satır / lines.
+Aktif web kaynakları / Active web source: **15551** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

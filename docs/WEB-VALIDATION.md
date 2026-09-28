@@ -1,22 +1,24 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-09-28. Yerel ortam / Local environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium. Sürüm / Release: **v1.2.3**.
+Tarih / Date: 2026-09-28. Yerel ortam / Local environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium. Sürüm / Release: **v1.2.4**.
 
 | Kontrol / Check                                                            | Sonuç / Result                                                                                                                                                                  |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Kaynak ve çeviriler / Source and translations                              | Geçti / Passed — 37 JavaScript dosyası, 223 eşleşen TR/EN anahtar                                                                                                               |
 | Motor, API, OAuth ve sürüm araçları / Engine, API, OAuth and release tools | 71/71 geçti / passed                                                                                                                                                            |
 | Tarayıcı / Browser                                                         | 25/25 geçti / passed — oturumlu oyun, oturumsuz bağlantı engeli, çıkış yarışı, analiz, mobil, tema ve önizleme                                                                  |
-| Üretim ve tek dosya derlemesi / Production and single-file builds          | Geçti / Passed; `preview/index.html` 701.728 bayt / bytes                                                                                                                       |
+| Üretim ve tek dosya derlemesi / Production and single-file builds          | Geçti / Passed; `preview/index.html` 779.650 bayt / bytes                                                                                                                       |
 | Biçim ve diff / Formatting and diff                                        | `npm run format:check`, `git diff --check` geçti / passed                                                                                                                       |
 | Dokploy ve yerel Compose / Production and local Compose                    | Yapılandırma doğrulandı; dört imaj derlendi / config validated; all four images built                                                                                           |
 | Konteyner smoke / Container smoke                                          | Sağlık, salt okunur non-root çalışma, yeniden başlatma öncesi/sonrası oturumsuz erişim engeli geçti / health, read-only non-root runtime and guest denial across restart passed |
 | Yerel Compose / Local Compose                                              | Dört servis `127.0.0.1:3000–3003` üzerinde healthy; sağlık ve Google giriş kapısı smoke geçti / all four healthy; health and Google gate smoke passed                           |
 | Sürüm ekranı / Release screen                                              | v1.2.2 ve TR/EN notları tarayıcıda doğrulandı; 390 px koyu tema görüntüsü incelendi / current version and both languages verified; dark mobile screenshot reviewed              |
 | Sürüm artışı / Version increase                                            | v1.2.1 taban commit'ine karşı v1.2.2 geçti; paket, kilit, README, CHANGELOG ve oyun geçmişi eşleşiyor / newer than the v1.2.1 base; all version records agree                   |
-| Kaynak satırları / Source lines                                            | 145 dosya, 25.747 fiziksel satır; 15.549 aktif web satırı / 145 files, 25,747 physical lines; 15,549 active web-source lines                                                    |
+| Kaynak satırları / Source lines                                            | 145 dosya, 25.749 fiziksel satır; 15.551 aktif web satırı / 145 files, 25,749 physical lines; 15,551 active web-source lines                                                    |
 
 ## Türkçe
+
+v1.2.4 görsel güncellemesinde beş kurt obanın önünde doğal hilal düzenine yerleştirildi; yüzleri sağdaki çakallara dönük. Dağlar, göl, gün batımı, oba ve çakallar görsel incelemeyle karşılaştırıldı. Görsel 1672×941 piksel ve 457.788 bayt WebP olarak kodlandı; kırpma veya yeniden boyutlandırma yoktur. Güncel görselle 7/7 ana sayfa tarayıcı testi geçti: dört masaüstü ölçüsü, eşit TR/EN boyutları, ilk ekranda Google girişi, mobil, tema ve dosya önizlemesi. Tam motor/API ve 25 tarayıcı testi için aşağıdaki temel kanıt v1.2.3 CI koşusundan gelir; v1.2.4 CI aynı kontrolleri tekrar çalıştırır. [İstem ve görsel kaydı](HERO-ART.md).
 
 v1.2.3 yaması ana sayfa, gizlilik ve koşullar sayfalarının görünür alt bilgisindeki MIT etiketini kaldırır; alt bilgi `© 2026 Bozkurt Obası` şeklindedir. Paket/kilit/geçmiş/README sürümleri v1.2.3 ile eşleşir ve üretim ile tek dosya önizlemesi yeniden derlendi. Aşağıdaki motor ve kapsamlı tarayıcı kanıtı v1.2.2 temelinden gelir; v1.2.3 için aynı tam kontroller GitHub Actions içinde yeniden çalışır.
 
@@ -31,6 +33,8 @@ Gerçek Google girişini açmak için [Google Cloud ve Dokploy ayarları](GOOGLE
 27 Eylül tarihli önceki VPS kontrolünde yönetici oturumu 503 `admin_unavailable`, `admin.bozkurtobasi.com/healthz` 502 döndürmüştü. Bu sürüm VPS dağıtımını doğrulamaz: Dokploy'da `ADMIN_PASSWORD`/`ADMIN_EMAIL` ve `admin:3000` alan adı eşlemesini kontrol edip yeniden dağıtın. Yerel kontroller GitHub CI sonucuyla aynı değildir; bu commit'in [GitHub Actions koşusu](https://github.com/emindemirciai/Bozkurt-Obasi/actions/workflows/web-ci.yml) ayrıca kontrol edilmelidir.
 
 ## English
+
+The v1.2.4 artwork update arranges five wolves into a natural crescent in front of the camp, facing the jackals on the right. Mountains, lake, sunset, camp and jackals were compared visually. The asset is a 1672×941, 457,788-byte WebP encoded without cropping or resizing. All 7 homepage browser tests passed with the new artwork: four desktop sizes, equal TR/EN dimensions, first-screen Google sign-in, mobile, theme and file preview. Full engine/API and 25-browser-test evidence below comes from v1.2.3 CI; v1.2.4 CI repeats those same checks. See the [prompt and artwork record](HERO-ART.md).
 
 The v1.2.3 patch removes the MIT label from visible homepage, privacy and terms footers, which now read `© 2026 Bozkurt Obası`. Package, lockfile, history and README agree on v1.2.3; production and standalone preview builds were regenerated. Engine and full browser evidence below comes from the v1.2.2 base; GitHub Actions repeats the same full checks for v1.2.3.
 
