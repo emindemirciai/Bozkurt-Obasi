@@ -4,6 +4,16 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.2.3 — 2026-09-28
+
+**TR**
+
+- Ana sayfa, gizlilik ve koşullar sayfalarının alt bilgilerindeki MIT etiketi kaldırıldı; alt bilgi artık © 2026 Bozkurt Obası şeklindedir.
+
+**EN**
+
+- Removed the MIT label from the homepage, privacy and terms page footers; the footer now reads © 2026 Bozkurt Obası.
+
 ## v1.2.2 — 2026-09-28
 
 **TR**

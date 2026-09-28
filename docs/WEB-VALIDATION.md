@@ -1,13 +1,13 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-09-28. Yerel ortam / Local environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium. Sürüm / Release: **v1.2.2**.
+Tarih / Date: 2026-09-28. Yerel ortam / Local environment: Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium. Sürüm / Release: **v1.2.3**.
 
 | Kontrol / Check                                                            | Sonuç / Result                                                                                                                                                                  |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Kaynak ve çeviriler / Source and translations                              | Geçti / Passed — 37 JavaScript dosyası, 223 eşleşen TR/EN anahtar                                                                                                               |
 | Motor, API, OAuth ve sürüm araçları / Engine, API, OAuth and release tools | 71/71 geçti / passed                                                                                                                                                            |
 | Tarayıcı / Browser                                                         | 25/25 geçti / passed — oturumlu oyun, oturumsuz bağlantı engeli, çıkış yarışı, analiz, mobil, tema ve önizleme                                                                  |
-| Üretim ve tek dosya derlemesi / Production and single-file builds          | Geçti / Passed; `preview/index.html` 701.409 bayt / bytes                                                                                                                       |
+| Üretim ve tek dosya derlemesi / Production and single-file builds          | Geçti / Passed; `preview/index.html` 701.728 bayt / bytes                                                                                                                       |
 | Biçim ve diff / Formatting and diff                                        | `npm run format:check`, `git diff --check` geçti / passed                                                                                                                       |
 | Dokploy ve yerel Compose / Production and local Compose                    | Yapılandırma doğrulandı; dört imaj derlendi / config validated; all four images built                                                                                           |
 | Konteyner smoke / Container smoke                                          | Sağlık, salt okunur non-root çalışma, yeniden başlatma öncesi/sonrası oturumsuz erişim engeli geçti / health, read-only non-root runtime and guest denial across restart passed |
@@ -17,6 +17,8 @@ Tarih / Date: 2026-09-28. Yerel ortam / Local environment: Windows, Node.js 24.1
 | Kaynak satırları / Source lines                                            | 145 dosya, 25.747 fiziksel satır; 15.549 aktif web satırı / 145 files, 25,747 physical lines; 15,549 active web-source lines                                                    |
 
 ## Türkçe
+
+v1.2.3 yaması ana sayfa, gizlilik ve koşullar sayfalarının görünür alt bilgisindeki MIT etiketini kaldırır; alt bilgi `© 2026 Bozkurt Obası` şeklindedir. Paket/kilit/geçmiş/README sürümleri v1.2.3 ile eşleşir ve üretim ile tek dosya önizlemesi yeniden derlendi. Aşağıdaki motor ve kapsamlı tarayıcı kanıtı v1.2.2 temelinden gelir; v1.2.3 için aynı tam kontroller GitHub Actions içinde yeniden çalışır.
 
 Sürüm araçları gerçek depoda v1.2.1 → v1.2.2 artışı ve yalnızca güncel CHANGELOG bölümünün TR/EN çıkarımıyla doğrulandı. Testler; sayısal SemVer karşılaştırmasını, geçersiz/eksik notlarda dosyaların değişmemesini, dry-run davranışını, yanlış commit'teki etiketin reddini, yayımlanmış sürümün korunmasını, taslağın tamamlanmasını, bozuk ZIP/eksik dosya reddini ve GitHub erişim hatalarında yayın yapılmamasını kapsar. Google imzası olumsuz testinde rastgele imzanın son karakterlerini değiştirmek yerine bir bayt kesin olarak değiştirilir; test artık nadiren geçerli imza üretmez. GitHub Release yayını, aynı koşunun test ve Docker işleri tamamlandıktan sonra çalışır; sonuç Actions bağlantısından ayrıca görülebilir. [Sürüm rehberi](RELEASING.md).
 
@@ -29,6 +31,8 @@ Gerçek Google girişini açmak için [Google Cloud ve Dokploy ayarları](GOOGLE
 27 Eylül tarihli önceki VPS kontrolünde yönetici oturumu 503 `admin_unavailable`, `admin.bozkurtobasi.com/healthz` 502 döndürmüştü. Bu sürüm VPS dağıtımını doğrulamaz: Dokploy'da `ADMIN_PASSWORD`/`ADMIN_EMAIL` ve `admin:3000` alan adı eşlemesini kontrol edip yeniden dağıtın. Yerel kontroller GitHub CI sonucuyla aynı değildir; bu commit'in [GitHub Actions koşusu](https://github.com/emindemirciai/Bozkurt-Obasi/actions/workflows/web-ci.yml) ayrıca kontrol edilmelidir.
 
 ## English
+
+The v1.2.3 patch removes the MIT label from visible homepage, privacy and terms footers, which now read `© 2026 Bozkurt Obası`. Package, lockfile, history and README agree on v1.2.3; production and standalone preview builds were regenerated. Engine and full browser evidence below comes from the v1.2.2 base; GitHub Actions repeats the same full checks for v1.2.3.
 
 Release tooling was verified with the actual v1.2.1 → v1.2.2 bump and extraction of only the current CHANGELOG section in both languages. Tests cover numeric SemVer ordering, unchanged files after invalid/missing notes, dry-run behavior, rejecting tags at another commit, preserving published releases, completing drafts, rejecting corrupt ZIPs/missing assets, and stopping on GitHub access failures. The negative Google signature test now flips a byte deterministically instead of replacing trailing characters that could occasionally remain unchanged. Publishing runs after tests and Docker jobs in the same workflow; inspect the Actions link for the remote result. See the [release guide](RELEASING.md).
 
