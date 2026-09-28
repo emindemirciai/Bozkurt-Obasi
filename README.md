@@ -4,11 +4,17 @@
 
 **EN:** “Build your village. Guard your herd.” A browser village builder and herd defense game. Wolves and the herd face the jackals in battle.
 
-**Güncel sürüm / Current version: v1.2.1** · [Sürüm geçmişi / Changelog](CHANGELOG.md)
+**Güncel sürüm / Current version: v1.2.2** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
 
 [Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
 ## Türkçe
+
+GitHub About bölümü oyun açıklamasını, `https://bozkurtobasi.com` site bağlantısını ve proje konularını içerir. Görünür sayfa alt bilgisi `© 2026 Bozkurt Obası · MIT` şeklindedir. Ana görsel alanı TR/EN'de aynı ölçüyü kullanır, masaüstünde ilk ekrana sığar ve Google girişi burada görünür; sayfa sonunda tekrar giriş düğmesi yoktur.
+
+### Her tamamlanan iş için sürüm
+
+`npm run release:version -- patch --tr "Türkçe değişiklik notu" --en "English change note"` komutu paket sürümünü, kilit dosyasını, oyun içi sürüm geçmişini, CHANGELOG ve README'yi birlikte ilerletir. Yeni özellikler için `minor`, uyumsuz değişiklikler için `major` kullanın. Sürüm ve notlar commit'e dahildir. `main` dalına birleşme veya push sonrasında testler ve dört servis kontrolü geçerse GitHub Actions otomatik olarak `vX.Y.Z` etiketi ve CHANGELOG'daki TR/EN notlarla Release oluşturur; temiz kaynak ZIP'i, SHA-256 ve görsel `index.html` sürüme eklenir. CI, sürümün önceki `main` kaydından ilerlemesini zorunlu tutar. [Sürüm rehberi](docs/RELEASING.md).
 
 ### Ana sayfayı önizle ve oyuna giriş yap
 
@@ -22,18 +28,18 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli Google oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Önce [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md), ardından ana sayfadan Google ile giriş yapın. Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** v1.2.1 ve önceki değişiklikleri gösterir. Google Cloud istemcisi ve Dokploy ortamı ayarlanana kadar giriş kapalıdır ve oyun erişimi sağlanmaz. PvP, arkadaş/sohbet, parola sıfırlama ve ödeme henüz yoktur.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Oyundaki **Sürüm geçmişi** v1.2.2 ve önceki değişiklikleri gösterir. Google Cloud istemcisi ve Dokploy ortamı ayarlanana kadar giriş kapalıdır ve oyun erişimi sağlanmaz. PvP, arkadaş/sohbet, parola sıfırlama ve ödeme henüz yoktur.
 
 ### Tek Dokploy Compose, dört servis
 
 Dokploy'da depo `main` dalını bağlayın. Ekrandaki **Compose Path = `./docker-compose.yml`** ayarı doğrudan çalışır; `./compose.yml` aynı dört servisi içerir. Servislerin tamamı tek Compose içinde üretilir:
 
-| Alan adı | Dokploy servisi | Port | İşlev |
-| --- | --- | ---: | --- |
-| `bozkurtobasi.com` ve `www.bozkurtobasi.com` | `web` | 3000 | Görselli ana sayfa, oyun, gizlilik/koşullar ve aynı kaynaklı `/api` proxy |
-| `api.bozkurtobasi.com` | `api` | 3000 | Oyun API'si ve yönetici kimlik doğrulaması |
-| `admin.bozkurtobasi.com` | `admin` | 3000 | İki dilli yönetim paneli; canlı 502 için Dokploy eşlemesi incelenmeli |
-| `analiz.bozkurtobasi.com` | `analyze` | 3000 | Trafik kolektörü ve analiz paneli |
+| Alan adı                                     | Dokploy servisi | Port | İşlev                                                                     |
+| -------------------------------------------- | --------------- | ---: | ------------------------------------------------------------------------- |
+| `bozkurtobasi.com` ve `www.bozkurtobasi.com` | `web`           | 3000 | Görselli ana sayfa, oyun, gizlilik/koşullar ve aynı kaynaklı `/api` proxy |
+| `api.bozkurtobasi.com`                       | `api`           | 3000 | Oyun API'si ve yönetici kimlik doğrulaması                                |
+| `admin.bozkurtobasi.com`                     | `admin`         | 3000 | İki dilli yönetim paneli; canlı 502 için Dokploy eşlemesi incelenmeli     |
+| `analiz.bozkurtobasi.com`                    | `analyze`       | 3000 | Trafik kolektörü ve analiz paneli                                         |
 
 Güncel [üretim ortamı örneğini](.env.production.example) Dokploy Environment için temel alın. Örnek, yalnızca Compose tarafından okunan değiştirilebilir anahtarları içerir; gerçek sır içermez. **`ADMIN_PASSWORD` değerini en az 12 karakterlik güçlü bir sır** olarak Dokploy'da tanımlayın. Compose'un varsayılan yönetici e-postası `info@bozkurtobasi.com`; örnek üretim ortamı, girişte kullanılan `emindemirci.ai@gmail.com` adresini `ADMIN_EMAIL` olarak ayarlar. Parola olmadan oyun ve sağlık kontrolleri çalışır, ancak yönetim/analiz girişi kapalı kalır. Parolayı Git'e, ZIP'e veya ekran görüntüsüne koymayın. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` Compose'da hazırdır. Verdiğiniz diğer `ANALYZE_*` varsayılanları da [Compose dosyasında](compose.yml) tanımlıdır. Domain değişikliklerinden sonra Dokploy'da yeniden dağıtın.
 
@@ -59,11 +65,17 @@ Portlar: oyun <http://127.0.0.1:3000>, API <http://127.0.0.1:3001>, yönetim <ht
 
 ## English
 
+GitHub About includes the game description, `https://bozkurtobasi.com` website link and project topics. Visible page footers show `© 2026 Bozkurt Obası · MIT`. The hero uses equal TR/EN dimensions, fits the first desktop screen and displays Google sign-in there; the bottom of the page does not repeat the sign-in button.
+
+### A version for each completed update
+
+Run `npm run release:version -- patch --tr "Türkçe değişiklik notu" --en "English change note"` to advance the package, lockfile, in-game history, CHANGELOG and README together. Use `minor` for new features and `major` for breaking changes. Commit the version and notes with the change. After a merge or push to `main`, passing tests and all four service checks trigger an automatic `vX.Y.Z` tag and GitHub Release with this version's TR/EN CHANGELOG notes, clean source ZIP, SHA-256 and visual `index.html`. CI requires a version newer than the previous `main` revision. See the [release guide](docs/RELEASING.md).
+
 ### Preview the homepage and sign in to play
 
 Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, [configure Google OAuth](docs/GOOGLE-SIGNIN.md), and sign in from the homepage. The homepage and information pages are public; **the village and every other game screen require a valid Google session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.2.1 and earlier updates. Until Google Cloud credentials are configured in Dokploy, sign-in and game access remain unavailable. PvP, chat, password recovery, and payments are not yet included.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. The in-game **Release history** shows v1.2.2 and earlier updates. Until Google Cloud credentials are configured in Dokploy, sign-in and game access remain unavailable. PvP, chat, password recovery, and payments are not yet included.
 
 ### Four services in one Dokploy Compose stack
 
@@ -85,35 +97,36 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 
 ## Depo yapısı / Repository layout
 
-| Yol / Path | İçerik / Contents |
-| --- | --- |
-| `web/`, `shared/` | Görselli ana sayfa, oyun arayüzü ve kuralları / Visual homepage, game UI and rules |
-| `web/assets/`, `public/` | Ana görsel, gizlilik ve koşullar / Hero art, privacy and terms |
-| `server/web/` | Oyun, Google ve yönetici API'si, SQLite / Game, Google and admin API, SQLite |
-| `services/web/` | Nginx oyun gateway / Nginx game gateway |
-| `services/admin/` | İki dilli yönetim arayüzü / Bilingual admin UI |
-| `services/analyze/` | MIT lisanslı analiz paneli ve kolektör / MIT analytics dashboard and collector |
-| `tests/`, `scripts/` | Test, önizleme, ölçüm ve ZIP / Tests, preview, metrics, and ZIP |
-| `preview/index.html` | Tek dosyalık görsel ana sayfa önizlemesi; oyun için Google girişi gerekir / Standalone visual homepage preview; game requires Google sign-in |
-| `releases.json`, `CHANGELOG.md` | İki dilli sürüm kayıtları / Bilingual release history |
-| `.env.production.example` | Dokploy üretim ortamı örneği / Production environment example |
-| `docs/GOOGLE-SIGNIN.md` | İki dilli Google OAuth kurulumu / Bilingual Google OAuth setup |
-| `Assets/`, `client/`, `infrastructure/` | Korunan Unity dönemi kaynakları / Preserved Unity-era sources |
+| Yol / Path                              | İçerik / Contents                                                                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web/`, `shared/`                       | Görselli ana sayfa, oyun arayüzü ve kuralları / Visual homepage, game UI and rules                                                           |
+| `web/assets/`, `public/`                | Ana görsel, gizlilik ve koşullar / Hero art, privacy and terms                                                                               |
+| `server/web/`                           | Oyun, Google ve yönetici API'si, SQLite / Game, Google and admin API, SQLite                                                                 |
+| `services/web/`                         | Nginx oyun gateway / Nginx game gateway                                                                                                      |
+| `services/admin/`                       | İki dilli yönetim arayüzü / Bilingual admin UI                                                                                               |
+| `services/analyze/`                     | MIT lisanslı analiz paneli ve kolektör / MIT analytics dashboard and collector                                                               |
+| `tests/`, `scripts/`                    | Test, önizleme, ölçüm ve ZIP / Tests, preview, metrics, and ZIP                                                                              |
+| `preview/index.html`                    | Tek dosyalık görsel ana sayfa önizlemesi; oyun için Google girişi gerekir / Standalone visual homepage preview; game requires Google sign-in |
+| `releases.json`, `CHANGELOG.md`         | İki dilli sürüm kayıtları / Bilingual release history                                                                                        |
+| `.env.production.example`               | Dokploy üretim ortamı örneği / Production environment example                                                                                |
+| `docs/GOOGLE-SIGNIN.md`                 | İki dilli Google OAuth kurulumu / Bilingual Google OAuth setup                                                                               |
+| `Assets/`, `client/`, `infrastructure/` | Korunan Unity dönemi kaynakları / Preserved Unity-era sources                                                                                |
 
 ## Kaynak satırları / Source line counts
 
 <!-- metrics:start -->
-| Kapsam / Scope | Dosya / Files | Satır / Lines |
-| --- | ---: | ---: |
-| Web istemci / Web client | 8 | 5150 |
-| Web sunucu / Web server | 5 | 1215 |
-| Dağıtım servisleri / Deployment services | 30 | 4014 |
-| Paylaşılan oyun / Shared game | 1 | 718 |
-| Web test ve araçlar / Web tests and tools | 20 | 2752 |
-| Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **139** | **24047** |
 
-Aktif web kaynakları / Active web source: **13849** satır / lines.
+| Kapsam / Scope                                     | Dosya / Files | Satır / Lines |
+| -------------------------------------------------- | ------------: | ------------: |
+| Web istemci / Web client                           |             8 |          5154 |
+| Web sunucu / Web server                            |             5 |          1215 |
+| Dağıtım servisleri / Deployment services           |            30 |          4014 |
+| Paylaşılan oyun / Shared game                      |             1 |           718 |
+| Web test ve araçlar / Web tests and tools          |            26 |          4448 |
+| Korunan Unity kaynakları / Preserved Unity sources |            75 |         10198 |
+| **Toplam / Total**                                 |       **145** |     **25747** |
+
+Aktif web kaynakları / Active web source: **15549** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

@@ -1,6 +1,26 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "releases": [
+    {
+      "version": "1.2.2",
+      "date": "2026-09-28",
+      "changes": {
+        "tr": [
+          "main güncellemelerinde başarılı test ve dört servis kontrolünden sonra otomatik Git etiketi ve TR/EN GitHub Release yayını eklendi.",
+          "Sürümler temiz kaynak ZIP, SHA-256 ve görsel index.html ile teslim edilir; güncel sürüm README ve GitHub Releases bölümünde görünür.",
+          "Tek komutla sürüm kayıtlarını birlikte ilerleten araç, sürüm artışını zorunlu tutan CI kontrolü ve güvenli tekrar yayın desteği eklendi.",
+          "GitHub About açıklaması, site bağlantısı ve proje konuları eklendi; görünür sayfa alt bilgilerindeki kişi adı kaldırıldı.",
+          "Ana sayfa görseli TR/EN dil değişiminde aynı ölçüde kalır ve masaüstünde ilk ekrana sığar; sayfa sonundaki tekrarlanan Google girişi kaldırıldı."
+        ],
+        "en": [
+          "Added automatic Git tags and TR/EN GitHub Releases after successful tests and four-service checks on main updates.",
+          "Releases include a clean source ZIP, SHA-256 and visual index.html; the current version appears in README and GitHub Releases.",
+          "Added one-command version updates, a CI version-increase requirement and safe publishing retries.",
+          "Added the GitHub About description, website link and project topics; removed the personal name from visible page footers.",
+          "Homepage artwork keeps the same size across TR/EN and fits the first desktop screen; removed the repeated Google sign-in at the bottom of the page."
+        ]
+      }
+    },
     {
       "version": "1.2.1",
       "date": "2026-09-28",

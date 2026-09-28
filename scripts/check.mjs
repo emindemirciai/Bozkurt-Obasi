@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { projectFiles, projectRoot } from './project-files.mjs';
+import { readReleaseMetadata } from './release-version.mjs';
 
 const fail = (message) => {
   throw new Error(message);
@@ -109,6 +110,7 @@ for (const release of releases.releases) {
   }
 }
 const environment = await readFile(path.join(projectRoot, '.env.production.example'), 'utf8');
+await readReleaseMetadata(projectRoot);
 const composeInputs = [...compose.matchAll(/\$\{([A-Z][A-Z0-9_]*):-/g)].map((match) => match[1]);
 const exampleInputs = [...environment.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1]);
 if (

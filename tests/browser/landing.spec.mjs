@@ -7,6 +7,93 @@ import { signIn } from './sign-in.mjs';
 
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
 
+async function heroGeometry(page) {
+  return page.locator('.landing-hero').evaluate((hero) => {
+    const bounds = (element) => {
+      const { x, y, width, height, bottom, right } = element.getBoundingClientRect();
+      return { x, y, width, height, bottom, right };
+    };
+    const image = hero.querySelector('.landing-hero-art');
+    const imageBox = bounds(image);
+    const scale = Math.min(
+      imageBox.width / image.naturalWidth,
+      imageBox.height / image.naturalHeight,
+    );
+    return {
+      hero: bounds(hero),
+      image: imageBox,
+      title: bounds(hero.querySelector('h1')),
+      signIn: bounds(hero.querySelector('.landing-google')),
+      fit: getComputedStyle(image).objectFit,
+      paintedWidth: image.naturalWidth * scale,
+      paintedHeight: image.naturalHeight * scale,
+    };
+  });
+}
+
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 1366, height: 768 },
+  { width: 1905, height: 910 },
+  { width: 1920, height: 1080 },
+]) {
+  test(`complete hero and sign-in fit the first screen in both languages at ${viewport.width}x${viewport.height}`, async ({
+    page,
+  }) => {
+    let enabled = true;
+    await page.setViewportSize(viewport);
+    await page.route('**/api/auth/google/status', (route) =>
+      route.fulfill(json({ enabled, authenticated: false })),
+    );
+    await page.goto('/');
+    await expect(page.locator('.landing-google')).toHaveCount(1);
+    await expect(page.locator('.landing-google')).toHaveAttribute('href', '/api/auth/google/start');
+    await expect
+      .poll(() => page.locator('.landing-hero-art').evaluate((image) => image.naturalWidth))
+      .toBeGreaterThan(0);
+    const tr = await heroGeometry(page);
+    await page.getByRole('button', { name: 'Switch to English' }).click();
+    const en = await heroGeometry(page);
+
+    for (const geometry of [tr, en]) {
+      expect(geometry.hero.bottom).toBeLessThanOrEqual(viewport.height);
+      expect(geometry.signIn.y).toBeGreaterThanOrEqual(geometry.hero.y);
+      expect(geometry.signIn.bottom).toBeLessThanOrEqual(viewport.height);
+      expect(geometry.signIn.right).toBeLessThanOrEqual(viewport.width);
+      expect(geometry.fit).toBe('contain');
+      expect(geometry.paintedWidth).toBeLessThanOrEqual(geometry.image.width + 0.1);
+      expect(geometry.paintedHeight).toBeLessThanOrEqual(geometry.image.height + 0.1);
+      expect(geometry.image.y).toBeGreaterThanOrEqual(geometry.hero.y);
+      expect(geometry.image.bottom).toBeLessThanOrEqual(geometry.hero.bottom);
+    }
+    expect(en.hero).toEqual(tr.hero);
+    expect(en.image).toEqual(tr.image);
+    expect(Math.abs(en.title.height - tr.title.height)).toBeLessThan(1);
+    await expect(page.locator('.landing-finale .landing-google')).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      viewport.width,
+    );
+    await mkdir('artifacts', { recursive: true });
+    await page.screenshot({
+      path: `artifacts/landing-fit-en-${viewport.width}x${viewport.height}.png`,
+    });
+    await page.getByRole('button', { name: 'Türkçeye geç' }).click();
+    await page.screenshot({
+      path: `artifacts/landing-fit-tr-${viewport.width}x${viewport.height}.png`,
+    });
+    enabled = false;
+    await page.reload();
+    await expect(page.locator('.landing-google')).toBeDisabled();
+    await expect(page.locator('.landing-google-unavailable small')).toContainText(
+      'Oyun için giriş gereklidir.',
+    );
+    const unavailable = await heroGeometry(page);
+    expect(unavailable.hero).toEqual(tr.hero);
+    expect(unavailable.signIn.bottom).toBeLessThanOrEqual(viewport.height);
+    expect(unavailable.signIn.y).toBeGreaterThanOrEqual(tr.hero.y);
+  });
+}
+
 test('visual homepage gates game navigation until Google sign-in', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -124,6 +211,31 @@ test('mobile homepage scroll survives passive game updates and offline preview s
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /Obanı kur.*Sürünü koru/s })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await expect(page.locator('.landing-google')).toHaveCount(1);
+  await expect
+    .poll(() => page.locator('.landing-hero-art').evaluate((image) => image.naturalWidth))
+    .toBeGreaterThan(0);
+  const mobileImage = await page.locator('.landing-hero-art').evaluate((image) => {
+    const bounds = image.getBoundingClientRect();
+    return {
+      x: bounds.x,
+      width: bounds.width,
+      height: bounds.height,
+      ratio: image.naturalWidth / image.naturalHeight,
+      fit: getComputedStyle(image).objectFit,
+    };
+  });
+  expect(mobileImage.x).toBe(0);
+  expect(mobileImage.width).toBe(390);
+  expect(mobileImage.width / mobileImage.height).toBeCloseTo(mobileImage.ratio, 2);
+  expect(mobileImage.fit).toBe('contain');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  const mobileEnImage = await page.locator('.landing-hero-art').boundingBox();
+  expect(mobileEnImage.width).toBe(mobileImage.width);
+  expect(mobileEnImage.height).toBeCloseTo(mobileImage.height, 2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: 'artifacts/landing-mobile-en.png', fullPage: true });
+  await page.getByRole('button', { name: 'Türkçeye geç' }).click();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const before = await page.evaluate(() => window.scrollY);
   await page.clock.fastForward(6_100);

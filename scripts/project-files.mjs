@@ -21,6 +21,7 @@ const excludedDirectories = new Set([
   '.cache',
   '.npm-cache',
   'artifacts',
+  'release-assets',
   'data',
   'playwright-report',
   'test-results',

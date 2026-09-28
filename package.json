@@ -1,6 +1,6 @@
 {
   "name": "bozkurt-obasi",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -30,6 +30,9 @@
     "test:e2e": "playwright test",
     "count:lines": "node scripts/count-lines.mjs",
     "backup": "node scripts/backup.mjs",
+    "release:version": "node scripts/release-version.mjs",
+    "release:notes": "node scripts/release-notes.mjs",
+    "release:check": "node scripts/release-version.mjs check",
     "verify": "npm run check && npm test && npm run build && npm run build:preview && npm run test:e2e"
   },
   "devDependencies": {

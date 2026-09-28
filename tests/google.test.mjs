@@ -19,8 +19,9 @@ function jwt(privateKey, claims, signatureValid = true) {
   ).toString('base64url');
   const payload = Buffer.from(JSON.stringify(claims)).toString('base64url');
   const value = `${header}.${payload}`;
-  const signature = sign('RSA-SHA256', Buffer.from(value), privateKey).toString('base64url');
-  return `${value}.${signatureValid ? signature : signature.slice(0, -2) + 'AA'}`;
+  const signature = sign('RSA-SHA256', Buffer.from(value), privateKey);
+  if (!signatureValid) signature[0] ^= 1;
+  return `${value}.${signature.toString('base64url')}`;
 }
 
 function cookie(response, name) {

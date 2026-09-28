@@ -1,8 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { signIn } from './sign-in.mjs';
+
+const releaseHistory = JSON.parse(
+  await readFile(new URL('../../releases.json', import.meta.url), 'utf8'),
+);
 
 test.beforeEach(async ({ page }) => signIn(page));
 
@@ -115,19 +119,21 @@ test('appearance persists and the bilingual release history remains readable on 
 
   await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Yenilikler', exact: true })).toBeVisible();
-  await expect(page.locator('.release-card')).toHaveCount(4);
+  await expect(page.locator('.release-card')).toHaveCount(releaseHistory.releases.length);
   await expect(page.locator('.release-card').first()).toHaveAttribute(
     'data-release-version',
-    '1.2.1',
+    releaseHistory.version,
   );
-  await expect(page.locator('.release-card').first()).toContainText('Google oturumu');
-  await expect(page.locator('.release-card').nth(2)).toContainText('tema seçimi');
+  for (const change of releaseHistory.releases[0].changes.tr)
+    await expect(page.locator('.release-card').first()).toContainText(change);
+  await expect(page.locator('[data-release-version="1.1.0"]')).toContainText('tema seçimi');
   await expect(page.locator('.release-card').last()).toContainText('Köy kurma');
 
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await expect(page.getByRole('heading', { name: 'What’s new', exact: true })).toBeVisible();
-  await expect(page.locator('.release-card').first()).toContainText('Google session');
-  await expect(page.locator('.release-card').nth(2)).toContainText('light/dark theme');
+  for (const change of releaseHistory.releases[0].changes.en)
+    await expect(page.locator('.release-card').first()).toContainText(change);
+  await expect(page.locator('[data-release-version="1.1.0"]')).toContainText('light/dark theme');
   await expect(page.locator('.release-card').last()).toContainText('village builder');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

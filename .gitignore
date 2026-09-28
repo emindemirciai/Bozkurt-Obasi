@@ -59,6 +59,7 @@ node_modules/
 .npm-cache/
 dist/
 artifacts/
+release-assets/
 data/
 test-results/
 playwright-report/
