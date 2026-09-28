@@ -60,7 +60,7 @@ function applyTheme() {
   button.setAttribute('aria-label', label);
   button.setAttribute('title', label);
   button.setAttribute('aria-pressed', String(theme === 'dark'));
-  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0b151b' : '#f5f2e9';
+  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#211a16' : '#f5f2e9';
 }
 
 function translate() {

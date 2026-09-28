@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.2.5 — 2026-09-29
+
+**TR**
+
+- Koyu tema ana sayfa, oyun, yönetim ve analiz ekranlarında sıcak kahverengi ve toprak tonlarına taşındı; vurgu alanlarında bozkır yeşili kullanılıyor.
+- Krem metinler, altın vurgular ve uyumlu kart, düğme, bildirim ve pencere renkleriyle okunabilirlik iyileştirildi; açık tema ve ana görsel ölçüleri korundu.
+
+**EN**
+
+- Dark mode now uses warm brown and earth tones across the homepage, game, admin and analytics screens, with steppe green accents.
+- Cream text, gold highlights and coordinated cards, buttons, notices and dialogs improve readability; light mode and hero image dimensions remain unchanged.
+
 ## v1.2.4 — 2026-09-28
 
 **TR**

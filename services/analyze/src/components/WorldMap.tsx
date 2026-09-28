@@ -551,12 +551,12 @@ export default function WorldMap({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="absolute right-5 top-5 z-10 flex overflow-hidden rounded-lg border border-blue-950/70 bg-blue-950/60 shadow">
+      <div className={`absolute right-5 top-5 z-10 flex overflow-hidden rounded-lg border shadow ${isDark ? "analyze-dark-map-toolbar" : "border-blue-950/70 bg-blue-950/60"}`}>
         <button
           type="button"
           onClick={zoomOut}
           disabled={position.zoom <= 1}
-          className="h-8 w-9 text-sm font-bold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`h-8 w-9 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${isDark ? "analyze-dark-map-button" : "text-white hover:bg-blue-900"}`}
           aria-label={language === "tr" ? "Haritayı uzaklaştır" : "Zoom out"}
           title={language === "tr" ? "Uzaklaştır" : "Zoom out"}
         >
@@ -565,7 +565,7 @@ export default function WorldMap({
         <button
           type="button"
           onClick={resetZoom}
-          className="h-8 min-w-14 border-x border-blue-900 px-3 text-sm font-bold text-white transition hover:bg-blue-900"
+          className={`h-8 min-w-14 border-x px-3 text-sm font-bold transition ${isDark ? "analyze-dark-map-button" : "border-blue-900 text-white hover:bg-blue-900"}`}
           aria-label={language === "tr" ? "Yakınlaştırmayı sıfırla" : "Reset zoom"}
           title={language === "tr" ? "Sıfırla" : "Reset"}
         >
@@ -575,7 +575,7 @@ export default function WorldMap({
           type="button"
           onClick={zoomIn}
           disabled={position.zoom >= 6}
-          className="h-8 w-9 text-sm font-bold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`h-8 w-9 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${isDark ? "analyze-dark-map-button" : "text-white hover:bg-blue-900"}`}
           aria-label={language === "tr" ? "Haritayı yakınlaştır" : "Zoom in"}
           title={language === "tr" ? "Yakınlaştır" : "Zoom in"}
         >
@@ -615,26 +615,26 @@ export default function WorldMap({
                     style={{
                       default: {
                         fill: active
-                          ? `rgba(37, 99, 235, ${intensity})`
+                          ? isDark ? `rgba(129, 150, 106, ${intensity})` : `rgba(37, 99, 235, ${intensity})`
                           : isDark
-                            ? "rgba(39, 39, 42, 0.96)"
+                            ? "rgba(71, 54, 42, 0.96)"
                             : "rgba(226, 232, 240, 0.98)",
                         stroke: isDark
-                          ? "rgba(24, 24, 27, 1)"
+                          ? "rgba(48, 36, 29, 1)"
                           : "rgba(203, 213, 225, 1)",
                         strokeWidth: 0.55,
                         outline: "none",
                       },
                       hover: {
                         fill: active
-                          ? "rgba(59, 130, 246, 1)"
+                          ? isDark ? "rgba(181, 201, 151, 1)" : "rgba(59, 130, 246, 1)"
                           : isDark
-                            ? "rgba(63, 63, 70, 1)"
+                            ? "rgba(96, 75, 59, 1)"
                             : "rgba(203, 213, 225, 1)",
                         stroke: active
-                          ? "rgba(147, 197, 253, 0.95)"
+                          ? isDark ? "rgba(242, 229, 206, 0.95)" : "rgba(147, 197, 253, 0.95)"
                           : isDark
-                            ? "rgba(113, 113, 122, 1)"
+                            ? "rgba(150, 118, 90, 1)"
                             : "rgba(148, 163, 184, 1)",
                         strokeWidth: active ? 0.9 : 0.75,
                         outline: "none",
@@ -642,9 +642,9 @@ export default function WorldMap({
                       },
                       pressed: {
                         fill: active
-                          ? "rgba(37, 99, 235, 1)"
+                          ? isDark ? "rgba(129, 150, 106, 1)" : "rgba(37, 99, 235, 1)"
                           : isDark
-                            ? "rgba(63, 63, 70, 1)"
+                            ? "rgba(96, 75, 59, 1)"
                             : "rgba(203, 213, 225, 1)",
                         outline: "none",
                       },
@@ -663,11 +663,11 @@ export default function WorldMap({
             return (
               <Marker key={`marker-${country.id}`} coordinates={coordinates}>
                 {/* hale + buyuk nokta: kucuk ada ulkeler de gorunur ve hoverlanabilir olsun */}
-                <circle r={11} fill="rgba(59, 130, 246, 0.22)" stroke="none" />
+                <circle r={11} fill={isDark ? "rgba(129, 150, 106, 0.22)" : "rgba(59, 130, 246, 0.22)"} stroke="none" />
                 <circle
                   r={6.5}
-                  fill="#3b82f6"
-                  stroke="#ffffff"
+                  fill={isDark ? "#81966a" : "#3b82f6"}
+                  stroke={isDark ? "#f2e5ce" : "#ffffff"}
                   strokeWidth={2}
                   style={{ cursor: "pointer" }}
                   onMouseMove={(event) =>
@@ -690,7 +690,7 @@ export default function WorldMap({
         <div
           className={`pointer-events-none absolute z-20 min-w-[220px] rounded-xl border px-3 py-2 text-xs shadow-lg ${
             isDark
-              ? "border-slate-700 bg-slate-950/95 text-white"
+              ? "analyze-dark-panel"
               : "border-slate-200 bg-white/95 text-slate-950"
           }`}
           style={{
@@ -701,13 +701,13 @@ export default function WorldMap({
           <div className="mb-1 flex items-center gap-2 font-bold">
             <span
               className={`h-2 w-2 rounded-full ${
-                tooltip.visitors > 0 ? "bg-blue-400" : "bg-zinc-500"
+                tooltip.visitors > 0 ? isDark ? "analyze-dark-sage-dot" : "bg-blue-400" : isDark ? "analyze-dark-dot" : "bg-zinc-500"
               }`}
             />
             {tooltip.name}
           </div>
 
-          <div className={isDark ? "text-slate-300" : "text-slate-600"}>
+          <div className={isDark ? "analyze-dark-muted" : "text-slate-600"}>
             {tooltip.visitors} {visitorText} ·{" "}
             {language === "tr" ? `%${tooltip.percent}` : `${tooltip.percent}%`}
           </div>
@@ -715,14 +715,14 @@ export default function WorldMap({
           {tooltip.cities.length > 0 && (
             <div
               className={`mt-2 space-y-1 border-t pt-2 ${
-                isDark ? "border-slate-700" : "border-slate-200"
+                isDark ? "analyze-dark-rule" : "border-slate-200"
               }`}
             >
               {tooltip.cities.map((city) => (
                 <div
                   key={city.city}
                   className={`whitespace-nowrap text-[11px] ${
-                    isDark ? "text-slate-200" : "text-slate-700"
+                    isDark ? "analyze-dark-ink" : "text-slate-700"
                   }`}
                 >
                   {language === "tr"
@@ -737,7 +737,7 @@ export default function WorldMap({
 
       <p
         className={`mt-2 border-t pt-3 text-center text-xs italic ${
-          isDark ? "border-zinc-800 text-zinc-500" : "border-slate-200 text-slate-400"
+          isDark ? "analyze-dark-rule analyze-dark-muted" : "border-slate-200 text-slate-400"
         }`}
       >
         {footerText}

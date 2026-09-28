@@ -2251,28 +2251,28 @@ footer > span:first-child {
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  color: #e7efe4;
-  background: #111d18;
-  --forest: #9ac6a0;
-  --muted: #a6b7a7;
-  --line: #324b3e;
-  --gold: #d9b774;
+  color: #f2e5ce;
+  background: #211a16;
+  --forest: #d9be8d;
+  --muted: #c1ab8d;
+  --line: #604b3b;
+  --gold: #d0ae6f;
 }
 :root[data-theme='dark'] .rail {
-  background: #0b1913;
-  color: #c7d7c2;
-  border-right: 1px solid #314a39;
+  background: #1c1612;
+  color: #e1ceb2;
+  border-right: 1px solid #574334;
 }
 :root[data-theme='dark'] .nav-item,
 :root[data-theme='dark'] .rail-help {
-  color: #adc7ad;
+  color: #bba88b;
 }
 :root[data-theme='dark'] .nav-item.active {
   color: #f0dea9;
-  background: #ffffff12;
+  background: #81966a26;
 }
 :root[data-theme='dark'] .topbar {
-  background: #192a22;
+  background: #30241d;
 }
 :root[data-theme='dark'] .wordmark span,
 :root[data-theme='dark'] .eyebrow,
@@ -2294,7 +2294,7 @@ footer > span:first-child {
 :root[data-theme='dark'] .recovery-bar p,
 :root[data-theme='dark'] footer,
 :root[data-theme='dark'] .release-card time {
-  color: #afbfab;
+  color: #c1ab8d;
 }
 :root[data-theme='dark'] .page-heading h1,
 :root[data-theme='dark'] .section-heading h2,
@@ -2303,7 +2303,7 @@ footer > span:first-child {
 :root[data-theme='dark'] .world-banner h2,
 :root[data-theme='dark'] .modal h2,
 :root[data-theme='dark'] .release-version {
-  color: #e8f0dd;
+  color: #f2e5ce;
 }
 :root[data-theme='dark'] .page-heading p,
 :root[data-theme='dark'] .section-heading p,
@@ -2311,21 +2311,21 @@ footer > span:first-child {
 :root[data-theme='dark'] .modal p,
 :root[data-theme='dark'] .weather span,
 :root[data-theme='dark'] .weather small {
-  color: #b4c6b1;
+  color: #cdb89b;
 }
 :root[data-theme='dark'] .connection,
 :root[data-theme='dark'] .language {
-  color: #d4e2ce;
+  color: #e1ceb2;
 }
 :root[data-theme='dark'] .theme-toggle,
 :root[data-theme='dark'] .profile {
-  color: #e4d39d;
-  background: #2a4736;
-  border-color: #416449;
+  color: #ead4a5;
+  background: #3a4730;
+  border-color: #667a53;
 }
 :root[data-theme='dark'] .theme-toggle:hover,
 :root[data-theme='dark'] .profile:hover {
-  background: #355640;
+  background: #48583a;
 }
 :root[data-theme='dark'] .resource-bar,
 :root[data-theme='dark'] .map-card,
@@ -2336,11 +2336,11 @@ footer > span:first-child {
 :root[data-theme='dark'] .region-card,
 :root[data-theme='dark'] .quest-card,
 :root[data-theme='dark'] .release-card article {
-  background: #1c2e25;
+  background: #30241d;
   border-color: var(--line);
 }
 :root[data-theme='dark'] .map-toolbar {
-  background: #1c2e25;
+  background: #30241d;
 }
 :root[data-theme='dark'] .resource:not(:last-child):after,
 :root[data-theme='dark'] .detail-stats,
@@ -2356,11 +2356,11 @@ footer > span:first-child {
 :root[data-theme='dark'] .guardian-portrait,
 :root[data-theme='dark'] .quest-icon,
 :root[data-theme='dark'] .modal-icon {
-  background: #294336;
-  color: #c7d2a7;
+  background: #3a4730;
+  color: #d2ddbc;
 }
 :root[data-theme='dark'] .scene-wrap {
-  background: #496650;
+  background: #526348;
 }
 :root[data-theme='dark'] .landscape {
   filter: brightness(0.75) saturate(0.85);
@@ -2371,43 +2371,43 @@ footer > span:first-child {
 :root[data-theme='dark'] .map-bottom-note,
 :root[data-theme='dark'] .subtle-count,
 :root[data-theme='dark'] .level-badge {
-  color: #d2dfbd;
-  background: #253f31e8;
-  border-color: #557255;
+  color: #e1ceb2;
+  background: #3a2b22ed;
+  border-color: #79604a;
 }
 :root[data-theme='dark'] .icon-button {
-  color: #d4e7ca;
+  color: #e1ceb2;
 }
 :root[data-theme='dark'] .icon-button:hover {
-  background: #3b5c45;
+  background: #4a392d;
 }
 :root[data-theme='dark'] .button.primary {
-  background: #417450;
+  background: #536347;
   color: #ffffff;
-  border-color: #598963;
+  border-color: #81966a;
 }
 :root[data-theme='dark'] .button.primary:hover:not(:disabled) {
-  background: #4d865c;
+  background: #617452;
 }
 :root[data-theme='dark'] .button.outline,
 :root[data-theme='dark'] .small-button {
-  border-color: #53735a;
-  color: #d4e7c4;
-  background: #284333;
+  border-color: #79604a;
+  color: #e1ceb2;
+  background: #3a2b22;
 }
 :root[data-theme='dark'] .button.outline:hover:not(:disabled),
 :root[data-theme='dark'] .small-button:hover:not(:disabled) {
-  background: #385943;
+  background: #4a392d;
 }
 :root[data-theme='dark'] .button.text-button {
-  color: #d0dfc3;
+  color: #e1ceb2;
 }
 :root[data-theme='dark'] .quest-callout,
 :root[data-theme='dark'] .world-banner,
 :root[data-theme='dark'] .guardian-card.selected,
 :root[data-theme='dark'] .quest-complete {
-  background: #283d2d;
-  border-color: #486345;
+  background: #3a4730;
+  border-color: #667a53;
 }
 :root[data-theme='dark'] .quest-callout p,
 :root[data-theme='dark'] .quest-callout button,
@@ -2423,7 +2423,7 @@ footer > span:first-child {
 :root[data-theme='dark'] .quest-progress-label,
 :root[data-theme='dark'] .region-art,
 :root[data-theme='dark'] .journey-pill {
-  color: #bed0b0;
+  color: #d2ddbc;
 }
 :root[data-theme='dark'] .tactic-reveal,
 :root[data-theme='dark'] .tactic-reveal.concealed,
@@ -2433,42 +2433,79 @@ footer > span:first-child {
 :root[data-theme='dark'] .quest-tag,
 :root[data-theme='dark'] .release-latest,
 :root[data-theme='dark'] .journey-pill {
-  background: #304a36;
-  color: #d7e8c5;
-  border-color: #577755;
+  background: #3a4730;
+  color: #e0e8cc;
+  border-color: #81966a;
 }
 :root[data-theme='dark'] .segmented,
 :root[data-theme='dark'] .progress {
-  border-color: #46624c;
-  background: #253a2e;
+  border-color: #604b3b;
+  background: #241b16;
 }
 :root[data-theme='dark'] .segmented button,
 :root[data-theme='dark'] .battle-elapsed {
-  color: #c0d3b1;
+  color: #d2ddbc;
 }
 :root[data-theme='dark'] .region-art,
 :root[data-theme='dark'] .region-1,
 :root[data-theme='dark'] .region-2,
 :root[data-theme='dark'] .region-3 {
-  background: #324c3a;
+  background: #47523a;
 }
 :root[data-theme='dark'] .modal {
-  background: #203329;
-  border-color: #47624b;
+  background: #3a2b22;
+  border-color: #79604a;
 }
 :root[data-theme='dark'] .modal .modal-note {
-  background: #2d4735;
-  color: #cfdec3;
+  background: #3a4730;
+  color: #e0e8cc;
 }
 :root[data-theme='dark'] .release-timeline {
-  border-color: #53745a;
+  border-color: #79604a;
 }
 :root[data-theme='dark'] .release-marker {
-  border-color: #111d18;
-  background: #b3d08f;
+  border-color: #211a16;
+  background: #a5b681;
 }
 :root[data-theme='dark'] .release-card ul {
-  color: #d0ddc6;
+  color: #e1ceb2;
+}
+:root[data-theme='dark'] .selected-building-art:before,
+:root[data-theme='dark'] .large-wolf {
+  background: radial-gradient(ellipse, #6b533b, transparent 70%);
+}
+:root[data-theme='dark'] .callout-symbol {
+  color: #536347;
+}
+:root[data-theme='dark'] .quest-number {
+  color: #4a392d;
+}
+:root[data-theme='dark'] .building-detail-title > span {
+  border-color: #604b3b;
+  color: #c1ab8d;
+}
+:root[data-theme='dark'] .built-label,
+:root[data-theme='dark'] .completed,
+:root[data-theme='dark'] .resource-rate,
+:root[data-theme='dark'] .training-points b,
+:root[data-theme='dark'] .tactic-reveal svg {
+  color: #a5b681;
+}
+:root[data-theme='dark'] .training-row small,
+:root[data-theme='dark'] .battle-count strong small {
+  color: #c1ab8d;
+}
+:root[data-theme='dark'] .toast {
+  background: #3a2b22;
+  border-color: #79604a;
+  color: #f2e5ce;
+  box-shadow: 0 8px 24px #1c161266;
+}
+:root[data-theme='dark'] .modal-backdrop {
+  background: #1c161299;
+}
+:root[data-theme='dark'] .modal {
+  box-shadow: 0 20px 80px #1c161266;
 }
 @media (max-width: 700px) {
   .topbar-end {
@@ -3064,32 +3101,88 @@ footer > span:first-child {
 }
 
 :root[data-theme='dark'] .landing-shell {
-  --landing-bg: #14261f;
-  --landing-card: #20392c;
-  --landing-ink: #edf1dd;
-  --landing-muted: #b1c5ae;
-  --landing-border: #3c5945;
+  --landing-bg: #211a16;
+  --landing-card: #30241d;
+  --landing-ink: #f2e5ce;
+  --landing-muted: #c1ab8d;
+  --landing-border: #604b3b;
 }
 :root[data-theme='dark'] .landing-header {
-  background: #172d23;
-  border-color: #35523e;
+  background: #30241d;
+  border-color: #604b3b;
 }
 :root[data-theme='dark'] .landing-brand {
-  color: #e9eed8;
+  color: #f2e5ce;
+}
+:root[data-theme='dark'] .landing-brand b,
+:root[data-theme='dark'] .landing-section-label {
+  color: #d0ae6f;
 }
 :root[data-theme='dark'] .landing-brand small,
 :root[data-theme='dark'] .landing-nav button,
 :root[data-theme='dark'] .landing-header-actions .language {
-  color: #b7cbb1;
+  color: #c1ab8d;
+}
+:root[data-theme='dark'] .landing-nav button:hover,
+:root[data-theme='dark'] .landing-footer a:hover,
+:root[data-theme='dark'] .landing-footer button:hover {
+  color: #e2c58f;
+}
+:root[data-theme='dark'] .landing-brand-symbol {
+  background: #3a4730;
+  color: #ead4a5;
+}
+:root[data-theme='dark'] .landing-hero {
+  background: #241b16;
+}
+:root[data-theme='dark'] .landing-hero-shade {
+  background: linear-gradient(
+    90deg,
+    rgba(36, 27, 22, 0.88) 0%,
+    rgba(36, 27, 22, 0.7) 22%,
+    rgba(36, 27, 22, 0.24) 49%,
+    transparent 72%
+  );
+}
+:root[data-theme='dark'] .landing-hero-content > p {
+  color: #f2e5ce;
+}
+:root[data-theme='dark'] .landing-hero-hint,
+:root[data-theme='dark'] .landing-account small {
+  color: #e1ceb2;
 }
 :root[data-theme='dark'] .landing-features {
-  background: #1a3025;
+  background: #2a201a;
 }
 :root[data-theme='dark'] .landing-feature {
-  border-color: #35523e;
+  border-color: #604b3b;
 }
 :root[data-theme='dark'] .landing-intro-art {
-  border-color: #3b644b;
+  border-color: #667a53;
+  background: linear-gradient(165deg, #514330 0%, #827047 56%, #667a53 56.5%, #3a4730 100%);
+}
+:root[data-theme='dark'] .landing-feature-art.building {
+  background: linear-gradient(150deg, #6b533b, #a18352);
+}
+:root[data-theme='dark'] .landing-feature-art.wolf {
+  background: linear-gradient(150deg, #81966a, #475b3e);
+}
+:root[data-theme='dark'] .landing-feature-art.horizon {
+  background: linear-gradient(#554634, #ad9060 63%, #667a53 63%);
+}
+:root[data-theme='dark'] .landing-finale {
+  background: #3a2b22;
+}
+:root[data-theme='dark'] .landing-finale > p {
+  color: #e1ceb2;
+}
+:root[data-theme='dark'] .landing-footer {
+  background: #1c1612;
+  color: #c1ab8d;
+}
+:root[data-theme='dark'] .landing-footer a,
+:root[data-theme='dark'] .landing-footer button {
+  color: #e1ceb2;
 }
 
 @media (max-width: 1000px) {

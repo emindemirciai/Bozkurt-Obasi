@@ -87,7 +87,7 @@ export default function LoginClient({ title, name }: LoginClientProps) {
           <button
             type="button"
             onClick={switchLanguage}
-            className="analyze-login-control rounded border px-3 py-1 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="analyze-login-control rounded border px-3 py-1 text-sm transition focus-visible:outline focus-visible:outline-2"
             aria-label={language === "tr" ? "Switch to English" : "Türkçeye geç"}
           >
             {language === "tr" ? "EN" : "TR"}
@@ -95,7 +95,7 @@ export default function LoginClient({ title, name }: LoginClientProps) {
           <button
             type="button"
             onClick={() => chooseTheme(isDark ? "light" : "dark")}
-            className="analyze-login-control flex items-center gap-2 rounded border px-3 py-1 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="analyze-login-control flex items-center gap-2 rounded border px-3 py-1 text-sm transition focus-visible:outline focus-visible:outline-2"
             aria-label={isDark ? copy.switchLight : copy.switchDark}
             title={isDark ? copy.switchLight : copy.switchDark}
           >
@@ -104,7 +104,7 @@ export default function LoginClient({ title, name }: LoginClientProps) {
           </button>
         </div>
         <div className="mb-7 flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-500">
+          <span className="grid h-11 w-11 place-items-center rounded-lg border analyze-login-brand">
             <Activity size={23} aria-hidden="true" />
           </span>
           <div>
@@ -113,7 +113,7 @@ export default function LoginClient({ title, name }: LoginClientProps) {
           </div>
         </div>
         <div className="analyze-login-notice mb-6 flex items-start gap-3 rounded-md border p-3 text-sm">
-          <ShieldCheck className="mt-0.5 shrink-0 text-emerald-500" size={18} aria-hidden="true" />
+          <ShieldCheck className="mt-0.5 shrink-0 analyze-login-shield" size={18} aria-hidden="true" />
           <span>{copy.notice}</span>
         </div>
         <form className="space-y-4" onSubmit={login}>
@@ -143,7 +143,7 @@ export default function LoginClient({ title, name }: LoginClientProps) {
           <button
             type="submit"
             disabled={pending}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-blue-600 font-semibold text-white transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-wait disabled:opacity-60"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md analyze-login-submit font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60"
           >
             <LogIn size={18} aria-hidden="true" /> {pending ? copy.pending : copy.submit}
           </button>

@@ -816,11 +816,11 @@ async function fetchAnalyzeEvents() {
   return extractEventsFromPayload(payload);
 }
 
-function ChangeText({ value }: { value: number }) {
+function ChangeText({ value, theme }: { value: number; theme: ThemeType }) {
   const isPositive = value >= 0;
 
   return (
-    <div className={isPositive ? "text-emerald-400" : "text-red-400"}>
+    <div className={isPositive ? theme === "dark" ? "analyze-dark-positive" : "text-emerald-400" : theme === "dark" ? "analyze-dark-error" : "text-red-400"}>
       {isPositive ? "↑" : "↓"} %{Math.abs(value)}
     </div>
   );
@@ -843,19 +843,19 @@ function MetricCard({
     <div
       className={`rounded-2xl border p-5 shadow-sm ${
         isDark
-          ? "border-zinc-800 bg-zinc-950/50 text-white"
+          ? "analyze-dark-panel"
           : "border-slate-200 bg-white text-slate-950"
       }`}
     >
       <div
         className={`mb-4 text-xs font-bold uppercase tracking-wide ${
-          isDark ? "text-zinc-500" : "text-slate-500"
+          isDark ? "analyze-dark-muted" : "text-slate-500"
         }`}
       >
         {title}
       </div>
       <div className="mb-3 text-3xl font-black">{value}</div>
-      <ChangeText value={change} />
+      <ChangeText value={change} theme={theme} />
     </div>
   );
 }
@@ -879,16 +879,16 @@ function SectionCard({
     <section
       className={`rounded-2xl border p-5 shadow-sm ${
         isDark
-          ? "border-zinc-800 bg-zinc-950/50 text-white"
+          ? "analyze-dark-panel"
           : "border-slate-200 bg-white text-slate-950"
       } ${className}`}
     >
       <div className="mb-5 flex items-center justify-between">
-        <h2 className="border-b-2 border-blue-500 pb-3 text-lg font-bold text-blue-500">
+        <h2 className={`border-b-2 pb-3 text-lg font-bold ${isDark ? "analyze-dark-accent" : "border-blue-500 text-blue-500"}`}>
           {title}
         </h2>
         {rightText ? (
-          <span className={isDark ? "text-sm text-zinc-500" : "text-sm text-slate-500"}>
+          <span className={isDark ? "text-sm analyze-dark-muted" : "text-sm text-slate-500"}>
             {rightText}
           </span>
         ) : null}
@@ -921,7 +921,7 @@ function TrafficChart({
           className={`${narrow ? "text-[10px]" : "text-xs"} font-bold leading-none ${
             item.value > 0
               ? isDark
-                ? "text-blue-300"
+                ? "analyze-dark-positive"
                 : "text-blue-600"
               : "text-transparent"
           }`}
@@ -929,15 +929,15 @@ function TrafficChart({
           {item.value > 0 ? item.value : "0"}
         </span>
         <div
-          className={`w-full ${narrow ? "max-w-[34px]" : "max-w-[54px]"} rounded-t border-t-2 border-blue-400 ${
-            isDark ? "bg-blue-950/60" : "bg-blue-100"
+          className={`w-full ${narrow ? "max-w-[34px]" : "max-w-[54px]"} rounded-t border-t-2 ${
+            isDark ? "analyze-dark-chart-bar" : "border-blue-400 bg-blue-100"
           }`}
           style={{ height }}
           title={`${item.time} · ${item.value} ziyaretçi`}
         />
         <span
           className={`${narrow ? "text-[10px]" : "text-sm"} ${
-            isDark ? "text-zinc-500" : "text-slate-400"
+            isDark ? "analyze-dark-muted" : "text-slate-400"
           }`}
         >
           {item.time}
@@ -985,7 +985,7 @@ function SimpleTable({
 
   if (!items.length) {
     return (
-      <div className={isDark ? "py-10 text-center text-zinc-500" : "py-10 text-center text-slate-400"}>
+      <div className={isDark ? "py-10 text-center analyze-dark-muted" : "py-10 text-center text-slate-400"}>
         {emptyText}
       </div>
     );
@@ -1002,7 +1002,7 @@ function SimpleTable({
           <div
             key={item.label}
             className={`rounded-lg px-3 py-3 ${
-              isDark ? "bg-zinc-900/70" : "bg-slate-50"
+              isDark ? "analyze-dark-soft" : "bg-slate-50"
             }`}
           >
             <div className="flex items-center justify-between text-sm font-bold">
@@ -1010,7 +1010,7 @@ function SimpleTable({
               <span>
                 {value}
                 {hasVisitorValue ? (
-                  <span className={isDark ? "text-zinc-500" : "text-slate-400"}>
+                  <span className={isDark ? "analyze-dark-muted" : "text-slate-400"}>
                     {" "}
                     (%{percent})
                   </span>
@@ -1040,7 +1040,7 @@ function LocationBreakdown({
 
   if (!locations.length) {
     return (
-      <div className={isDark ? "py-10 text-center text-zinc-500" : "py-10 text-center text-slate-400"}>
+      <div className={isDark ? "py-10 text-center analyze-dark-muted" : "py-10 text-center text-slate-400"}>
         {emptyText}
       </div>
     );
@@ -1057,13 +1057,13 @@ function LocationBreakdown({
         return (
           <div
             key={location.countryCode ?? location.countryIso2 ?? location.country}
-            className={`rounded-lg px-3 py-3 ${isDark ? "bg-zinc-900/70" : "bg-slate-50"}`}
+            className={`rounded-lg px-3 py-3 ${isDark ? "analyze-dark-soft" : "bg-slate-50"}`}
           >
             <div className="flex items-center justify-between text-sm font-bold">
               <span>{name}</span>
               <span>
                 {location.visitors} {visitorWord}
-                <span className={isDark ? "text-zinc-500" : "text-slate-400"}>
+                <span className={isDark ? "analyze-dark-muted" : "text-slate-400"}>
                   {" · "}
                   {language === "tr" ? `%${countryPercent}` : `${countryPercent}%`}
                 </span>
@@ -1073,7 +1073,7 @@ function LocationBreakdown({
             {location.cities.length > 0 && (
               <div
                 className={`mt-2 space-y-1 border-t pt-2 ${
-                  isDark ? "border-zinc-800" : "border-slate-200"
+                  isDark ? "analyze-dark-rule" : "border-slate-200"
                 }`}
               >
                 {location.cities.map((city) => {
@@ -1087,7 +1087,7 @@ function LocationBreakdown({
                   return (
                     <div
                       key={city.city}
-                      className={`text-[11px] ${isDark ? "text-zinc-300" : "text-slate-600"}`}
+                      className={`text-[11px] ${isDark ? "analyze-dark-ink" : "text-slate-600"}`}
                     >
                       {language === "tr"
                         ? `${city.visitors} ${cityWord} - ${city.city} - %${city.percent}`
@@ -1194,7 +1194,7 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
   return (
     <main
       className={`min-h-screen px-5 py-10 transition ${
-        isDark ? "bg-[#111216] text-white" : "bg-slate-50 text-slate-950"
+        isDark ? "analyze-login" : "bg-slate-50 text-slate-950"
       }`}
     >
       <div className="mx-auto max-w-7xl">
@@ -1202,13 +1202,13 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="mb-3 flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full bg-blue-600" />
+                <span className={`h-3 w-3 rounded-full ${isDark ? "analyze-dark-dot" : "bg-blue-600"}`} />
                 <h1 className="text-3xl font-black">{t.title}</h1>
-                <span className={isDark ? "text-zinc-500" : "text-slate-500"}>{t.panel}</span>
+                <span className={isDark ? "analyze-dark-muted" : "text-slate-500"}>{t.panel}</span>
               </div>
-              <p className={isDark ? "text-zinc-500" : "text-slate-500"}>{t.subtitle}</p>
+              <p className={isDark ? "analyze-dark-muted" : "text-slate-500"}>{t.subtitle}</p>
               {(isLoading || apiError) && (
-                <p className={`mt-3 text-sm ${apiError ? "text-red-500" : "text-blue-500"}`}>
+                <p className={`mt-3 text-sm ${isDark ? apiError ? "analyze-dark-error" : "analyze-dark-accent" : apiError ? "text-red-500" : "text-blue-500"}`}>
                   {apiError || t.loading}
                 </p>
               )}
@@ -1220,7 +1220,7 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                 type="button"
                 onClick={() => void logout()}
                 className={`flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold transition ${
-                  isDark ? "border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                  isDark ? "analyze-dark-control" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
                 }`}
               >
                 <LogOut size={16} /> {language === 'tr' ? 'Çıkış' : 'Sign out'}
@@ -1233,7 +1233,7 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                 title={isDark ? t.switchLight : t.switchDark}
                 className={`rounded-xl border px-4 py-2 text-sm font-bold transition ${
                   isDark
-                    ? "border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+                    ? "analyze-dark-control"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
                 }`}
               >
@@ -1242,7 +1242,7 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
 
               <div
                 className={`rounded-xl border p-1 ${
-                  isDark ? "border-zinc-800 bg-zinc-900" : "border-slate-200 bg-white"
+                  isDark ? "analyze-dark-panel" : "border-slate-200 bg-white"
                 }`}
               >
                 <button
@@ -1251,10 +1251,10 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                   className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
                     language === "tr"
                       ? isDark
-                        ? "bg-zinc-800 text-white"
+                        ? "analyze-dark-selected"
                         : "bg-slate-100 text-slate-950"
                       : isDark
-                        ? "text-zinc-500 hover:text-white"
+                        ? "analyze-dark-inactive"
                         : "text-slate-400 hover:text-slate-900"
                   }`}
                 >
@@ -1266,10 +1266,10 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                   className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
                     language === "en"
                       ? isDark
-                        ? "bg-zinc-800 text-white"
+                        ? "analyze-dark-selected"
                         : "bg-slate-100 text-slate-950"
                       : isDark
-                        ? "text-zinc-500 hover:text-white"
+                        ? "analyze-dark-inactive"
                         : "text-slate-400 hover:text-slate-900"
                   }`}
                 >
@@ -1279,7 +1279,7 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
 
               <div
                 className={`rounded-xl border p-1 ${
-                  isDark ? "border-zinc-800 bg-zinc-900" : "border-slate-200 bg-white"
+                  isDark ? "analyze-dark-panel" : "border-slate-200 bg-white"
                 }`}
               >
                 <button
@@ -1288,10 +1288,10 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                   className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
                     range === "24h"
                       ? isDark
-                        ? "bg-zinc-800 text-white"
+                        ? "analyze-dark-selected"
                         : "bg-slate-100 text-slate-950"
                       : isDark
-                        ? "text-zinc-500 hover:text-white"
+                        ? "analyze-dark-inactive"
                         : "text-slate-400 hover:text-slate-900"
                   }`}
                 >
@@ -1303,10 +1303,10 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                   className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
                     range === "7d"
                       ? isDark
-                        ? "bg-zinc-800 text-white"
+                        ? "analyze-dark-selected"
                         : "bg-slate-100 text-slate-950"
                       : isDark
-                        ? "text-zinc-500 hover:text-white"
+                        ? "analyze-dark-inactive"
                         : "text-slate-400 hover:text-slate-900"
                   }`}
                 >
@@ -1318,10 +1318,10 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
                   className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
                     range === "30d"
                       ? isDark
-                        ? "bg-zinc-800 text-white"
+                        ? "analyze-dark-selected"
                         : "bg-slate-100 text-slate-950"
                       : isDark
-                        ? "text-zinc-500 hover:text-white"
+                        ? "analyze-dark-inactive"
                         : "text-slate-400 hover:text-slate-900"
                   }`}
                 >
