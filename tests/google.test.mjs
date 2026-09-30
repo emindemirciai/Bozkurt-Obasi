@@ -134,8 +134,9 @@ async function fixture(t, overrides = {}) {
         cookies: [...cookies, started.flowCookie],
       });
     },
-    async restart() {
+    async restart(overrides = {}) {
       await app.close();
+      Object.assign(settings, overrides);
       app = createApp(settings);
       await app.listen(port);
     },
@@ -165,7 +166,7 @@ test('Google settings fail closed when credentials or redirect origins are missi
   ]) {
     const blocked = await api.request(path, { method, body });
     assert.equal(blocked.status, 401);
-    assert.deepEqual(await blocked.json(), { error: 'google_session_required' });
+    assert.deepEqual(await blocked.json(), { error: 'account_session_required' });
   }
   assert.equal(api.provider.calls.length, 0);
 });
@@ -206,7 +207,7 @@ test('existing guest SQLite saves migrate without losing progress', async (t) =>
     headers: { Cookie: `bozkurt_session=${token}` },
   });
   assert.equal(response.status, 401);
-  assert.deepEqual(await response.json(), { error: 'google_session_required' });
+  assert.deepEqual(await response.json(), { error: 'account_session_required' });
 });
 
 test('Google login claims a legacy guest village and resumes it across devices', async (t) => {
@@ -344,4 +345,244 @@ test('Google logout requires authenticated same-origin JSON request', async (t) 
     body: { extra: true },
   });
   assert.equal(invalid.status, 400);
+});
+
+const PLAYER_PASSWORD = 'Both methods guard this village 123!';
+
+async function registerEmail(api, email = 'wolf@example.com') {
+  const response = await api.request('/api/auth/player/register', {
+    method: 'POST',
+    body: { email, password: PLAYER_PASSWORD, name: 'Oba Reisi' },
+  });
+  assert.equal(response.status, 201);
+  return cookie(response, 'bozkurt_session');
+}
+
+async function loginEmail(api, email = 'wolf@example.com') {
+  const response = await api.request('/api/auth/player/login', {
+    method: 'POST',
+    body: { email, password: PLAYER_PASSWORD },
+  });
+  assert.equal(response.status, 200);
+  return cookie(response, 'bozkurt_session');
+}
+
+async function buildVillage(api, accountCookie, building) {
+  const initial = await (await api.request('/api/state', { cookies: [accountCookie] })).json();
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookies: [accountCookie],
+    body: { action: { type: 'build', building }, revision: initial.revision },
+  });
+  assert.equal(response.status, 200);
+  return response.json();
+}
+
+test('matching Google and email accounts link only after both proofs and share one village', async (t) => {
+  const api = await fixture(t);
+  const emailCookie = await registerEmail(api);
+  const built = await buildVillage(api, emailCookie, 'quarry');
+  const otherEmailDevice = await loginEmail(api);
+  const unproved = await api.callback(await api.start());
+  assert.equal(unproved.status, 303);
+  assert.equal(unproved.headers.get('location'), '/?auth=account_link_required');
+  assert.equal(cookie(unproved, 'bozkurt_session'), '');
+  const linked = await api.callback(await api.start([emailCookie]), [emailCookie]);
+  assert.equal(linked.status, 303);
+  assert.equal(linked.headers.get('location'), '/?auth=success');
+  const googleCookie = cookie(linked, 'bozkurt_session');
+  assert.ok(googleCookie);
+  assert.equal((await api.request('/api/state', { cookies: [emailCookie] })).status, 401);
+  for (const accountCookie of [googleCookie, otherEmailDevice]) {
+    assert.deepEqual(
+      await (await api.request('/api/state', { cookies: [accountCookie] })).json(),
+      built,
+    );
+    const status = await (
+      await api.request('/api/auth/player/status', { cookies: [accountCookie] })
+    ).json();
+    assert.equal(status.user.passwordEnabled, true);
+    assert.equal(status.user.googleLinked, true);
+    assert.equal(status.user.emailVerified, true);
+  }
+  const passwordCookie = await loginEmail(api);
+  const googleAgain = cookie(await api.callback(await api.start()), 'bozkurt_session');
+  assert.ok(googleAgain);
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookies: [passwordCookie] })).json(),
+    built,
+  );
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookies: [googleAgain] })).json(),
+    built,
+  );
+  await api.restart({ googleClientSecret: '' });
+  const status = await (
+    await api.request('/api/auth/player/status', { cookies: [googleAgain] })
+  ).json();
+  assert.equal(status.enabled, false);
+  assert.equal(status.authenticated, true);
+  const passwordAfterRestart = await loginEmail(api);
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookies: [passwordAfterRestart] })).json(),
+    built,
+  );
+});
+
+test('Google users set a password for their verified email without replacing their village', async (t) => {
+  const api = await fixture(t);
+  const originalCookie = cookie(await api.callback(await api.start()), 'bozkurt_session');
+  const built = await buildVillage(api, originalCookie, 'quarry');
+  const blocked = await api.request('/api/auth/player/register', {
+    method: 'POST',
+    body: { email: ' WOLF@EXAMPLE.COM ', password: PLAYER_PASSWORD },
+  });
+  assert.equal(blocked.status, 409);
+  assert.deepEqual(await blocked.json(), { error: 'google_login_required' });
+  const anonymous = await api.request('/api/auth/player/password', {
+    method: 'POST',
+    body: { password: PLAYER_PASSWORD },
+  });
+  assert.equal(anonymous.status, 401);
+  const foreign = await api.request('/api/auth/player/password', {
+    method: 'POST',
+    cookies: [originalCookie],
+    body: { password: PLAYER_PASSWORD },
+    headers: { Origin: 'https://attacker.invalid' },
+  });
+  assert.equal(foreign.status, 403);
+  const setup = await api.request('/api/auth/player/password', {
+    method: 'POST',
+    cookies: [originalCookie],
+    body: { password: PLAYER_PASSWORD },
+  });
+  assert.equal(setup.status, 200);
+  const profile = await setup.json();
+  assert.equal(profile.user.provider, 'google');
+  assert.equal(profile.user.passwordEnabled, true);
+  assert.equal(profile.user.googleLinked, true);
+  assert.equal(profile.user.emailVerified, true);
+  const rotated = cookie(setup, 'bozkurt_session');
+  assert.notEqual(rotated, originalCookie);
+  assert.equal((await api.request('/api/state', { cookies: [originalCookie] })).status, 401);
+  assert.deepEqual(await (await api.request('/api/state', { cookies: [rotated] })).json(), built);
+  const changedPassword = await api.request('/api/auth/player/password', {
+    method: 'POST',
+    cookies: [rotated],
+    body: { password: 'new password must not replace old one 123' },
+  });
+  assert.equal(changedPassword.status, 409);
+  assert.deepEqual(await changedPassword.json(), { error: 'password_already_set' });
+  const passwordCookie = await loginEmail(api);
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookies: [passwordCookie] })).json(),
+    built,
+  );
+  assert.equal(
+    (
+      await api.request('/api/auth/google/logout', {
+        method: 'POST',
+        cookies: [passwordCookie],
+        body: {},
+      })
+    ).status,
+    401,
+  );
+});
+
+test('linking existing villages preserves Google progress and backs up email state while rejecting stale commands', async (t) => {
+  const api = await fixture(t);
+  const googleCookie = cookie(await api.callback(await api.start()), 'bozkurt_session');
+  const googleBuilt = await buildVillage(api, googleCookie, 'healer');
+  const emailCookie = await registerEmail(api, 'legacy@example.com');
+  const emailBuilt = await buildVillage(api, emailCookie, 'quarry');
+  assert.equal(googleBuilt.revision, emailBuilt.revision);
+  assert.notDeepEqual(googleBuilt.state, emailBuilt.state);
+  // Simulate independent accounts from an earlier database before identity linking existed.
+  const database = new DatabaseSync(api.dbPath);
+  database
+    .prepare(
+      "UPDATE email_accounts SET email = 'wolf@example.com' WHERE email = 'legacy@example.com'",
+    )
+    .run();
+  const emailBefore = database
+    .prepare('SELECT state_json, revision, password_hash FROM email_accounts')
+    .get();
+  const googleBefore = database.prepare('SELECT state_json, revision FROM google_accounts').get();
+  database.close();
+  const otherEmailDevice = await loginEmail(api);
+  const noOverwrite = await api.request('/api/auth/player/password', {
+    method: 'POST',
+    cookies: [googleCookie],
+    body: { password: 'must not replace existing password 123' },
+  });
+  assert.equal(noOverwrite.status, 409);
+  assert.equal((await noOverwrite.json()).error, 'account_link_required');
+  const linked = await api.callback(await api.start([emailCookie]), [emailCookie]);
+  assert.equal(linked.status, 303);
+  assert.equal(linked.headers.get('location'), '/?auth=success');
+  const canonical = await (await api.request('/api/state', { cookies: [otherEmailDevice] })).json();
+  assert.deepEqual(canonical.state, googleBuilt.state);
+  assert.ok(canonical.revision > Math.max(googleBuilt.revision, emailBuilt.revision));
+  const stale = await api.request('/api/action', {
+    method: 'POST',
+    cookies: [otherEmailDevice],
+    body: { action: { type: 'collect' }, revision: emailBuilt.revision },
+  });
+  assert.equal(stale.status, 409);
+  assert.deepEqual(await stale.json(), { error: 'stale_revision', ...canonical });
+  const inspection = new DatabaseSync(api.dbPath);
+  const emailAfter = inspection
+    .prepare('SELECT state_json, revision, password_hash FROM email_accounts')
+    .get();
+  const googleAfter = inspection.prepare('SELECT state_json, revision FROM google_accounts').get();
+  assert.deepEqual(emailAfter, emailBefore);
+  assert.equal(googleAfter.state_json, googleBefore.state_json);
+  assert.equal(googleAfter.revision, canonical.revision);
+  inspection.close();
+  const emailAgain = await loginEmail(api);
+  const googleAgain = cookie(await api.callback(await api.start()), 'bozkurt_session');
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookies: [emailAgain] })).json(),
+    canonical,
+  );
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookies: [googleAgain] })).json(),
+    canonical,
+  );
+});
+
+test('different or unverified Google emails cannot link an authenticated email village', async (t) => {
+  const api = await fixture(t);
+  const emailCookie = await registerEmail(api);
+  api.provider.claims = { email: 'another@example.com' };
+  const mismatch = await api.callback(await api.start([emailCookie]), [emailCookie]);
+  assert.equal(mismatch.status, 303);
+  assert.equal(mismatch.headers.get('location'), '/?auth=account_link_email_mismatch');
+  assert.equal(cookie(mismatch, 'bozkurt_session'), '');
+  api.provider.claims = { email_verified: false };
+  assert.equal((await api.callback(await api.start([emailCookie]), [emailCookie])).status, 502);
+  const status = await (
+    await api.request('/api/auth/player/status', { cookies: [emailCookie] })
+  ).json();
+  assert.equal(status.user.googleLinked, false);
+  assert.equal(status.user.emailVerified, false);
+});
+
+test('an expired email session does not count as proof when its OAuth flow is still valid', async (t) => {
+  let now = NOW;
+  const api = await fixture(t, { clock: () => now });
+  const emailCookie = await registerEmail(api);
+  const started = await api.start([emailCookie]);
+  const database = new DatabaseSync(api.dbPath);
+  database.prepare('UPDATE sessions SET expires_at = ?').run(NOW + 1000);
+  database.close();
+  now += 2000;
+  const response = await api.callback(started, [emailCookie]);
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get('location'), '/?auth=account_link_required');
+  const inspection = new DatabaseSync(api.dbPath);
+  assert.equal(inspection.prepare('SELECT count(*) AS count FROM google_accounts').get().count, 0);
+  assert.equal(inspection.prepare('SELECT google_sub FROM email_accounts').get().google_sub, null);
+  inspection.close();
 });

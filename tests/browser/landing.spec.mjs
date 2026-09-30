@@ -42,8 +42,8 @@ for (const viewport of [
   }) => {
     let enabled = true;
     await page.setViewportSize(viewport);
-    await page.route('**/api/auth/google/status', (route) =>
-      route.fulfill(json({ enabled, authenticated: false })),
+    await page.route('**/api/auth/player/status', (route) =>
+      route.fulfill(json({ enabled, emailEnabled: true, authenticated: false })),
     );
     await page.goto('/');
     await expect(page.locator('.landing-google')).toHaveCount(1);
@@ -85,7 +85,7 @@ for (const viewport of [
     await page.reload();
     await expect(page.locator('.landing-google')).toBeDisabled();
     await expect(page.locator('.landing-google-unavailable small')).toContainText(
-      'Oyun için giriş gereklidir.',
+      'E-posta ile giriş yapabilirsin.',
     );
     const unavailable = await heroGeometry(page);
     expect(unavailable.hero).toEqual(tr.hero);
@@ -147,10 +147,11 @@ test('Google sign-in is honest when unavailable and account logout works when co
   let enabled = false;
   let logoutCalls = 0;
   let sessionCalls = 0;
-  await page.route('**/api/auth/google/status', (route) =>
+  await page.route('**/api/auth/player/status', (route) =>
     route.fulfill(
       json({
         enabled,
+        emailEnabled: true,
         authenticated,
         ...(authenticated ? { user: { name: 'Player One', email: 'player@example.com' } } : {}),
       }),
@@ -160,7 +161,7 @@ test('Google sign-in is honest when unavailable and account logout works when co
     sessionCalls++;
     return route.fulfill(json({ state: createGame(), revision: 0, mode: 'online' }));
   });
-  await page.route('**/api/auth/google/logout', (route) => {
+  await page.route('**/api/auth/player/logout', (route) => {
     logoutCalls++;
     authenticated = false;
     return route.fulfill(json({ ok: true }));
@@ -178,7 +179,7 @@ test('Google sign-in is honest when unavailable and account logout works when co
     .toBeGreaterThan(0);
 
   await expect(page.locator('.landing-google-unavailable').first()).toContainText(
-    'Oyun için giriş gereklidir.',
+    'E-posta ile giriş yapabilirsin.',
   );
   enabled = true;
   authenticated = true;

@@ -18,8 +18,14 @@ async function googleFetch(url, options) {
     return new Response(JSON.stringify({ keys: [jwk] }), { status: 200 });
   if (url !== 'https://oauth2.googleapis.com/token') throw new Error('Unexpected OAuth endpoint');
   const code = new URLSearchParams(options.body).get('code') || '';
-  const [nonce, identity] = code.split('.');
+  const [nonce, identity, encodedEmail] = code.split('.');
   if (!nonce || !/^[a-f0-9-]{36}$/.test(identity))
+    return new Response(JSON.stringify({ error: 'invalid_grant' }), { status: 400 });
+  // Explicit email fixtures exist only in this signed test provider, never in production.
+  const email = encodedEmail
+    ? Buffer.from(encodedEmail, 'base64url').toString('utf8')
+    : `player-${identity}@example.com`;
+  if (email.length > 254 || !/^[a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email))
     return new Response(JSON.stringify({ error: 'invalid_grant' }), { status: 400 });
   const now = Math.floor(Date.now() / 1000);
   return new Response(
@@ -28,7 +34,7 @@ async function googleFetch(url, options) {
         iss: 'https://accounts.google.com',
         aud: clientId,
         sub: `e2e-${identity}`,
-        email: `player-${identity}@example.com`,
+        email,
         email_verified: true,
         name: 'Player One',
         nonce,

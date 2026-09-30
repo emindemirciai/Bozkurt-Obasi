@@ -204,7 +204,7 @@ test('game endpoints require an authenticated account; clients cannot upload sav
   const api = await fixture(t);
   const unauthorized = await api.request('/api/session', { method: 'POST', body: {} });
   assert.equal(unauthorized.status, 401);
-  assert.deepEqual(await unauthorized.json(), { error: 'google_session_required' });
+  assert.deepEqual(await unauthorized.json(), { error: 'account_session_required' });
   assert.equal((await api.request('/api/state')).status, 401);
   assert.equal((await api.request('/api/state', { cookie: 'bozkurt_session=forged' })).status, 401);
   const uploaded = await api.request('/api/session', {

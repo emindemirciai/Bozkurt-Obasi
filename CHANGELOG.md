@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.3.0 — 2026-09-30
+
+**TR**
+
+- Google girişine ek olarak e-posta ve şifreyle kayıt ve giriş eklendi; ana sayfada Kayıt ol ve Giriş yap düğmeleri bulunur.
+- Hesaba bağlı köyler sunucuda saklanır; güvenli parola özetleri ve yenilenen oturum çerezleriyle cihazlar arasında ilerlemeye devam edilir.
+- Kayıt ve giriş pencereleri Türkçe/İngilizce, açık/koyu tema ve mobil kullanımı destekler; aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulamasıyla tek hesaba ve köye bağlanır.
+
+**EN**
+
+- Email/password registration and sign-in are available alongside Google, with Register and Sign in buttons on the homepage.
+- Account villages persist on the server; salted password hashes and rotated session cookies support resuming progress across devices.
+- Registration and sign-in dialogs support Turkish/English, light/dark mode and mobile layouts; Google and password sign-in for the same email link to one account and village after ownership verification.
+
 ## v1.2.5 — 2026-09-29
 
 **TR**

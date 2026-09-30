@@ -6,13 +6,13 @@
 
 Dokploy'da Docker Compose uygulaması açın, özel [depoyu](https://github.com/emindemirciai/Bozkurt-Obasi) GitHub bağlantınızla seçin ve `main` dalını kullanın. Ekran görüntüsündeki **Compose Path: `./docker-compose.yml`** artık doğrudan çalışır; `./compose.yml` aynı dört servisli içeriğin eşidir. Her iki dosya da depo kökündedir. `compose.local.yml` sadece yerel Docker içindir.
 
-| Alan adı | Servis | Konteyner portu | Durum |
-| --- | --- | ---: | --- |
-| `bozkurtobasi.com` | `web` | 3000 | Görselli ana sayfa, oyun, gizlilik ve koşullar |
-| `www.bozkurtobasi.com` | `web` | 3000 | Aynı anasayfa/oyun; kanonik adrese yönlendirme önerilir |
-| `api.bozkurtobasi.com` | `api` | 3000 | Oyun ve yönetici API |
-| `admin.bozkurtobasi.com` | `admin` | 3000 | Yönetim paneli; canlı 502 için Dokploy eşlemesini düzeltin |
-| `analiz.bozkurtobasi.com` | `analyze` | 3000 | Trafik paneli ve `/api/track` |
+| Alan adı                  | Servis    | Konteyner portu | Durum                                                      |
+| ------------------------- | --------- | --------------: | ---------------------------------------------------------- |
+| `bozkurtobasi.com`        | `web`     |            3000 | Görselli ana sayfa, oyun, gizlilik ve koşullar             |
+| `www.bozkurtobasi.com`    | `web`     |            3000 | Aynı anasayfa/oyun; kanonik adrese yönlendirme önerilir    |
+| `api.bozkurtobasi.com`    | `api`     |            3000 | Oyun ve yönetici API                                       |
+| `admin.bozkurtobasi.com`  | `admin`   |            3000 | Yönetim paneli; canlı 502 için Dokploy eşlemesini düzeltin |
+| `analiz.bozkurtobasi.com` | `analyze` |            3000 | Trafik paneli ve `/api/track`                              |
 
 Domains ekranında her alan adını ilgili **servise** bağlayın. Dokploy kendi ters proxy yönlendirmesini oluşturur; konteyner host portu veya `container_name` ayarlamak gerekmez. HTTPS'i etkinleştirin ve alan adı değişikliklerinden sonra yeniden deploy edin. [Dokploy Compose alan adı rehberi](https://docs.dokploy.com/docs/core/docker-compose/domains).
 
@@ -34,7 +34,8 @@ ADMIN_PASSWORD=
 
 ### Google ile giriş
 
-Google girişi **oyun erişimi için zorunludur**. Google Cloud Console'da **Web application** OAuth istemcisi oluşturun. İzinli yönlendirme URI'leri `https://bozkurtobasi.com/api/auth/google/callback` ve `https://www.bozkurtobasi.com/api/auth/google/callback` olmalıdır. Dokploy Environment içine `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` ve aynı adreslerin virgülle ayrılmış `GOOGLE_REDIRECT_URIS` listesini girip yeniden dağıtın. Gizlilik ve koşullar sayfalarını Google marka/izin ekranında tanımlayın. Ayrıntılı adımlar [Google giriş rehberinde](GOOGLE-SIGNIN.md). Bu anahtarlar boşken `/api/auth/google/status` güvenli şekilde `enabled: false` döndürür; ana sayfa erişilebilir, oyun kapalı kalır. İstemci sırrını kaynak depoya koymayın.
+Oyuncular e-posta/şifreyle kayıt olup giriş yapabilir; Google girişi isteğe bağlı ek seçenektir. [Hesap rehberi](ACCOUNT-SIGNIN.md). Google Cloud Console'da **Web application** OAuth istemcisi oluşturun. İzinli yönlendirme URI'leri `https://bozkurtobasi.com/api/auth/google/callback` ve `https://www.bozkurtobasi.com/api/auth/google/callback` olmalıdır. Dokploy Environment içine `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` ve aynı adreslerin virgülle ayrılmış `GOOGLE_REDIRECT_URIS` listesini girip yeniden dağıtın. Gizlilik ve koşullar sayfalarını Google marka/izin ekranında tanımlayın. Ayrıntılı adımlar [Google giriş rehberinde](GOOGLE-SIGNIN.md). Bu anahtarlar boşken `/api/auth/google/status` güvenli şekilde `enabled: false` döndürür; e-posta kaydı ve girişi kullanılabilir. İstemci sırrını kaynak depoya koymayın.
+
 ### Kalıcılık ve geri dönüş
 
 `game-data:/data` SQLite oyun verisini; `analyze-data:/app/data` analiz olaylarını saklar. Dokploy Volume Backups ile **iki volume'u da** yedekleyin ve geri yüklemeyi ayrı ortamda deneyin. `down -v` veya Fresh Volumes veri siler. Compose proje adını değiştirmek yeni, boş volume yaratabilir. SQLite nedeniyle `api` ve `analyze` tek replica çalışır.
@@ -45,6 +46,7 @@ Dağıtım sonrası şunları kontrol edin:
 https://bozkurtobasi.com/
 https://bozkurtobasi.com/privacy.html
 https://bozkurtobasi.com/terms.html
+https://bozkurtobasi.com/api/auth/player/status
 https://bozkurtobasi.com/api/auth/google/status
 https://bozkurtobasi.com/api/health
 https://api.bozkurtobasi.com/api/health
@@ -83,7 +85,8 @@ For a local rehearsal, run `docker compose -f compose.yml -f compose.local.yml u
 
 ### Google sign-in
 
-Google sign-in is **required for game access**. Create a **Web application** OAuth client in Google Cloud Console and register `https://bozkurtobasi.com/api/auth/google/callback` and `https://www.bozkurtobasi.com/api/auth/google/callback` as exact redirect URIs. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and the comma-separated `GOOGLE_REDIRECT_URIS` in Dokploy Environment, then redeploy. Add the homepage, [privacy notice](../public/privacy.html), and [terms](../public/terms.html) to Google's branding setup. See the [Google sign-in guide](GOOGLE-SIGNIN.md). Without these credentials `/api/auth/google/status` safely reports `enabled: false`; the homepage is accessible while the game remains closed. Never commit the client secret.
+Players can register/sign in with email and password; Google is an optional alternative. See the [account guide](ACCOUNT-SIGNIN.md). Create a **Web application** OAuth client in Google Cloud Console and register `https://bozkurtobasi.com/api/auth/google/callback` and `https://www.bozkurtobasi.com/api/auth/google/callback` as exact redirect URIs. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and the comma-separated `GOOGLE_REDIRECT_URIS` in Dokploy Environment, then redeploy. Add the homepage, [privacy notice](../public/privacy.html), and [terms](../public/terms.html) to Google's branding setup. See the [Google sign-in guide](GOOGLE-SIGNIN.md). Without these credentials `/api/auth/google/status` safely reports `enabled: false`; email registration and sign-in remain available. Never commit the client secret.
+
 ### Live admin sign-in and 502 troubleshooting
 
 If the API admin session returns admin_unavailable (503), verify **ADMIN_PASSWORD** (at least 12 characters) and the intended **ADMIN_EMAIL** in Dokploy Environment. Save and redeploy the Compose application so the API receives the new environment. If the **admin.bozkurtobasi.com** page or /healthz returns 502, verify its Domains mapping targets **admin:3000**, check that the admin container is running and healthy, and inspect Dokploy logs for startup or runtime errors. Keep the password out of logs and support messages.

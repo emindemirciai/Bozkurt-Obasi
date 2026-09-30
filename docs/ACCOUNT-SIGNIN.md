@@ -1,0 +1,25 @@
+# Bozkurt Obası · hesap kaydı / Account registration
+
+## Türkçe
+
+Ana sayfada **Kayıt ol** düğmesini seçin. İsteğe bağlı görünen ad (en fazla 60 karakter), e-posta ve 12–128 karakterlik şifre girin. Kayıt başarılı olunca köy açılır. Sonraki ziyaretlerde **Giriş yap** ile aynı e-posta ve şifreyi kullanın. Köy kaynakları, yapılar ve ilerleme oyun sunucusundaki SQLite içinde saklanır; başka cihazdan aynı hesaba giriş yapabilirsiniz. E-posta boşlukları temizlenir ve küçük harfe çevrilir. **Google ile giriş** ayrı bir seçenektir; Google anahtarları olmadan e-posta kaydı çalışır.
+
+**Aynı e-posta, tek hesap ve köy:** E-posta/şifre hesabınıza giriş yaptıktan sonra hesap penceresinden **Google hesabını bağla** seçeneğini kullanın. Google doğrulanmış e-postası mevcut hesapla eşleşince iki yöntem aynı köyü açar. Google ile başlamışsanız hesap penceresinden **Şifre belirle** seçeneğiyle ikinci giriş yöntemini ekleyin. Oturum kapalıyken aynı e-postayla Google girişi denenirse önce mevcut şifreyle giriş ve ardından Google hesabını bağlama adımı istenir. Eşleştirme eski şifreyi silmez; iki giriş yönteminin sahipliği doğrulanır. Yalnızca başka bir hesabın e-postasını yazmak o hesaba erişim vermez. Önceden Google köyü varsa o köy korunur; yoksa e-posta köyü kullanılır. Kaynaklar birleştirilmez. E-posta doğrulama mesajı, SMTP gönderimi ve otomatik şifre sıfırlama bu sürümde yoktur.
+
+Sunucu rastgele tuzlu scrypt parola özeti tutar; düz şifre SQLite, analiz, ZIP veya Git kayıtlarına yazılmaz. Başarılı girişte oyun oturum çerezi yenilenir. Çerez HttpOnly ve SameSite=Lax, canlı HTTPS ortamında Secure ve 30 gün geçerlidir. Çıkış mevcut çerezin sunucu oturumunu kapatır; hesap köyü korunur. Kalıcı game-data volume'unu ayrıca yedekleyin.
+
+Oyuncu API yolları /api/auth/player/status (GET), /api/auth/player/register (POST), /api/auth/player/login (POST), /api/auth/player/logout (POST) şeklindedir. Oturumlu Google hesabına şifre eklemek için /api/auth/player/password (POST) kullanılır. Yönetici girişi /api/auth/login yoluyla ayrı kalır; oyuncu hesabı yönetim yetkisi vermez. Mutasyonlar JSON ve aynı kaynak kontrolü, giriş/kayıt ise ek istek sınırları kullanır. Şifreyi loglamayın.
+
+Çevrimdışı preview/index.html görsel dil/tema önizlemesidir; kayıt ve giriş için çalışan API gerekir. Yerelde dört Compose servisi veya npm run build ardından npm start ile http://127.0.0.1:3000 adresini kullanın. VPS'te dört servisi yeniden dağıtın. E-posta hesabı için yeni ortam anahtarı gerekmez; Google seçeneğini açmak için [Google rehberini](GOOGLE-SIGNIN.md) izleyin.
+
+## English
+
+Select **Register** on the homepage. Enter an optional display name (up to 60 characters), an email address and a 12–128-character password. Registration opens the village. On later visits, use **Sign in** with the same email/password. Resources, buildings and progress are stored in server-side SQLite and resume on another device. Email whitespace is trimmed and addresses are normalized to lowercase. **Sign in with Google** is an alternative; email registration works without Google credentials.
+
+**Same email, one account and village:** Sign in to your email/password account and choose **Connect Google** in the account dialog. Once Google verifies the matching email, both methods open the same village. If you started with Google, use **Set password** in the account dialog to add the second method. If matching Google sign-in is attempted while signed out, the screen first asks for the existing password, then **Connect Google**. Linking preserves the password and verifies control of both sign-in methods. Typing another account’s email never grants access. An existing Google village is retained; otherwise the email village is used. Resources are never merged. Verification email delivery, SMTP and automatic password reset are not included in this release.
+
+The server stores a randomly salted scrypt hash, never the plain password in SQLite, analytics, source archives or Git. Successful sign-in rotates the game cookie. It is HttpOnly, SameSite=Lax, Secure on live HTTPS and valid for 30 days. Signing out revokes the current server session while preserving the account village. Back up the persistent game-data volume separately.
+
+Player API routes are /api/auth/player/status (GET), /api/auth/player/register (POST), /api/auth/player/login (POST), and /api/auth/player/logout (POST). POST /api/auth/player/password adds a password to an authenticated Google account. Administrator sign-in remains separate at /api/auth/login; a player account grants no admin access. Mutations enforce JSON and same-origin checks; registration/sign-in have additional request limits. Never log passwords.
+
+The offline preview/index.html supports visual language/theme preview; registration and sign-in need a running API. Locally, use the four Compose services, or npm run build followed by npm start, at http://127.0.0.1:3000. Redeploy all four services on the VPS. Email accounts require no new environment keys; follow the [Google guide](GOOGLE-SIGNIN.md) to enable Google as an alternative.

@@ -37,6 +37,10 @@ async function main() {
   assert.equal(google.response.status, 200);
   assert.equal(typeof google.data.enabled, 'boolean');
   assert.equal(google.data.authenticated, false);
+  const player = await json(base.web + '/api/auth/player/status');
+  assert.equal(player.response.status, 200);
+  assert.equal(player.data.emailEnabled, true);
+  assert.equal(player.data.authenticated, false);
   const game = await json(base.web + '/api/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -48,7 +52,7 @@ async function main() {
   assert.equal((await fetch(base.admin + '/api/admin/session')).status, password ? 401 : 503);
   if (!password) {
     console.log(
-      'Four-service health and Google login gate passed. Set ADMIN_PASSWORD for authenticated panel smoke.',
+      'Four-service health and account login gate passed. Set ADMIN_PASSWORD for authenticated panel smoke.',
     );
     return;
   }
@@ -120,7 +124,7 @@ async function main() {
   assert.equal(events.data.events.filter((item) => item.id === id).length, 1);
   assert.equal(events.data.events.find((item) => item.id === id).duration, 7);
   console.log(
-    'Four-service Google login gate, admin auth, analytics auth, tracking, and duration smoke passed.',
+    'Four-service account login gate, admin auth, analytics auth, tracking, and duration smoke passed.',
   );
 }
 await main();

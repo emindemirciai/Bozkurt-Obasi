@@ -1,31 +1,31 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-09-29. Sürüm / Release: **v1.2.5**. Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium.
+Tarih / Date: 2026-09-30. Sürüm / Release: **v1.3.0**. Windows, Node.js 24.16.0, Docker Desktop 29.8.0, Playwright Chromium.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| Kaynak ve çeviriler / Source and translations | 37 JavaScript dosyası ve 223 eşleşen TR/EN anahtar / files and matching keys |
-| Motor, API, OAuth ve sürüm araçları / Engine, API, OAuth and release tools | 71/71 geçti / passed |
-| Tarayıcı / Browser | 25/25 geçti / passed; masaüstü, mobil, TR/EN, tema, oturum ve önizleme / desktop, mobile, theme, sessions and preview |
-| Üretim ve tek dosya / Production and single-file builds | Geçti / passed; preview/index.html 782.577 bayt / bytes |
+| Kaynak ve çeviriler / Source and translations | 40 JavaScript dosyası, 262 eşleşen TR/EN anahtar / files and matching keys |
+| Motor, hesap API'si, OAuth ve sürüm araçları / Engine, account API, OAuth and release tools | 89/89 geçti / passed |
+| Tarayıcı / Browser | 31/31 geçti / passed; kayıt, giriş, aynı köyde iki yöntem, oturum kapısı, masaüstü, mobil, tema ve önizleme / registration, sign-in, linked village, access gate, desktop, mobile, theme and preview |
+| Üretim ve tek dosya / Production and single-file builds | Geçti / passed; `preview/index.html` yeniden üretildi / regenerated |
 | Biçim ve diff / Formatting and diff | npm run format:check ve git diff --check geçti / passed |
-| Sürüm artışı / Version increase | v1.2.4 → v1.2.5; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / all version records agree |
-| Dört servis / Four services | Dört Docker imajı derlendi, yerel sağlık ve Google giriş kapısı kontrolü geçti / all images built, local health and sign-in gate passed |
-| Analiz üretim derlemesi / Analytics production build | Next.js derleme, lint, TypeScript ve 8 statik sayfa geçti / compile, lint, type checking and 8 static pages passed |
-| Kaynak sayımı / Source count | 145 dosya, 25.967 fiziksel satır; 15.769 aktif web satırı / files, physical lines, active web lines |
+| Sürüm artışı / Version increase | v1.2.5 → v1.3.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / all version records agree |
+| Dört servis / Four services | `web`, `api`, `admin`, `analyze` imajları derlendi; yerel sağlık ve hesap kapısı kontrolü geçti / images built; local health and account gate passed |
+| Konteyner kalıcılığı / Container persistence | Salt-okunur, root olmayan API konteynerinde kayıt → köy inşası → yeniden başlatma → yeniden giriş → aynı köy → çıkış geçti / read-only non-root API container registration, village, restart, sign-in and logout passed |
+| Kaynak sayımı / Source count | 148 dosya, 27.900 fiziksel satır; 17.702 aktif web satırı / files, physical lines, active web lines |
 
 ## Türkçe
 
-Koyu tema ana sayfa, köy, savaş, muhafızlar, görevler, sürüm geçmişi, hesap penceresi, yönetim ve analiz ekranlarında kahverengi/toprak yüzeyler kullanır. Krem metinler ve altın vurgular; bozkır yeşili düğmeler, seçili kartlar, bildirimler, grafikler ve harita detaylarıyla tamamlanır. Temel metin/yüzey kontrastları 4,52–13,79 aralığındadır. Web açık tema kuralları ve hero ölçüleri önceki commit ile aynı; yönetim açık tema bloğu ve analizin önceki açık tema renkleri korunur. Analizin sistem tercihi ve açıkça seçilen koyu tema paletleri eşleşir.
+E-posta ve şifreyle kayıt/giriş, Google anahtarları yerelde boşken çalışıyor. Şifre rastgele tuzlu scrypt özetiyle sunucuda saklanıyor. Köy çıkış, yeniden giriş ve konteyner yeniden başlatma sonrasında korunuyor. Geçersiz veya çıkış yapılmış çerez oyun API'sini açmıyor. Google ile başlayıp şifre ekleme ve önce şifreyle girip aynı doğrulanmış Google e-postasını bağlama akışları yalnızca test sunucusundaki imzalı Google taklidiyle doğrulandı. Eşleştirmede mevcut Google köyü korunuyor; eski e-posta köyünün kaynakları karıştırılmıyor. Anonim Google girişi mevcut bir şifre hesabıyla karşılaşırsa önce şifreyle giriş isteniyor.
 
-Masaüstü ve mobil ekran görüntüleri yerelde incelendi. Yönetim ve analiz panolarının görsel incelemesi sentetik tarayıcı verileriyle yapıldı; geçici localhost analiz konteyneri kontrol sonrası kaldırıldı. Kalıcı proje volume'ları korundu. Yerel stack kontrolünde ADMIN_PASSWORD boş olduğundan gerçek panel oturumu adımı atlandı; GitHub CI korunan panel akışını test parolasıyla sınar. Gerçek Google anahtarları yerelde ayarlı değil; oyun erişimi için yapılandırma gerekir. OAuth testleri yalnızca test sunucusundaki imzalı taklit sağlayıcıyla çalışır.
+Masaüstü ve mobil giriş/kayıt ekranları görsel olarak incelendi. Koyu kahverengi, krem ve bozkır yeşili palet ile TR/EN ana sayfa ölçüleri korundu. Yerel Compose dört servis sağlıklı. `ADMIN_PASSWORD` yerelde boş olduğu için yönetici/analiz oturumu burada denenmedi; GitHub CI test parolasıyla bu akışı çalıştırır. E-posta doğrulama iletisi, SMTP ve otomatik şifre sıfırlama henüz yok. Bu nedenle e-posta hesabı önceden açılmışsa, Google e-posta sahibinin o hesabın şifresini bilmeden otomatik eşleştirme yapması mümkün değil. Şifreler ve eski oturumlar otomatik silinmiyor.
 
-Bu kayıt VPS dağıtımını doğrulamaz. Dokploy'da dört servisi yeniden dağıtın; Google anahtarları, ADMIN_PASSWORD/ADMIN_EMAIL ve alan adı-servis-port eşlemelerini [dağıtım rehberinden](WEB-DEPLOYMENT.md) kontrol edin. Bu commit'in tam test/Docker/Release sonucu [GitHub Actions](https://github.com/emindemirciai/Bozkurt-Obasi/actions/workflows/web-ci.yml) üzerinden görülebilir.
+Bu kayıt canlı VPS dağıtımını doğrulamaz. Dokploy'da dört servisi yeniden dağıtın; alan adı-servis-port eşlemesini ve Google kullanacaksanız OAuth anahtarlarını [dağıtım rehberine](WEB-DEPLOYMENT.md) göre denetleyin. Bu commit'in CI, Docker ve Release sonucu [GitHub Actions](https://github.com/emindemirciai/Bozkurt-Obasi/actions/workflows/web-ci.yml) üzerinde görülebilir.
 
 ## English
 
-Dark mode uses brown/earth surfaces across the homepage, village, battle, guardians, quests, release history, account dialog, admin and analytics screens. Cream text and gold highlights pair with steppe green buttons, selected cards, notices, charts and map details. Key text/surface contrast ratios range from 4.52 to 13.79. Web light rules and hero geometry match the previous commit; admin light overrides and previous analytics light colors are preserved. Analytics system-preference and explicitly selected dark palettes agree.
+Email/password registration and sign-in work locally without Google credentials. The server stores a randomly salted scrypt hash. The account village survives sign-out, sign-in and a container restart. Invalid or logged-out cookies cannot access the game API. Google-first password setup and email-first linking to the same verified Google address passed with a signed mock provider confined to the test server. Linking retains an existing Google village without blending resources from the previous email save. Anonymous Google sign-in for an existing password account prompts the user to sign in with that password first.
 
-Desktop and mobile screenshots were reviewed locally. Admin and analytics dashboards used synthetic browser fixtures for visual review; the temporary localhost analytics container was removed afterward. Persistent project volumes were preserved. Local stack smoke skipped actual panel sign-in because ADMIN_PASSWORD is unset; GitHub CI exercises protected panels with a test password. Live Google credentials are unset locally; game access requires configuration. OAuth tests use a signed mock provider restricted to the test server.
+Desktop and mobile account screens were visually reviewed. The brown, cream and steppe-green dark palette and TR/EN hero geometry remain intact. All four local Compose services are healthy. Local `ADMIN_PASSWORD` is unset, so admin/analytics sign-in was not tested here; GitHub CI exercises it with a test password. Verification email delivery, SMTP and automated password recovery are not yet available. A verified Google email owner cannot automatically link an address previously registered by someone else without knowing that account's password. Passwords and all old sessions are not automatically cleared.
 
-This record does not confirm a VPS deployment. Redeploy the four services in Dokploy and verify Google credentials, ADMIN_PASSWORD/ADMIN_EMAIL and domain/service/port mappings using the [deployment guide](WEB-DEPLOYMENT.md). This commit's full test, Docker and Release result is available in [GitHub Actions](https://github.com/emindemirciai/Bozkurt-Obasi/actions/workflows/web-ci.yml).
+This record does not confirm a live VPS deployment. Redeploy all four services in Dokploy and check the domain/service/port mappings and optional Google credentials against the [deployment guide](WEB-DEPLOYMENT.md). This commit's CI, Docker and Release results are visible in [GitHub Actions](https://github.com/emindemirciai/Bozkurt-Obasi/actions/workflows/web-ci.yml).

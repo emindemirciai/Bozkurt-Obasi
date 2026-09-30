@@ -1,6 +1,22 @@
 {
-  "version": "1.2.5",
+  "version": "1.3.0",
   "releases": [
+    {
+      "version": "1.3.0",
+      "date": "2026-09-30",
+      "changes": {
+        "tr": [
+          "Google girişine ek olarak e-posta ve şifreyle kayıt ve giriş eklendi; ana sayfada Kayıt ol ve Giriş yap düğmeleri bulunur.",
+          "Hesaba bağlı köyler sunucuda saklanır; güvenli parola özetleri ve yenilenen oturum çerezleriyle cihazlar arasında ilerlemeye devam edilir.",
+          "Kayıt ve giriş pencereleri Türkçe/İngilizce, açık/koyu tema ve mobil kullanımı destekler; aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulamasıyla tek hesaba ve köye bağlanır."
+        ],
+        "en": [
+          "Email/password registration and sign-in are available alongside Google, with Register and Sign in buttons on the homepage.",
+          "Account villages persist on the server; salted password hashes and rotated session cookies support resuming progress across devices.",
+          "Registration and sign-in dialogs support Turkish/English, light/dark mode and mobile layouts; Google and password sign-in for the same email link to one account and village after ownership verification."
+        ]
+      }
+    },
     {
       "version": "1.2.5",
       "date": "2026-09-29",

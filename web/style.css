@@ -3099,6 +3099,151 @@ footer > span:first-child {
   margin-top: 15px;
   font-size: 11px;
 }
+.landing-email-actions {
+  display: flex;
+  gap: 8px;
+}
+.landing-email-button {
+  min-height: 51px;
+  padding: 0 16px;
+  border: 1px solid #f1ddaf80;
+  border-radius: 7px;
+  background: #211a1633;
+  color: #fff8e8;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.landing-email-button:hover:not(:disabled) {
+  background: #f1ddaf26;
+}
+.landing-email-button.emphasis {
+  background: #e1cb91;
+  border-color: #e1cb91;
+  color: #243c30;
+}
+.landing-email-button.emphasis:hover:not(:disabled) {
+  background: #f1dba2;
+}
+.account-modal {
+  padding: 32px;
+}
+.account-modal h2 {
+  font-size: 27px;
+  margin-bottom: 12px;
+}
+.account-form {
+  display: grid;
+  gap: 7px;
+  margin-top: 20px;
+  text-align: left;
+}
+.account-form label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.account-form input {
+  width: 100%;
+  min-width: 0;
+  height: 43px;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  border: 1px solid #cad2bc;
+  border-radius: 6px;
+  background: #fcfcf6;
+  color: #2b4238;
+  font: inherit;
+  font-size: 14px;
+}
+.account-form input:focus-visible {
+  outline: 3px solid #c28c3c;
+  outline-offset: 2px;
+}
+.account-form small {
+  color: #66796d;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.account-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 7px;
+}
+.modal .account-error {
+  color: #9d3c26;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.modal .account-switch {
+  margin-top: 15px;
+  font-size: 12px;
+}
+.account-switch-button {
+  padding: 4px;
+  color: #355b44;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.account-google {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+.account-google .landing-google-unavailable {
+  align-items: center;
+}
+.account-google .landing-google-unavailable small {
+  color: #66796d;
+}
+.modal .account-provider-note {
+  margin-top: 13px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.account-methods {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin: 18px 0;
+}
+.account-appearance {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.account-appearance .language {
+  border-left: 0;
+  padding: 7px;
+}
+.account-methods > p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.account-methods .modal-note {
+  width: 100%;
+}
+.account-modal .account-legal {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+:root[data-theme='dark'] .account-form input {
+  background: #241b16;
+  border-color: #79604a;
+  color: #f2e5ce;
+}
+:root[data-theme='dark'] .account-form small,
+:root[data-theme='dark'] .account-google .landing-google-unavailable small {
+  color: #c1ab8d;
+}
+:root[data-theme='dark'] .account-switch-button {
+  color: #d0ae6f;
+}
+:root[data-theme='dark'] .modal .account-error {
+  color: #f0a694;
+}
 
 :root[data-theme='dark'] .landing-shell {
   --landing-bg: #211a16;

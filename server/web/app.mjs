@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { createAdminRoutes } from './admin.mjs';
 import { appendCookie, createGoogleRoutes, googleAuthConfig } from './google.mjs';
+import { createPlayerRoutes } from './player-auth.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
@@ -283,6 +284,15 @@ export function createApp({
       .some((column) => column.name === 'account_sub')
   )
     database.exec('ALTER TABLE sessions ADD COLUMN account_sub TEXT');
+  if (
+    !database
+      .prepare('PRAGMA table_info(sessions)')
+      .all()
+      .some((column) => column.name === 'account_provider')
+  )
+    database.exec(
+      "ALTER TABLE sessions ADD COLUMN account_provider TEXT NOT NULL DEFAULT 'google'",
+    );
   database.exec(`
     CREATE TABLE IF NOT EXISTS google_accounts (
       sub TEXT PRIMARY KEY,
@@ -294,20 +304,40 @@ export function createApp({
       updated_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS sessions_account ON sessions (account_sub);
+    CREATE TABLE IF NOT EXISTS email_accounts (
+      sub TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      state_json TEXT NOT NULL,
+      revision INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
   `);
+  if (
+    !database
+      .prepare('PRAGMA table_info(email_accounts)')
+      .all()
+      .some((column) => column.name === 'google_sub')
+  )
+    database.exec('ALTER TABLE email_accounts ADD COLUMN google_sub TEXT');
+  database.exec(
+    'CREATE UNIQUE INDEX IF NOT EXISTS email_accounts_google ON email_accounts(google_sub) WHERE google_sub IS NOT NULL',
+  );
   const statements = {
     health: database.prepare('SELECT 1 AS ready'),
     get: database.prepare(
-      'SELECT state_json, revision, expires_at, account_sub FROM sessions WHERE token_hash = ?',
+      'SELECT state_json, revision, expires_at, account_sub, account_provider FROM sessions WHERE token_hash = ?',
     ),
     update: database.prepare(
       'UPDATE sessions SET state_json = ?, revision = ?, updated_at = ? WHERE token_hash = ?',
     ),
     insertAccountSession: database.prepare(
-      'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at, account_sub) VALUES (?, ?, 0, ?, ?, ?, ?)',
+      'INSERT INTO sessions (token_hash, state_json, revision, created_at, updated_at, expires_at, account_sub, account_provider) VALUES (?, ?, 0, ?, ?, ?, ?, ?)',
     ),
     bindAccount: database.prepare(
-      'UPDATE sessions SET token_hash = ?, account_sub = ?, updated_at = ?, expires_at = ? WHERE token_hash = ?',
+      'UPDATE sessions SET token_hash = ?, account_sub = ?, account_provider = ?, updated_at = ?, expires_at = ? WHERE token_hash = ?',
     ),
     touchAccountSession: database.prepare(
       'UPDATE sessions SET updated_at = ? WHERE token_hash = ?',
@@ -318,13 +348,34 @@ export function createApp({
       'SELECT sub, email, display_name, state_json, revision FROM google_accounts WHERE sub = ?',
     ),
     accountInsert: database.prepare(
-      'INSERT INTO google_accounts (sub, email, display_name, state_json, revision, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
+      'INSERT INTO google_accounts (sub, email, display_name, state_json, revision, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
     ),
     accountProfile: database.prepare(
       'UPDATE google_accounts SET email = ?, display_name = ?, updated_at = ? WHERE sub = ?',
     ),
+    googleByEmail: database.prepare('SELECT sub FROM google_accounts WHERE lower(trim(email)) = ?'),
     accountSave: database.prepare(
       'UPDATE google_accounts SET state_json = ?, revision = ?, updated_at = ? WHERE sub = ? AND revision = ?',
+    ),
+    accountRevision: database.prepare(
+      'UPDATE google_accounts SET revision = ?, updated_at = ? WHERE sub = ? AND revision = ?',
+    ),
+    emailGet: database.prepare(
+      'SELECT sub, email, display_name, state_json, revision, google_sub FROM email_accounts WHERE sub = ?',
+    ),
+    emailByAddress: database.prepare('SELECT sub, google_sub FROM email_accounts WHERE email = ?'),
+    emailByGoogle: database.prepare(
+      'SELECT sub, password_hash FROM email_accounts WHERE google_sub = ?',
+    ),
+    emailCredentialGet: database.prepare('SELECT password_hash FROM email_accounts WHERE sub = ?'),
+    emailInsert: database.prepare(
+      'INSERT INTO email_accounts (sub, email, display_name, password_hash, state_json, revision, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)',
+    ),
+    emailSave: database.prepare(
+      'UPDATE email_accounts SET state_json = ?, revision = ?, updated_at = ? WHERE sub = ? AND revision = ?',
+    ),
+    emailLink: database.prepare(
+      'UPDATE email_accounts SET google_sub = ?, updated_at = ? WHERE sub = ? AND google_sub IS NULL',
     ),
   };
   const adminRoutes = createAdminRoutes(database, {
@@ -367,8 +418,20 @@ export function createApp({
     const hash = sessionHash(request);
     const row = hash ? statements.get.get(hash) : null;
     if (!row || row.expires_at <= now) return null;
-    const account = row.account_sub ? statements.accountGet.get(row.account_sub) : null;
-    if (row.account_sub && !account) throw new Error('Orphaned Google game session');
+    if (!['google', 'email'].includes(row.account_provider))
+      throw new Error('Invalid persisted account provider');
+    const credential = row.account_sub
+      ? (row.account_provider === 'email' ? statements.emailGet : statements.accountGet).get(
+          row.account_sub,
+        )
+      : null;
+    if (row.account_sub && !credential) throw new Error('Orphaned game account session');
+    const canonicalProvider = credential?.google_sub ? 'google' : row.account_provider;
+    const canonicalSub = credential?.google_sub || row.account_sub;
+    const account = credential?.google_sub
+      ? statements.accountGet.get(credential.google_sub)
+      : credential;
+    if (credential?.google_sub && !account) throw new Error('Orphaned linked account');
     const serialized = account ? account.state_json : row.state_json;
     const state = JSON.parse(serialized);
     if (!validateGame(state)) throw new Error('Invalid persisted game');
@@ -378,6 +441,10 @@ export function createApp({
       revision: account ? account.revision : row.revision,
       serialized,
       accountSub: row.account_sub,
+      accountProvider: row.account_provider,
+      canonicalProvider,
+      canonicalSub,
+      credential,
       account,
     };
   }
@@ -389,13 +456,9 @@ export function createApp({
       const previousRevision = session.revision;
       session.revision++;
       if (session.accountSub) {
-        const result = statements.accountSave.run(
-          serialized,
-          session.revision,
-          now,
-          session.accountSub,
-          previousRevision,
-        );
+        const result = (
+          session.canonicalProvider === 'email' ? statements.emailSave : statements.accountSave
+        ).run(serialized, session.revision, now, session.canonicalSub, previousRevision);
         if (result.changes !== 1) throw new HttpError(409, 'stale_revision');
         statements.touchAccountSession.run(now, session.hash);
       } else {
@@ -411,6 +474,188 @@ export function createApp({
     clientSecret: googleClientSecret,
     redirectUris: googleRedirectUris,
   });
+
+  function publicPlayer(session) {
+    if (!session?.account) return null;
+    const credential =
+      session.canonicalProvider === 'google'
+        ? statements.emailByGoogle.get(session.canonicalSub)
+        : statements.emailCredentialGet.get(session.accountSub);
+    const passwordEnabled = Boolean(credential?.password_hash);
+    return {
+      name: session.account.display_name,
+      email: session.account.email,
+      provider: session.accountProvider,
+      emailVerified: session.canonicalProvider === 'google',
+      passwordEnabled,
+      googleLinked: session.canonicalProvider === 'google',
+    };
+  }
+
+  function logoutPlayer(request, response, session) {
+    statements.removeSession.run(session.hash);
+    appendCookie(
+      response,
+      `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
+    );
+  }
+
+  function completeEmailLogin(request, response, identity, now, registration = false) {
+    now = Math.floor(clock());
+    // Do not silently replace a browser's authenticated identity or link by matching email.
+    const current = loadSession(request, now);
+    const existing = statements.emailGet.get(identity.sub);
+    if (!registration && !existing) throw new HttpError(401, 'invalid_credentials');
+    if (
+      !registration &&
+      statements.emailCredentialGet.get(identity.sub)?.password_hash !== identity.passwordHash
+    )
+      throw new HttpError(401, 'invalid_credentials');
+    if (
+      current?.accountSub &&
+      !(current.accountProvider === 'email' && current.accountSub === identity.sub) &&
+      !(
+        existing?.google_sub &&
+        current.canonicalProvider === 'google' &&
+        current.canonicalSub === existing.google_sub
+      )
+    )
+      throw new HttpError(409, 'account_conflict');
+    const state = current?.state ?? createGame(now);
+    if (!validateGame(state)) throw new Error('Invalid game to link');
+    if (registration && current && !current.accountSub) resumeGame(state, now);
+    const token = randomBytes(32).toString('base64url');
+    const hash = createHash('sha256').update(token).digest('hex');
+    database.exec('BEGIN IMMEDIATE');
+    try {
+      if (registration) {
+        // Re-check inside the transaction because password hashing yields to other requests.
+        if (statements.emailByAddress.get(identity.email)) throw new HttpError(409, 'email_in_use');
+        if (statements.googleByEmail.get(identity.email))
+          throw new HttpError(409, 'google_login_required');
+        statements.emailInsert.run(
+          identity.sub,
+          identity.email,
+          identity.name,
+          identity.passwordHash,
+          JSON.stringify(state),
+          now,
+          now,
+        );
+      }
+      if (current) {
+        statements.bindAccount.run(
+          hash,
+          identity.sub,
+          'email',
+          now,
+          now + SESSION_AGE_MS,
+          current.hash,
+        );
+      } else {
+        statements.insertAccountSession.run(
+          hash,
+          existing ? existing.state_json : JSON.stringify(state),
+          now,
+          now,
+          now + SESSION_AGE_MS,
+          identity.sub,
+          'email',
+        );
+      }
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    }
+    appendCookie(
+      response,
+      `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
+    );
+    const canonical = existing?.google_sub
+      ? statements.accountGet.get(existing.google_sub)
+      : existing;
+    return {
+      name: canonical?.display_name ?? identity.name,
+      email: canonical?.email ?? identity.email,
+      provider: 'email',
+      emailVerified: Boolean(existing?.google_sub),
+      passwordEnabled: true,
+      googleLinked: Boolean(existing?.google_sub),
+    };
+  }
+
+  function setPlayerPassword(request, response, passwordHash, now) {
+    now = Math.floor(clock());
+    const current = loadSession(request, now);
+    if (!current?.accountSub || current.accountProvider !== 'google')
+      throw new HttpError(401, 'google_session_required');
+    const email = current.account.email.trim().toLowerCase();
+    const sub = randomBytes(24).toString('base64url');
+    const token = randomBytes(32).toString('base64url');
+    const hash = createHash('sha256').update(token).digest('hex');
+    database.exec('BEGIN IMMEDIATE');
+    try {
+      const existing = statements.emailByAddress.get(email);
+      if (
+        existing?.google_sub === current.canonicalSub ||
+        statements.emailByGoogle.get(current.canonicalSub)
+      )
+        throw new HttpError(409, 'password_already_set');
+      if (existing) throw new HttpError(409, 'account_link_required');
+      statements.emailInsert.run(
+        sub,
+        email,
+        current.account.display_name,
+        passwordHash,
+        current.serialized,
+        now,
+        now,
+      );
+      statements.emailLink.run(current.canonicalSub, now, sub);
+      statements.bindAccount.run(
+        hash,
+        current.accountSub,
+        'google',
+        now,
+        now + SESSION_AGE_MS,
+        current.hash,
+      );
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    }
+    appendCookie(
+      response,
+      `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
+    );
+    return { ...publicPlayer(current), passwordEnabled: true };
+  }
+
+  const playerRoutes = createPlayerRoutes(database, {
+    googleConfig,
+    HttpError,
+    json,
+    checkMutation,
+    readJson,
+    trustProxy,
+    getSession: loadSession,
+    publicUser: publicPlayer,
+    register: (request, response, identity, now) =>
+      completeEmailLogin(
+        request,
+        response,
+        { ...identity, sub: randomBytes(24).toString('base64url') },
+        now,
+        true,
+      ),
+    login: (request, response, identity, now) =>
+      completeEmailLogin(request, response, identity, now),
+    setPassword: setPlayerPassword,
+    logout: logoutPlayer,
+  });
+
   const googleRoutes = createGoogleRoutes(database, {
     config: googleConfig,
     fetchImpl: googleFetch,
@@ -424,13 +669,31 @@ export function createApp({
     sessionHash,
     getSession: loadSession,
     publicUser: (session) =>
-      session?.account
+      session?.account && session.accountProvider === 'google'
         ? { name: session.account.display_name, email: session.account.email }
         : null,
     completeLogin(request, response, identity, now) {
+      now = Math.floor(clock());
       const current = loadSession(request, now);
-      if (current?.accountSub && current.accountSub !== identity.sub)
-        throw new HttpError(409, 'google_account_conflict');
+      const email = identity.email.trim().toLowerCase();
+      const credential = statements.emailByAddress.get(email);
+      let linkingEmail = null;
+      if (current?.accountSub && current.accountProvider === 'email') {
+        if (current.credential.email !== email)
+          throw new HttpError(409, 'account_link_email_mismatch');
+        if (current.credential.google_sub && current.credential.google_sub !== identity.sub)
+          throw new HttpError(409, 'google_account_conflict');
+        const linked = statements.emailByGoogle.get(identity.sub);
+        if (linked && linked.sub !== current.accountSub)
+          throw new HttpError(409, 'account_link_required');
+        linkingEmail = current.accountSub;
+      } else if (current?.accountSub) {
+        if (current.canonicalProvider !== 'google' || current.canonicalSub !== identity.sub)
+          throw new HttpError(409, 'google_account_conflict');
+      } else if (credential && credential.google_sub !== identity.sub) {
+        // A verified Google email alone does not prove control of a pre-existing password.
+        throw new HttpError(409, 'account_link_required');
+      }
       const existing = statements.accountGet.get(identity.sub);
       const state = current?.state ?? createGame(now);
       if (!validateGame(state)) throw new Error('Invalid game to link');
@@ -447,12 +710,34 @@ export function createApp({
             identity.email,
             identity.name,
             JSON.stringify(state),
+            current?.canonicalProvider === 'email' ? current.revision : 0,
             now,
             now,
           );
         }
+        if (linkingEmail && !current.credential.google_sub) {
+          if (existing) {
+            // Preserve the Google save verbatim and invalidate commands from either old village.
+            const changed = statements.accountRevision.run(
+              Math.max(existing.revision, current.revision) + 1,
+              now,
+              identity.sub,
+              existing.revision,
+            );
+            if (changed.changes !== 1) throw new HttpError(409, 'stale_revision');
+          }
+          const linked = statements.emailLink.run(identity.sub, now, linkingEmail);
+          if (linked.changes !== 1) throw new HttpError(409, 'account_link_required');
+        }
         if (current) {
-          statements.bindAccount.run(hash, identity.sub, now, now + SESSION_AGE_MS, current.hash);
+          statements.bindAccount.run(
+            hash,
+            identity.sub,
+            'google',
+            now,
+            now + SESSION_AGE_MS,
+            current.hash,
+          );
         } else {
           statements.insertAccountSession.run(
             hash,
@@ -461,6 +746,7 @@ export function createApp({
             now,
             now + SESSION_AGE_MS,
             identity.sub,
+            'google',
           );
         }
         database.exec('COMMIT');
@@ -473,13 +759,7 @@ export function createApp({
         `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
       );
     },
-    logout(request, response, session) {
-      statements.removeSession.run(session.hash);
-      appendCookie(
-        response,
-        `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
-      );
-    },
+    logout: logoutPlayer,
   });
 
   const server = createServer(async (request, response) => {
@@ -495,6 +775,7 @@ export function createApp({
       const now = Math.floor(clock());
       allowRequest(request, now);
       if (await adminRoutes.handle(request, response, pathname, now)) return;
+      if (await playerRoutes.handle(request, response, pathname, now)) return;
       if (await googleRoutes.handle(request, response, pathname, now)) return;
       if (pathname === '/api/config' && request.method === 'GET') {
         return json(response, 200, { analytics: publicAnalytics }, { 'Cache-Control': 'no-store' });
@@ -504,13 +785,13 @@ export function createApp({
         const body = await readJson(request);
         if (Object.keys(body).length) throw new HttpError(400, 'unexpected_fields');
         const session = loadSession(request, now);
-        if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
+        if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
         resumeGame(session.state, now);
         return json(response, 200, { ...persist(session, now), mode: 'online' });
       }
       if (pathname === '/api/state' && request.method === 'GET') {
         const session = loadSession(request, now);
-        if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
+        if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
         advanceGame(session.state, now);
         return json(response, 200, persist(session, now));
       }
@@ -529,7 +810,7 @@ export function createApp({
           throw new HttpError(400, 'invalid_action_request');
         }
         const session = loadSession(request, now);
-        if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
+        if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
         if (body.revision !== session.revision) {
           advanceGame(session.state, now);
           return json(response, 409, { error: 'stale_revision', ...persist(session, now) });

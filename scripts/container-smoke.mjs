@@ -62,6 +62,11 @@ try {
     authenticated: false,
     reason: 'not_configured',
   });
+  const playerStatus = await fetch(`${baseUrl}/api/auth/player/status`);
+  const playerConfig = await playerStatus.json();
+  assert.equal(playerStatus.status, 200);
+  assert.equal(playerConfig.emailEnabled, true, 'Email accounts work without Google keys.');
+  assert.equal(playerConfig.authenticated, false);
   const sessionResponse = await fetch(`${baseUrl}/api/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -82,14 +87,66 @@ try {
     }),
   });
   assert.equal(mutationResponse.status, 401, 'A guest must not mutate a village.');
+  const credentials = {
+    email: `${name}@example.com`,
+    password: randomBytes(24).toString('base64url'),
+    name: 'Container Player',
+  };
+  const registration = await fetch(`${baseUrl}/api/auth/player/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
+  assert.equal(registration.status, 201, 'Email registration must work in the production image.');
+  const registered = await registration.json();
+  assert.equal(registered.authenticated, true);
+  const cookie = registration.headers.get('set-cookie').split(';')[0];
+  const current = await fetch(`${baseUrl}/api/state`, { headers: { Cookie: cookie } });
+  const village = await current.json();
+  const construction = await fetch(`${baseUrl}/api/action`, {
+    method: 'POST',
+    headers: { Cookie: cookie, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: { type: 'build', building: 'quarry' },
+      revision: village.revision,
+    }),
+  });
+  assert.equal(construction.status, 200);
+  const saved = await construction.json();
   docker(['restart', name]);
   // Docker may allocate a different ephemeral host port after a restart.
   baseUrl = containerUrl();
   await waitForHealth(baseUrl);
   const restoredResponse = await fetch(`${baseUrl}/api/state`);
   assert.equal(restoredResponse.status, 401, 'The village gate must survive container restart.');
+  const signedIn = await fetch(`${baseUrl}/api/auth/player/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+  });
+  assert.equal(signedIn.status, 200, 'Email account must survive container restart.');
+  const renewedCookie = signedIn.headers.get('set-cookie').split(';')[0];
+  assert.notEqual(renewedCookie, cookie);
+  const resumedResponse = await fetch(`${baseUrl}/api/state`, {
+    headers: { Cookie: renewedCookie },
+  });
+  assert.equal(resumedResponse.status, 200);
+  const resumed = await resumedResponse.json();
+  assert.deepEqual(resumed.state.buildings, saved.state.buildings, 'Account village must persist.');
+  assert.ok(resumed.revision >= saved.revision);
+  const logout = await fetch(`${baseUrl}/api/auth/player/logout`, {
+    method: 'POST',
+    headers: { Cookie: renewedCookie, 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  assert.equal(logout.status, 200);
+  assert.equal(
+    (await fetch(`${baseUrl}/api/state`, { headers: { Cookie: renewedCookie } })).status,
+    401,
+    'Logged-out player cookies must not reopen the village.',
+  );
   console.log(
-    'Container smoke passed: non-root read-only runtime, HTTP health, production HTML, Google status, guest access denied before and after restart.',
+    'Container smoke passed: non-root read-only runtime, health, guest denial, email registration/login, saved village across restart, cookie rotation and logout.',
   );
 } catch (error) {
   if (created) console.error(docker(['logs', name], true));

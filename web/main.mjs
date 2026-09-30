@@ -23,6 +23,7 @@ const termsHref = location.protocol === 'file:' ? '../public/terms.html' : '/ter
 let auth = {
   loading: location.protocol !== 'file:',
   enabled: false,
+  emailEnabled: false,
   authenticated: false,
   user: null,
 };
@@ -59,6 +60,10 @@ let polling = null,
   renderedSignature = '';
 let notice = '',
   noticeUntil = 0;
+let accountDraft = { name: '', email: '', password: '' },
+  accountError = '',
+  accountOpener = '',
+  accountRequest = 0;
 const root = document.querySelector('#app');
 const t = (key) => translations[language][key] || key;
 const escape = (value) =>
@@ -165,15 +170,19 @@ function navigate(next) {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
+function googleSignInControl(label = 'googleSignIn') {
+  if (!auth.enabled) {
+    return `<div class="landing-google-unavailable"><button class="landing-google" disabled><img class="google-g" src="${googleIcon}" alt="" aria-hidden="true">${t(label)}</button><small>${t(auth.loading ? 'googleChecking' : 'googleUnavailable')}</small></div>`;
+  }
+  return `<a class="landing-google" href="/api/auth/google/start"><img class="google-g" src="${googleIcon}" alt="" aria-hidden="true">${t(label)}</a>`;
+}
+
 function googleControl() {
   if (auth.authenticated) {
-    const name = auth.user?.name || auth.user?.email || t('googleAccount');
+    const name = auth.user?.name || auth.user?.email || t('playerAccount');
     return `<div class="landing-account"><span class="landing-avatar" aria-hidden="true">${escape(name.slice(0, 1).toLocaleUpperCase(language))}</span><span><strong>${escape(name)}</strong><small>${t(mode === 'online' ? 'accountReady' : 'googleGameUnavailable')}</small></span>${button(t('manageAccount'), 'account', 'landing-account-manage')}</div>`;
   }
-  if (!auth.enabled) {
-    return `<div class="landing-google-unavailable"><button class="landing-google" disabled><img class="google-g" src="${googleIcon}" alt="" aria-hidden="true">${t('googleSignIn')}</button><small>${t(auth.loading ? 'googleChecking' : 'googleUnavailable')}</small></div>`;
-  }
-  return `<a class="landing-google" href="/api/auth/google/start"><img class="google-g" src="${googleIcon}" alt="" aria-hidden="true">${t('googleSignIn')}</a>`;
+  return `${googleSignInControl()}<div class="landing-email-actions">${button(t('emailLogin'), 'login', 'landing-email-button', auth.loading)}${button(t('emailRegister'), 'register', 'landing-email-button emphasis', auth.loading)}</div>`;
 }
 
 function landingView() {
@@ -191,13 +200,19 @@ function landingView() {
 
 async function refreshGoogleAuth() {
   if (location.protocol === 'file:') {
-    auth = { loading: false, enabled: false, authenticated: false, user: null };
+    auth = {
+      loading: false,
+      enabled: false,
+      emailEnabled: false,
+      authenticated: false,
+      user: null,
+    };
     denyGameAccess();
     render();
     return;
   }
   try {
-    const response = await fetch('/api/auth/google/status', {
+    const response = await fetch('/api/auth/player/status', {
       credentials: 'same-origin',
       signal: AbortSignal.timeout(8000),
     });
@@ -206,12 +221,19 @@ async function refreshGoogleAuth() {
     auth = {
       loading: false,
       enabled: result.enabled === true,
+      emailEnabled: result.emailEnabled === true,
       authenticated: result.authenticated === true,
       user: result.authenticated ? result.user : null,
       reason: result.reason,
     };
   } catch {
-    auth = { loading: false, enabled: false, authenticated: false, user: null };
+    auth = {
+      loading: false,
+      enabled: false,
+      emailEnabled: false,
+      authenticated: false,
+      user: null,
+    };
   }
   if (!auth.authenticated) denyGameAccess();
   render();
@@ -223,6 +245,7 @@ function denyGameAccess() {
   mode = 'local';
   view = 'home';
   modal = '';
+  clearAccountDraft();
   if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
 }
 
@@ -235,6 +258,13 @@ async function initGoogleAuth() {
     history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     if (result === 'success' && auth.authenticated) toast('googleWelcome');
     else if (result === 'cancelled') toast('googleCancelled');
+    else if (result === 'account_link_required' || result === 'account_link_email_mismatch') {
+      clearAccountDraft();
+      accountError =
+        result === 'account_link_required' ? 'accountLinkRequired' : 'accountLinkEmailMismatch';
+      modal = auth.authenticated ? 'account' : 'login';
+      render();
+    }
   }
   if (!auth.authenticated) return;
   const generation = ++sessionGeneration;
@@ -266,7 +296,7 @@ function render(restoreFocus) {
     renderedSignature = interfaceSignature();
     renderNotice();
     if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
-    if (modal) document.querySelector('[role="dialog"] button')?.focus({ preventScroll: true });
+    focusDialog();
     return;
   }
   const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'updates'];
@@ -284,11 +314,33 @@ function render(restoreFocus) {
   renderedSignature = interfaceSignature();
   renderNotice();
   if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
-  if (modal) {
-    const dialog = document.querySelector('[role="dialog"]');
-    if (!dialog.contains(document.activeElement))
-      dialog.querySelector('button')?.focus({ preventScroll: true });
-  }
+  focusDialog();
+}
+
+function focusDialog() {
+  const dialog = document.querySelector('[role="dialog"]');
+  if (dialog && !dialog.contains(document.activeElement))
+    (
+      dialog.querySelector('[data-account-field="email"]:not([readonly])') ||
+      dialog.querySelector('#account-password') ||
+      dialog.querySelector('button')
+    )?.focus({
+      preventScroll: true,
+    });
+}
+
+function clearAccountDraft() {
+  accountDraft = { name: '', email: '', password: '' };
+  accountError = '';
+}
+
+function closeDialog() {
+  const opener = accountOpener;
+  accountOpener = '';
+  accountRequest++;
+  modal = '';
+  clearAccountDraft();
+  render(opener);
 }
 
 function playView() {
@@ -447,13 +499,134 @@ function updatesView() {
   );
 }
 
+function accountAppearanceControls() {
+  return `<div class="account-appearance"><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}</button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button></div>`;
+}
+
+function accountMethodControls() {
+  const user = auth.user || {};
+  if (user.googleLinked && user.passwordEnabled)
+    return `<div class="account-methods"><p class="modal-note">${t('accountMethodsLinked')}</p></div>`;
+  if (user.provider === 'google')
+    return `<div class="account-methods"><p>${t('setPasswordIntro')}</p>${button(t('setPassword'), 'setPassword', 'button primary', busy)}</div>`;
+  return `<div class="account-methods"><p>${t('connectGoogleHint')}</p>${googleSignInControl('connectGoogle')}</div>`;
+}
+
+function accountFormView() {
+  const registering = modal === 'register';
+  const settingPassword = modal === 'password';
+  const title = settingPassword ? 'setPassword' : registering ? 'registerTitle' : 'loginTitle';
+  const introduction = settingPassword
+    ? 'setPasswordIntro'
+    : registering
+      ? 'registerIntro'
+      : 'loginIntro';
+  return `<div class="modal-backdrop"><section class="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="account-intro"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}" ${busy ? 'disabled' : ''}>${icon('close', 20)}</button>${accountAppearanceControls()}<div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t(title)}</h2><p id="account-intro">${t(introduction)}</p><form id="account-form" class="account-form" aria-busy="${busy}"><label for="account-email">${t('accountEmail')}</label><input id="account-email" data-account-field="email" name="email" type="email" autocomplete="email" maxlength="254" required value="${escape(accountDraft.email)}" ${settingPassword ? 'readonly' : ''} ${busy ? 'disabled' : ''}>${registering ? `<label for="account-name">${t('accountName')}</label><input id="account-name" data-account-field="name" name="name" type="text" autocomplete="nickname" maxlength="60" value="${escape(accountDraft.name)}" ${busy ? 'disabled' : ''}>` : ''}<label for="account-password">${t('accountPassword')}</label><input id="account-password" data-account-field="password" name="password" type="password" autocomplete="${registering || settingPassword ? 'new-password' : 'current-password'}" required aria-describedby="account-password-hint" value="${escape(accountDraft.password)}" ${busy ? 'disabled' : ''}><small id="account-password-hint">${t('passwordHint')}</small>${accountError ? `<p id="account-error" class="account-error" role="alert">${t(accountError)}</p>` : ''}${!auth.emailEnabled ? `<p class="account-error" role="status">${t('emailUnavailable')}</p>` : ''}<button class="button primary account-submit" type="submit" ${busy || !auth.emailEnabled ? 'disabled' : ''}>${t(busy ? 'accountSubmitting' : settingPassword ? 'setPassword' : registering ? 'emailRegister' : 'emailLogin')}</button></form>${settingPassword ? '' : `<p class="account-switch">${t(registering ? 'alreadyRegistered' : 'newPlayer')} ${button(t(registering ? 'emailLogin' : 'emailRegister'), registering ? 'login' : 'register', 'account-switch-button', busy)}</p><div class="account-google">${googleSignInControl()}</div>`}<p class="account-provider-note">${t('accountLinkNote')}</p><div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
+}
+
 function modalView() {
   if (!modal) return '';
+  if (['login', 'register', 'password'].includes(modal)) return accountFormView();
   if (modal === 'account') {
-    return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t('googleAccount')}</h2><p>${escape(auth.user?.name || auth.user?.email || '')}</p><p class="modal-note">${escape(auth.user?.email || '')}</p>${button(t('googleLogout'), 'googleLogout', 'button outline', busy)}<div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
+    return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t('playerAccount')}</h2><p>${escape(auth.user?.name || auth.user?.email || '')}</p><p class="modal-note">${escape(auth.user?.email || '')}<br>${t(auth.user?.provider === 'email' ? 'emailAccount' : 'googleAccount')}${auth.user?.provider === 'email' && auth.user?.emailVerified === false ? `<br>${t('emailNotVerified')}` : ''}</p>${accountMethodControls()}${accountError ? `<p class="account-error" role="alert">${t(accountError)}</p>` : ''}${button(t('googleLogout'), 'accountLogout', 'button outline', busy)}<div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
   }
   return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI · AY-YILDIZ NÖBETİ</div><h2 id="modal-title">${t('helpTitle')}</h2><p>${t('helpText')}</p><p class="modal-note">${t('helpOffline')}</p>${button(t('understood') + icon('arrow', 18), 'close', 'button primary')}${button(icon('save', 16) + t('exportSave'), 'exportSave', 'button text-button')}</section></div>`;
 }
+
+const accountErrorKeys = {
+  invalid_email: 'invalidEmail',
+  invalid_password: 'invalidPassword',
+  invalid_name: 'invalidName',
+  invalid_credentials: 'invalidCredentials',
+  email_in_use: 'emailInUse',
+  account_conflict: 'accountConflict',
+  login_rate_limited: 'accountRateLimited',
+  origin_rejected: 'accountOriginRejected',
+  account_session_required: 'signInRequired',
+  google_session_required: 'signInRequired',
+  google_login_required: 'googleLoginRequired',
+  account_link_required: 'accountLinkRequired',
+  account_link_email_mismatch: 'accountLinkEmailMismatch',
+  password_already_set: 'passwordAlreadySet',
+};
+
+async function submitAccount(form) {
+  if (busy || !auth.emailEnabled || !['login', 'register', 'password'].includes(modal)) return;
+  if (!form.reportValidity()) return;
+  const registering = modal === 'register';
+  const settingPassword = modal === 'password';
+  const fields = new FormData(form);
+  const body = {
+    ...(!settingPassword ? { email: String(fields.get('email') || '') } : {}),
+    password: String(fields.get('password') || ''),
+    ...(registering ? { name: String(fields.get('name') || '') } : {}),
+  };
+  const passwordLength = Array.from(body.password).length;
+  if (passwordLength > 128 || ((registering || settingPassword) && passwordLength < 12)) {
+    accountError = 'invalidPassword';
+    render('account-password');
+    return;
+  }
+  const request = ++accountRequest;
+  const generation = ++sessionGeneration;
+  accountError = '';
+  busy = true;
+  let accepted = false;
+  render();
+  try {
+    const response = await fetch(
+      `/api/auth/player/${settingPassword ? 'password' : registering ? 'register' : 'login'}`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    const result = await response.json();
+    if (request !== accountRequest) return;
+    if (!response.ok)
+      throw Object.assign(new Error(result?.error || 'request_failed'), { code: result?.error });
+    if (result?.authenticated !== true || !result.user?.email) throw new Error('invalid_response');
+    auth.authenticated = true;
+    auth.user = result.user;
+    accepted = true;
+    clearAccountDraft();
+    await api('session', {}, generation);
+    mode = 'online';
+    accountOpener = '';
+    if (settingPassword) {
+      modal = 'account';
+      toast('passwordSet');
+    } else {
+      navigate('village');
+      toast(registering ? 'accountCreated' : 'emailWelcome');
+    }
+  } catch (error) {
+    if (request !== accountRequest) return;
+    if (accepted) {
+      modal = '';
+      toast('googleGameUnavailable');
+    } else {
+      accountError = accountErrorKeys[error.code] || 'accountRequestFailed';
+    }
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+root.addEventListener('input', (event) => {
+  const field = event.target.dataset.accountField;
+  if (field && Object.hasOwn(accountDraft, field)) accountDraft[field] = event.target.value;
+});
+
+root.addEventListener('submit', (event) => {
+  if (event.target.id !== 'account-form') return;
+  event.preventDefault();
+  void submitAccount(event.target);
+});
 
 async function api(path, body, generation = sessionGeneration) {
   const response = await fetch(`/api/${path}`, {
@@ -589,16 +762,42 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (a === 'account') {
+    accountOpener = target.id;
     modal = 'account';
     render();
     return;
   }
-  if (a === 'googleLogout') {
+  if (a === 'setPassword') {
+    if (
+      busy ||
+      !auth.authenticated ||
+      auth.user?.provider !== 'google' ||
+      auth.user?.passwordEnabled
+    )
+      return;
+    clearAccountDraft();
+    accountDraft.email = auth.user.email;
+    modal = 'password';
+    render('account-password');
+    return;
+  }
+  if (a === 'login' || a === 'register') {
+    if (busy) return;
+    if (!['login', 'register', 'password'].includes(modal)) {
+      clearAccountDraft();
+      accountOpener = target.id;
+    }
+    accountError = '';
+    modal = a;
+    render();
+    return;
+  }
+  if (a === 'accountLogout') {
     if (busy) return;
     busy = true;
     render();
     try {
-      const response = await fetch('/api/auth/google/logout', {
+      const response = await fetch('/api/auth/player/logout', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -634,13 +833,13 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (a === 'help') {
+    accountOpener = target.id;
     modal = a;
     render();
     return;
   }
   if (a === 'close') {
-    modal = '';
-    render();
+    closeDialog();
     return;
   }
   if (a === 'zoomIn' || a === 'zoomOut' || a === 'resetZoom') {
@@ -694,20 +893,24 @@ root.addEventListener('click', async (event) => {
 
 root.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && modal) {
-    modal = '';
-    render();
+    if (busy && ['login', 'register', 'password'].includes(modal)) return;
+    closeDialog();
     return;
   }
   if (event.key === 'Tab' && modal) {
-    const focusable = [...document.querySelectorAll('.modal button:not(:disabled)')];
+    const focusable = [
+      ...document.querySelectorAll(
+        '.modal button:not(:disabled), .modal input:not(:disabled), .modal a[href], .modal [tabindex="0"]',
+      ),
+    ];
     const first = focusable[0],
       last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
-      last.focus();
+      last?.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
       event.preventDefault();
-      first.focus();
+      first?.focus();
     }
   }
   if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('g[role="button"]')) {

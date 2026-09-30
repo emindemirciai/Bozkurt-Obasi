@@ -57,7 +57,7 @@ function safeRedirectUri(value) {
   }
 }
 
-/** Incomplete credentials disable sign-in without breaking guest gameplay. */
+/** Incomplete credentials disable Google sign-in without disabling existing game accounts. */
 export function googleAuthConfig({ clientId, clientSecret, redirectUris } = {}) {
   const id = typeof clientId === 'string' ? clientId.trim() : '';
   const secret = typeof clientSecret === 'string' ? clientSecret.trim() : '';
@@ -340,7 +340,15 @@ export function createGoogleRoutes(
         HttpError,
       );
       const person = await identity(tokens.id_token, pending.nonce, now);
-      completeLogin(request, response, person, now);
+      try {
+        completeLogin(request, response, person, now);
+      } catch (error) {
+        if (['account_link_required', 'account_link_email_mismatch'].includes(error.code)) {
+          redirect(response, `/?auth=${error.code}`);
+          return true;
+        }
+        throw error;
+      }
       redirect(response, '/?auth=success');
       return true;
     }
@@ -348,7 +356,8 @@ export function createGoogleRoutes(
     const body = await readJson(request);
     if (Object.keys(body).length) throw new HttpError(400, 'unexpected_fields');
     const session = getSession(request, now);
-    if (!session?.accountSub) throw new HttpError(401, 'google_session_required');
+    if (!session?.accountSub || session.accountProvider !== 'google')
+      throw new HttpError(401, 'google_session_required');
     logout(request, response, session);
     json(response, 200, { ok: true });
     return true;

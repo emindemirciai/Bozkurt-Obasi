@@ -2,7 +2,7 @@ import { build } from 'vite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-// Inlined visual landing preview for file://; village entry still requires server-side Google sign-in.
+// Inlined visual landing preview for file://; village entry still requires a server-side account session.
 const result = await build({
   configFile: false,
   logLevel: 'warn',
