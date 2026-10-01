@@ -40,6 +40,7 @@ async function main() {
   const player = await json(base.web + '/api/auth/player/status');
   assert.equal(player.response.status, 200);
   assert.equal(player.data.emailEnabled, true);
+  assert.equal(typeof player.data.mailEnabled, 'boolean');
   assert.equal(player.data.authenticated, false);
   const game = await json(base.web + '/api/session', {
     method: 'POST',

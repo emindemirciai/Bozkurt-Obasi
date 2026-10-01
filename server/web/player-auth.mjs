@@ -36,6 +36,7 @@ export function createPlayerRoutes(
   database,
   {
     googleConfig,
+    mailEnabled,
     HttpError,
     json,
     checkMutation,
@@ -47,6 +48,8 @@ export function createPlayerRoutes(
     login,
     setPassword,
     logout,
+    issueVerification,
+    confirmVerification,
   },
 ) {
   const findEmail = database.prepare(
@@ -114,6 +117,8 @@ export function createPlayerRoutes(
       '/api/auth/player/login': 'POST',
       '/api/auth/player/logout': 'POST',
       '/api/auth/player/password': 'POST',
+      '/api/auth/player/verify/request': 'POST',
+      '/api/auth/player/verify/confirm': 'POST',
     };
     const expected = methods[pathname];
     if (!expected) return false;
@@ -126,6 +131,7 @@ export function createPlayerRoutes(
       json(response, 200, {
         enabled: googleConfig.enabled,
         emailEnabled: true,
+        mailEnabled,
         authenticated: Boolean(user),
         ...(user ? { user } : {}),
         ...(!googleConfig.enabled ? { reason: googleConfig.reason } : {}),
@@ -134,6 +140,26 @@ export function createPlayerRoutes(
     }
     checkMutation(request, trustProxy);
     const body = await readJson(request);
+    if (pathname === '/api/auth/player/verify/confirm') {
+      if (Object.keys(body).some((key) => key !== 'token'))
+        throw new HttpError(400, 'unexpected_fields');
+      allowAttempt(request, now);
+      confirmVerification(body.token, now);
+      json(response, 200, { verified: true });
+      return true;
+    }
+    if (pathname === '/api/auth/player/verify/request') {
+      if (Object.keys(body).length) throw new HttpError(400, 'unexpected_fields');
+      allowAttempt(request, now);
+      const session = getSession(request, now);
+      if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
+      const sent = await issueVerification(
+        session.accountProvider === 'email' ? session.accountSub : undefined,
+        now,
+      );
+      json(response, 200, { ok: true, sent });
+      return true;
+    }
     if (pathname === '/api/auth/player/logout') {
       if (Object.keys(body).length) throw new HttpError(400, 'unexpected_fields');
       const session = getSession(request, now);
@@ -185,7 +211,9 @@ export function createPlayerRoutes(
       const passwordHash = await hashPassword(body.password);
       const name = body.name?.trim() || email.split('@')[0].slice(0, 60);
       const user = register(request, response, { email, name, passwordHash }, now);
-      json(response, 201, { authenticated: true, user });
+      const account = findEmail.get(email);
+      const verificationSent = await issueVerification(account.sub, now);
+      json(response, 201, { authenticated: true, user, verificationSent });
       return true;
     }
     const failed = bucket(failures, email, now);

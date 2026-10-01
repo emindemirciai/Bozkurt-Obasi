@@ -239,3 +239,62 @@ test('a matching Google sign-in guides the player through password proof before 
   await page.getByRole('dialog').getByRole('button', { name: 'Giriş yap', exact: true }).click();
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
 });
+
+test('a verification link clears its token from the URL and refreshes the account profile', async ({
+  page,
+}) => {
+  const exposed = [];
+  page.on('request', (request) => {
+    if (request.url().includes('verify=')) exposed.push(request.url());
+    const referrer = request.headers().referer;
+    if (referrer?.includes('verify=')) exposed.push(referrer);
+  });
+  const email = `verify-${randomUUID()}@example.com`;
+  const password = 'Verification example 2026!';
+  let confirmed = false;
+  await page.route('**/api/auth/player/status', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    await route.fulfill({
+      response,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...body,
+        mailEnabled: true,
+        ...(body.user ? { user: { ...body.user, emailVerified: confirmed } } : {}),
+      }),
+    });
+  });
+  await page.route('**/api/auth/player/verify/request', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, sent: true }),
+    }),
+  );
+  await page.route('**/api/auth/player/verify/confirm', (route) => {
+    confirmed = true;
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ verified: true }),
+    });
+  });
+  const registered = await page.request.post('/api/auth/player/register', {
+    data: { email, password },
+  });
+  expect(registered.status()).toBe(201);
+  await page.goto('/#village');
+  await page.locator('.profile').click();
+  const resend = page.getByRole('button', { name: 'Doğrulama e-postasını yeniden gönder' });
+  await expect(resend).toBeVisible();
+  await resend.click();
+  await expect(page.getByRole('status')).toContainText('Doğrulama bağlantısı e-postana gönderildi');
+  await page.goto(`/#verify=${'v'.repeat(43)}`);
+  await expect(page).toHaveURL(/\/$/);
+  expect(exposed).toEqual([]);
+  await expect(page.getByRole('status')).toContainText('E-posta adresin doğrulandı');
+  await page.getByRole('button', { name: 'Hesabı yönet' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Doğrulama e-postasını yeniden gönder' }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('dialog')).not.toContainText('E-posta adresi henüz doğrulanmadı');
+});

@@ -122,6 +122,8 @@ if (!/^GOOGLE_CLIENT_SECRET=$/m.test(environment))
   fail('Production environment example must not include a Google client secret.');
 if (!/^ADMIN_PASSWORD=$/m.test(environment))
   fail('Production environment example must not include a password or inline placeholder.');
+if (!/^SMTP_PASSWORD=$/m.test(environment))
+  fail('Production environment example must not include an SMTP password or inline placeholder.');
 console.log(
   `Checks passed: ${javascript.length} JavaScript files; ${turkish.length} TR/EN translation keys; Docker sources; persistent single-replica compose; lockfile metadata.`,
 );

@@ -58,6 +58,16 @@ export const translations = {
     accountLinkEmailMismatch: 'Google hesabının doğrulanmış e-postası mevcut hesabınla eşleşmeli.',
     passwordAlreadySet: 'Bu hesap için şifre zaten belirlenmiş.',
     emailNotVerified: 'E-posta adresi henüz doğrulanmadı.',
+    verificationPending: 'Hesabını doğrulamak için e-postandaki bağlantıyı aç.',
+    verificationUnavailable: 'E-posta gönderimi henüz ayarlanmadı; oyun hesabını kullanabilirsin.',
+    resendVerification: 'Doğrulama e-postasını yeniden gönder',
+    verificationSent: 'Doğrulama bağlantısı e-postana gönderildi.',
+    verificationSendFailed: 'Doğrulama e-postası gönderilemedi. Biraz sonra yeniden dene.',
+    emailVerified: 'E-posta adresin doğrulandı.',
+    verificationFailed:
+      'Doğrulama bağlantısı geçersiz veya süresi dolmuş. Hesabına girip yenisini iste.',
+    accountCreatedWithMail:
+      'Obana hoş geldin! info@bozkurtobasi.com adresinden gelen doğrulama e-postasını aç.',
     emailLogin: 'Giriş yap',
     emailRegister: 'Kayıt ol',
     loginTitle: 'Obana geri dön.',
@@ -333,6 +343,16 @@ export const translations = {
     accountLinkEmailMismatch: 'The verified Google email must match your current account.',
     passwordAlreadySet: 'A password is already set for this account.',
     emailNotVerified: 'This email address is not verified yet.',
+    verificationPending: 'Open the link in your email to verify your account.',
+    verificationUnavailable:
+      'Email delivery is not configured yet; you can still use your game account.',
+    resendVerification: 'Resend verification email',
+    verificationSent: 'A verification link was sent to your email.',
+    verificationSendFailed: 'The verification email could not be sent. Try again later.',
+    emailVerified: 'Your email address is verified.',
+    verificationFailed: 'The verification link is invalid or expired. Sign in and request another.',
+    accountCreatedWithMail:
+      'Welcome to your village! Open the verification email from info@bozkurtobasi.com.',
     emailLogin: 'Sign in',
     emailRegister: 'Register',
     loginTitle: 'Return to your camp.',

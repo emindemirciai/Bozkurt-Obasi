@@ -95,7 +95,7 @@ test('battle reveals a random jackal tactic at start and animates both sides', a
   expect(await activeScene.evaluate((node) => node.isConnected)).toBe(true);
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await expect(page.locator('.tactic-reveal')).toContainText(
-    /Direct assault|Left flank|Right flank|Double flank|Herd rush/,
+    /Direct attack|Left flank|Right flank|Double flank|Herd rush/,
   );
   expect(errors).toEqual([]);
 });

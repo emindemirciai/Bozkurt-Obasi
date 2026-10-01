@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createAdminRoutes } from './admin.mjs';
 import { appendCookie, createGoogleRoutes, googleAuthConfig } from './google.mjs';
 import { createPlayerRoutes } from './player-auth.mjs';
+import { createMailService, mailConfig } from './mail.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
@@ -259,9 +260,31 @@ export function createApp({
   googleClientSecret = process.env.GOOGLE_CLIENT_SECRET,
   googleRedirectUris = process.env.GOOGLE_REDIRECT_URIS,
   googleFetch = globalThis.fetch,
+  mailProvider = process.env.MAIL_PROVIDER,
+  mailFrom = process.env.MAIL_FROM,
+  smtpHost = process.env.SMTP_HOST,
+  smtpPort = process.env.SMTP_PORT,
+  smtpSecure = process.env.SMTP_SECURE,
+  smtpUser = process.env.SMTP_USER,
+  smtpPassword = process.env.SMTP_PASSWORD,
+  publicUrl = process.env.PUBLIC_URL,
+  mailSender,
 } = {}) {
   const { config: publicAnalytics, endpointOrigin: analyticsOrigin } =
     publicAnalyticsConfig(analytics);
+  const mail = createMailService(
+    mailConfig({
+      provider: mailProvider,
+      from: mailFrom,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      user: smtpUser,
+      password: smtpPassword,
+      publicUrl,
+    }),
+    mailSender,
+  );
   if (dbPath !== ':memory:') mkdirSync(dirname(resolve(dbPath)), { recursive: true });
   const database = new DatabaseSync(dbPath);
   database.exec(`
@@ -325,6 +348,26 @@ export function createApp({
   database.exec(
     'CREATE UNIQUE INDEX IF NOT EXISTS email_accounts_google ON email_accounts(google_sub) WHERE google_sub IS NOT NULL',
   );
+  if (
+    !database
+      .prepare('PRAGMA table_info(email_accounts)')
+      .all()
+      .some((column) => column.name === 'email_verified')
+  )
+    database.exec(
+      'ALTER TABLE email_accounts ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0',
+    );
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      email_sub TEXT PRIMARY KEY,
+      token_hash TEXT NOT NULL UNIQUE,
+      issued_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      window_start INTEGER NOT NULL,
+      window_count INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS email_verifications_expiry ON email_verifications(expires_at);
+  `);
   const statements = {
     health: database.prepare('SELECT 1 AS ready'),
     get: database.prepare(
@@ -361,7 +404,7 @@ export function createApp({
       'UPDATE google_accounts SET revision = ?, updated_at = ? WHERE sub = ? AND revision = ?',
     ),
     emailGet: database.prepare(
-      'SELECT sub, email, display_name, state_json, revision, google_sub FROM email_accounts WHERE sub = ?',
+      'SELECT sub, email, display_name, state_json, revision, google_sub, email_verified FROM email_accounts WHERE sub = ?',
     ),
     emailByAddress: database.prepare('SELECT sub, google_sub FROM email_accounts WHERE email = ?'),
     emailByGoogle: database.prepare(
@@ -375,7 +418,20 @@ export function createApp({
       'UPDATE email_accounts SET state_json = ?, revision = ?, updated_at = ? WHERE sub = ? AND revision = ?',
     ),
     emailLink: database.prepare(
-      'UPDATE email_accounts SET google_sub = ?, updated_at = ? WHERE sub = ? AND google_sub IS NULL',
+      'UPDATE email_accounts SET google_sub = ?, email_verified = 1, updated_at = ? WHERE sub = ? AND google_sub IS NULL',
+    ),
+    verificationGet: database.prepare(
+      'SELECT token_hash, issued_at, expires_at, window_start, window_count FROM email_verifications WHERE email_sub = ?',
+    ),
+    verificationPut: database.prepare(
+      'INSERT INTO email_verifications (email_sub, token_hash, issued_at, expires_at, window_start, window_count) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(email_sub) DO UPDATE SET token_hash = excluded.token_hash, issued_at = excluded.issued_at, expires_at = excluded.expires_at, window_start = excluded.window_start, window_count = excluded.window_count',
+    ),
+    verificationByHash: database.prepare(
+      'SELECT email_sub, expires_at FROM email_verifications WHERE token_hash = ?',
+    ),
+    verificationDelete: database.prepare('DELETE FROM email_verifications WHERE email_sub = ?'),
+    verificationMark: database.prepare(
+      'UPDATE email_accounts SET email_verified = 1, updated_at = ? WHERE sub = ?',
     ),
   };
   const adminRoutes = createAdminRoutes(database, {
@@ -388,6 +444,8 @@ export function createApp({
     HttpError,
   });
   const limits = new Map();
+  const pendingVerifications = new Set();
+  const verificationAttempts = new Map();
   let lastCleanup = 0;
   let closed = false;
 
@@ -475,6 +533,65 @@ export function createApp({
     redirectUris: googleRedirectUris,
   });
 
+  async function issueEmailVerification(emailSub, now) {
+    if (!mail.enabled || !emailSub) return false;
+    if (pendingVerifications.has(emailSub)) return false;
+    const account = statements.emailGet.get(emailSub);
+    if (!account || account.email_verified || account.google_sub) return false;
+    const previous = statements.verificationGet.get(emailSub);
+    const day = 24 * 60 * 60 * 1000;
+    if (now - (verificationAttempts.get(emailSub) ?? -Infinity) < 60_000) return false;
+    if (previous && now - previous.issued_at < 60_000) return false;
+    const sameWindow = previous && now - previous.window_start < day;
+    if (sameWindow && previous.window_count >= 5) return false;
+    const token = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    if (verificationAttempts.size >= 10_000) {
+      for (const [sub, attemptedAt] of verificationAttempts)
+        if (now - attemptedAt >= 60_000) verificationAttempts.delete(sub);
+    }
+    verificationAttempts.set(emailSub, now);
+    pendingVerifications.add(emailSub);
+    try {
+      if (!(await mail.sendVerification(account.email, token))) return false;
+      const current = statements.emailGet.get(emailSub);
+      if (!current || current.email_verified || current.google_sub) return false;
+      statements.verificationPut.run(
+        emailSub,
+        tokenHash,
+        now,
+        now + 60 * 60 * 1000,
+        sameWindow ? previous.window_start : now,
+        sameWindow ? previous.window_count + 1 : 1,
+      );
+      return true;
+    } catch {
+      // Account registration still succeeds if the mail service is temporarily unavailable.
+      return false;
+    } finally {
+      pendingVerifications.delete(emailSub);
+    }
+  }
+
+  function confirmEmailVerification(token, now) {
+    if (!/^[A-Za-z0-9_-]{43}$/.test(token || ''))
+      throw new HttpError(400, 'invalid_verification_token');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    database.exec('BEGIN IMMEDIATE');
+    try {
+      const challenge = statements.verificationByHash.get(tokenHash);
+      if (!challenge || challenge.expires_at <= now)
+        throw new HttpError(400, 'invalid_verification_token');
+      const updated = statements.verificationMark.run(now, challenge.email_sub);
+      if (updated.changes !== 1) throw new HttpError(400, 'invalid_verification_token');
+      statements.verificationDelete.run(challenge.email_sub);
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
   function publicPlayer(session) {
     if (!session?.account) return null;
     const credential =
@@ -486,7 +603,8 @@ export function createApp({
       name: session.account.display_name,
       email: session.account.email,
       provider: session.accountProvider,
-      emailVerified: session.canonicalProvider === 'google',
+      emailVerified:
+        session.canonicalProvider === 'google' || Boolean(session.credential?.email_verified),
       passwordEnabled,
       googleLinked: session.canonicalProvider === 'google',
     };
@@ -579,7 +697,7 @@ export function createApp({
       name: canonical?.display_name ?? identity.name,
       email: canonical?.email ?? identity.email,
       provider: 'email',
-      emailVerified: Boolean(existing?.google_sub),
+      emailVerified: Boolean(existing?.google_sub || existing?.email_verified),
       passwordEnabled: true,
       googleLinked: Boolean(existing?.google_sub),
     };
@@ -635,6 +753,7 @@ export function createApp({
 
   const playerRoutes = createPlayerRoutes(database, {
     googleConfig,
+    mailEnabled: mail.enabled,
     HttpError,
     json,
     checkMutation,
@@ -654,6 +773,8 @@ export function createApp({
       completeEmailLogin(request, response, identity, now),
     setPassword: setPlayerPassword,
     logout: logoutPlayer,
+    issueVerification: issueEmailVerification,
+    confirmVerification: confirmEmailVerification,
   });
 
   const googleRoutes = createGoogleRoutes(database, {

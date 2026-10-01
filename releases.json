@@ -1,6 +1,20 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "releases": [
+    {
+      "version": "1.4.0",
+      "date": "2026-10-01",
+      "changes": {
+        "tr": [
+          "Hostinger SMTP ile info@bozkurtobasi.com göndereninden e-posta doğrulaması ve hesap ekranında yeniden gönderim eklendi.",
+          "Tek kullanımlık bağlantı bir saat geçerli; belirteç erişim kayıtlarına gitmez ve SMTP parolası olmayan kurulumlarda oyun çalışır."
+        ],
+        "en": [
+          "Added email verification from info@bozkurtobasi.com through Hostinger SMTP, with resend from the account screen.",
+          "Single-use links expire after one hour; tokens avoid access logs and gameplay remains available without an SMTP password."
+        ]
+      }
+    },
     {
       "version": "1.3.0",
       "date": "2026-09-30",

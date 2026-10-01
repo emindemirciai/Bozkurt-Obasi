@@ -8,6 +8,7 @@ COPY web ./web
 COPY public ./public
 COPY shared ./shared
 RUN npm run build
+RUN npm prune --omit=dev --no-audit --no-fund
 
 FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production \
@@ -17,6 +18,7 @@ ENV NODE_ENV=production \
 WORKDIR /app
 RUN mkdir -p /data && chown node:node /data /app
 COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node server/web ./server/web
 COPY --chown=node:node shared ./shared
 COPY --chown=node:node package.json ./package.json

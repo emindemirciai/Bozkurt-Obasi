@@ -90,6 +90,7 @@ test('email authentication is available without Google or administrator credenti
   assert.deepEqual(await status.json(), {
     enabled: false,
     emailEnabled: true,
+    mailEnabled: false,
     authenticated: false,
     reason: 'not_configured',
   });
@@ -107,6 +108,8 @@ test('email authentication is available without Google or administrator credenti
     ['/api/auth/player/login', 'POST'],
     ['/api/auth/player/logout', 'POST'],
     ['/api/auth/player/password', 'POST'],
+    ['/api/auth/player/verify/request', 'POST'],
+    ['/api/auth/player/verify/confirm', 'POST'],
   ]) {
     const wrong = await api.request(path, { method: allow === 'GET' ? 'POST' : 'GET' });
     assert.equal(wrong.status, 405);
@@ -128,6 +131,7 @@ test('registration creates a private account village with salted credentials and
       passwordEnabled: true,
       googleLinked: false,
     },
+    verificationSent: false,
   });
   const cookie = sessionCookie(registered);
   assert.match(cookie, /^bozkurt_session=[A-Za-z0-9_-]{43}$/);

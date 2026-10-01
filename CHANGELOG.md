@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.4.0 — 2026-10-01
+
+**TR**
+
+- Hostinger SMTP ile info@bozkurtobasi.com göndereninden e-posta doğrulaması ve hesap ekranında yeniden gönderim eklendi.
+- Tek kullanımlık bağlantı bir saat geçerli; belirteç erişim kayıtlarına gitmez ve SMTP parolası olmayan kurulumlarda oyun çalışır.
+
+**EN**
+
+- Added email verification from info@bozkurtobasi.com through Hostinger SMTP, with resend from the account screen.
+- Single-use links expire after one hour; tokens avoid access logs and gameplay remains available without an SMTP password.
+
 ## v1.3.0 — 2026-09-30
 
 **TR**

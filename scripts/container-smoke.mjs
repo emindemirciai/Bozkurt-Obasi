@@ -66,6 +66,7 @@ try {
   const playerConfig = await playerStatus.json();
   assert.equal(playerStatus.status, 200);
   assert.equal(playerConfig.emailEnabled, true, 'Email accounts work without Google keys.');
+  assert.equal(playerConfig.mailEnabled, false, 'Missing SMTP credentials must not stop gameplay.');
   assert.equal(playerConfig.authenticated, false);
   const sessionResponse = await fetch(`${baseUrl}/api/session`, {
     method: 'POST',

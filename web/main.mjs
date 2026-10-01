@@ -24,6 +24,7 @@ let auth = {
   loading: location.protocol !== 'file:',
   enabled: false,
   emailEnabled: false,
+  mailEnabled: false,
   authenticated: false,
   user: null,
 };
@@ -204,6 +205,7 @@ async function refreshGoogleAuth() {
       loading: false,
       enabled: false,
       emailEnabled: false,
+      mailEnabled: false,
       authenticated: false,
       user: null,
     };
@@ -222,6 +224,7 @@ async function refreshGoogleAuth() {
       loading: false,
       enabled: result.enabled === true,
       emailEnabled: result.emailEnabled === true,
+      mailEnabled: result.mailEnabled === true,
       authenticated: result.authenticated === true,
       user: result.authenticated ? result.user : null,
       reason: result.reason,
@@ -231,6 +234,7 @@ async function refreshGoogleAuth() {
       loading: false,
       enabled: false,
       emailEnabled: false,
+      mailEnabled: false,
       authenticated: false,
       user: null,
     };
@@ -250,7 +254,30 @@ function denyGameAccess() {
 }
 
 async function initGoogleAuth() {
+  const verificationToken = location.hash.startsWith('#verify=')
+    ? location.hash.slice('#verify='.length)
+    : '';
+  if (verificationToken) {
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+  }
   await refreshGoogleAuth();
+  if (verificationToken) {
+    try {
+      if (!/^[A-Za-z0-9_-]{43}$/.test(verificationToken)) throw new Error('invalid_token');
+      const response = await fetch('/api/auth/player/verify/confirm', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: verificationToken }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!response.ok) throw new Error('verification_failed');
+      await refreshGoogleAuth();
+      toast('emailVerified');
+    } catch {
+      toast('verificationFailed');
+    }
+  }
   const result = new URL(location.href).searchParams.get('auth');
   if (result) {
     const url = new URL(location.href);
@@ -512,6 +539,11 @@ function accountMethodControls() {
   return `<div class="account-methods"><p>${t('connectGoogleHint')}</p>${googleSignInControl('connectGoogle')}</div>`;
 }
 
+function verificationControls() {
+  if (auth.user?.provider !== 'email' || auth.user.emailVerified) return '';
+  return `<div class="account-verification"><p>${t(auth.mailEnabled ? 'verificationPending' : 'verificationUnavailable')}</p>${auth.mailEnabled ? button(t('resendVerification'), 'verifyEmail', 'button outline', busy) : ''}</div>`;
+}
+
 function accountFormView() {
   const registering = modal === 'register';
   const settingPassword = modal === 'password';
@@ -528,7 +560,7 @@ function modalView() {
   if (!modal) return '';
   if (['login', 'register', 'password'].includes(modal)) return accountFormView();
   if (modal === 'account') {
-    return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t('playerAccount')}</h2><p>${escape(auth.user?.name || auth.user?.email || '')}</p><p class="modal-note">${escape(auth.user?.email || '')}<br>${t(auth.user?.provider === 'email' ? 'emailAccount' : 'googleAccount')}${auth.user?.provider === 'email' && auth.user?.emailVerified === false ? `<br>${t('emailNotVerified')}` : ''}</p>${accountMethodControls()}${accountError ? `<p class="account-error" role="alert">${t(accountError)}</p>` : ''}${button(t('googleLogout'), 'accountLogout', 'button outline', busy)}<div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
+    return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t('playerAccount')}</h2><p>${escape(auth.user?.name || auth.user?.email || '')}</p><p class="modal-note">${escape(auth.user?.email || '')}<br>${t(auth.user?.provider === 'email' ? 'emailAccount' : 'googleAccount')}${auth.user?.provider === 'email' && auth.user?.emailVerified === false ? `<br>${t('emailNotVerified')}` : ''}</p>${verificationControls()}${accountMethodControls()}${accountError ? `<p class="account-error" role="alert">${t(accountError)}</p>` : ''}${button(t('googleLogout'), 'accountLogout', 'button outline', busy)}<div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
   }
   return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI · AY-YILDIZ NÖBETİ</div><h2 id="modal-title">${t('helpTitle')}</h2><p>${t('helpText')}</p><p class="modal-note">${t('helpOffline')}</p>${button(t('understood') + icon('arrow', 18), 'close', 'button primary')}${button(icon('save', 16) + t('exportSave'), 'exportSave', 'button text-button')}</section></div>`;
 }
@@ -601,7 +633,13 @@ async function submitAccount(form) {
       toast('passwordSet');
     } else {
       navigate('village');
-      toast(registering ? 'accountCreated' : 'emailWelcome');
+      toast(
+        registering
+          ? result.verificationSent
+            ? 'accountCreatedWithMail'
+            : 'accountCreated'
+          : 'emailWelcome',
+      );
     }
   } catch (error) {
     if (request !== accountRequest) return;
@@ -781,6 +819,29 @@ root.addEventListener('click', async (event) => {
     render('account-password');
     return;
   }
+  if (a === 'verifyEmail') {
+    if (busy || !auth.authenticated || auth.user?.emailVerified || !auth.mailEnabled) return;
+    busy = true;
+    render();
+    try {
+      const response = await fetch('/api/auth/player/verify/request', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+        signal: AbortSignal.timeout(8000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error || 'request_failed');
+      toast(result.sent ? 'verificationSent' : 'verificationSendFailed');
+    } catch {
+      toast('verificationSendFailed');
+    } finally {
+      busy = false;
+      render();
+    }
+    return;
+  }
   if (a === 'login' || a === 'register') {
     if (busy) return;
     if (!['login', 'register', 'password'].includes(modal)) {
@@ -957,6 +1018,9 @@ window.addEventListener('popstate', () => {
   modal = '';
   if (!auth.authenticated || mode !== 'online') denyGameAccess();
   render();
+});
+window.addEventListener('hashchange', () => {
+  if (location.hash.startsWith('#verify=')) void initGoogleAuth();
 });
 render();
 void initGoogleAuth();
