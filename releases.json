@@ -1,6 +1,22 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "releases": [
+    {
+      "version": "1.5.0",
+      "date": "2026-10-05",
+      "changes": {
+        "tr": [
+          "Hilal ve bozkurt simgeli yeni SVG logo; mobil, açık/koyu tema ve tarayıcı simgesi uyumu.",
+          "Köyde ilerlemeyi izleyen beş aşamalı İlk adımlar rehberi; mevcut kayıtlar korunur.",
+          "Tam Google Drive yedeği, doğrulama ve son 30 yedeği saklama akışı; temiz GitHub ZIP teslimi sürer."
+        ],
+        "en": [
+          "New crescent-and-wolf SVG identity with responsive layouts, light/dark themes and a browser icon.",
+          "A five-step village guide follows saved progress without changing existing saves.",
+          "Full Google Drive backups with verification and 30-backup retention alongside clean GitHub source archives."
+        ]
+      }
+    },
     {
       "version": "1.4.0",
       "date": "2026-10-01",

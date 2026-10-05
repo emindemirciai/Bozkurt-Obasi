@@ -287,11 +287,11 @@ test('a verification link clears its token from the URL and refreshes the accoun
   const resend = page.getByRole('button', { name: 'Doğrulama e-postasını yeniden gönder' });
   await expect(resend).toBeVisible();
   await resend.click();
-  await expect(page.getByRole('status')).toContainText('Doğrulama bağlantısı e-postana gönderildi');
+  await expect(page.locator('#notice')).toContainText('Doğrulama bağlantısı e-postana gönderildi');
   await page.goto(`/#verify=${'v'.repeat(43)}`);
   await expect(page).toHaveURL(/\/$/);
   expect(exposed).toEqual([]);
-  await expect(page.getByRole('status')).toContainText('E-posta adresin doğrulandı');
+  await expect(page.locator('#notice')).toContainText('E-posta adresin doğrulandı');
   await page.getByRole('button', { name: 'Hesabı yönet' }).click();
   await expect(
     page.getByRole('button', { name: 'Doğrulama e-postasını yeniden gönder' }),

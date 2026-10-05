@@ -12,9 +12,12 @@ const codeExtensions = new Set([
   '.jsx',
   '.css',
   '.html',
+  '.svg',
   '.cs',
   '.sh',
   '.ps1',
+  '.cmd',
+  '.bat',
 ]);
 const categories = {
   web: { label: 'Web istemci / Web client', files: 0, lines: 0 },
@@ -37,7 +40,8 @@ for (const file of await projectFiles()) {
           ? 'server'
           : file.startsWith('shared/')
             ? 'shared'
-            : /^(?:scripts|tests)\//.test(file) || (!file.includes('/') && /\.[cm]?js$/.test(file))
+            : /^(?:scripts|tests)\//.test(file) ||
+                (!file.includes('/') && /\.(?:[cm]?js|ps1|cmd|bat)$/.test(file))
               ? 'delivery'
               : 'legacy';
   categories[group].files += 1;

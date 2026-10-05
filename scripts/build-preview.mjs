@@ -27,7 +27,9 @@ const css = output
   .join('\n');
 const legalNotice = (await readFile('index.html', 'utf8')).match(/<!--[\s\S]*?-->/)?.[0];
 if (!legalNotice?.includes('MIT License')) throw new Error('MIT source notice is missing.');
-const html = `<!doctype html>${legalNotice}<html lang="tr"><head><meta charset="UTF-8"><meta name="author" content="Emin DEMİRCİ"><meta name="copyright" content="Copyright © 2026 Emin DEMİRCİ; MIT License"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#203e35"><meta name="description" content="Bozkurt Obası: Ay-Yıldız Nöbeti — obanı kur, sürünü koru."><title>Bozkurt Obası: Ay-Yıldız Nöbeti · Önizleme</title><style>${css}</style></head><body><div id="app"></div><script>${script}</script></body></html>`;
+const favicon =
+  'data:image/svg+xml;base64,' + (await readFile('public/brand/logo-mark.svg')).toString('base64');
+const html = `<!doctype html>${legalNotice}<html lang="tr"><head><meta charset="UTF-8"><meta name="author" content="Emin DEMİRCİ"><meta name="copyright" content="Copyright © 2026 Emin DEMİRCİ; MIT License"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#203e35"><meta name="description" content="Bozkurt Obası: Ay-Yıldız Nöbeti — obanı kur, sürünü koru."><link rel="icon" type="image/svg+xml" href="${favicon}"><title>Bozkurt Obası: Ay-Yıldız Nöbeti · Önizleme</title><style>${css}</style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
 await writeFile('preview/index.html', html, 'utf8');
 console.log(`Offline visual preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);

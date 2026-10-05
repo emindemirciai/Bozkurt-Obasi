@@ -3493,3 +3493,173 @@ footer > span:first-child {
     max-width: 100%;
   }
 }
+
+/* The first-steps guide shares the village palette and fits the narrow side panel. */
+.first-steps .guide-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.first-steps h3 {
+  margin: 0;
+  font-size: 19px;
+}
+.guide-count {
+  font-size: 10px;
+  color: #4d6343;
+}
+.guide-list {
+  list-style: none;
+  margin: 15px 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.guide-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #46563d;
+}
+.guide-list li > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.guide-list li[aria-current='step'] {
+  font-weight: 700;
+}
+.guide-marker {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  border: 1px solid #788b64;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.is-complete .guide-marker {
+  color: #fff;
+  background: #496443;
+  border-color: #496443;
+}
+.guide-list small {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.first-steps p.guide-description {
+  margin: 12px 0 0;
+  max-width: 100%;
+  color: #46563d;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.first-steps button.guide-action {
+  padding: 12px 0 0;
+  min-height: 44px;
+  font-size: 11px;
+  text-align: left;
+  color: #354e30;
+}
+:root[data-theme='dark'] .first-steps .guide-count,
+:root[data-theme='dark'] .guide-list li,
+:root[data-theme='dark'] .first-steps p.guide-description,
+:root[data-theme='dark'] .first-steps button.guide-action {
+  color: #eee4cb;
+}
+:root[data-theme='dark'] .guide-marker {
+  border-color: #b2c694;
+}
+:root[data-theme='dark'] .is-complete .guide-marker {
+  background: #cadbb4;
+  color: #273622;
+}
+
+/* Vector identity: one mark at every size, stable in either language and theme. */
+.landing-brand .landing-brand-symbol {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  letter-spacing: normal;
+  flex: 0 0 auto;
+}
+.landing-brand-symbol svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.landing-brand .brand-name {
+  font-size: clamp(13px, 1.15vw, 18px);
+  letter-spacing: 0.11em;
+  line-height: 1.1;
+}
+.landing-brand .brand-name small {
+  font-size: clamp(7px, 0.6vw, 9px);
+  letter-spacing: 0.36em;
+  margin-top: 7px;
+}
+.wordmark .brand-name {
+  display: block;
+  font-size: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+.wordmark .brand-name b {
+  color: #946c2f;
+}
+.wordmark .brand-name small {
+  display: block;
+  font-size: 7px;
+  letter-spacing: 3px;
+  margin-top: 4px;
+  color: #617359;
+}
+:root[data-theme='dark'] .landing-brand .landing-brand-symbol {
+  background: transparent;
+}
+:root[data-theme='dark'] .brand-name b {
+  color: #d6b771;
+}
+:root[data-theme='dark'] .wordmark .brand-name small {
+  color: #c6cca8;
+}
+@media (max-width: 600px) {
+  .landing-brand {
+    gap: 9px;
+  }
+  .landing-brand .landing-brand-symbol {
+    width: 42px;
+    height: 42px;
+  }
+}
+@media (max-width: 360px) {
+  .landing-brand .brand-name {
+    font-size: 11px;
+    letter-spacing: 0.07em;
+  }
+  .landing-brand .brand-name small {
+    font-size: 6px;
+    letter-spacing: 0.22em;
+  }
+  .landing-brand .landing-brand-symbol {
+    width: 36px;
+    height: 36px;
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

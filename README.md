@@ -6,7 +6,7 @@
 
 [Görsel düzenleme kaydı ve tam istem / Artwork edit record and exact prompt](docs/HERO-ART.md)
 
-**Güncel sürüm / Current version: v1.4.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
+**Güncel sürüm / Current version: v1.5.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
 
 [Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Hesap kaydı / Account registration](docs/ACCOUNT-SIGNIN.md) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
@@ -30,7 +30,11 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli hesap oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Ana sayfadaki **Kayıt ol** ile e-posta/şifre hesabı oluşturabilir veya **Giriş yap** ile mevcut hesabınızı açabilirsiniz. Şifre 12–128 karakterdir. Google seçeneği için [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md). [Hesap rehberi](docs/ACCOUNT-SIGNIN.md). Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v1.4.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında kayıt sonrası doğrulama bağlantısı `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden gider; bağlantı bir saat geçerlidir ve hesap ekranından yeniden istenebilir. SMTP parolası boşsa kayıt/giriş sürer, e-posta gönderimi kapalı kalır. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. PvP, arkadaş/sohbet, otomatik parola sıfırlama ve ödeme henüz yoktur.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v1.5.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında kayıt sonrası doğrulama bağlantısı `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden gider; bağlantı bir saat geçerlidir ve hesap ekranından yeniden istenebilir. SMTP parolası boşsa kayıt/giriş sürer, e-posta gönderimi kapalı kalır. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. PvP, arkadaş/sohbet, otomatik parola sıfırlama ve ödeme henüz yoktur.
+
+
+
+Köydeki **İlk adımlar** rehberi kaynak toplama, yeni yapı, ilk görev ödülü, iki eğitim ve ilk zaferi kayıtlı ilerlemeden izler. Düğmeler ilgili kontrole götürür; kendiliğinden kaynak harcamaz. Önceden tamamlanan adımlar tanınır. Yeni hilal ve bozkurt logosu masaüstü/mobil, açık/koyu tema ve favicon için SVG olarak kullanılır; [logo dosyaları ve kullanım](docs/BRAND.md).
 
 ### Tek Dokploy Compose, dört servis
 
@@ -43,7 +47,7 @@ Dokploy'da depo `main` dalını bağlayın. Ekrandaki **Compose Path = `./docker
 | `admin.bozkurtobasi.com`                     | `admin`         | 3000 | İki dilli yönetim paneli; canlı 502 için Dokploy eşlemesi incelenmeli     |
 | `analiz.bozkurtobasi.com`                    | `analyze`       | 3000 | Trafik kolektörü ve analiz paneli                                         |
 
-Güncel [üretim ortamı örneğini](.env.production.example) Dokploy Environment için temel alın. Örnek, yalnızca Compose tarafından okunan değiştirilebilir anahtarları içerir; gerçek sır içermez. **`ADMIN_PASSWORD` değerini en az 12 karakterlik güçlü bir sır** olarak Dokploy'da tanımlayın. Compose'un varsayılan yönetici e-postası `info@bozkurtobasi.com`; örnek üretim ortamı, girişte kullanılan `emindemirci.ai@gmail.com` adresini `ADMIN_EMAIL` olarak ayarlar. Parola olmadan oyun ve sağlık kontrolleri çalışır, ancak yönetim/analiz girişi kapalı kalır. Parolayı Git'e, ZIP'e veya ekran görüntüsüne koymayın. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` Compose'da hazırdır. Verdiğiniz diğer `ANALYZE_*` varsayılanları da [Compose dosyasında](compose.yml) tanımlıdır. Domain değişikliklerinden sonra Dokploy'da yeniden dağıtın.
+Güncel [üretim ortamı örneğini](.env.production.example) Dokploy Environment için temel alın. Örnek, yalnızca Compose tarafından okunan değiştirilebilir anahtarları içerir; gerçek sır içermez. **`ADMIN_PASSWORD` değerini en az 12 karakterlik güçlü bir sır** olarak Dokploy'da tanımlayın. Compose'un varsayılan yönetici e-postası `info@bozkurtobasi.com`; örnek üretim ortamı, girişte kullanılan `emindemirci.ai@gmail.com` adresini `ADMIN_EMAIL` olarak ayarlar. Parola olmadan oyun ve sağlık kontrolleri çalışır, ancak yönetim/analiz girişi kapalı kalır. Parolayı Git'e, temiz kaynak ZIP'ine veya ekran görüntüsüne koymayın. `ANALYZE_AUTH_MODE=platform-admin` ve `ANALYZE_AUTH_API_URL=https://api.bozkurtobasi.com` Compose'da hazırdır. Verdiğiniz diğer `ANALYZE_*` varsayılanları da [Compose dosyasında](compose.yml) tanımlıdır. Domain değişikliklerinden sonra Dokploy'da yeniden dağıtın.
 
 Google ile girişi açmak için Google Cloud Console içinde **Web application** OAuth istemcisi oluşturup `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` değerlerini Dokploy Environment bölümüne ekleyin. `GOOGLE_REDIRECT_URIS` tam olarak `https://bozkurtobasi.com/api/auth/google/callback,https://www.bozkurtobasi.com/api/auth/google/callback` olmalı ve her iki adres Google istemcisinde izinli yönlendirme URI olarak kayıtlı olmalıdır. Anasayfadaki [gizlilik bildirimi](public/privacy.html) ve [kullanım koşulları](public/terms.html) Google marka ekranına eklenmelidir. Adımlar [Google giriş rehberinde](docs/GOOGLE-SIGNIN.md). Bu anahtarlar boşken yalnızca Google düğmesi kullanılamaz; e-posta ile kayıt/giriş kullanılabilir.
 
@@ -65,6 +69,10 @@ Portlar: oyun <http://127.0.0.1:3000>, API <http://127.0.0.1:3001>, yönetim <ht
 
 `npm run verify` kaynak kontrolü, motor/API testleri, üretim ve tek dosya derlemesi, tarayıcı testlerini çalıştırır. `npm run count:lines` aşağıdaki sayımı yeniler; `npm run backup` `artifacts/` altında temiz kaynak ZIP'i ve SHA-256 dosyası oluşturur. ZIP oyuncu veritabanlarını, sırları, bağımlılıkları veya Git geçmişini içermez. Güncel sonuçlar [doğrulama kaydında](docs/WEB-VALIDATION.md).
 
+
+
+Windows tesliminde kontroller geçtikten sonra [`push-and-backup.ps1`](push-and-backup.ps1) commit/push ve **tam proje yedeğini** birlikte yapar. İncelenen dosyaları `git add -- <dosyalar>` ile hazırlayıp `.\push-and-backup.ps1 -StagedOnly -CommitMessage "feat: açıklama"` çalıştırın; varsayılan çağrı bütün görünür değişiklikleri stage eder. Yayımlanmış sürümün yeni yedeği için `-BackupOnly` kullanın. Tam ZIP, `H:\Drive'ım\Artificial Intelligence - Projects\Bozkurt Obası\Bozkurt Obası_YYYY-MM-DD_HHMMSS.zip` yoluna yazılır; `.git`, `node_modules`, derlemeler, yerel `.env` ve boş klasörler dahil hiçbir içerik hariç tutulmaz. İçerik doğrulanır, son 30 tarihli yedek saklanır. Bu özel Drive ZIP'i GitHub'a yüklenmez; GitHub Release temiz kaynak ZIP'ini kullanır. Drive'ın bulut eşitleme durumu masaüstü istemcisinden kontrol edilir. [Tam yedek standardı](BACKUP-STANDARD.md), [teslim kuralları](PROJECT-BACKUP-RULES.md). Repo dışındaki Docker volume'ları ayrıca yedeklenir.
+
 ## English
 
 GitHub About includes the game description, `https://bozkurtobasi.com` website link and project topics. Visible page footers show `© 2026 Bozkurt Obası`. The hero uses equal TR/EN dimensions, fits the first desktop screen and displays Google sign-in there; the bottom of the page does not repeat the sign-in button.
@@ -77,7 +85,11 @@ Run `npm run release:version -- patch --tr "Türkçe değişiklik notu" --en "En
 
 Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, and register/sign in with email and password from the homepage. A password must contain 12–128 characters. Alternatively, [configure Google OAuth](docs/GOOGLE-SIGNIN.md) to use Google. See the [account guide](docs/ACCOUNT-SIGNIN.md). The homepage and information pages are public; **the village and every other game screen require a valid account session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v1.4.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a one-hour verification link from `Bozkurtobasi.com <info@bozkurtobasi.com>`; players can request another link from their account screen. Registration and sign-in still work when the SMTP password is unset, with delivery disabled. Google and password sign-in for the same email open one account and village after ownership is confirmed. PvP, chat, automatic password recovery, and payments are not yet included.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v1.5.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a one-hour verification link from `Bozkurtobasi.com <info@bozkurtobasi.com>`; players can request another link from their account screen. Registration and sign-in still work when the SMTP password is unset, with delivery disabled. Google and password sign-in for the same email open one account and village after ownership is confirmed. PvP, chat, automatic password recovery, and payments are not yet included.
+
+
+
+The village **First steps** guide follows gathering, construction, the first quest reward, two training actions and the first victory from saved progress. Buttons lead to the relevant control without spending resources. Previously completed steps are recognized. The new crescent-and-wolf SVG identity supports desktop/mobile, light/dark themes and the favicon; see [logo files and usage](docs/BRAND.md).
 
 ### Four services in one Dokploy Compose stack
 
@@ -96,6 +108,10 @@ For a local four-service preview, run `docker compose -f compose.yml -f compose.
 On production HTTPS, the site sends screen views and cumulative duration for home, village, battle, world, wolves, and quests to the bundled analytics collector. Payloads omit saves, resources, URL parameters, and session cookies. DNT/GPC are honored; the local/offline visual preview sends nothing. When enabled, geo lookup can send visitor IPs to ipwho.is over HTTPS, as described in the [privacy notice](public/privacy.html).
 
 Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run count:lines` to refresh the table below and `npm run backup` for a clean source ZIP and SHA-256 sidecar in `artifacts/`. The ZIP includes the visual preview but excludes player data, secrets, dependencies, production build directories, and Git history. See the [validation record](docs/WEB-VALIDATION.md) and [deployment guide](docs/WEB-DEPLOYMENT.md).
+
+
+
+On Windows, after checks pass, [`push-and-backup.ps1`](push-and-backup.ps1) commits/pushes and creates a **full project backup**. Stage reviewed files with `git add -- <files>` and run `.\push-and-backup.ps1 -StagedOnly -CommitMessage "feat: description"`; the default invocation stages every visible change. Use `-BackupOnly` to snapshot an already published revision. The full ZIP goes to `H:\Drive'ım\Artificial Intelligence - Projects\Bozkurt Obası\Bozkurt Obası_YYYY-MM-DD_HHMMSS.zip` with no exclusions, including `.git`, `node_modules`, builds, local `.env` and empty directories. Contents are verified and the latest 30 dated backups retained. This private Drive ZIP is separate from the clean GitHub Release archive. Check cloud sync status in the Drive desktop client. See [backup standard](BACKUP-STANDARD.md) and [delivery rules](PROJECT-BACKUP-RULES.md). Docker volumes outside the repo need separate backups.
 
 ## Depo yapısı / Repository layout
 
@@ -119,15 +135,15 @@ Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run 
 <!-- metrics:start -->
 | Kapsam / Scope | Dosya / Files | Satır / Lines |
 | --- | ---: | ---: |
-| Web istemci / Web client | 8 | 5782 |
+| Web istemci / Web client | 12 | 6091 |
 | Web sunucu / Web server | 7 | 1990 |
 | Dağıtım servisleri / Deployment services | 30 | 4139 |
 | Paylaşılan oyun / Shared game | 1 | 718 |
-| Web test ve araçlar / Web tests and tools | 29 | 5849 |
+| Web test ve araçlar / Web tests and tools | 34 | 6709 |
 | Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **150** | **28676** |
+| **Toplam / Total** | **159** | **29845** |
 
-Aktif web kaynakları / Active web source: **18478** satır / lines.
+Aktif web kaynakları / Active web source: **19647** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

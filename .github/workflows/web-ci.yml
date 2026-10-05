@@ -72,6 +72,16 @@ jobs:
             playwright-report/
           if-no-files-found: ignore
 
+  backup:
+    name: Windows full-backup checks
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify full backups with disposable repositories
+        shell: powershell
+        run: ./scripts/test-backup.ps1
+
   container:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -113,7 +123,7 @@ jobs:
     name: Publish version tag and bilingual release
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [checks, container]
+    needs: [checks, container, backup]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: write

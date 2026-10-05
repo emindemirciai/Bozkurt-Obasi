@@ -21,6 +21,8 @@ npm run backup
 
 `docs/WEB-VALIDATION.md` içindeki sonuçları güncelleyin; temiz ZIP'i belge değişikliklerinden sonra üretin. README, sürüm ve değişiklikleri commit'e dahil edin. `main` dalına birleşme veya doğrudan push, [Web checks, containers and release](../.github/workflows/web-ci.yml) akışını çalıştırır. Pull request kontrolü de sürümün hedef `main` sürümünden büyük olduğunu doğrular.
 
+Windows'ta teslim scriptini de `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-backup.ps1` ile doğrulayın. İncelenen dosyaları stage edip `.\push-and-backup.ps1 -StagedOnly -CommitMessage "feat: değişiklik (vX.Y.Z)"` çalıştırın. Script commit/push sonrasında tüm yerel dosyaları doğrulanmış Drive ZIP'ine alır. `-BackupOnly`, HEAD'in gerçek uzak branch ile eşleştiğini kontrol ederek mevcut sürümün tam yedeğini alır; sürüm artırmaz. [Tam standart](../BACKUP-STANDARD.md).
+
 Yayın sırası:
 
 1. Kaynak/çeviri/sürüm kontrolleri, biçim, birim/API ve tarayıcı testleri; üretim ve görsel önizleme derlemesi.
@@ -45,6 +47,8 @@ npm run release:version -- patch --tr "Türkçe değişiklik notu" --en "English
 Repeat `--tr` and `--en` for multiple changes. Both languages are required; add `--dry-run` to preview the update. The tool updates `package.json`, `package-lock.json`, `releases.json`, `CHANGELOG.md`, and current version references in README together. The in-game history reads `releases.json`. Using `npm version` alone does not complete these records.
 
 Run `npm run verify`, `npm run format:check`, `npm run count:lines` and `npm run backup`. Update `docs/WEB-VALIDATION.md`, then produce the final clean ZIP after documentation changes. Commit the code, version and notes together.
+
+On Windows, verify delivery with `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-backup.ps1`. Stage reviewed files and run `.\push-and-backup.ps1 -StagedOnly -CommitMessage "feat: change (vX.Y.Z)"`. The script commits/pushes, then creates a verified full Drive ZIP of all local content. `-BackupOnly` requires HEAD to match the actual remote branch and snapshots the current version without bumping it. See the [full standard](../BACKUP-STANDARD.md).
 
 A merge or push to `main` runs [Web checks, containers and release](../.github/workflows/web-ci.yml). PR checks require a version newer than the target `main` version. After source, formatting, unit/API, browser, build and four-service Docker checks pass, the release job downloads artifacts from that same run and verifies the ZIP checksum. It creates an annotated `vX.Y.Z` tag at the tested commit and publishes the exact version's TR/EN CHANGELOG section with the source ZIP, SHA-256 file and visual `index.html`.
 

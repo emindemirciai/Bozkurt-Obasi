@@ -1,5 +1,28 @@
 export const translations = {
   tr: {
+    guideTitle: 'İlk adımlar',
+    guideCompleted: 'tamamlandı',
+    guide_gather: 'Kaynak topla',
+    guide_build: 'Yeni bir yapı kur',
+    guide_reward: 'İlk görev ödülünü al',
+    guide_train: 'İki eğitim yap',
+    guide_win: 'İlk savunmanı kazan',
+    guide_gatherDesc: 'Bozkırdan kaynak toplayarak başla. Toplama düğmesi köy haritasının altında.',
+    guide_buildDesc:
+      'Taş üretimi için bir taş ocağı kur. Başka bir yeni yapı da bu adımı tamamlar.',
+    guide_rewardDesc: 'İlk yapın hazır. Görevlerden “Yurdun ilk adımı” ödülünü al.',
+    guide_trainDesc:
+      'Muhafızlarını iki kez eğit. Her eğitim 8 ot, 12 yem ve bir eğitim puanı kullanır.',
+    guide_winDesc:
+      'Savunma düzenini seç ve ilk çakal saldırısını karşıla. Yaralı sürünü tedavi edip kurtlarını kampta dinlendirebilirsin.',
+    guide_exploreDesc:
+      'Oban hazır! Şimdi yeni bölgeleri keşfedebilir, köyünü büyütebilir ve görevleri sürdürebilirsin.',
+    guide_gatherAction: 'Toplama düğmesine git',
+    guide_buildAction: 'Yapıları gör',
+    guide_rewardAction: 'Görev ödülüne git',
+    guide_trainAction: 'Muhafızlara git',
+    guide_winAction: 'Savunmaya hazırlan',
+    guide_exploreAction: 'Dünyayı keşfet',
     landingHome: 'Ana sayfa',
     landingNavigation: 'Site bölümleri',
     landingStoryNav: 'Hikâye',
@@ -284,6 +307,30 @@ export const translations = {
     recovery: 'Yedek kayıt geri yüklendi.',
   },
   en: {
+    guideTitle: 'First steps',
+    guideCompleted: 'completed',
+    guide_gather: 'Gather resources',
+    guide_build: 'Build a new structure',
+    guide_reward: 'Claim your first quest reward',
+    guide_train: 'Train twice',
+    guide_win: 'Win your first defense',
+    guide_gatherDesc:
+      'Start by gathering from the steppe. The gather button is below the village map.',
+    guide_buildDesc:
+      'Build a quarry to produce stone. Any other new structure also completes this step.',
+    guide_rewardDesc: 'Your first structure is ready. Claim “A homeland’s first step” in Quests.',
+    guide_trainDesc:
+      'Train your guardians twice. Each training uses 8 herbs, 12 feed and one training point.',
+    guide_winDesc:
+      'Choose your formation and face the first jackal attack. Treat your wounded herd and rest your wolves at camp when needed.',
+    guide_exploreDesc:
+      'Your homeland is ready! Explore new regions, grow your village and continue your quests.',
+    guide_gatherAction: 'Go to the gather button',
+    guide_buildAction: 'View buildings',
+    guide_rewardAction: 'Go to the quest reward',
+    guide_trainAction: 'Go to Guardians',
+    guide_winAction: 'Prepare your defense',
+    guide_exploreAction: 'Explore the world',
     landingHome: 'Home',
     landingNavigation: 'Site sections',
     landingStoryNav: 'Story',

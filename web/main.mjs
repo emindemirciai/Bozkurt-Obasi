@@ -10,6 +10,8 @@ import {
   getUpgradeCost,
 } from '../shared/game.mjs';
 import { translations } from './i18n.mjs';
+import { firstSteps } from './onboarding.mjs';
+import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
 import { createAnalytics } from './analytics.mjs';
@@ -188,7 +190,7 @@ function googleControl() {
 
 function landingView() {
   return `<div class="landing-shell">
-    <header class="landing-header"><button class="landing-brand" data-action="home" aria-label="${t('landingHome')}"><span class="landing-brand-symbol" aria-hidden="true">☾✦</span><span>BOZKURT <b>OBASI</b><small>AY-YILDIZ NÖBETİ</small></span></button>
+    <header class="landing-header"><button class="landing-brand" data-action="home" aria-label="BOZKURT OBASI · ${t('landingHome')}"><span class="landing-brand-symbol">${brandMark}</span>${brandName}</button>
       <nav class="landing-nav" aria-label="${t('landingNavigation')}"><button data-action="scroll" data-target="landing-story">${t('landingStoryNav')}</button><button data-action="scroll" data-target="landing-features">${t('landingFeaturesNav')}</button></nav>
       <div class="landing-header-actions"><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button></div>
     </header>
@@ -328,10 +330,10 @@ function render(restoreFocus) {
   }
   const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'updates'];
   root.innerHTML = `<div class="game-shell">
-    <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}"><svg viewBox="0 0 42 42"><path d="M26 6a16 16 0 1 0 0 30 15 15 0 0 1 0-30" fill="currentColor"/><path d="m29 15 2 4 5 .5-3.7 3.2 1.2 4.8-4.5-2.5-4.3 2.5 1-4.8-3.7-3.2 5-.5Z" fill="currentColor"/></svg></a>
+    <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}">${brandMark}</a>
     <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
-    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="home" title="${t('landingHome')}">BOZKURT OBASI <span>AY-YILDIZ NÖBETİ</span></button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
+    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="home" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${number(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
     ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : updatesView()}
@@ -377,6 +379,41 @@ function playView() {
     ${isBattle ? battleRecovery() : buildingList()}`;
 }
 
+function firstStepsView() {
+  const guide = firstSteps(state);
+  return `<section class="quest-callout first-steps" aria-labelledby="first-steps-title">
+    <div class="guide-heading"><h3 id="first-steps-title">${t('guideTitle')}</h3><span class="guide-count" role="status" aria-live="polite">${guide.completed} / ${guide.steps.length} ${t('guideCompleted')}</span></div>
+    <ol class="guide-list">${guide.steps.map((step, index) => `<li class="${step.complete ? 'is-complete' : ''}" ${step.id === guide.next ? 'aria-current="step"' : ''}><span class="guide-marker" aria-hidden="true">${step.complete ? icon('check', 13) : index + 1}</span><span>${t(`guide_${step.id}`)}</span><small>${step.progress}/${step.target}<span class="sr-only"> ${t(step.complete ? 'guideCompleted' : 'inProgress')}</span></small></li>`).join('')}</ol>
+    <p class="guide-description">${t(`guide_${guide.next}Desc`)}</p>
+    ${button(t(`guide_${guide.next}Action`) + icon('arrow', 17), 'guide', 'guide-action', busy)}
+  </section>`;
+}
+
+function followFirstSteps() {
+  const next = firstSteps(state).next;
+  const targets = {
+    gather: ['village', '#collect-button'],
+    build: ['village', '[data-building-type="quarry"]'],
+    reward: ['quests', '[data-action="claimQuest"][data-id="first_build"]'],
+    train: ['wolves', '[data-action="train"]:not(:disabled)'],
+    win: ['battle', '[data-action="startBattle"], [data-action="newBattle"]'],
+    explore: ['world', '.page-heading h1'],
+  };
+  if (next === 'train')
+    selectedWolf = state.wolves.find((wolf) => wolf.points > 0)?.id || selectedWolf;
+  const [destination, selector] = targets[next];
+  navigate(destination);
+  const control = root.querySelector(selector);
+  const target = control && !control.disabled ? control : root.querySelector('.page-heading h1');
+  if (!target) return;
+  if (!target.matches('button, a')) target.tabIndex = -1;
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    block: 'center',
+  });
+}
+
 function villagePanel() {
   const b = state.buildings.find((b) => b.id === selected) || state.buildings[0];
   const def = BUILDINGS.find((d) => d.id === b.type),
@@ -391,7 +428,7 @@ function villagePanel() {
       .join('') ||
     `<div><span>${t('capacity')}</span><strong>${number(state.capacity)}</strong></div>`
   }</div>${b.level < 5 ? `<div class="upgrade-row">${costView(cost)}${button(t('upgrade') + icon('arrow', 15), 'upgrade', 'button outline', !affordable(cost) || busy, `data-id="${b.id}"`)}</div>` : `<div class="completed">${icon('check', 16)}${t('maxLevel')}</div>`}</section>
-    <section class="quest-callout"><div class="eyebrow">${t('nextStep')}</div><h3>${t('nextTitle')}</h3><p>${t('nextDesc')}</p><button data-view="quests">${t('viewQuests')}${icon('arrow', 17)}</button><span class="callout-symbol">☽</span></section>
+    ${firstStepsView()}
     <section class="activity-card"><h3>${t('activity')}<span class="pulse"></span></h3>${state.log
       .slice(-3)
       .reverse()
@@ -791,6 +828,10 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const a = target.dataset.action;
+  if (a === 'guide') {
+    if (!busy) followFirstSteps();
+    return;
+  }
   if (a === 'scroll') {
     document.getElementById(target.dataset.target)?.scrollIntoView({ behavior: 'smooth' });
     return;

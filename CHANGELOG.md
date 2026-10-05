@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.5.0 — 2026-10-05
+
+**TR**
+
+- Hilal ve bozkurt simgeli yeni SVG logo; mobil, açık/koyu tema ve tarayıcı simgesi uyumu.
+- Köyde ilerlemeyi izleyen beş aşamalı İlk adımlar rehberi; mevcut kayıtlar korunur.
+- Tam Google Drive yedeği, doğrulama ve son 30 yedeği saklama akışı; temiz GitHub ZIP teslimi sürer.
+
+**EN**
+
+- New crescent-and-wolf SVG identity with responsive layouts, light/dark themes and a browser icon.
+- A five-step village guide follows saved progress without changing existing saves.
+- Full Google Drive backups with verification and 30-backup retention alongside clean GitHub source archives.
+
 ## v1.4.0 — 2026-10-01
 
 **TR**
