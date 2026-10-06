@@ -15,10 +15,19 @@ import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
 import { createAnalytics } from './analytics.mjs';
+import { profileDialog, verificationDialog, friendsView } from './player-panel.mjs';
 
 const analytics = createAnalytics();
 
-const GAME_VIEWS = new Set(['village', 'battle', 'world', 'wolves', 'quests', 'updates']);
+const GAME_VIEWS = new Set([
+  'village',
+  'battle',
+  'world',
+  'wolves',
+  'quests',
+  'friends',
+  'updates',
+]);
 const initialView = GAME_VIEWS.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
 const privacyHref = location.protocol === 'file:' ? '../public/privacy.html' : '/privacy.html';
 const termsHref = location.protocol === 'file:' ? '../public/terms.html' : '/terms.html';
@@ -63,7 +72,11 @@ let polling = null,
   renderedSignature = '';
 let notice = '',
   noticeUntil = 0;
-let accountDraft = { name: '', email: '', password: '' },
+let profileDraft = {},
+  friendsDraft = {},
+  friendsData = { friends: [], incoming: [], outgoing: [], transfers: [] },
+  friendsLoaded = false;
+let accountDraft = { name: '', email: '', password: '', code: '' },
   accountError = '',
   accountOpener = '',
   accountRequest = 0;
@@ -164,6 +177,7 @@ function navigate(next) {
     toast('signInRequired');
     return;
   }
+  if (next === 'friends') void loadFriends();
   view = next;
   zoom = 1;
   modal = '';
@@ -181,16 +195,18 @@ function googleSignInControl(label = 'googleSignIn') {
 }
 
 function googleControl() {
+  if (auth.verificationRequired)
+    return button(t('openVerification'), 'openVerification', 'landing-account-manage');
   if (auth.authenticated) {
     const name = auth.user?.name || auth.user?.email || t('playerAccount');
-    return `<div class="landing-account"><span class="landing-avatar" aria-hidden="true">${escape(name.slice(0, 1).toLocaleUpperCase(language))}</span><span><strong>${escape(name)}</strong><small>${t(mode === 'online' ? 'accountReady' : 'googleGameUnavailable')}</small></span>${button(t('manageAccount'), 'account', 'landing-account-manage')}</div>`;
+    return `<div class="landing-account"><span class="landing-avatar" aria-hidden="true">${auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : escape(name.slice(0, 1).toLocaleUpperCase(language))}</span><span><strong>${escape(name)}</strong><small>${t(mode === 'online' ? 'accountReady' : 'googleGameUnavailable')}</small></span>${button(t('manageAccount'), 'account', 'landing-account-manage')}</div>`;
   }
   return `${googleSignInControl()}<div class="landing-email-actions">${button(t('emailLogin'), 'login', 'landing-email-button', auth.loading)}${button(t('emailRegister'), 'register', 'landing-email-button emphasis', auth.loading)}</div>`;
 }
 
 function landingView() {
   return `<div class="landing-shell">
-    <header class="landing-header"><button class="landing-brand" data-action="home" aria-label="BOZKURT OBASI · ${t('landingHome')}"><span class="landing-brand-symbol">${brandMark}</span>${brandName}</button>
+    <header class="landing-header"><button class="landing-brand" data-action="brandHome" aria-label="BOZKURT OBASI · ${t('landingHome')}"><span class="landing-brand-symbol">${brandMark}</span>${brandName}</button>
       <nav class="landing-nav" aria-label="${t('landingNavigation')}"><button data-action="scroll" data-target="landing-story">${t('landingStoryNav')}</button><button data-action="scroll" data-target="landing-features">${t('landingFeaturesNav')}</button></nav>
       <div class="landing-header-actions"><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button></div>
     </header>
@@ -229,6 +245,8 @@ async function refreshGoogleAuth() {
       mailEnabled: result.mailEnabled === true,
       authenticated: result.authenticated === true,
       user: result.authenticated ? result.user : null,
+      verificationRequired: result.verificationRequired === true,
+      pendingEmail: result.pendingEmail || '',
       reason: result.reason,
     };
   } catch {
@@ -242,6 +260,7 @@ async function refreshGoogleAuth() {
     };
   }
   if (!auth.authenticated) denyGameAccess();
+  if (auth.verificationRequired) modal = 'verify';
   render();
 }
 
@@ -256,30 +275,7 @@ function denyGameAccess() {
 }
 
 async function initGoogleAuth() {
-  const verificationToken = location.hash.startsWith('#verify=')
-    ? location.hash.slice('#verify='.length)
-    : '';
-  if (verificationToken) {
-    history.replaceState(null, '', `${location.pathname}${location.search}`);
-  }
   await refreshGoogleAuth();
-  if (verificationToken) {
-    try {
-      if (!/^[A-Za-z0-9_-]{43}$/.test(verificationToken)) throw new Error('invalid_token');
-      const response = await fetch('/api/auth/player/verify/confirm', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: verificationToken }),
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!response.ok) throw new Error('verification_failed');
-      await refreshGoogleAuth();
-      toast('emailVerified');
-    } catch {
-      toast('verificationFailed');
-    }
-  }
   const result = new URL(location.href).searchParams.get('auth');
   if (result) {
     const url = new URL(location.href);
@@ -300,6 +296,7 @@ async function initGoogleAuth() {
   try {
     await api('session', {}, generation);
     mode = 'online';
+    if (view === 'friends') void loadFriends();
     render();
   } catch (error) {
     if (error.code !== 'obsolete_response') toast('googleGameUnavailable');
@@ -328,15 +325,15 @@ function render(restoreFocus) {
     focusDialog();
     return;
   }
-  const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'updates'];
+  const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'friends', 'updates'];
   root.innerHTML = `<div class="game-shell">
     <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}">${brandMark}</a>
-    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
+    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key === 'friends' ? 'wolves' : key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
-    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="home" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
+    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${number(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
-    ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : updatesView()}
+    ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : view === 'friends' ? friendsView({ t, escape, number, button, data: friendsData, user: auth.user, loaded: friendsLoaded, busy, draft: friendsDraft }) : updatesView()}
     <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="${privacyHref}">${t('privacyPolicy')}</a> · <a href="${termsHref}">${t('termsOfUse')}</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
   identifyControls();
@@ -359,7 +356,7 @@ function focusDialog() {
 }
 
 function clearAccountDraft() {
-  accountDraft = { name: '', email: '', password: '' };
+  accountDraft = { name: '', email: '', password: '', code: '' };
   accountError = '';
 }
 
@@ -369,6 +366,7 @@ function closeDialog() {
   accountRequest++;
   modal = '';
   clearAccountDraft();
+  profileDraft = {};
   render(opener);
 }
 
@@ -576,11 +574,6 @@ function accountMethodControls() {
   return `<div class="account-methods"><p>${t('connectGoogleHint')}</p>${googleSignInControl('connectGoogle')}</div>`;
 }
 
-function verificationControls() {
-  if (auth.user?.provider !== 'email' || auth.user.emailVerified) return '';
-  return `<div class="account-verification"><p>${t(auth.mailEnabled ? 'verificationPending' : 'verificationUnavailable')}</p>${auth.mailEnabled ? button(t('resendVerification'), 'verifyEmail', 'button outline', busy) : ''}</div>`;
-}
-
 function accountFormView() {
   const registering = modal === 'register';
   const settingPassword = modal === 'password';
@@ -596,13 +589,50 @@ function accountFormView() {
 function modalView() {
   if (!modal) return '';
   if (['login', 'register', 'password'].includes(modal)) return accountFormView();
-  if (modal === 'account') {
-    return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t('playerAccount')}</h2><p>${escape(auth.user?.name || auth.user?.email || '')}</p><p class="modal-note">${escape(auth.user?.email || '')}<br>${t(auth.user?.provider === 'email' ? 'emailAccount' : 'googleAccount')}${auth.user?.provider === 'email' && auth.user?.emailVerified === false ? `<br>${t('emailNotVerified')}` : ''}</p>${verificationControls()}${accountMethodControls()}${accountError ? `<p class="account-error" role="alert">${t(accountError)}</p>` : ''}${button(t('googleLogout'), 'accountLogout', 'button outline', busy)}<div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
-  }
+  if (modal === 'verify')
+    return verificationDialog({
+      t,
+      escape,
+      button,
+      icon,
+      email: auth.pendingEmail,
+      mailEnabled: auth.mailEnabled,
+      busy,
+      error: accountError,
+      code: accountDraft.code,
+    });
+  if (modal === 'account')
+    return profileDialog({
+      t,
+      escape,
+      button,
+      icon,
+      user: auth.user,
+      draft: profileDraft,
+      busy,
+      error: accountError,
+      methods: accountMethodControls(),
+    });
+
   return `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">${icon('close', 20)}</button><div class="modal-icon">${icon('wolves', 38)}</div><div class="eyebrow">BOZKURT OBASI · AY-YILDIZ NÖBETİ</div><h2 id="modal-title">${t('helpTitle')}</h2><p>${t('helpText')}</p><p class="modal-note">${t('helpOffline')}</p>${button(t('understood') + icon('arrow', 18), 'close', 'button primary')}${button(icon('save', 16) + t('exportSave'), 'exportSave', 'button text-button')}</section></div>`;
 }
 
 const accountErrorKeys = {
+  invalid_avatar: 'invalidAvatar',
+  invalid_verification_code: 'invalidVerificationCode',
+  verification_expired: 'verificationExpired',
+  email_verification_required: 'verifyTitle',
+  player_not_found: 'playerNotFound',
+  self_friend: 'selfFriend',
+  friend_exists: 'friendExists',
+  friend_required: 'friendRequired',
+  friend_request_required: 'friendRequired',
+  insufficient_stone: 'insufficientStone',
+  recipient_storage_full: 'recipientStorageFull',
+  invalid_transfer: 'invalidTransfer',
+  transfer_conflict: 'transferConflict',
+  friend_limit: 'friendLimit',
+  stale_revision: 'transferConflict',
   invalid_email: 'invalidEmail',
   invalid_password: 'invalidPassword',
   invalid_name: 'invalidName',
@@ -657,8 +687,21 @@ async function submitAccount(form) {
     if (request !== accountRequest) return;
     if (!response.ok)
       throw Object.assign(new Error(result?.error || 'request_failed'), { code: result?.error });
+    if (result.verificationRequired) {
+      auth.authenticated = false;
+      auth.user = null;
+      auth.verificationRequired = true;
+      auth.pendingEmail = result.pendingEmail;
+      clearAccountDraft();
+      modal = 'verify';
+      mode = 'local';
+      view = 'home';
+      toast(result.verificationSent ? 'verificationSent' : 'verificationSendFailed');
+      return;
+    }
     if (result?.authenticated !== true || !result.user?.email) throw new Error('invalid_response');
     auth.authenticated = true;
+    auth.verificationRequired = false;
     auth.user = result.user;
     accepted = true;
     clearAccountDraft();
@@ -666,6 +709,7 @@ async function submitAccount(form) {
     mode = 'online';
     accountOpener = '';
     if (settingPassword) {
+      profileDraft = {};
       modal = 'account';
       toast('passwordSet');
     } else {
@@ -701,6 +745,181 @@ root.addEventListener('submit', (event) => {
   if (event.target.id !== 'account-form') return;
   event.preventDefault();
   void submitAccount(event.target);
+});
+
+async function playerRequest(path, body) {
+  const response = await fetch(`/api/${path}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    credentials: 'same-origin',
+    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    signal: AbortSignal.timeout(8000),
+  });
+  const result = await response.json();
+  if (!response.ok)
+    throw Object.assign(new Error(result.error || 'request_failed'), { code: result.error });
+  return result;
+}
+
+async function verifyCode(form) {
+  if (busy || !auth.verificationRequired || !form.reportValidity()) return;
+  const code = String(new FormData(form).get('code') || '');
+  busy = true;
+  accountError = '';
+  render();
+  try {
+    const result = await playerRequest('auth/player/verify/confirm', { code });
+    auth.user = result.user;
+    auth.authenticated = true;
+    auth.verificationRequired = false;
+    clearAccountDraft();
+    await api('session', {}, ++sessionGeneration);
+    mode = 'online';
+    navigate('village');
+    toast('emailVerified');
+  } catch (error) {
+    accountError = accountErrorKeys[error.code] || 'accountRequestFailed';
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+async function saveProfile(form) {
+  if (busy || !auth.authenticated || !form.reportValidity()) return;
+  const fields = new FormData(form);
+  const body = { nickname: String(fields.get('nickname') || '') };
+  if (Object.hasOwn(profileDraft, 'avatarDataUrl')) body.avatarDataUrl = profileDraft.avatarDataUrl;
+  const password = String(fields.get('password') || '');
+  const currentPassword = String(fields.get('currentPassword') || '');
+  if (
+    password &&
+    (!currentPassword || Array.from(password).length < 12 || Array.from(password).length > 128)
+  ) {
+    accountError = 'invalidPassword';
+    render();
+    return;
+  }
+  busy = true;
+  accountError = '';
+  render();
+  try {
+    if (password) await playerRequest('auth/player/password/change', { password, currentPassword });
+    const result = await playerRequest('player/profile', body);
+    auth.user = result.user;
+    profileDraft = {};
+    toast('profileSaved');
+  } catch (error) {
+    accountError = accountErrorKeys[error.code] || 'accountRequestFailed';
+  } finally {
+    busy = false;
+    profileDraft.password = '';
+    profileDraft.currentPassword = '';
+    render();
+  }
+}
+
+async function loadFriends() {
+  if (!auth.authenticated) return;
+  const generation = sessionGeneration;
+  try {
+    const result = await playerRequest('player/friends');
+    if (generation !== sessionGeneration || !auth.authenticated) return;
+    friendsData = result;
+    friendsLoaded = true;
+    if (view === 'friends') render();
+  } catch (error) {
+    if (generation === sessionGeneration) toast(accountErrorKeys[error.code] || 'failed');
+  }
+}
+
+async function socialAction(action, body) {
+  if (busy || !auth.authenticated) return;
+  busy = true;
+  if (polling) await polling;
+  const generation = ++sessionGeneration;
+  render();
+  try {
+    if (action === 'transfer') {
+      await api('state', undefined, generation);
+      body = { ...body, revision };
+    }
+    await playerRequest(`player/friends/${action}`, body);
+    if (action === 'transfer') {
+      await api('state', undefined, generation);
+      delete friendsDraft[body.userCode];
+      delete friendsDraft[`pending:${body.userCode}`];
+    } else if (action === 'request') friendsDraft.code = '';
+    await loadFriends();
+    toast(action === 'transfer' ? 'stoneTransferDone' : 'friendUpdated');
+  } catch (error) {
+    if (action === 'transfer' && error.code === 'stale_revision')
+      await api('state', undefined, generation).catch(() => {});
+    toast(accountErrorKeys[error.code] || 'failed');
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+root.addEventListener('input', (event) => {
+  const field = event.target.dataset.profileField;
+  if (field) profileDraft[field] = event.target.value;
+  if (event.target.hasAttribute('data-friend-code')) friendsDraft.code = event.target.value;
+  if (event.target.dataset.transferCode)
+    friendsDraft[event.target.dataset.transferCode] = event.target.value;
+});
+
+root.addEventListener('change', async (event) => {
+  if (event.target.id !== 'profile-upload' || busy) return;
+  const file = event.target.files?.[0],
+    request = accountRequest;
+  if (!file) return;
+  if (
+    !['image/png', 'image/jpeg', 'image/gif'].includes(file.type) ||
+    file.size > 2 * 1024 * 1024
+  ) {
+    accountError = 'invalidAvatar';
+    render();
+    return;
+  }
+  try {
+    const data = await new Promise((resolveFile, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolveFile(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    if (modal !== 'account' || request !== accountRequest) return;
+    profileDraft.avatarDataUrl = data;
+    accountError = '';
+    render();
+  } catch {
+    accountError = 'invalidAvatar';
+    render();
+  }
+});
+
+root.addEventListener('submit', (event) => {
+  const form = event.target;
+  if (
+    !['verification-form', 'profile-form', 'friend-request-form'].includes(form.id) &&
+    !form.matches('.stone-transfer')
+  )
+    return;
+  event.preventDefault();
+  if (form.id === 'verification-form') void verifyCode(form);
+  else if (form.id === 'profile-form') void saveProfile(form);
+  else if (form.id === 'friend-request-form')
+    void socialAction('request', { userCode: String(new FormData(form).get('userCode') || '') });
+  else {
+    const userCode = form.dataset.code,
+      amount = Number(new FormData(form).get('amount'));
+    const previous = friendsDraft[`pending:${userCode}`];
+    const requestId = previous?.amount === amount ? previous.requestId : crypto.randomUUID();
+    friendsDraft[`pending:${userCode}`] = { amount, requestId };
+    void socialAction('transfer', { userCode, amount, requestId, revision });
+  }
 });
 
 async function api(path, body, generation = sessionGeneration) {
@@ -803,7 +1022,7 @@ root.addEventListener('click', async (event) => {
   if (!target || target.disabled) return;
   if (target.matches('a.brand-mark')) {
     event.preventDefault();
-    navigate('home');
+    navigate(auth.authenticated ? 'village' : 'home');
     return;
   }
   if (target.dataset.view) {
@@ -836,12 +1055,36 @@ root.addEventListener('click', async (event) => {
     document.getElementById(target.dataset.target)?.scrollIntoView({ behavior: 'smooth' });
     return;
   }
+  if (a === 'brandHome') {
+    navigate(auth.authenticated ? 'village' : 'home');
+    return;
+  }
+  if (a === 'openVerification') {
+    modal = 'verify';
+    accountError = '';
+    render();
+    return;
+  }
+  if (a === 'removePhoto') {
+    profileDraft.avatarDataUrl = null;
+    render();
+    return;
+  }
+  if (a === 'acceptFriend' || a === 'removeFriend') {
+    if (!busy)
+      await socialAction(a === 'acceptFriend' ? 'accept' : 'remove', {
+        userCode: target.dataset.code,
+      });
+    return;
+  }
   if (a === 'home' || a === 'play' || a === 'updates') {
     navigate(a === 'home' ? 'home' : a === 'play' ? 'village' : 'updates');
     return;
   }
   if (a === 'account') {
     accountOpener = target.id;
+    profileDraft = {};
+    accountError = '';
     modal = 'account';
     render();
     return;
@@ -861,7 +1104,7 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (a === 'verifyEmail') {
-    if (busy || !auth.authenticated || auth.user?.emailVerified || !auth.mailEnabled) return;
+    if (busy || !auth.verificationRequired || !auth.mailEnabled) return;
     busy = true;
     render();
     try {
@@ -909,6 +1152,11 @@ root.addEventListener('click', async (event) => {
       if (!response.ok) throw new Error('auth_request_failed');
       auth.authenticated = false;
       auth.user = null;
+      auth.verificationRequired = false;
+      profileDraft = {};
+      friendsDraft = {};
+      friendsData = { friends: [], incoming: [], outgoing: [], transfers: [] };
+      friendsLoaded = false;
       denyGameAccess();
       await refreshGoogleAuth();
       toast('googleLoggedOut');
@@ -995,7 +1243,7 @@ root.addEventListener('click', async (event) => {
 
 root.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && modal) {
-    if (busy && ['login', 'register', 'password'].includes(modal)) return;
+    if (busy && ['login', 'register', 'password', 'account', 'verify'].includes(modal)) return;
     closeDialog();
     return;
   }
@@ -1061,7 +1309,10 @@ window.addEventListener('popstate', () => {
   render();
 });
 window.addEventListener('hashchange', () => {
-  if (location.hash.startsWith('#verify=')) void initGoogleAuth();
+  if (location.hash.startsWith('#verify=')) {
+    history.replaceState(null, '', location.pathname + location.search);
+    void initGoogleAuth();
+  }
 });
 render();
 void initGoogleAuth();

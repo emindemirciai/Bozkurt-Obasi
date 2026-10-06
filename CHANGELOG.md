@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.6.0 — 2026-10-06
+
+**TR**
+
+- Profil: sabit e-posta ve ad soyad, düzenlenebilir takma ad ve özel fotoğraf önceliği; logo oturumlu oyuncuyu Ana Yurt'a açar.
+- Görselli HTML e-posta, 15 dakikalık doğrulama kodu ve doğrulanmadan oyun/API erişiminin kapatılması.
+- Kalıcı oyuncu kodları, kabul edilen arkadaşlık istekleri ve tekrar göndermeye dayanıklı atomik maden transferi.
+
+**EN**
+
+- Profiles keep email and full name immutable, allow nickname/photo edits, preserve custom photo priority, and route signed-in logo clicks to the homeland.
+- Illustrated HTML mail and 15-minute verification codes gate gameplay and player APIs until confirmation.
+- Permanent player codes, accepted friendships, and idempotent atomic stone gifts between villages.
+
 ## v1.5.0 — 2026-10-05
 
 **TR**

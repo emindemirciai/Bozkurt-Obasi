@@ -3,6 +3,9 @@ import { createAdminRoutes } from './admin.mjs';
 import { appendCookie, createGoogleRoutes, googleAuthConfig } from './google.mjs';
 import { createPlayerRoutes } from './player-auth.mjs';
 import { createMailService, mailConfig } from './mail.mjs';
+import { createVerificationStore } from './verification.mjs';
+import { createProfileStore } from './profile.mjs';
+import { createSocialStore } from './social.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
@@ -66,7 +69,7 @@ function securityHeaders(response, analyticsOrigin) {
   response.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.setHeader(
     'Content-Security-Policy',
-    `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${analyticsOrigin ? ` ${analyticsOrigin}` : ''}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`,
+    `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; connect-src 'self'${analyticsOrigin ? ` ${analyticsOrigin}` : ''}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`,
   );
   response.setHeader('Cache-Control', 'no-store');
 }
@@ -143,9 +146,9 @@ function requestOrigin(request, trustProxy) {
   }
 }
 
-async function readJson(request) {
+async function readJson(request, limit = BODY_LIMIT) {
   const length = Number(request.headers['content-length']);
-  if (Number.isFinite(length) && length > BODY_LIMIT) {
+  if (Number.isFinite(length) && length > limit) {
     request.resume();
     throw new HttpError(413, 'body_too_large');
   }
@@ -155,7 +158,7 @@ async function readJson(request) {
     let tooLarge = false;
     request.on('data', (chunk) => {
       size += chunk.length;
-      if (size > BODY_LIMIT) {
+      if (size > limit) {
         if (!tooLarge) {
           tooLarge = true;
           chunks.length = 0;
@@ -420,20 +423,9 @@ export function createApp({
     emailLink: database.prepare(
       'UPDATE email_accounts SET google_sub = ?, email_verified = 1, updated_at = ? WHERE sub = ? AND google_sub IS NULL',
     ),
-    verificationGet: database.prepare(
-      'SELECT token_hash, issued_at, expires_at, window_start, window_count FROM email_verifications WHERE email_sub = ?',
-    ),
-    verificationPut: database.prepare(
-      'INSERT INTO email_verifications (email_sub, token_hash, issued_at, expires_at, window_start, window_count) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(email_sub) DO UPDATE SET token_hash = excluded.token_hash, issued_at = excluded.issued_at, expires_at = excluded.expires_at, window_start = excluded.window_start, window_count = excluded.window_count',
-    ),
-    verificationByHash: database.prepare(
-      'SELECT email_sub, expires_at FROM email_verifications WHERE token_hash = ?',
-    ),
-    verificationDelete: database.prepare('DELETE FROM email_verifications WHERE email_sub = ?'),
-    verificationMark: database.prepare(
-      'UPDATE email_accounts SET email_verified = 1, updated_at = ? WHERE sub = ?',
-    ),
   };
+  const profiles = createProfileStore(database, { HttpError });
+  const social = createSocialStore(database, { HttpError, profiles });
   const adminRoutes = createAdminRoutes(database, {
     email: adminEmail,
     password: adminPassword,
@@ -444,8 +436,6 @@ export function createApp({
     HttpError,
   });
   const limits = new Map();
-  const pendingVerifications = new Set();
-  const verificationAttempts = new Map();
   let lastCleanup = 0;
   let closed = false;
 
@@ -533,63 +523,26 @@ export function createApp({
     redirectUris: googleRedirectUris,
   });
 
+  const verification = createVerificationStore(database, { mail, HttpError });
+
   async function issueEmailVerification(emailSub, now) {
-    if (!mail.enabled || !emailSub) return false;
-    if (pendingVerifications.has(emailSub)) return false;
-    const account = statements.emailGet.get(emailSub);
-    if (!account || account.email_verified || account.google_sub) return false;
-    const previous = statements.verificationGet.get(emailSub);
-    const day = 24 * 60 * 60 * 1000;
-    if (now - (verificationAttempts.get(emailSub) ?? -Infinity) < 60_000) return false;
-    if (previous && now - previous.issued_at < 60_000) return false;
-    const sameWindow = previous && now - previous.window_start < day;
-    if (sameWindow && previous.window_count >= 5) return false;
-    const token = randomBytes(32).toString('base64url');
-    const tokenHash = createHash('sha256').update(token).digest('hex');
-    if (verificationAttempts.size >= 10_000) {
-      for (const [sub, attemptedAt] of verificationAttempts)
-        if (now - attemptedAt >= 60_000) verificationAttempts.delete(sub);
-    }
-    verificationAttempts.set(emailSub, now);
-    pendingVerifications.add(emailSub);
-    try {
-      if (!(await mail.sendVerification(account.email, token))) return false;
-      const current = statements.emailGet.get(emailSub);
-      if (!current || current.email_verified || current.google_sub) return false;
-      statements.verificationPut.run(
-        emailSub,
-        tokenHash,
-        now,
-        now + 60 * 60 * 1000,
-        sameWindow ? previous.window_start : now,
-        sameWindow ? previous.window_count + 1 : 1,
-      );
-      return true;
-    } catch {
-      // Account registration still succeeds if the mail service is temporarily unavailable.
-      return false;
-    } finally {
-      pendingVerifications.delete(emailSub);
-    }
+    return verification.issue(emailSub, now);
   }
 
-  function confirmEmailVerification(token, now) {
-    if (!/^[A-Za-z0-9_-]{43}$/.test(token || ''))
-      throw new HttpError(400, 'invalid_verification_token');
-    const tokenHash = createHash('sha256').update(token).digest('hex');
-    database.exec('BEGIN IMMEDIATE');
-    try {
-      const challenge = statements.verificationByHash.get(tokenHash);
-      if (!challenge || challenge.expires_at <= now)
-        throw new HttpError(400, 'invalid_verification_token');
-      const updated = statements.verificationMark.run(now, challenge.email_sub);
-      if (updated.changes !== 1) throw new HttpError(400, 'invalid_verification_token');
-      statements.verificationDelete.run(challenge.email_sub);
-      database.exec('COMMIT');
-    } catch (error) {
-      database.exec('ROLLBACK');
-      throw error;
-    }
+  function confirmPlayerCode(request, code, now) {
+    const session = loadSession(request, now);
+    if (!session?.accountSub || session.accountProvider !== 'email')
+      throw new HttpError(401, 'account_session_required');
+    verification.confirm(session.accountSub, code, now);
+    return publicPlayer(loadSession(request, now));
+  }
+
+  function requirePlayer(request, now) {
+    const session = loadSession(request, now);
+    if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
+    if (session.canonicalProvider !== 'google' && !session.credential.email_verified)
+      throw new HttpError(403, 'email_verification_required');
+    return session;
   }
 
   function publicPlayer(session) {
@@ -599,9 +552,12 @@ export function createApp({
         ? statements.emailByGoogle.get(session.canonicalSub)
         : statements.emailCredentialGet.get(session.accountSub);
     const passwordEnabled = Boolean(credential?.password_hash);
+    const profile = profiles.ensure(
+      { email: session.account.email, name: session.account.display_name },
+      Math.floor(clock()),
+    );
     return {
-      name: session.account.display_name,
-      email: session.account.email,
+      ...profiles.publicProfile(profile.email),
       provider: session.accountProvider,
       emailVerified:
         session.canonicalProvider === 'google' || Boolean(session.credential?.email_verified),
@@ -693,9 +649,12 @@ export function createApp({
     const canonical = existing?.google_sub
       ? statements.accountGet.get(existing.google_sub)
       : existing;
+    const profile = profiles.ensure(
+      { email: canonical?.email ?? identity.email, name: canonical?.display_name ?? identity.name },
+      now,
+    );
     return {
-      name: canonical?.display_name ?? identity.name,
-      email: canonical?.email ?? identity.email,
+      ...profiles.publicProfile(profile.email),
       provider: 'email',
       emailVerified: Boolean(existing?.google_sub || existing?.email_verified),
       passwordEnabled: true,
@@ -772,9 +731,41 @@ export function createApp({
     login: (request, response, identity, now) =>
       completeEmailLogin(request, response, identity, now),
     setPassword: setPlayerPassword,
+    requirePlayer,
+    changePassword(request, expectedHash, passwordHash, now) {
+      const session = requirePlayer(request, Math.floor(clock()));
+      const credential =
+        session.canonicalProvider === 'google'
+          ? statements.emailByGoogle.get(session.canonicalSub)
+          : { sub: session.accountSub };
+      if (!credential) throw new HttpError(409, 'account_conflict');
+      database.exec('BEGIN IMMEDIATE');
+      try {
+        const changed = database
+          .prepare(
+            'UPDATE email_accounts SET password_hash=?,updated_at=? WHERE sub=? AND password_hash=?',
+          )
+          .run(passwordHash, now, credential.sub, expectedHash);
+        if (changed.changes !== 1) throw new HttpError(409, 'account_conflict');
+        database
+          .prepare(
+            "DELETE FROM sessions WHERE token_hash<>? AND ((account_provider='email' AND account_sub=?) OR (account_provider='google' AND account_sub=?))",
+          )
+          .run(
+            session.hash,
+            credential.sub,
+            session.canonicalProvider === 'google' ? session.canonicalSub : '',
+          );
+        database.exec('COMMIT');
+      } catch (error) {
+        database.exec('ROLLBACK');
+        throw error;
+      }
+      return publicPlayer(session);
+    },
     logout: logoutPlayer,
     issueVerification: issueEmailVerification,
-    confirmVerification: confirmEmailVerification,
+    confirmVerification: confirmPlayerCode,
   });
 
   const googleRoutes = createGoogleRoutes(database, {
@@ -797,6 +788,8 @@ export function createApp({
       now = Math.floor(clock());
       const current = loadSession(request, now);
       const email = identity.email.trim().toLowerCase();
+      if (current?.accountProvider === 'email' && !current.credential.email_verified)
+        throw new HttpError(403, 'email_verification_required');
       const credential = statements.emailByAddress.get(email);
       let linkingEmail = null;
       if (current?.accountSub && current.accountProvider === 'email') {
@@ -816,6 +809,8 @@ export function createApp({
         throw new HttpError(409, 'account_link_required');
       }
       const existing = statements.accountGet.get(identity.sub);
+      if (existing && existing.email.trim().toLowerCase() !== email)
+        throw new HttpError(409, 'account_link_email_mismatch');
       const state = current?.state ?? createGame(now);
       if (!validateGame(state)) throw new Error('Invalid game to link');
       if (!existing && current && !current.accountSub) resumeGame(state, now);
@@ -824,7 +819,7 @@ export function createApp({
       database.exec('BEGIN IMMEDIATE');
       try {
         if (existing) {
-          statements.accountProfile.run(identity.email, identity.name, now, identity.sub);
+          statements.accountProfile.run(existing.email, existing.display_name, now, identity.sub);
         } else {
           statements.accountInsert.run(
             identity.sub,
@@ -836,6 +831,16 @@ export function createApp({
             now,
           );
         }
+        profiles.ensure(
+          {
+            email: existing?.email ?? identity.email,
+            name: linkingEmail
+              ? current.account.display_name
+              : (existing?.display_name ?? identity.name),
+            googlePicture: identity.picture,
+          },
+          now,
+        );
         if (linkingEmail && !current.credential.google_sub) {
           if (existing) {
             // Preserve the Google save verbatim and invalidate commands from either old village.
@@ -898,6 +903,61 @@ export function createApp({
       if (await adminRoutes.handle(request, response, pathname, now)) return;
       if (await playerRoutes.handle(request, response, pathname, now)) return;
       if (await googleRoutes.handle(request, response, pathname, now)) return;
+      if (pathname.startsWith('/api/player/avatar/') && request.method === 'GET') {
+        requirePlayer(request, now);
+        let code;
+        try {
+          code = decodeURIComponent(pathname.slice('/api/player/avatar/'.length));
+        } catch {
+          throw new HttpError(400, 'invalid_avatar');
+        }
+        const avatar = profiles.getAvatar(code);
+        if (!avatar) throw new HttpError(404, 'not_found');
+        response.writeHead(200, {
+          'Content-Type': avatar.mime,
+          'Cache-Control': 'private, no-store',
+        });
+        return response.end(Buffer.from(avatar.bytes));
+      }
+      if (pathname === '/api/player/profile' || pathname.startsWith('/api/player/friends')) {
+        const session = requirePlayer(request, now);
+        const email = publicPlayer(session).email;
+        if (pathname === '/api/player/profile' && request.method === 'GET')
+          return json(response, 200, { user: publicPlayer(session) });
+        if (pathname === '/api/player/friends' && request.method === 'GET')
+          return json(response, 200, social.list(email));
+        const allowed = [
+          '/api/player/profile',
+          '/api/player/friends/request',
+          '/api/player/friends/accept',
+          '/api/player/friends/remove',
+          '/api/player/friends/transfer',
+        ];
+        if (!allowed.includes(pathname)) throw new HttpError(404, 'not_found');
+        if (request.method !== 'POST')
+          return json(response, 405, { error: 'method_not_allowed' }, { Allow: 'POST' });
+        checkMutation(request, trustProxy);
+        const body = await readJson(
+          request,
+          pathname === '/api/player/profile' ? 3 * 1024 * 1024 : BODY_LIMIT,
+        );
+        if (pathname === '/api/player/profile')
+          return json(response, 200, {
+            user: { ...publicPlayer(session), ...profiles.update(email, body, now) },
+          });
+        const action = pathname.split('/').at(-1);
+        const fields =
+          action === 'transfer' ? ['userCode', 'amount', 'revision', 'requestId'] : ['userCode'];
+        if (Object.keys(body).some((key) => !fields.includes(key)))
+          throw new HttpError(400, 'unexpected_fields');
+        return json(
+          response,
+          200,
+          action === 'transfer'
+            ? social.transfer(email, body, now)
+            : social[action](email, body.userCode, now),
+        );
+      }
       if (pathname === '/api/config' && request.method === 'GET') {
         return json(response, 200, { analytics: publicAnalytics }, { 'Cache-Control': 'no-store' });
       }
@@ -905,14 +965,12 @@ export function createApp({
         checkMutation(request, trustProxy);
         const body = await readJson(request);
         if (Object.keys(body).length) throw new HttpError(400, 'unexpected_fields');
-        const session = loadSession(request, now);
-        if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
+        const session = requirePlayer(request, now);
         resumeGame(session.state, now);
         return json(response, 200, { ...persist(session, now), mode: 'online' });
       }
       if (pathname === '/api/state' && request.method === 'GET') {
-        const session = loadSession(request, now);
-        if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
+        const session = requirePlayer(request, now);
         advanceGame(session.state, now);
         return json(response, 200, persist(session, now));
       }
@@ -930,8 +988,7 @@ export function createApp({
         ) {
           throw new HttpError(400, 'invalid_action_request');
         }
-        const session = loadSession(request, now);
-        if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
+        const session = requirePlayer(request, now);
         if (body.revision !== session.revision) {
           advanceGame(session.state, now);
           return json(response, 409, { error: 'stale_revision', ...persist(session, now) });

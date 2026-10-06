@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { signIn } from './sign-in.mjs';
+import { signIn, verifyEmail, verificationCode } from './sign-in.mjs';
 
 test('email registration, village progress and login survive logout and reload', async ({
   page,
@@ -22,6 +22,11 @@ test('email registration, village progress and login survive logout and reload',
     'new-password',
   );
   await dialog.getByRole('button', { name: 'Kayıt ol', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'E-postanı doğrula' })).toBeVisible();
+  await page
+    .getByLabel('Doğrulama kodu', { exact: true })
+    .fill(await verificationCode(page, email));
+  await page.getByRole('button', { name: 'Doğrula ve obaya gir' }).click();
   await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
   await page
     .locator('.buildings-grid')
@@ -29,8 +34,7 @@ test('email registration, village progress and login survive logout and reload',
     .click();
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
   await page.locator('.profile').click();
-  await expect(page.getByRole('dialog')).toContainText('Bozkır Yolcusu');
-  await expect(page.getByRole('dialog')).toContainText('E-posta hesabı');
+  await expect(page.getByLabel('Takma ad', { exact: true })).toHaveValue('Bozkır Yolcusu');
   await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
   await expect(page.locator('.game-shell')).toHaveCount(0);
   await page.getByRole('button', { name: 'Giriş yap', exact: true }).click();
@@ -134,6 +138,7 @@ test('linking matching Google and email sign-in preserves one village across bot
     data: { email, password, name: 'Shared Player' },
   });
   expect(registered.status()).toBe(201);
+  await verifyEmail(page, email);
   await page.goto('/#village');
   await page
     .locator('.buildings-grid')
@@ -204,6 +209,7 @@ test('a matching Google sign-in guides the player through password proof before 
     data: { email, password },
   });
   expect(registered.status()).toBe(201);
+  await verifyEmail(page, email);
   await page.goto('/#village');
   await page
     .locator('.buildings-grid')
@@ -240,61 +246,26 @@ test('a matching Google sign-in guides the player through password proof before 
   await expect(page.locator('.map-chip')).toHaveText('5 yapı');
 });
 
-test('a verification link clears its token from the URL and refreshes the account profile', async ({
+test('a pending email login requires the emailed code and never places it in a URL', async ({
   page,
 }) => {
-  const exposed = [];
-  page.on('request', (request) => {
-    if (request.url().includes('verify=')) exposed.push(request.url());
-    const referrer = request.headers().referer;
-    if (referrer?.includes('verify=')) exposed.push(referrer);
-  });
-  const email = `verify-${randomUUID()}@example.com`;
-  const password = 'Verification example 2026!';
-  let confirmed = false;
-  await page.route('**/api/auth/player/status', async (route) => {
-    const response = await route.fetch();
-    const body = await response.json();
-    await route.fulfill({
-      response,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        ...body,
-        mailEnabled: true,
-        ...(body.user ? { user: { ...body.user, emailVerified: confirmed } } : {}),
-      }),
-    });
-  });
-  await page.route('**/api/auth/player/verify/request', (route) =>
-    route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, sent: true }),
-    }),
-  );
-  await page.route('**/api/auth/player/verify/confirm', (route) => {
-    confirmed = true;
-    return route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({ verified: true }),
-    });
-  });
-  const registered = await page.request.post('/api/auth/player/register', {
+  const email = `verify-${randomUUID()}@example.com`,
+    password = 'Verification example 2026!';
+  const registration = await page.request.post('/api/auth/player/register', {
     data: { email, password },
   });
-  expect(registered.status()).toBe(201);
+  expect(registration.status()).toBe(201);
+  expect((await page.request.get('/api/state')).status()).toBe(403);
   await page.goto('/#village');
+  await expect(page.locator('.game-shell')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'E-postanı doğrula' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'E-postanı doğrula' })).toBeVisible();
+  const code = await verificationCode(page, email);
+  await page.getByLabel('Doğrulama kodu', { exact: true }).fill(code);
+  await page.getByRole('button', { name: 'Doğrula ve obaya gir' }).click();
+  await expect(page.locator('.game-shell')).toBeVisible();
+  expect(page.url()).not.toContain(code);
   await page.locator('.profile').click();
-  const resend = page.getByRole('button', { name: 'Doğrulama e-postasını yeniden gönder' });
-  await expect(resend).toBeVisible();
-  await resend.click();
-  await expect(page.locator('#notice')).toContainText('Doğrulama bağlantısı e-postana gönderildi');
-  await page.goto(`/#verify=${'v'.repeat(43)}`);
-  await expect(page).toHaveURL(/\/$/);
-  expect(exposed).toEqual([]);
-  await expect(page.locator('#notice')).toContainText('E-posta adresin doğrulandı');
-  await page.getByRole('button', { name: 'Hesabı yönet' }).click();
-  await expect(
-    page.getByRole('button', { name: 'Doğrulama e-postasını yeniden gönder' }),
-  ).toHaveCount(0);
-  await expect(page.getByRole('dialog')).not.toContainText('E-posta adresi henüz doğrulanmadı');
+  await expect(page.getByLabel('E-posta', { exact: true })).toHaveAttribute('readonly', '');
 });

@@ -50,6 +50,8 @@ export function createPlayerRoutes(
     logout,
     issueVerification,
     confirmVerification,
+    requirePlayer,
+    changePassword,
   },
 ) {
   const findEmail = database.prepare(
@@ -117,6 +119,7 @@ export function createPlayerRoutes(
       '/api/auth/player/login': 'POST',
       '/api/auth/player/logout': 'POST',
       '/api/auth/player/password': 'POST',
+      '/api/auth/player/password/change': 'POST',
       '/api/auth/player/verify/request': 'POST',
       '/api/auth/player/verify/confirm': 'POST',
     };
@@ -132,8 +135,12 @@ export function createPlayerRoutes(
         enabled: googleConfig.enabled,
         emailEnabled: true,
         mailEnabled,
-        authenticated: Boolean(user),
-        ...(user ? { user } : {}),
+        authenticated: Boolean(user?.emailVerified),
+        ...(user?.emailVerified
+          ? { user }
+          : user
+            ? { verificationRequired: true, pendingEmail: user.email }
+            : {}),
         ...(!googleConfig.enabled ? { reason: googleConfig.reason } : {}),
       });
       return true;
@@ -141,11 +148,11 @@ export function createPlayerRoutes(
     checkMutation(request, trustProxy);
     const body = await readJson(request);
     if (pathname === '/api/auth/player/verify/confirm') {
-      if (Object.keys(body).some((key) => key !== 'token'))
+      if (Object.keys(body).some((key) => key !== 'code'))
         throw new HttpError(400, 'unexpected_fields');
       allowAttempt(request, now);
-      confirmVerification(body.token, now);
-      json(response, 200, { verified: true });
+      const user = confirmVerification(request, body.code, now);
+      json(response, 200, { verified: true, authenticated: true, user });
       return true;
     }
     if (pathname === '/api/auth/player/verify/request') {
@@ -166,6 +173,35 @@ export function createPlayerRoutes(
       if (!session?.accountSub) throw new HttpError(401, 'account_session_required');
       logout(request, response, session);
       json(response, 200, { ok: true });
+      return true;
+    }
+    if (pathname === '/api/auth/player/password/change') {
+      if (Object.keys(body).some((key) => !['password', 'currentPassword'].includes(key)))
+        throw new HttpError(400, 'unexpected_fields');
+      allowAttempt(request, now);
+      const session = requirePlayer(request, now);
+      const credential =
+        session.canonicalProvider === 'google'
+          ? database
+              .prepare('SELECT password_hash FROM email_accounts WHERE google_sub=?')
+              .get(session.canonicalSub)
+          : database
+              .prepare('SELECT password_hash FROM email_accounts WHERE sub=?')
+              .get(session.accountSub);
+      if (!credential?.password_hash) throw new HttpError(400, 'password_not_set');
+      if (!boundedPassword(body.password, 12)) throw new HttpError(400, 'invalid_password');
+      if (
+        !boundedPassword(body.currentPassword) ||
+        !(await verifyPassword(body.currentPassword, credential.password_hash))
+      )
+        throw new HttpError(401, 'invalid_credentials');
+      const user = changePassword(
+        request,
+        credential.password_hash,
+        await hashPassword(body.password),
+        now,
+      );
+      json(response, 200, { authenticated: true, user });
       return true;
     }
     if (pathname === '/api/auth/player/password') {
@@ -213,7 +249,12 @@ export function createPlayerRoutes(
       const user = register(request, response, { email, name, passwordHash }, now);
       const account = findEmail.get(email);
       const verificationSent = await issueVerification(account.sub, now);
-      json(response, 201, { authenticated: true, user, verificationSent });
+      json(response, 201, {
+        authenticated: false,
+        verificationRequired: true,
+        pendingEmail: user.email,
+        verificationSent,
+      });
       return true;
     }
     const failed = bucket(failures, email, now);
@@ -230,7 +271,21 @@ export function createPlayerRoutes(
       now,
     );
     failures.delete(email);
-    json(response, 200, { authenticated: true, user });
+    const verificationSent = !user.emailVerified
+      ? await issueVerification(account.sub, now)
+      : false;
+    json(
+      response,
+      200,
+      user.emailVerified
+        ? { authenticated: true, user }
+        : {
+            authenticated: false,
+            verificationRequired: true,
+            pendingEmail: user.email,
+            verificationSent,
+          },
+    );
     return true;
   }
   return { handle };

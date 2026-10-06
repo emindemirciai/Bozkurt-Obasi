@@ -66,7 +66,11 @@ try {
   const playerConfig = await playerStatus.json();
   assert.equal(playerStatus.status, 200);
   assert.equal(playerConfig.emailEnabled, true, 'Email accounts work without Google keys.');
-  assert.equal(playerConfig.mailEnabled, false, 'Missing SMTP credentials must not stop gameplay.');
+  assert.equal(
+    playerConfig.mailEnabled,
+    false,
+    'Without SMTP, email verification remains unavailable.',
+  );
   assert.equal(playerConfig.authenticated, false);
   const sessionResponse = await fetch(`${baseUrl}/api/session`, {
     method: 'POST',
@@ -100,8 +104,25 @@ try {
   });
   assert.equal(registration.status, 201, 'Email registration must work in the production image.');
   const registered = await registration.json();
-  assert.equal(registered.authenticated, true);
+  assert.equal(registered.authenticated, false);
+  assert.equal(registered.verificationRequired, true);
   const cookie = registration.headers.get('set-cookie').split(';')[0];
+  assert.equal(
+    (await fetch(`${baseUrl}/api/state`, { headers: { Cookie: cookie } })).status,
+    403,
+    'An unverified account must not play.',
+  );
+  // This isolated smoke volume has no SMTP. Seed a verified test fixture directly;
+  // production has no HTTP route or environment setting to bypass verification.
+  docker([
+    'exec',
+    name,
+    'node',
+    '--input-type=module',
+    '-e',
+    "import {DatabaseSync} from 'node:sqlite';const db=new DatabaseSync('/data/game.sqlite');db.prepare('UPDATE email_accounts SET email_verified=1 WHERE email=?').run(process.argv[1]);db.close();",
+    credentials.email,
+  ]);
   const current = await fetch(`${baseUrl}/api/state`, { headers: { Cookie: cookie } });
   const village = await current.json();
   const construction = await fetch(`${baseUrl}/api/action`, {

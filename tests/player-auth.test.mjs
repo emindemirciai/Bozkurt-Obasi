@@ -22,6 +22,7 @@ async function fixture(t, options = {}) {
   const staticDir = join(root, 'public');
   await mkdir(staticDir);
   await writeFile(join(staticDir, 'index.html'), '<title>Bozkurt</title>');
+  const messages = [];
   const settings = {
     dbPath: join(root, 'game.sqlite'),
     staticDir,
@@ -30,6 +31,14 @@ async function fixture(t, options = {}) {
     googleClientSecret: '',
     googleRedirectUris: '',
     adminPassword: '',
+    mailProvider: 'smtp',
+    smtpHost: 'smtp.hostinger.com',
+    smtpPort: '465',
+    smtpSecure: 'true',
+    smtpUser: 'info@bozkurtobasi.com',
+    smtpPassword: 'test-only-secret',
+    publicUrl: 'https://bozkurtobasi.com',
+    mailSender: async (message) => messages.push(message),
     ...options,
   };
   let app = createApp(settings);
@@ -40,6 +49,7 @@ async function fixture(t, options = {}) {
     await rm(root, { recursive: true, force: true });
   });
   return {
+    messages,
     get base() {
       return base;
     },
@@ -60,12 +70,25 @@ async function fixture(t, options = {}) {
           : { body: typeof body === 'string' ? body : JSON.stringify(body) }),
       });
     },
-    register(body = {}, extra = {}) {
-      return this.request('/api/auth/player/register', {
+    async register(body = {}, extra = {}) {
+      const response = await this.request('/api/auth/player/register', {
         method: 'POST',
         body: { email: 'wolf@example.com', password: PASSWORD, ...body },
         ...extra,
       });
+      if (response.status === 201) {
+        const message = messages.findLast(
+          (item) => item.to === (body.email || 'wolf@example.com').trim().toLowerCase(),
+        );
+        const code = /code: ([0-9]{6})/.exec(message.text)[1];
+        const verified = await this.request('/api/auth/player/verify/confirm', {
+          method: 'POST',
+          cookie: sessionCookie(response),
+          body: { code },
+        });
+        assert.equal(verified.status, 200);
+      }
+      return response;
     },
     login(body = {}, extra = {}) {
       return this.request('/api/auth/player/login', {
@@ -90,7 +113,7 @@ test('email authentication is available without Google or administrator credenti
   assert.deepEqual(await status.json(), {
     enabled: false,
     emailEnabled: true,
-    mailEnabled: false,
+    mailEnabled: true,
     authenticated: false,
     reason: 'not_configured',
   });
@@ -122,16 +145,10 @@ test('registration creates a private account village with salted credentials and
   const registered = await api.register({ email: ' WOLF@EXAMPLE.COM ', name: '  Oba Reisi  ' });
   assert.equal(registered.status, 201);
   assert.deepEqual(await registered.json(), {
-    authenticated: true,
-    user: {
-      name: 'Oba Reisi',
-      email: 'wolf@example.com',
-      provider: 'email',
-      emailVerified: false,
-      passwordEnabled: true,
-      googleLinked: false,
-    },
-    verificationSent: false,
+    authenticated: false,
+    verificationRequired: true,
+    pendingEmail: 'wolf@example.com',
+    verificationSent: true,
   });
   const cookie = sessionCookie(registered);
   assert.match(cookie, /^bozkurt_session=[A-Za-z0-9_-]{43}$/);
@@ -269,7 +286,14 @@ test('registration bounds names, email, Unicode passwords, and rejects save inje
   const password = `  ${'🐺'.repeat(12)}  `;
   const registered = await api.register({ password });
   assert.equal(registered.status, 201);
-  assert.equal((await registered.json()).user.name, 'wolf');
+  assert.equal(
+    (
+      await (
+        await api.request('/api/auth/player/status', { cookie: sessionCookie(registered) })
+      ).json()
+    ).user.name,
+    'wolf',
+  );
   assert.equal((await api.login({ password })).status, 200);
   assert.equal((await api.login({ password: password.trim() })).status, 401);
 });
@@ -448,4 +472,187 @@ test('concurrent password derivations are throttled and release their capacity a
   assert.ok(responses.every((response) => [201, 429].includes(response.status)));
   assert.equal((await api.register({ email: 'after-burst@example.com' })).status, 201);
   assert.equal((await api.request('/api/health')).status, 200);
+});
+
+test('profile API rejects immutable fields, serves bounded image uploads and requires verified sessions', async (t) => {
+  const api = await fixture(t),
+    response = await api.register({ name: 'Emin Demirci' }),
+    cookie = sessionCookie(response);
+  const user = (await (await api.request('/api/player/profile', { cookie })).json()).user;
+  assert.equal(user.fullName, 'Emin Demirci');
+  assert.match(user.userCode, /^emindemirci#[0-9]{4}$/);
+  for (const field of ['email', 'fullName', 'userCode']) {
+    const rejected = await api.request('/api/player/profile', {
+      method: 'POST',
+      cookie,
+      body: { [field]: 'other@example.com' },
+    });
+    assert.equal(rejected.status, 400);
+    assert.equal((await rejected.json()).error, 'unexpected_fields');
+  }
+  const avatarDataUrl = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+  const updated = await api.request('/api/player/profile', {
+    method: 'POST',
+    cookie,
+    body: { nickname: 'Yeni Reis', avatarDataUrl },
+  });
+  assert.equal(updated.status, 200);
+  const changed = (await updated.json()).user;
+  assert.equal(changed.email, user.email);
+  assert.equal(changed.fullName, user.fullName);
+  assert.equal(changed.userCode, user.userCode);
+  assert.equal(changed.name, 'Yeni Reis');
+  const image = await api.request(changed.avatarUrl, { cookie });
+  assert.equal(image.status, 200);
+  assert.equal(image.headers.get('content-type'), 'image/gif');
+  assert.equal((await image.arrayBuffer()).byteLength, 34);
+  assert.equal((await api.request(changed.avatarUrl)).status, 401);
+  const foreign = await api.request('/api/player/profile', {
+    method: 'POST',
+    cookie,
+    body: { nickname: 'Attacker' },
+    headers: { Origin: 'https://attacker.invalid' },
+  });
+  assert.equal(foreign.status, 403);
+  const pending = await api.request('/api/auth/player/register', {
+    method: 'POST',
+    body: { email: 'pending@example.com', password: PASSWORD },
+  });
+  assert.equal(
+    (await api.request('/api/player/profile', { cookie: sessionCookie(pending) })).status,
+    403,
+  );
+  assert.equal(
+    (await api.request('/api/player/friends', { cookie: sessionCookie(pending) })).status,
+    403,
+  );
+  await api.restart();
+  assert.deepEqual(
+    (await (await api.request('/api/player/profile', { cookie })).json()).user,
+    changed,
+  );
+});
+
+test('changing a password requires the current secret, revokes other devices and preserves village progress', async (t) => {
+  const api = await fixture(t),
+    cookie = sessionCookie(await api.register()),
+    other = sessionCookie(await api.login());
+  const before = await (await api.request('/api/state', { cookie })).json();
+  const next = 'Yeni ve guvenli parola 2026!';
+  const rejected = await api.request('/api/auth/player/password/change', {
+    method: 'POST',
+    cookie,
+    body: { currentPassword: 'wrong', password: next },
+  });
+  assert.equal(rejected.status, 401);
+  assert.equal((await api.request('/api/state', { cookie: other })).status, 200);
+  const changed = await api.request('/api/auth/player/password/change', {
+    method: 'POST',
+    cookie,
+    body: { currentPassword: PASSWORD, password: next },
+  });
+  assert.equal(changed.status, 200);
+  assert.equal((await api.request('/api/state', { cookie: other })).status, 401);
+  assert.deepEqual(await (await api.request('/api/state', { cookie })).json(), before);
+  assert.equal((await api.login()).status, 401);
+  assert.equal((await api.login({ password: next })).status, 200);
+});
+
+test('accepted friendships and stone transfers persist across API restart without overwriting recipient commands', async (t) => {
+  const api = await fixture(t),
+    alice = sessionCookie(await api.register({ name: 'Alice' })),
+    bob = sessionCookie(await api.register({ email: 'bob@example.com', name: 'Bob' }));
+  const a = (await (await api.request('/api/player/profile', { cookie: alice })).json()).user,
+    b = (await (await api.request('/api/player/profile', { cookie: bob })).json()).user;
+  assert.equal(
+    (
+      await api.request('/api/player/friends/request', {
+        method: 'POST',
+        cookie: alice,
+        body: { userCode: b.userCode },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await api.request('/api/player/friends/accept', {
+        method: 'POST',
+        cookie: bob,
+        body: { userCode: a.userCode },
+      })
+    ).status,
+    200,
+  );
+  const prior = await (await api.request('/api/state', { cookie: alice })).json();
+  const body = {
+    userCode: b.userCode,
+    amount: 40,
+    revision: prior.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const sent = await api.request('/api/player/friends/transfer', {
+    method: 'POST',
+    cookie: alice,
+    body,
+  });
+  assert.equal(sent.status, 200);
+  const received = await (await api.request('/api/state', { cookie: bob })).json();
+  assert.equal(received.state.resources.stone, 190);
+  assert.equal(
+    (
+      await (
+        await api.request('/api/player/friends/transfer', { method: 'POST', cookie: alice, body })
+      ).json()
+    ).duplicate,
+    true,
+  );
+  const stale = await api.request('/api/action', {
+    method: 'POST',
+    cookie: bob,
+    body: { action: { type: 'collect' }, revision: 0 },
+  });
+  assert.equal(stale.status, 409);
+  await api.restart();
+  const list = await (await api.request('/api/player/friends', { cookie: bob })).json();
+  assert.equal(list.friends[0].userCode, a.userCode);
+  assert.equal(list.transfers[0].amount, 40);
+  assert.equal(list.transfers[0].sent, false);
+});
+
+test('pending verification code and failed-attempt count survive a server restart', async (t) => {
+  const api = await fixture(t),
+    response = await api.request('/api/auth/player/register', {
+      method: 'POST',
+      body: { email: 'restart@example.com', password: PASSWORD },
+    }),
+    cookie = sessionCookie(response);
+  const code = /code: ([0-9]{6})/.exec(api.messages[0].text)[1],
+    wrong = code === '000000' ? '000001' : '000000';
+  for (let i = 0; i < 3; i++)
+    assert.equal(
+      (
+        await api.request('/api/auth/player/verify/confirm', {
+          method: 'POST',
+          cookie,
+          body: { code: wrong },
+        })
+      ).status,
+      400,
+    );
+  await api.restart();
+  const db = new DatabaseSync(api.dbPath);
+  assert.equal(
+    db.prepare('SELECT failed_attempts FROM email_verifications').get().failed_attempts,
+    3,
+  );
+  db.close();
+  assert.equal((await api.request('/api/state', { cookie })).status, 403);
+  const confirmed = await api.request('/api/auth/player/verify/confirm', {
+    method: 'POST',
+    cookie,
+    body: { code },
+  });
+  assert.equal(confirmed.status, 200);
+  assert.equal((await api.request('/api/state', { cookie })).status, 200);
 });

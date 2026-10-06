@@ -1,44 +1,44 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-05. Sürüm / Release: **v1.5.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-06. Sürüm / Release: **v1.6.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| Kaynak ve çeviriler / Source and translations | 46 JavaScript dosyası, 289 eşleşen TR/EN anahtar / files and matching keys |
-| Motor, hesap, SMTP ve sürüm / Engine, account, SMTP and release | 99/99 geçti / passed |
-| Tarayıcı / Browser | 34/34 geçti / passed; hesaplar, giriş kapısı, rehber, oyun, TR/EN, temalar ve mobil / accounts, sign-in gate, guide, gameplay, languages, themes and mobile |
+| Kaynak ve çeviriler / Source and translations | 54 JavaScript dosyası, 344 eşleşen TR/EN anahtar / files and matching keys |
+| Motor, hesap, profil, arkadaşlık, SMTP ve sürüm / Engine, accounts, profiles, friends, SMTP and release | 111 test: tümü geçti / all passed |
+| Tarayıcı / Browser | 36/36 geçti / passed; kod doğrulama, profil, iki oyuncu, maden gönderimi, oyun, TR/EN, temalar ve mobil / code verification, profiles, two players, stone gifts, gameplay, languages, themes and mobile |
 | Tam yedek / Full backup | PowerShell 5.1 çevrimdışı entegrasyon: 12/12 geçti / offline integration passed |
-| Üretim ve tek dosya / Production and standalone | Geçti; `preview/index.html` ve gömülü favicon güncel / passed with updated preview and embedded favicon |
-| Logo ve yerel servis / Logo and local service | 320px TR/EN taşma yok; SVG favicon HTTP 200; yerel v1.5.0 / no overflow; local version verified |
+| Üretim ve tek dosya / Production and standalone | Derleme geçti; `preview/index.html` güncel, `preview/mail.html` görselli e-posta örneği / build passed; homepage and illustrated email previews |
 | Biçim ve diff / Formatting and diff | `npm run format:check`, `git diff --check` geçti / passed |
-| Sürüm artışı / Version increase | v1.4.0 → v1.5.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
-| Dört servis / Four services | `web`, `api`, `admin`, `analyze` derlemeleri ve yerel sağlık kontrolleri geçti / builds and local health passed |
-| Kaynak sayımı / Source count | 159 dosya, 29.845 fiziksel satır; 19.647 aktif web satırı / files, physical lines, active web lines |
+| Sürüm artışı / Version increase | v1.5.0 → v1.6.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
+| Dört servis / Four services | `web`, `api`, `admin`, `analyze` derlendi; yerel sağlık ve konteyner kalıcılık kontrolleri geçti / builds, local health and container persistence passed |
+
+Kaynak sayımı / Source count: **168 dosya, 31.585 fiziksel satır; 21.387 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
 
 ## Türkçe
 
-Yeni SVG logo, ana sayfa ve oyun menüsüne uygulandı. 320px TR/EN görünümü yatay taşma yapmadı; açık/koyu tema, favicon yanıtı ve yerel v1.5.0 kontrol edildi. Tek dosyalık önizleme favicon dahil yerel dosyaları kendi içinde taşır.
+E-posta kaydı sınırlı yetkili bekleyen oturum oluşturur. Oyun ekranları, state/session/action, profil ve arkadaş uç noktaları kod doğrulanmadan açılmaz. Google imzalı ve doğrulanmış e-posta kimliğine güvenilir; mevcut şifre hesabına bağlama için o hesabın sahipliği ayrıca kanıtlanır. Kod 15 dakika geçerli, tek kullanımlık, oturumdaki hesaba bağlı ve tuzlu özet olarak saklanır. Beş hatalı deneme, tekrar gönderim süresi, günlük kota, SMTP hatası, hesaplar arası deneme, süre sonu ve sunucu yeniden başlatma test edildi. Başarısız SMTP, doğrulama kapısını kaldırmaz.
 
-İlk adımlar rehberi gerçek komutlarla toplama, inşa, ödülü alma, iki eğitim ve ilk zaferi izler. Testler eski/sıra dışı ilerlemeyi, yenilgiyi, beş başlangıç savaş taktiğini, kaynak harcamayan yönlendirmeleri, klavye odağını, yenileme ve mobil görünümü kapsar.
+Görselli HTML ileti hilal muhafızlar ve yıldız sürü düzenini anlatır. PNG CID eki ve düz metin alternatifi MIME testinde kontrol edildi. SMTP göndereni `info@bozkurtobasi.com`; örnek mail önizlemesinin kodu gerçek bir hesaba ait değildir.
 
-PowerShell 5.1 teslim testleri geçici yerel depolarla varsayılan akışı, seçilen indexi, yayımlanmış HEAD'i, tüm gizli/ignore edilmiş dosyaları ve boş klasörleri doğrular. Silinmiş hassas commitler, yeniden adlandırma, başarısız push, kilitli kaynak, bozuk ZIP içeriği, son 30 sınırı ve junction hata davranışı kontrol edildi. Gerçek sırlar testlerde kullanılmadı. Tam Drive ZIP'i yalnızca içerik SHA-256 doğrulaması sonrasında yayımlanır. Bulut eşitleme durumu ve repo dışındaki canlı volume yedekleri bu kaynak arşiviyle doğrulanmaz.
+Profil API'si e-posta, ad soyad ve oyuncu koduna yazmayı reddeder. Takma ad ve en fazla 2 MB PNG/JPEG/GIF değişebilir. Google fotoğrafı ilk görseldir; özel yükleme sonraki Google girişinde korunur. Şifre değişimi eski şifreyi doğrular, diğer oturumları kapatır ve köyü korur. Profil açık/koyu, masaüstü/mobil görünümü incelendi; fotoğraf kaldırma ve üç logo bağlantısı test edildi.
 
-SMTP etkinse kayıt sonrası `info@bozkurtobasi.com` göndereninden bir saatlik, tek kullanımlık doğrulama bağlantısı gönderilir. Hesap ekranındaki yeniden gönderim, oturum ve aynı kaynak denetimiyle korunur. Belirteç SQLite içinde yalnızca SHA-256 özeti olarak tutulur; bağlantıda URL parçasındadır ve HTTP istek adresine gitmez. Başarısız gönderim mevcut çalışan bağlantıyı bozmaz veya günlük başarılı gönderim kotasını tüketmez. Yavaş SMTP için kayıt yanıtı beş saniyelik gönderim üst sınırından sonra başarıyla döner; e-posta teslim edilememişse doğrulama gönderildi iddiası gösterilmez. Gönderen adresi sabittir; `MAIL_FROM` yalnızca güvenli görünen adı seçer.
+Arkadaşlık açık kabul gerektirir. Maden (taş) transferi bakiyeyi ve alıcının depo kapasitesini kontrol eder. Her iki kayıt tek işlemde güncellenir; gönderici ve alıcının revizyonları artar. UUID ile tekrarlanan istek ikinci kez kaynak düşmez; uyuşmayan tekrar, eski revizyon ve başarısız aktarım kayıtları bozmaz. Savaş devam eder. API yeniden başlatma sonrası ilişki ve son hareketler korunur. İki ayrı tarayıcı oturumuyla istek, kabul, gönderim, alım ve arkadaşlıktan çıkarma denendi.
 
-Testlerde gerçek Hostinger hesabı yerine bellekteki posta göndericisi kullanıldı; canlı SMTP teslimatı ve VPS/Dokploy dağıtımı bu kayıtla doğrulanmış sayılmaz. Yerel Compose ortamında `SMTP_PASSWORD` boş ve `mailEnabled=false`; oyuncu kaydı/girişi ile dört servis sağlığı çalışır. `ADMIN_PASSWORD` yerelde boş olduğundan yönetim/analiz girişi burada denenmedi; yönetici API testleri test parolasıyla geçti. Yönetici girişi `ADMIN_EMAIL` ve `ADMIN_PASSWORD` ortam değişkenlerine bağlıdır, seed veritabanı hesabı yoktur.
+Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca profil rotası 3 MB JSON sınırını kullanır; diğer proxy rotaları 32 KB, oyun sunucusu varsayılanı 16 KB sınırını korur. Docker testi SMTP olmayan geçici volume'da bekleyen hesabın oyun erişimini reddettiğini kontrol eder, sonra yalnızca o test veritabanına doğrulanmış fixture ekleyerek kalıcılığı sınar; üretimde doğrulamayı atlayan rota/ortam anahtarı yoktur.
 
-Google ile aynı e-postanın eşleştirilmesi önceki sahiplik kanıtı ve köy koruma testleriyle geçti. Otomatik parola sıfırlama bu sürüme dahil değildir. Temiz kaynak ZIP'i Git projesindeki dosyalarla üretilir; kişisel takip edilmeyen dosyalar, sırlar, veritabanları ve bağımlılıklar dışarıda kalır. Canlı SMTP için parolayı yalnızca Dokploy Environment bölümüne girip [dağıtım rehberindeki](WEB-DEPLOYMENT.md) adımları uygulayın.
+GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
 
-The new SVG identity is applied to the homepage and game menu. TR/EN at 320px produced no horizontal overflow; light/dark themes, favicon response and local v1.5.0 were checked. The standalone preview embeds its favicon and assets.
+Email registration creates a restricted pending session. Game screens and state/session/action, profile and friend APIs stay locked until code confirmation. Signed Google identities with verified email can start through Google; linking to an existing password account also proves control of that account. Tests cover single use, 15-minute expiration, hashed storage, five-guess limits, resend cooldown/quota, failed SMTP, cross-account attempts and server restart persistence.
 
-First steps follows real gathering, construction, reward claim, two training actions and an initial victory. Tests cover old/out-of-order progress, defeat, all five initial combat tactics, navigation without spending, keyboard focus, reload and mobile layouts.
+Illustrated HTML email embeds the crescent guardian/star herd PNG with CID and includes a plain-text alternative. MIME tests check the image part. `info@bozkurtobasi.com` remains the fixed sender. The offline mail preview uses an example code, never a real account secret.
 
-PowerShell 5.1 delivery tests use disposable local repositories to verify default/staged-only/backup-only flows and complete hidden/ignored files and empty directories. They cover deleted sensitive commits, renames, rejected pushes, locked source files, corrupted ZIP content, exact 30-backup retention and junction errors. Tests use no real secrets. Full Drive ZIPs are published after per-file SHA-256 validation. Cloud synchronization and live volumes outside this repo are not established by this source archive.
+Profile APIs reject email, full-name and player-code changes. Editable nicknames and bounded PNG/JPEG/GIF uploads persist; custom photos win over later Google pictures. Password changes prove the current secret, revoke other devices and preserve village progress. Desktop/mobile light/dark views, photo removal and every logo destination were checked.
 
-When SMTP is enabled, registration sends a one-hour, single-use verification link from `info@bozkurtobasi.com`. Resend from the account screen requires a session and same-origin request. SQLite stores only the SHA-256 token digest; the link places the token in a URL fragment so it does not reach the HTTP request URL. A failed resend keeps a previously delivered link usable and does not consume the daily successful-send quota. A five-second delivery bound prevents slow SMTP from holding a completed registration; the UI does not claim mail was sent when delivery failed. The From address is fixed and `MAIL_FROM` controls only a validated display name.
+Accepted friendship is required for atomic stone gifts. Balance, capacity, integer amount, revision and idempotency checks protect both villages. Both revisions increase, retrying cannot deduct twice, errors roll back, active battles continue, and friendship/history survive restart. Two browser sessions exercised requests, acceptance, sending, receiving and removal.
 
-Tests use an in-memory sender rather than a real Hostinger mailbox; this record does not establish live SMTP delivery or a VPS/Dokploy deployment. Local Compose leaves `SMTP_PASSWORD` empty and reports `mailEnabled=false`, while player sign-in and all four services remain healthy. Local `ADMIN_PASSWORD` is unset, so admin/analytics login was not exercised in the local stack; admin API tests passed with a test password. Admin access uses the `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment values, without a seeded database account.
+Production Nginx allows Google image origins and gives only the profile JSON route a 3 MB limit. Other proxy bodies remain bounded at 32 KB and default API bodies at 16 KB. The isolated Docker smoke test denies pending gameplay, then directly seeds its own disposable test database for persistence checks; production exposes no verification bypass route or environment flag.
 
-Matching Google/email methods passed the existing ownership-proof and village-preservation tests. Automatic password recovery is not included. The clean source ZIP contains Git project files and excludes personal untracked files, secrets, databases and dependencies. Put the real SMTP password only in Dokploy Environment and follow the [deployment guide](WEB-DEPLOYMENT.md) for a live delivery check.
+Linux CI uses Ubuntu 24.04 from the [official runner list](https://github.com/actions/runner-images#available-images). The earlier v1.5.0 run failed before acquiring a Linux runner. Automatic release still requires all three validation jobs to pass. Local success cannot guarantee hosted-runner availability or live VPS/SMTP delivery.

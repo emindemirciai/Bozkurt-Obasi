@@ -219,6 +219,12 @@ export function createGoogleRoutes(
     )
       throw new HttpError(502, 'google_auth_failed');
     return {
+      picture:
+        typeof claims.picture === 'string' &&
+        claims.picture.length <= 2048 &&
+        /^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com\//i.test(claims.picture)
+          ? claims.picture
+          : null,
       sub: claims.sub,
       email: claims.email,
       name:

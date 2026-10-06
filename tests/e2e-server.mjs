@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { createApp } from '../server/web/app.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
 import { generateKeyPairSync, sign } from 'node:crypto';
@@ -45,8 +46,30 @@ async function googleFetch(url, options) {
     { status: 200 },
   );
 }
+const messages = new Map();
+const inbox = createServer((request, response) => {
+  const email = new URL(request.url, 'http://localhost').searchParams.get('email');
+  const message = messages.get(email);
+  response.writeHead(message ? 200 : 404, { 'Content-Type': 'application/json' });
+  response.end(
+    JSON.stringify(
+      message ? { code: /code: ([0-9]{6})/.exec(message.text)[1] } : { error: 'not_found' },
+    ),
+  );
+});
+await new Promise((resolve) => inbox.listen(4174, '127.0.0.1', resolve));
 const app = createApp({
   dbPath: ':memory:',
+  mailProvider: 'smtp',
+  smtpHost: 'smtp.hostinger.com',
+  smtpPort: '465',
+  smtpSecure: 'true',
+  smtpUser: 'info@bozkurtobasi.com',
+  smtpPassword: 'test-only-secret',
+  publicUrl: 'http://127.0.0.1:4173',
+  mailSender: async (message) => {
+    messages.set(message.to, message);
+  },
   rateLimit: 2000,
   analytics: analyticsConfig({ ANALYZE_ENABLED: 'true' }),
   googleClientId: clientId,
@@ -57,6 +80,7 @@ const app = createApp({
 await app.listen(4173);
 for (const signal of ['SIGINT', 'SIGTERM'])
   process.once(signal, async () => {
+    inbox.close();
     await app.close();
     process.exit(0);
   });

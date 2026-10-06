@@ -84,6 +84,7 @@ async function fixture(t, overrides = {}) {
       );
     },
   };
+  const messages = [];
   const settings = {
     dbPath: join(root, 'game.sqlite'),
     staticDir,
@@ -92,6 +93,14 @@ async function fixture(t, overrides = {}) {
     googleClientSecret: 'test-secret',
     googleRedirectUris: redirect,
     googleFetch: provider.fetch.bind(provider),
+    mailProvider: 'smtp',
+    smtpHost: 'smtp.hostinger.com',
+    smtpPort: '465',
+    smtpSecure: 'true',
+    smtpUser: 'info@bozkurtobasi.com',
+    smtpPassword: 'test-only-secret',
+    publicUrl: 'https://bozkurtobasi.com',
+    mailSender: async (message) => messages.push(message),
     ...overrides,
   };
   let app = createApp(settings);
@@ -103,6 +112,7 @@ async function fixture(t, overrides = {}) {
   const base = `http://127.0.0.1:${port}`;
   return {
     provider,
+    messages,
     dbPath: settings.dbPath,
     async request(path, { method = 'GET', cookies = [], body, headers = {} } = {}) {
       return fetch(`${base}${path}`, {
@@ -355,7 +365,15 @@ async function registerEmail(api, email = 'wolf@example.com') {
     body: { email, password: PLAYER_PASSWORD, name: 'Oba Reisi' },
   });
   assert.equal(response.status, 201);
-  return cookie(response, 'bozkurt_session');
+  const session = cookie(response, 'bozkurt_session');
+  const code = /code: ([0-9]{6})/.exec(api.messages.findLast((item) => item.to === email).text)[1];
+  const verified = await api.request('/api/auth/player/verify/confirm', {
+    method: 'POST',
+    cookies: [session],
+    body: { code },
+  });
+  assert.equal(verified.status, 200);
+  return session;
 }
 
 async function loginEmail(api, email = 'wolf@example.com') {
@@ -566,7 +584,7 @@ test('different or unverified Google emails cannot link an authenticated email v
     await api.request('/api/auth/player/status', { cookies: [emailCookie] })
   ).json();
   assert.equal(status.user.googleLinked, false);
-  assert.equal(status.user.emailVerified, false);
+  assert.equal(status.user.emailVerified, true);
 });
 
 test('an expired email session does not count as proof when its OAuth flow is still valid', async (t) => {
@@ -585,4 +603,35 @@ test('an expired email session does not count as proof when its OAuth flow is st
   assert.equal(inspection.prepare('SELECT count(*) AS count FROM google_accounts').get().count, 0);
   assert.equal(inspection.prepare('SELECT google_sub FROM email_accounts').get().google_sub, null);
   inspection.close();
+});
+
+test('Google profile pictures initialize once and cannot overwrite custom uploads or immutable identity', async (t) => {
+  const api = await fixture(t);
+  api.provider.claims.picture = 'https://lh3.googleusercontent.com/avatar-one';
+  const first = await api.callback(await api.start()),
+    session = cookie(first, 'bozkurt_session');
+  let user = (await (await api.request('/api/player/profile', { cookies: [session] })).json()).user;
+  assert.equal(user.avatarUrl, api.provider.claims.picture);
+  const code = user.userCode;
+  const custom = await api.request('/api/player/profile', {
+    method: 'POST',
+    cookies: [session],
+    body: {
+      nickname: 'My nickname',
+      avatarDataUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
+    },
+  });
+  const avatar = (await custom.json()).user.avatarUrl;
+  api.provider.claims.picture = 'https://lh3.googleusercontent.com/avatar-two';
+  api.provider.claims.name = 'Changed Google name';
+  const again = await api.callback(await api.start([session]), [session]),
+    renewed = cookie(again, 'bozkurt_session');
+  user = (await (await api.request('/api/player/profile', { cookies: [renewed] })).json()).user;
+  assert.equal(user.avatarUrl, avatar);
+  assert.equal(user.fullName, 'Wolf Keeper');
+  assert.equal(user.name, 'My nickname');
+  assert.equal(user.userCode, code);
+  api.provider.claims.email = 'changed@example.com';
+  const mismatch = await api.callback(await api.start([renewed]), [renewed]);
+  assert.equal(mismatch.headers.get('location'), '/?auth=account_link_email_mismatch');
 });

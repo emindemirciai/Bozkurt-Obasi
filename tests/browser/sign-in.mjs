@@ -19,3 +19,16 @@ export async function signIn(page, { email, identity = randomUUID(), result = 's
   expect(callback.status()).toBe(303);
   expect(callback.headers().location).toBe(`/?auth=${result}`);
 }
+
+export async function verificationCode(page, email) {
+  const response = await page.request.get(
+    'http://127.0.0.1:4174/?email=' + encodeURIComponent(email),
+  );
+  expect(response.status()).toBe(200);
+  return (await response.json()).code;
+}
+export async function verifyEmail(page, email) {
+  const code = await verificationCode(page, email);
+  const response = await page.request.post('/api/auth/player/verify/confirm', { data: { code } });
+  expect(response.status()).toBe(200);
+}

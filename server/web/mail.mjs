@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 const ADDRESS = 'info@bozkurtobasi.com';
 const DEFAULT_NAME = 'Bozkurtobasi.com';
 const DEFAULT_FROM = `${DEFAULT_NAME} <${ADDRESS}>`;
@@ -32,7 +33,7 @@ export function mailConfig({
     validatedFrom = `${fromName} <${ADDRESS}>`;
   }
   // Deployment templates include public SMTP settings but intentionally omit the secret.
-  // No password means local/first-time deployments stay usable without sending mail.
+  // Without SMTP, public pages and Google remain available; email accounts stay pending.
   if (!values[4]) return { enabled: false };
   if (values.some((value) => !value)) throw new Error('Complete SMTP configuration is required.');
   const [smtpHost, smtpPort, smtpSecure, smtpUser, smtpPassword] = values;
@@ -95,10 +96,11 @@ export function createMailService(config, injectedSender, sendTimeoutMs = 5000) 
   }
   return {
     enabled: config.enabled,
-    async sendVerification(to, token) {
+    async sendVerification(to, code) {
       if (!config.enabled) return false;
-      // The fragment never reaches the web server or Referer headers, keeping the token out of access logs.
-      const link = `${config.publicUrl}/#verify=${encodeURIComponent(token)}`;
+      if (!/^[0-9]{6}$/.test(code)) throw new Error('Invalid verification code.');
+      const illustration = readFileSync(new URL('./assets/formation.png', import.meta.url));
+      const html = `<html><body style="margin:0;background:#eee9dc;font-family:Arial,sans-serif;color:#233b30"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#fffdf4;border-radius:16px;overflow:hidden"><tr><td style="padding:24px;background:#233e31;color:#edd49b"><h1 style="margin:0;font-size:24px">Bozkurt Obası</h1><p style="margin:8px 0 0">Obanı kur, sürünü koru. / Build your village, protect your herd.</p></td></tr><tr><td><img src="cid:ayyildiz@bozkurtobasi" width="600" alt="Hilal şeklindeki muhafız kurtlar, yıldız düzenindeki sürüyü korur. Crescent wolves protect the star-shaped herd." style="display:block;width:100%;height:auto"></td></tr><tr><td style="padding:28px"><h2 style="font-size:20px">E-posta adresini doğrula / Verify your email</h2><p>Oyuna girmek için bu altı haneli kodu doğrulama ekranına yaz. Kod 15 dakika geçerlidir.</p><p>Enter this six-digit code on the verification screen to unlock your village. It expires in 15 minutes.</p><p style="font-size:36px;letter-spacing:8px;font-weight:bold;text-align:center;padding:20px;background:#e9eddd;border-radius:12px">${code}</p><p style="font-size:13px;color:#52634f">Hilal kurtların savunma hattıdır; yıldız ise korunan sürünün düzenidir.<br>The crescent is the wolves’ defense line; the star is the protected herd’s formation.</p><p>Bu kaydı sen yapmadıysan mesajı yok say. Kodu kimseyle paylaşma.<br>If you did not create this account, ignore this email. Never share the code.</p><p><a href="${config.publicUrl}" style="color:#34573f">bozkurtobasi.com</a></p></td></tr></table><p style="font-size:12px">© 2026 Bozkurt Obası</p></td></tr></table></body></html>`;
       let timer;
       try {
         await Promise.race([
@@ -106,9 +108,17 @@ export function createMailService(config, injectedSender, sendTimeoutMs = 5000) 
             from: { name: config.fromName, address: ADDRESS },
             to,
             subject: 'Bozkurt Obası — E-posta doğrulama / Verify your email',
-            text:
-              `Bozkurt Obası hesabının e-posta adresini doğrulamak için bağlantıyı aç. Bağlantı 1 saat geçerlidir:\n${link}\n\n` +
-              `Verify your Bozkurt Obası email address. This link expires in 1 hour:\n${link}\n`,
+            text: `Bozkurt Obası doğrulama kodu: ${code}\nKod 15 dakika geçerlidir. Doğrulanana kadar oyun kapalıdır.\n\nBozkurt Obası verification code: ${code}\nExpires in 15 minutes. Verify before entering your village.\n`,
+            html,
+            attachments: [
+              {
+                filename: 'ay-yildiz-duzeni.png',
+                content: illustration,
+                contentType: 'image/png',
+                cid: 'ayyildiz@bozkurtobasi',
+                contentDisposition: 'inline',
+              },
+            ],
           }),
           new Promise((_, reject) => {
             timer = setTimeout(() => {

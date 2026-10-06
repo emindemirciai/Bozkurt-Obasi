@@ -83,22 +83,19 @@ async function fixture(t, { configured = true, sender } = {}) {
         session,
       });
     },
-    confirm(token, session) {
+    confirm(code, session) {
       return this.request('/api/auth/player/verify/confirm', {
         method: 'POST',
-        body: { token },
+        body: { code },
         session,
       });
     },
   };
 }
 
-function tokenFrom(message) {
-  const matches = [
-    ...message.text.matchAll(/https:\/\/bozkurtobasi\.com\/#verify=([A-Za-z0-9_-]{43})/g),
-  ];
-  assert.equal(matches.length, 2);
-  assert.equal(matches[0][1], matches[1][1]);
+function codeFrom(message) {
+  const matches = [...message.text.matchAll(/code: ([0-9]{6})/g)];
+  assert.equal(matches.length, 1);
   return matches[0][1];
 }
 
@@ -151,155 +148,133 @@ test('a stalled SMTP sender has a bounded wait and cannot make registration hang
     publicUrl: 'https://bozkurtobasi.com',
   });
   const service = createMailService(config, () => new Promise(() => {}), 20);
-  await assert.rejects(service.sendVerification('wolf@example.com', 'v'.repeat(43)), /timed out/);
+  await assert.rejects(service.sendVerification('wolf@example.com', '123456'), /timed out/);
 });
 
-test('registration sends fixed-From mail and verifies a single-use hashed token without logging in', async (t) => {
-  const api = await fixture(t);
-  const before = await (await api.request('/api/auth/player/status')).json();
-  assert.equal(before.mailEnabled, true);
-  const registration = await api.register();
-  assert.equal(registration.status, 201);
-  const registered = await registration.json();
-  assert.equal(registered.verificationSent, true);
-  assert.equal(registered.user.emailVerified, false);
-  const session = cookie(registration);
-  assert.equal(api.messages.length, 1);
-  const message = api.messages[0];
-  assert.deepEqual(message.from, {
-    name: 'Bozkurtobasi.com',
-    address: 'info@bozkurtobasi.com',
-  });
-  const rendered = await nodemailer.createTransport({ streamTransport: true }).sendMail(message);
-  assert.equal(rendered.envelope.from, 'info@bozkurtobasi.com');
-  assert.equal(message.to, 'wolf@example.com');
-  const token = tokenFrom(message);
-  const database = new DatabaseSync(api.dbPath);
-  const challenge = database
-    .prepare('SELECT token_hash, expires_at FROM email_verifications')
-    .get();
-  assert.equal(challenge.token_hash, createHash('sha256').update(token).digest('hex'));
-  assert.equal(challenge.expires_at, 1_800_000_000_000 + 60 * 60 * 1000);
-  assert.ok(
-    !JSON.stringify(database.prepare('SELECT * FROM email_verifications').all()).includes(token),
-  );
+test('HTML verification mail embeds the formation and gates every game route until code confirmation', async (t) => {
+  const api = await fixture(t),
+    registration = await api.register(),
+    session = cookie(registration);
+  const result = await registration.json();
+  assert.equal(result.authenticated, false);
+  assert.equal(result.verificationRequired, true);
+  assert.equal(result.verificationSent, true);
+  assert.equal(result.user, undefined);
+  const message = api.messages[0],
+    code = codeFrom(message);
+  assert.equal(message.from.address, 'info@bozkurtobasi.com');
+  assert.match(message.html, /cid:ayyildiz@bozkurtobasi/);
+  assert.match(message.html, /Hilal/);
+  assert.match(message.html, /crescent/i);
+  assert.equal(message.attachments[0].contentType, 'image/png');
+  assert.ok(message.attachments[0].content.length > 1000);
+  const mime = await nodemailer
+    .createTransport({ streamTransport: true, buffer: true })
+    .sendMail(message);
+  assert.match(mime.message.toString(), /multipart\/related/);
+  for (const [path, method, body] of [
+    ['/api/state', 'GET', undefined],
+    ['/api/session', 'POST', {}],
+    ['/api/action', 'POST', { action: { type: 'collect' }, revision: 0 }],
+  ])
+    assert.equal((await api.request(path, { method, body, session })).status, 403);
+  assert.equal((await api.confirm(code)).status, 401);
+  const database = new DatabaseSync(api.dbPath),
+    challenge = database.prepare('SELECT * FROM email_verifications').get();
+  assert.equal(challenge.expires_at - challenge.issued_at, 900000);
+  assert.equal(challenge.token_hash.length, 64);
+  assert.ok(!JSON.stringify(challenge).includes(code));
   database.close();
-  const confirmation = await api.confirm(token);
+  const confirmation = await api.confirm(code, session);
   assert.equal(confirmation.status, 200);
-  assert.deepEqual(await confirmation.json(), { verified: true });
-  assert.equal(confirmation.headers.get('set-cookie'), null);
-  assert.equal((await (await api.request('/api/auth/player/status')).json()).authenticated, false);
-  const status = await (await api.request('/api/auth/player/status', { session })).json();
-  assert.equal(status.user.emailVerified, true);
-  assert.equal((await api.confirm(token)).status, 400);
-  const resend = await api.resend(session);
-  assert.deepEqual(await resend.json(), { ok: true, sent: false });
-  assert.equal(api.messages.length, 1);
+  assert.equal((await confirmation.json()).authenticated, true);
+  assert.equal((await api.request('/api/state', { session })).status, 200);
+  assert.equal((await api.confirm(code, session)).status, 400);
 });
 
-test('resends are authenticated, same-origin, throttled, and replace the prior token', async (t) => {
-  const api = await fixture(t);
-  const registration = await api.register();
-  const session = cookie(registration);
-  const first = tokenFrom(api.messages[0]);
-  const guest = await api.resend();
-  assert.equal(guest.status, 401);
-  assert.equal((await guest.json()).error, 'account_session_required');
-  const crossOrigin = await api.request('/api/auth/player/verify/request', {
-    method: 'POST',
-    body: {},
-    session,
-    headers: { Origin: 'https://attacker.invalid' },
-  });
-  assert.equal(crossOrigin.status, 403);
+test('resend is same-origin, throttled, limited to five successful sends, and replaces old codes', async (t) => {
+  const api = await fixture(t),
+    registration = await api.register(),
+    session = cookie(registration),
+    first = codeFrom(api.messages[0]);
+  assert.equal((await api.resend()).status, 401);
+  assert.equal(
+    (
+      await api.request('/api/auth/player/verify/request', {
+        method: 'POST',
+        body: {},
+        session,
+        headers: { Origin: 'https://attacker.invalid' },
+      })
+    ).status,
+    403,
+  );
   assert.deepEqual(await (await api.resend(session)).json(), { ok: true, sent: false });
-  api.tick(60_001);
-  assert.deepEqual(await (await api.resend(session)).json(), { ok: true, sent: true });
-  const second = tokenFrom(api.messages[1]);
-  assert.notEqual(second, first);
-  assert.equal((await api.confirm(first)).status, 400);
-  const badOrigin = await api.request('/api/auth/player/verify/confirm', {
-    method: 'POST',
-    body: { token: second },
-    headers: { Origin: 'https://attacker.invalid' },
-  });
-  assert.equal(badOrigin.status, 403);
-  assert.equal((await api.confirm(second)).status, 200);
+  for (let i = 1; i < 5; i++) {
+    api.tick(60001);
+    assert.equal((await (await api.resend(session)).json()).sent, true);
+  }
+  api.tick(60001);
+  assert.equal((await (await api.resend(session)).json()).sent, false);
+  assert.equal((await api.confirm(first, session)).status, 400);
+  assert.equal((await api.confirm(codeFrom(api.messages.at(-1)), session)).status, 200);
 });
 
-test('failed resends keep the delivered link and do not consume the daily send quota', async (t) => {
-  let unavailable = false;
+test('five incorrect guesses lock a challenge and the correct code cannot bypass that limit', async (t) => {
+  const api = await fixture(t),
+    registration = await api.register(),
+    session = cookie(registration),
+    code = codeFrom(api.messages[0]);
+  const wrong = code === '000000' ? '000001' : '000000';
+  for (let i = 0; i < 5; i++) assert.equal((await api.confirm(wrong, session)).status, 400);
+  assert.equal((await (await api.confirm(code, session)).json()).error, 'verification_expired');
+  const db = new DatabaseSync(api.dbPath);
+  assert.equal(
+    db.prepare('SELECT failed_attempts FROM email_verifications').get().failed_attempts,
+    5,
+  );
+  db.close();
+  assert.equal((await api.request('/api/state', { session })).status, 403);
+  api.tick(60001);
+  await api.resend(session);
+  assert.equal((await api.confirm(codeFrom(api.messages.at(-1)), session)).status, 200);
+});
+
+test('failed SMTP leaves the previous code valid and never authorizes an unverified account', async (t) => {
+  let fail = false;
   const api = await fixture(t, {
     sender: () => {
-      if (unavailable) throw new Error('temporary SMTP failure');
+      if (fail) throw new Error('SMTP_SECRET');
     },
   });
-  const registration = await api.register();
-  const session = cookie(registration);
-  const first = tokenFrom(api.messages[0]);
-  unavailable = true;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    api.tick(60_001);
-    assert.deepEqual(await (await api.resend(session)).json(), { ok: true, sent: false });
-  }
-  const database = new DatabaseSync(api.dbPath);
-  const challenge = database
-    .prepare('SELECT window_count, token_hash FROM email_verifications')
-    .get();
-  assert.equal(challenge.window_count, 1);
-  assert.equal(challenge.token_hash, createHash('sha256').update(first).digest('hex'));
-  database.close();
-  unavailable = false;
-  api.tick(60_001);
-  assert.deepEqual(await (await api.resend(session)).json(), { ok: true, sent: true });
-  assert.equal((await api.confirm(first)).status, 400);
-  assert.equal((await api.confirm(tokenFrom(api.messages[1]))).status, 200);
+  const registration = await api.register(),
+    session = cookie(registration),
+    code = codeFrom(api.messages[0]);
+  fail = true;
+  api.tick(60001);
+  const retry = await api.resend(session);
+  assert.deepEqual(await retry.json(), { ok: true, sent: false });
+  assert.equal((await api.confirm(code, session)).status, 200);
+  const absent = await fixture(t, { configured: false }),
+    pending = await absent.register(),
+    pendingSession = cookie(pending);
+  assert.equal((await pending.json()).verificationSent, false);
+  assert.equal((await absent.request('/api/state', { session: pendingSession })).status, 403);
 });
 
-test('expired tokens fail; delivery failure and absent SMTP never block account creation', async (t) => {
-  const failed = await fixture(t, {
-    sender: () => {
-      throw new Error('SMTP_SECRET confidential');
-    },
+test('expired codes, malformed input, and another account session cannot confirm ownership', async (t) => {
+  const api = await fixture(t),
+    registration = await api.register(),
+    session = cookie(registration),
+    code = codeFrom(api.messages[0]);
+  const other = await api.request('/api/auth/player/register', {
+    method: 'POST',
+    body: { email: 'other@example.com', password: PASSWORD },
   });
-  const registration = await failed.register();
-  assert.equal(registration.status, 201);
-  assert.equal((await registration.json()).verificationSent, false);
-  const session = cookie(registration);
-  assert.equal((await failed.request('/api/state', { session })).status, 200);
-  const failedRetry = await failed.resend(session);
-  const failedBody = await failedRetry.text();
-  assert.deepEqual(JSON.parse(failedBody), { ok: true, sent: false });
-  assert.ok(!failedBody.includes('SMTP_SECRET'));
-
-  const absent = await fixture(t, { configured: false });
-  const disabled = await absent.register();
-  assert.equal(disabled.status, 201);
-  assert.equal((await disabled.json()).verificationSent, false);
-  assert.equal(absent.messages.length, 0);
-  const disabledSession = cookie(disabled);
-  assert.deepEqual(await (await absent.resend(disabledSession)).json(), { ok: true, sent: false });
-  assert.equal(
-    (await (await absent.request('/api/auth/player/status', { session: disabledSession })).json())
-      .mailEnabled,
-    false,
-  );
-
-  const template = await fixture(t, { configured: 'withoutPassword' });
-  const firstRun = await template.register();
-  assert.equal(firstRun.status, 201);
-  assert.equal((await firstRun.json()).verificationSent, false);
-  assert.equal(template.messages.length, 0);
-  assert.equal(
-    (await (await template.request('/api/auth/player/status')).json()).mailEnabled,
-    false,
-  );
-
-  const expiring = await fixture(t);
-  await expiring.register();
-  const token = tokenFrom(expiring.messages[0]);
-  expiring.tick(60 * 60 * 1000 + 1);
-  const expired = await expiring.confirm(token);
-  assert.equal(expired.status, 400);
-  assert.deepEqual(await expired.json(), { error: 'invalid_verification_token' });
+  const otherSession = cookie(other);
+  assert.equal((await api.confirm(code, otherSession)).status, 400);
+  assert.equal((await api.confirm('12', session)).status, 400);
+  api.tick(900001);
+  assert.equal((await (await api.confirm(code, session)).json()).error, 'verification_expired');
+  assert.equal((await api.request('/api/state', { session })).status, 403);
 });

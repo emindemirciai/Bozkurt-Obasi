@@ -134,6 +134,8 @@ test('visual homepage gates game navigation until Google sign-in', async ({ page
   await expect(page.getByRole('heading', { name: 'Welcome to your homeland.' })).toBeVisible();
   await expect(page).toHaveURL(/#village$/);
   await page.getByRole('button', { name: /BOZKURT OBASI/ }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome to your homeland.' })).toBeVisible();
+  await page.goto('/');
   await expect(
     page.getByRole('heading', { name: /Build your camp.*Protect your herd/s }),
   ).toBeVisible();
@@ -188,7 +190,9 @@ test('Google sign-in is honest when unavailable and account logout works when co
   await expect.poll(() => sessionCalls).toBe(1);
   await expect(page).not.toHaveURL(/auth=success/);
   await page.getByRole('button', { name: 'Hesabı yönet' }).first().click();
-  await expect(page.getByRole('dialog')).toContainText('player@example.com');
+  await expect(page.getByRole('dialog').getByLabel('E-posta', { exact: true })).toHaveValue(
+    'player@example.com',
+  );
   await page.getByRole('button', { name: 'Çıkış yap' }).click();
   await expect(page.getByRole('link', { name: 'Google ile giriş yap' }).first()).toHaveAttribute(
     'href',
