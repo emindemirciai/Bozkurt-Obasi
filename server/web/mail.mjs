@@ -94,44 +94,62 @@ export function createMailService(config, injectedSender, sendTimeoutMs = 5000) 
     }
     return transport.sendMail(message);
   }
+  async function sendCode(to, code, recovery = false) {
+    if (!config.enabled) return false;
+    if (!/^[0-9]{6}$/.test(code)) throw new Error('Invalid verification code.');
+    const illustration = readFileSync(new URL('./assets/formation.png', import.meta.url));
+    const heading = recovery
+      ? 'Şifreni yenile / Reset your password'
+      : 'E-posta adresini doğrula / Verify your email';
+    const instructionTr = recovery
+      ? 'Şifreni yenilemek için bu altı haneli kodu şifre kurtarma ekranına yaz. Kod 15 dakika geçerlidir. Şifre değiştiğinde tüm cihazlardaki oturumların kapatılır.'
+      : 'Oyuna girmek için bu altı haneli kodu doğrulama ekranına yaz. Kod 15 dakika geçerlidir.';
+    const instructionEn = recovery
+      ? 'Enter this six-digit code on the password recovery screen. It expires in 15 minutes. Resetting your password signs you out on every device.'
+      : 'Enter this six-digit code on the verification screen to unlock your village. It expires in 15 minutes.';
+    const ignore = recovery
+      ? 'Şifre yenilemeyi sen istemediysen mesajı yok say. Şifren değişmez. Kodu kimseyle paylaşma.<br>If you did not request a password reset, ignore this email. Your password stays unchanged. Never share the code.'
+      : 'Bu kaydı sen yapmadıysan mesajı yok say. Kodu kimseyle paylaşma.<br>If you did not create this account, ignore this email. Never share the code.';
+    const html = `<html><body style="margin:0;background:#eee9dc;font-family:Arial,sans-serif;color:#233b30"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#fffdf4;border-radius:16px;overflow:hidden"><tr><td style="padding:24px;background:#233e31;color:#edd49b"><h1 style="margin:0;font-size:24px">Bozkurt Obası</h1><p style="margin:8px 0 0">Obanı kur, sürünü koru. / Build your village, protect your herd.</p></td></tr><tr><td><img src="cid:ayyildiz@bozkurtobasi" width="600" alt="Hilal şeklindeki muhafız kurtlar, yıldız düzenindeki sürüyü korur. Crescent wolves protect the star-shaped herd." style="display:block;width:100%;height:auto"></td></tr><tr><td style="padding:28px"><h2 style="font-size:20px">${heading}</h2><p>${instructionTr}</p><p>${instructionEn}</p><p style="font-size:36px;letter-spacing:8px;font-weight:bold;text-align:center;padding:20px;background:#e9eddd;border-radius:12px">${code}</p><p style="font-size:13px;color:#52634f">Hilal kurtların savunma hattıdır; yıldız ise korunan sürünün düzenidir.<br>The crescent is the wolves’ defense line; the star is the protected herd’s formation.</p><p>${ignore}</p><p><a href="${config.publicUrl}" style="color:#34573f">bozkurtobasi.com</a></p></td></tr></table><p style="font-size:12px">© 2026 Bozkurt Obası</p></td></tr></table></body></html>`;
+    let timer;
+    try {
+      await Promise.race([
+        sender({
+          from: { name: config.fromName, address: ADDRESS },
+          to,
+          subject: recovery
+            ? 'Bozkurt Obası — Şifre yenileme / Reset your password'
+            : 'Bozkurt Obası — E-posta doğrulama / Verify your email',
+          text: recovery
+            ? `Bozkurt Obası şifre yenileme kodu: ${code}\n${instructionTr}\n\nBozkurt Obası password reset code: ${code}\n${instructionEn}\n\nŞifre yenilemeyi sen istemediysen mesajı yok say. Kodu kimseyle paylaşma.\nIf you did not request a reset, ignore this email. Never share the code.\n`
+            : `Bozkurt Obası doğrulama kodu: ${code}\nKod 15 dakika geçerlidir. Doğrulanana kadar oyun kapalıdır.\n\nBozkurt Obası verification code: ${code}\nExpires in 15 minutes. Verify before entering your village.\n`,
+          html,
+          attachments: [
+            {
+              filename: 'ay-yildiz-duzeni.png',
+              content: illustration,
+              contentType: 'image/png',
+              cid: 'ayyildiz@bozkurtobasi',
+              contentDisposition: 'inline',
+            },
+          ],
+        }),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            transport?.close?.();
+            transport = undefined;
+            reject(new Error('SMTP delivery timed out'));
+          }, sendTimeoutMs);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+    return true;
+  }
   return {
     enabled: config.enabled,
-    async sendVerification(to, code) {
-      if (!config.enabled) return false;
-      if (!/^[0-9]{6}$/.test(code)) throw new Error('Invalid verification code.');
-      const illustration = readFileSync(new URL('./assets/formation.png', import.meta.url));
-      const html = `<html><body style="margin:0;background:#eee9dc;font-family:Arial,sans-serif;color:#233b30"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#fffdf4;border-radius:16px;overflow:hidden"><tr><td style="padding:24px;background:#233e31;color:#edd49b"><h1 style="margin:0;font-size:24px">Bozkurt Obası</h1><p style="margin:8px 0 0">Obanı kur, sürünü koru. / Build your village, protect your herd.</p></td></tr><tr><td><img src="cid:ayyildiz@bozkurtobasi" width="600" alt="Hilal şeklindeki muhafız kurtlar, yıldız düzenindeki sürüyü korur. Crescent wolves protect the star-shaped herd." style="display:block;width:100%;height:auto"></td></tr><tr><td style="padding:28px"><h2 style="font-size:20px">E-posta adresini doğrula / Verify your email</h2><p>Oyuna girmek için bu altı haneli kodu doğrulama ekranına yaz. Kod 15 dakika geçerlidir.</p><p>Enter this six-digit code on the verification screen to unlock your village. It expires in 15 minutes.</p><p style="font-size:36px;letter-spacing:8px;font-weight:bold;text-align:center;padding:20px;background:#e9eddd;border-radius:12px">${code}</p><p style="font-size:13px;color:#52634f">Hilal kurtların savunma hattıdır; yıldız ise korunan sürünün düzenidir.<br>The crescent is the wolves’ defense line; the star is the protected herd’s formation.</p><p>Bu kaydı sen yapmadıysan mesajı yok say. Kodu kimseyle paylaşma.<br>If you did not create this account, ignore this email. Never share the code.</p><p><a href="${config.publicUrl}" style="color:#34573f">bozkurtobasi.com</a></p></td></tr></table><p style="font-size:12px">© 2026 Bozkurt Obası</p></td></tr></table></body></html>`;
-      let timer;
-      try {
-        await Promise.race([
-          sender({
-            from: { name: config.fromName, address: ADDRESS },
-            to,
-            subject: 'Bozkurt Obası — E-posta doğrulama / Verify your email',
-            text: `Bozkurt Obası doğrulama kodu: ${code}\nKod 15 dakika geçerlidir. Doğrulanana kadar oyun kapalıdır.\n\nBozkurt Obası verification code: ${code}\nExpires in 15 minutes. Verify before entering your village.\n`,
-            html,
-            attachments: [
-              {
-                filename: 'ay-yildiz-duzeni.png',
-                content: illustration,
-                contentType: 'image/png',
-                cid: 'ayyildiz@bozkurtobasi',
-                contentDisposition: 'inline',
-              },
-            ],
-          }),
-          new Promise((_, reject) => {
-            timer = setTimeout(() => {
-              transport?.close?.();
-              transport = undefined;
-              reject(new Error('SMTP delivery timed out'));
-            }, sendTimeoutMs);
-          }),
-        ]);
-      } finally {
-        clearTimeout(timer);
-      }
-      return true;
-    },
+    sendVerification: (to, code) => sendCode(to, code),
+    sendPasswordReset: (to, code) => sendCode(to, code, true),
   };
 }

@@ -1,21 +1,23 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-06. Sürüm / Release: **v1.6.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-06. Sürüm / Release: **v1.7.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| Kaynak ve çeviriler / Source and translations | 54 JavaScript dosyası, 344 eşleşen TR/EN anahtar / files and matching keys |
-| Motor, hesap, profil, arkadaşlık, SMTP ve sürüm / Engine, accounts, profiles, friends, SMTP and release | 111 test: tümü geçti / all passed |
-| Tarayıcı / Browser | 36/36 geçti / passed; kod doğrulama, profil, iki oyuncu, maden gönderimi, oyun, TR/EN, temalar ve mobil / code verification, profiles, two players, stone gifts, gameplay, languages, themes and mobile |
-| Tam yedek / Full backup | PowerShell 5.1 çevrimdışı entegrasyon: 12/12 geçti / offline integration passed |
-| Üretim ve tek dosya / Production and standalone | Derleme geçti; `preview/index.html` güncel, `preview/mail.html` görselli e-posta örneği / build passed; homepage and illustrated email previews |
+| Kaynak ve çeviriler / Source and translations | 57 JavaScript dosyası, 363 eşleşen TR/EN anahtar / files and matching keys |
+| Motor, hesap, profil, arkadaşlık, SMTP ve sürüm / Engine, accounts, profiles, friends, SMTP and release | 125 test: tümü geçti / all passed |
+| Tarayıcı / Browser | 39/39 geçti / passed; kod doğrulama, profil, iki oyuncu, maden gönderimi, oyun, TR/EN, temalar ve mobil / code verification, profiles, two players, stone gifts, gameplay, languages, themes and mobile |
+| Tam yedek / Full backup | Betik değişmedi; son yerel kontrol v1.6.0: 12/12. Yeni CI ayrıca çalıştırır / unchanged script; last local check v1.6.0: 12/12; CI reruns |
+| Üretim ve tek dosya / Production and standalone | Derleme geçti; `preview/index.html` güncel, `preview/mail.html` ve `preview/password-reset.html` görselli e-posta örnekleri / build passed; homepage and illustrated email previews |
 | Biçim ve diff / Formatting and diff | `npm run format:check`, `git diff --check` geçti / passed |
-| Sürüm artışı / Version increase | v1.5.0 → v1.6.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
+| Sürüm artışı / Version increase | v1.6.0 → v1.7.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
 | Dört servis / Four services | `web`, `api`, `admin`, `analyze` derlendi; yerel sağlık ve konteyner kalıcılık kontrolleri geçti / builds, local health and container persistence passed |
 
-Kaynak sayımı / Source count: **168 dosya, 31.585 fiziksel satır; 21.387 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
+Kaynak sayımı / Source count: **171 dosya, 32.815 fiziksel satır; 22.617 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
 
 ## Türkçe
+
+Şifre kurtarma: altı haneli kod 15 dakika geçerli; yalnızca doğrulanmış şifre hesabında çalışır. E-posta varlığı ve SMTP süresi yanıtla açıklanmaz. Beş yanlış deneme, yeniden başlatma, 60 saniye/5 günlük gönderim kotası, SMTP hatasında önceki kodun korunması, 16 eşzamanlı gönderim sınırı, eski parola/kod yarışı ve işlem geri alma test edildi. Yenileme tüm e-posta/bağlı Google oturumlarını kapatır; köy, profil, arkadaşlar ve maden kayıtlarını korur. İki eşzamanlı onaydan yalnızca biri kabul edilir; kullanıcı yeni şifresiyle yeniden giriş yapar. Mobil TR/EN, kahverengi tema, alanların korunması ve şifre tekrarı kontrol edildi. Toplu tarayıcı senaryolarının test IP’leri ayrıldı; üretim giriş sınırları değişmedi.
 
 E-posta kaydı sınırlı yetkili bekleyen oturum oluşturur. Oyun ekranları, state/session/action, profil ve arkadaş uç noktaları kod doğrulanmadan açılmaz. Google imzalı ve doğrulanmış e-posta kimliğine güvenilir; mevcut şifre hesabına bağlama için o hesabın sahipliği ayrıca kanıtlanır. Kod 15 dakika geçerli, tek kullanımlık, oturumdaki hesaba bağlı ve tuzlu özet olarak saklanır. Beş hatalı deneme, tekrar gönderim süresi, günlük kota, SMTP hatası, hesaplar arası deneme, süre sonu ve sunucu yeniden başlatma test edildi. Başarısız SMTP, doğrulama kapısını kaldırmaz.
 
@@ -30,6 +32,8 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+Recovery tests cover hashed six-digit 15-minute codes, eligible verified credentials, generic background responses, persisted five-guess locks, restart, 60-second/five-per-day send quotas, failed delivery preserving the prior challenge, a 16-send concurrency bound, password/code races and transaction rollback. Reset revokes every email and linked Google session, preserving village/profile/friend/stone data. Exactly one concurrent confirmation succeeds. Browser tests cover explicit fresh login, linked devices, mobile TR/EN themes, preserved drafts and password confirmation. Scenario IPs are isolated in the mock gateway; production rate limits remain unchanged.
 
 Email registration creates a restricted pending session. Game screens and state/session/action, profile and friend APIs stay locked until code confirmation. Signed Google identities with verified email can start through Google; linking to an existing password account also proves control of that account. Tests cover single use, 15-minute expiration, hashed storage, five-guess limits, resend cooldown/quota, failed SMTP, cross-account attempts and server restart persistence.
 

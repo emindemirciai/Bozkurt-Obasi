@@ -71,6 +71,8 @@ const app = createApp({
     messages.set(message.to, message);
   },
   rateLimit: 2000,
+  // Simulate the trusted gateway; browser scenarios can use distinct documentation IPs.
+  trustProxy: true,
   analytics: analyticsConfig({ ANALYZE_ENABLED: 'true' }),
   googleClientId: clientId,
   googleClientSecret: 'e2e-only-secret',

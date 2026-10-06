@@ -1,5 +1,28 @@
 export const translations = {
   tr: {
+    forgotPassword: 'Şifremi unuttum',
+    recoverTitle: 'Şifreni yenile.',
+    recoverIntro:
+      'Hesabında kullandığın e-posta adresini yaz. Şifreni yenilemen için bir kod göndereceğiz.',
+    recoverCodeHint:
+      'Bu adres şifre yenilemeye uygun bir hesaba aitse kod gönderilir. Gelen kutunu ve spam klasörünü kontrol et. Altı haneli kodu ve yeni şifreni yaz. Kod 15 dakika geçerlidir.',
+    recoverSendCode: 'Şifre yenileme kodu gönder',
+    recoverNewPassword: 'Yeni şifre',
+    recoverConfirmPassword: 'Yeni şifreyi tekrar yaz',
+    recoverSavePassword: 'Şifreyi yenile',
+    recoverResend: 'Kodu yeniden gönder',
+    recoverChangeEmail: 'E-posta adresini değiştir',
+    recoverBackToLogin: 'Giriş ekranına dön',
+    recoverCodeSent:
+      'Bu adres uygun bir hesaba aitse kod gönderilir. Gelen kutunu ve spam klasörünü kontrol et.',
+    recoverSuccess: 'Şifren yenilendi. Yeni şifrenle giriş yap.',
+    recoverUnavailable: 'Şifre yenileme e-postası şu anda gönderilemiyor. Daha sonra yeniden dene.',
+    recoverInvalidCode: 'Kod doğrulanamadı. E-posta adresini ve kodu kontrol et.',
+    recoverExpired: 'Kodun süresi veya deneme hakkı doldu. Yeni bir kod iste.',
+    recoverRateLimited:
+      'Çok fazla kod isteği veya denemesi yapıldı. Bir süre bekleyip yeniden dene.',
+    recoverRetry: 'Şifre yenileme tamamlanamadı. Yeni bir kod isteyip tekrar dene.',
+    recoverPasswordMismatch: 'Yeni şifreler eşleşmiyor. İkisini de kontrol et.',
     profilePhoto: 'Profil fotoğrafı',
     profilePhotoHint: 'PNG, JPEG veya GIF · En fazla 2 MB',
     changePhoto: 'Fotoğraf değiştir',
@@ -366,6 +389,28 @@ export const translations = {
     recovery: 'Yedek kayıt geri yüklendi.',
   },
   en: {
+    forgotPassword: 'Forgot password',
+    recoverTitle: 'Reset your password.',
+    recoverIntro:
+      'Enter the email address you use for your account. We will send a password reset code.',
+    recoverCodeHint:
+      'If this address belongs to an eligible account, a code will be sent. Check your inbox and spam folder. Enter the six-digit code and your new password. The code expires in 15 minutes.',
+    recoverSendCode: 'Send password reset code',
+    recoverNewPassword: 'New password',
+    recoverConfirmPassword: 'Confirm new password',
+    recoverSavePassword: 'Reset password',
+    recoverResend: 'Resend code',
+    recoverChangeEmail: 'Change email address',
+    recoverBackToLogin: 'Back to sign in',
+    recoverCodeSent:
+      'If this address belongs to an eligible account, a code will be sent. Check your inbox and spam folder.',
+    recoverSuccess: 'Your password has been reset. Sign in with your new password.',
+    recoverUnavailable: 'Password reset email is currently unavailable. Try again later.',
+    recoverInvalidCode: 'The code could not be verified. Check your email address and code.',
+    recoverExpired: 'The code expired or the attempt limit was reached. Request a new code.',
+    recoverRateLimited: 'Too many code requests or attempts. Wait a while and try again.',
+    recoverRetry: 'The password reset could not be completed. Request a new code and try again.',
+    recoverPasswordMismatch: 'Your new passwords do not match. Check both entries.',
     profilePhoto: 'Profile photo',
     profilePhotoHint: 'PNG, JPEG or GIF · Up to 2 MB',
     changePhoto: 'Change photo',

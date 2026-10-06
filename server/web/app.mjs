@@ -4,6 +4,7 @@ import { appendCookie, createGoogleRoutes, googleAuthConfig } from './google.mjs
 import { createPlayerRoutes } from './player-auth.mjs';
 import { createMailService, mailConfig } from './mail.mjs';
 import { createVerificationStore } from './verification.mjs';
+import { createRecoveryStore } from './recovery.mjs';
 import { createProfileStore } from './profile.mjs';
 import { createSocialStore } from './social.mjs';
 import { createHash, randomBytes } from 'node:crypto';
@@ -524,6 +525,7 @@ export function createApp({
   });
 
   const verification = createVerificationStore(database, { mail, HttpError });
+  const recovery = createRecoveryStore(database, { mail, HttpError });
 
   async function issueEmailVerification(emailSub, now) {
     return verification.issue(emailSub, now);
@@ -766,6 +768,14 @@ export function createApp({
     logout: logoutPlayer,
     issueVerification: issueEmailVerification,
     confirmVerification: confirmPlayerCode,
+    requestRecovery(email) {
+      setImmediate(() => {
+        void recovery.request(email, Math.floor(clock())).catch(() => {});
+      });
+    },
+    confirmRecovery(email, code, expectedHash, passwordHash) {
+      recovery.confirm(email, code, expectedHash, passwordHash, Math.floor(clock()));
+    },
   });
 
   const googleRoutes = createGoogleRoutes(database, {

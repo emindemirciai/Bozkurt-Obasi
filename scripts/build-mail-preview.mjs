@@ -7,9 +7,14 @@ const mail = createMailService(
     message = value;
   },
 );
-await mail.sendVerification('preview@example.com', '123456');
-const image = message.attachments[0].content.toString('base64');
-const html = message.html.replace('cid:ayyildiz@bozkurtobasi', `data:image/png;base64,${image}`);
 await mkdir(new URL('../preview/', import.meta.url), { recursive: true });
-await writeFile(new URL('../preview/mail.html', import.meta.url), html);
-console.log('Offline illustrated email preview: preview/mail.html (example code only).');
+for (const [method, file] of [
+  ['sendVerification', 'mail.html'],
+  ['sendPasswordReset', 'password-reset.html'],
+]) {
+  await mail[method]('preview@example.com', '123456');
+  const image = message.attachments[0].content.toString('base64');
+  const html = message.html.replace('cid:ayyildiz@bozkurtobasi', `data:image/png;base64,${image}`);
+  await writeFile(new URL(`../preview/${file}`, import.meta.url), html);
+  console.log(`Offline illustrated email preview: preview/${file} (example code only).`);
+}

@@ -15,7 +15,7 @@ import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
 import { createAnalytics } from './analytics.mjs';
-import { profileDialog, verificationDialog, friendsView } from './player-panel.mjs';
+import { profileDialog, verificationDialog, recoveryDialog, friendsView } from './player-panel.mjs';
 
 const analytics = createAnalytics();
 
@@ -80,6 +80,9 @@ let accountDraft = { name: '', email: '', password: '', code: '' },
   accountError = '',
   accountOpener = '',
   accountRequest = 0;
+let recoveryDraft = { email: '', code: '', password: '', confirmPassword: '' },
+  recoveryStep = 'request',
+  recoveryError = '';
 const root = document.querySelector('#app');
 const t = (key) => translations[language][key] || key;
 const escape = (value) =>
@@ -172,6 +175,7 @@ function identifyControls() {
 }
 
 function navigate(next) {
+  if (busy && modal === 'recovery') return;
   if (next !== 'home' && !GAME_VIEWS.has(next)) return;
   if (next !== 'home' && (!auth.authenticated || mode !== 'online')) {
     toast('signInRequired');
@@ -271,6 +275,7 @@ function denyGameAccess() {
   view = 'home';
   modal = '';
   clearAccountDraft();
+  clearRecoveryDraft();
   if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
 }
 
@@ -348,6 +353,8 @@ function focusDialog() {
   if (dialog && !dialog.contains(document.activeElement))
     (
       dialog.querySelector('[data-account-field="email"]:not([readonly])') ||
+      dialog.querySelector('[data-recovery-field="email"]:not([readonly])') ||
+      dialog.querySelector('#recovery-code') ||
       dialog.querySelector('#account-password') ||
       dialog.querySelector('button')
     )?.focus({
@@ -360,12 +367,19 @@ function clearAccountDraft() {
   accountError = '';
 }
 
+function clearRecoveryDraft() {
+  recoveryDraft = { email: '', code: '', password: '', confirmPassword: '' };
+  recoveryStep = 'request';
+  recoveryError = '';
+}
+
 function closeDialog() {
   const opener = accountOpener;
   accountOpener = '';
   accountRequest++;
   modal = '';
   clearAccountDraft();
+  clearRecoveryDraft();
   profileDraft = {};
   render(opener);
 }
@@ -583,12 +597,25 @@ function accountFormView() {
     : registering
       ? 'registerIntro'
       : 'loginIntro';
-  return `<div class="modal-backdrop"><section class="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="account-intro"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}" ${busy ? 'disabled' : ''}>${icon('close', 20)}</button>${accountAppearanceControls()}<div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t(title)}</h2><p id="account-intro">${t(introduction)}</p><form id="account-form" class="account-form" aria-busy="${busy}"><label for="account-email">${t('accountEmail')}</label><input id="account-email" data-account-field="email" name="email" type="email" autocomplete="email" maxlength="254" required value="${escape(accountDraft.email)}" ${settingPassword ? 'readonly' : ''} ${busy ? 'disabled' : ''}>${registering ? `<label for="account-name">${t('accountName')}</label><input id="account-name" data-account-field="name" name="name" type="text" autocomplete="nickname" maxlength="60" value="${escape(accountDraft.name)}" ${busy ? 'disabled' : ''}>` : ''}<label for="account-password">${t('accountPassword')}</label><input id="account-password" data-account-field="password" name="password" type="password" autocomplete="${registering || settingPassword ? 'new-password' : 'current-password'}" required aria-describedby="account-password-hint" value="${escape(accountDraft.password)}" ${busy ? 'disabled' : ''}><small id="account-password-hint">${t('passwordHint')}</small>${accountError ? `<p id="account-error" class="account-error" role="alert">${t(accountError)}</p>` : ''}${!auth.emailEnabled ? `<p class="account-error" role="status">${t('emailUnavailable')}</p>` : ''}<button class="button primary account-submit" type="submit" ${busy || !auth.emailEnabled ? 'disabled' : ''}>${t(busy ? 'accountSubmitting' : settingPassword ? 'setPassword' : registering ? 'emailRegister' : 'emailLogin')}</button></form>${settingPassword ? '' : `<p class="account-switch">${t(registering ? 'alreadyRegistered' : 'newPlayer')} ${button(t(registering ? 'emailLogin' : 'emailRegister'), registering ? 'login' : 'register', 'account-switch-button', busy)}</p><div class="account-google">${googleSignInControl()}</div>`}<p class="account-provider-note">${t('accountLinkNote')}</p><div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
+  return `<div class="modal-backdrop"><section class="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="account-intro"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}" ${busy ? 'disabled' : ''}>${icon('close', 20)}</button>${accountAppearanceControls()}<div class="eyebrow">BOZKURT OBASI</div><h2 id="modal-title">${t(title)}</h2><p id="account-intro">${t(introduction)}</p><form id="account-form" class="account-form" aria-busy="${busy}"><label for="account-email">${t('accountEmail')}</label><input id="account-email" data-account-field="email" name="email" type="email" autocomplete="email" maxlength="254" required value="${escape(accountDraft.email)}" ${settingPassword ? 'readonly' : ''} ${busy ? 'disabled' : ''}>${registering ? `<label for="account-name">${t('accountName')}</label><input id="account-name" data-account-field="name" name="name" type="text" autocomplete="nickname" maxlength="60" value="${escape(accountDraft.name)}" ${busy ? 'disabled' : ''}>` : ''}<label for="account-password">${t('accountPassword')}</label><input id="account-password" data-account-field="password" name="password" type="password" autocomplete="${registering || settingPassword ? 'new-password' : 'current-password'}" required aria-describedby="account-password-hint" value="${escape(accountDraft.password)}" ${busy ? 'disabled' : ''}><small id="account-password-hint">${t('passwordHint')}</small>${accountError ? `<p id="account-error" class="account-error" role="alert">${t(accountError)}</p>` : ''}${!auth.emailEnabled ? `<p class="account-error" role="status">${t('emailUnavailable')}</p>` : ''}<button class="button primary account-submit" type="submit" ${busy || !auth.emailEnabled ? 'disabled' : ''}>${t(busy ? 'accountSubmitting' : settingPassword ? 'setPassword' : registering ? 'emailRegister' : 'emailLogin')}</button></form>${!registering && !settingPassword ? button(t('forgotPassword'), 'forgotPassword', 'account-switch-button forgot-password', busy) : ''}${settingPassword ? '' : `<p class="account-switch">${t(registering ? 'alreadyRegistered' : 'newPlayer')} ${button(t(registering ? 'emailLogin' : 'emailRegister'), registering ? 'login' : 'register', 'account-switch-button', busy)}</p><div class="account-google">${googleSignInControl()}</div>`}<p class="account-provider-note">${t('accountLinkNote')}</p><div class="account-legal"><a href="${privacyHref}">${t('privacyPolicy')}</a><a href="${termsHref}">${t('termsOfUse')}</a></div></section></div>`;
 }
 
 function modalView() {
   if (!modal) return '';
   if (['login', 'register', 'password'].includes(modal)) return accountFormView();
+  if (modal === 'recovery')
+    return recoveryDialog({
+      t,
+      escape,
+      button,
+      icon,
+      appearance: accountAppearanceControls(),
+      draft: recoveryDraft,
+      step: recoveryStep,
+      mailEnabled: auth.mailEnabled,
+      busy,
+      error: recoveryError,
+    });
   if (modal === 'verify')
     return verificationDialog({
       t,
@@ -647,6 +674,11 @@ const accountErrorKeys = {
   account_link_required: 'accountLinkRequired',
   account_link_email_mismatch: 'accountLinkEmailMismatch',
   password_already_set: 'passwordAlreadySet',
+  recovery_code_invalid: 'recoverInvalidCode',
+  recovery_code_expired: 'recoverExpired',
+  recovery_rate_limited: 'recoverRateLimited',
+  password_changed: 'recoverRetry',
+  mail_unavailable: 'recoverUnavailable',
 };
 
 async function submitAccount(form) {
@@ -739,12 +771,16 @@ async function submitAccount(form) {
 root.addEventListener('input', (event) => {
   const field = event.target.dataset.accountField;
   if (field && Object.hasOwn(accountDraft, field)) accountDraft[field] = event.target.value;
+  const recoveryField = event.target.dataset.recoveryField;
+  if (recoveryField && Object.hasOwn(recoveryDraft, recoveryField))
+    recoveryDraft[recoveryField] = event.target.value;
 });
 
 root.addEventListener('submit', (event) => {
-  if (event.target.id !== 'account-form') return;
+  if (!['account-form', 'recovery-form'].includes(event.target.id)) return;
   event.preventDefault();
-  void submitAccount(event.target);
+  if (event.target.id === 'recovery-form') void submitRecovery(event.target);
+  else void submitAccount(event.target);
 });
 
 async function playerRequest(path, body) {
@@ -759,6 +795,77 @@ async function playerRequest(path, body) {
   if (!response.ok)
     throw Object.assign(new Error(result.error || 'request_failed'), { code: result.error });
   return result;
+}
+
+async function submitRecovery(form, resend = false) {
+  if (busy || modal !== 'recovery' || !auth.mailEnabled) return;
+  if (!resend && !form.reportValidity()) return;
+  const confirming = recoveryStep === 'confirm' && !resend;
+  if (!resend) {
+    const fields = new FormData(form);
+    recoveryDraft.email = String(fields.get('email') || '');
+    if (confirming) {
+      recoveryDraft.code = String(fields.get('code') || '');
+      recoveryDraft.password = String(fields.get('password') || '');
+      recoveryDraft.confirmPassword = String(fields.get('confirmPassword') || '');
+    }
+  }
+  const email = recoveryDraft.email.trim();
+  if (confirming) {
+    const length = Array.from(recoveryDraft.password).length;
+    if (length < 12 || length > 128) {
+      recoveryError = 'invalidPassword';
+      render('recovery-password');
+      return;
+    }
+    if (recoveryDraft.password !== recoveryDraft.confirmPassword) {
+      recoveryError = 'recoverPasswordMismatch';
+      render('recovery-confirm-password');
+      return;
+    }
+  }
+  const request = ++accountRequest;
+  recoveryError = '';
+  busy = true;
+  render();
+  try {
+    const result = await playerRequest(
+      `auth/player/password/reset/${confirming ? 'confirm' : 'request'}`,
+      {
+        email,
+        ...(confirming ? { code: recoveryDraft.code, password: recoveryDraft.password } : {}),
+      },
+    );
+    if (request !== accountRequest || modal !== 'recovery') return;
+    if (result.ok !== true) throw new Error('invalid_response');
+    if (confirming) {
+      auth.authenticated = false;
+      auth.user = null;
+      auth.verificationRequired = false;
+      auth.pendingEmail = '';
+      profileDraft = {};
+      friendsDraft = {};
+      friendsData = { friends: [], incoming: [], outgoing: [], transfers: [] };
+      friendsLoaded = false;
+      state = createGame();
+      revision = 0;
+      denyGameAccess();
+      accountDraft.email = email;
+      modal = 'login';
+      toast('recoverSuccess');
+    } else {
+      recoveryDraft.email = email;
+      recoveryDraft.code = '';
+      recoveryStep = 'confirm';
+      toast('recoverCodeSent');
+    }
+  } catch (error) {
+    if (request !== accountRequest || modal !== 'recovery') return;
+    recoveryError = accountErrorKeys[error.code] || 'accountRequestFailed';
+  } finally {
+    busy = false;
+    render(confirming && modal === 'login' ? 'account-password' : undefined);
+  }
 }
 
 async function verifyCode(form) {
@@ -1020,6 +1127,10 @@ root.addEventListener('click', async (event) => {
     'button,[data-building],[data-plot],[data-wolf],a.brand-mark',
   );
   if (!target || target.disabled) return;
+  if (busy && modal === 'recovery' && !['language', 'theme'].includes(target.dataset.action)) {
+    event.preventDefault();
+    return;
+  }
   if (target.matches('a.brand-mark')) {
     event.preventDefault();
     navigate(auth.authenticated ? 'village' : 'home');
@@ -1047,6 +1158,38 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const a = target.dataset.action;
+  if (a === 'forgotPassword') {
+    if (busy || modal !== 'login') return;
+    const email = accountDraft.email;
+    clearRecoveryDraft();
+    clearAccountDraft();
+    recoveryDraft.email = email;
+    modal = 'recovery';
+    render();
+    return;
+  }
+  if (a === 'recoverResend') {
+    await submitRecovery(document.querySelector('#recovery-form'), true);
+    return;
+  }
+  if (a === 'recoverChangeEmail') {
+    if (busy || modal !== 'recovery') return;
+    const email = recoveryDraft.email;
+    clearRecoveryDraft();
+    recoveryDraft.email = email;
+    render('recovery-email');
+    return;
+  }
+  if (a === 'recoverBackToLogin') {
+    if (busy || modal !== 'recovery') return;
+    const email = recoveryDraft.email;
+    clearRecoveryDraft();
+    clearAccountDraft();
+    accountDraft.email = email;
+    modal = 'login';
+    render('account-password');
+    return;
+  }
   if (a === 'guide') {
     if (!busy) followFirstSteps();
     return;
@@ -1189,6 +1332,7 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (a === 'close') {
+    if (busy && modal === 'recovery') return;
     closeDialog();
     return;
   }
@@ -1243,7 +1387,8 @@ root.addEventListener('click', async (event) => {
 
 root.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && modal) {
-    if (busy && ['login', 'register', 'password', 'account', 'verify'].includes(modal)) return;
+    if (busy && ['login', 'register', 'password', 'account', 'verify', 'recovery'].includes(modal))
+      return;
     closeDialog();
     return;
   }
@@ -1303,6 +1448,8 @@ setInterval(async () => {
   renderNotice();
 }, 1000);
 window.addEventListener('popstate', () => {
+  if (busy && modal === 'recovery') return;
+  clearRecoveryDraft();
   view = GAME_VIEWS.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
   modal = '';
   if (!auth.authenticated || mode !== 'online') denyGameAccess();

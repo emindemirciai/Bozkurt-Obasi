@@ -4,6 +4,16 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.7.0 — 2026-10-06
+
+**TR**
+
+- Şifremi unuttum: görselli e-posta koduyla şifre yenileme, tüm cihaz oturumlarını kapatma ve aynı köyü koruma.
+
+**EN**
+
+- Forgot password: illustrated email codes reset credentials, revoke every device session and preserve the same village.
+
 ## v1.6.0 — 2026-10-06
 
 **TR**

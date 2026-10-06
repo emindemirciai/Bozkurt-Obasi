@@ -72,6 +72,13 @@ try {
     'Without SMTP, email verification remains unavailable.',
   );
   assert.equal(playerConfig.authenticated, false);
+  const recovery = await fetch(`${baseUrl}/api/auth/player/password/reset/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'recovery@example.com' }),
+  });
+  assert.equal(recovery.status, 503, 'Recovery must require SMTP in the production image.');
+  assert.equal((await recovery.json()).error, 'mail_unavailable');
   const sessionResponse = await fetch(`${baseUrl}/api/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -52,6 +52,8 @@ export function createPlayerRoutes(
     confirmVerification,
     requirePlayer,
     changePassword,
+    requestRecovery,
+    confirmRecovery,
   },
 ) {
   const findEmail = database.prepare(
@@ -120,6 +122,8 @@ export function createPlayerRoutes(
       '/api/auth/player/logout': 'POST',
       '/api/auth/player/password': 'POST',
       '/api/auth/player/password/change': 'POST',
+      '/api/auth/player/password/reset/request': 'POST',
+      '/api/auth/player/password/reset/confirm': 'POST',
       '/api/auth/player/verify/request': 'POST',
       '/api/auth/player/verify/confirm': 'POST',
     };
@@ -147,6 +151,29 @@ export function createPlayerRoutes(
     }
     checkMutation(request, trustProxy);
     const body = await readJson(request);
+    if (pathname.startsWith('/api/auth/player/password/reset/')) {
+      const confirming = pathname.endsWith('/confirm');
+      const fields = confirming ? ['email', 'code', 'password'] : ['email'];
+      if (Object.keys(body).some((key) => !fields.includes(key)))
+        throw new HttpError(400, 'unexpected_fields');
+      allowAttempt(request, now);
+      const email = normalizedEmail(body.email);
+      if (!email) throw new HttpError(400, 'invalid_email');
+      if (!mailEnabled) throw new HttpError(503, 'mail_unavailable');
+      if (!confirming) {
+        // Delivery runs behind a bounded guard; SMTP latency never reveals account existence.
+        requestRecovery(email);
+      } else {
+        if (typeof body.code !== 'string' || !/^[0-9]{6}$/.test(body.code))
+          throw new HttpError(400, 'recovery_code_invalid');
+        if (!boundedPassword(body.password, 12)) throw new HttpError(400, 'invalid_password');
+        const expectedHash = findEmail.get(email)?.password_hash;
+        confirmRecovery(email, body.code, expectedHash, await hashPassword(body.password));
+        failures.delete(email);
+      }
+      json(response, 200, { ok: true });
+      return true;
+    }
     if (pathname === '/api/auth/player/verify/confirm') {
       if (Object.keys(body).some((key) => key !== 'code'))
         throw new HttpError(400, 'unexpected_fields');

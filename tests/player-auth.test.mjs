@@ -131,6 +131,8 @@ test('email authentication is available without Google or administrator credenti
     ['/api/auth/player/login', 'POST'],
     ['/api/auth/player/logout', 'POST'],
     ['/api/auth/player/password', 'POST'],
+    ['/api/auth/player/password/reset/request', 'POST'],
+    ['/api/auth/player/password/reset/confirm', 'POST'],
     ['/api/auth/player/verify/request', 'POST'],
     ['/api/auth/player/verify/confirm', 'POST'],
   ]) {
@@ -655,4 +657,202 @@ test('pending verification code and failed-attempt count survive a server restar
   });
   assert.equal(confirmed.status, 200);
   assert.equal((await api.request('/api/state', { cookie })).status, 200);
+});
+
+const RESET_PASSWORD = 'Yeni Ay-Yildiz sifrem 2026!';
+const RESET_REQUEST = '/api/auth/player/password/reset/request';
+const RESET_CONFIRM = '/api/auth/player/password/reset/confirm';
+
+test('anonymous recovery revokes every device, preserves the village and clears failed-login locks', async (t) => {
+  const api = await fixture(t);
+  const first = sessionCookie(await api.register({ name: 'Kurt Reisi' }));
+  const second = sessionCookie(await api.login());
+  await api.request('/api/player/profile', {
+    method: 'POST',
+    cookie: first,
+    body: { nickname: 'Bozkır Muhafızı' },
+  });
+  const initial = await (await api.request('/api/state', { cookie: first })).json();
+  assert.equal(
+    (
+      await api.request('/api/action', {
+        method: 'POST',
+        cookie: first,
+        body: { revision: initial.revision, action: { type: 'collect' } },
+      })
+    ).status,
+    200,
+  );
+  const before = await (await api.request('/api/state', { cookie: first })).json();
+  const profile = (await (await api.request('/api/player/profile', { cookie: first })).json()).user;
+  for (let i = 0; i < 5; i++)
+    assert.equal((await api.login({ password: 'wrong password' })).status, 401);
+  assert.equal((await api.login()).status, 429);
+  const requested = await api.request(RESET_REQUEST, {
+    method: 'POST',
+    body: { email: ' WOLF@EXAMPLE.COM ' },
+  });
+  assert.deepEqual(await requested.json(), { ok: true });
+  const message = api.messages.findLast((mail) => mail.subject.includes('Reset your password'));
+  const code = /code: ([0-9]{6})/.exec(message.text)[1];
+  assert.ok(message.html.includes('cid:ayyildiz@bozkurtobasi'));
+  assert.equal(message.from.address, 'info@bozkurtobasi.com');
+  const confirmed = await api.request(RESET_CONFIRM, {
+    method: 'POST',
+    body: { email: 'wolf@example.com', code, password: RESET_PASSWORD },
+  });
+  assert.equal(confirmed.status, 200);
+  assert.deepEqual(await confirmed.json(), { ok: true });
+  assert.equal(confirmed.headers.get('set-cookie'), null);
+  for (const cookie of [first, second]) {
+    assert.equal((await api.request('/api/state', { cookie })).status, 401);
+    assert.equal(
+      (await (await api.request('/api/auth/player/status', { cookie })).json()).authenticated,
+      false,
+    );
+  }
+  assert.equal((await api.login()).status, 401);
+  const resumed = sessionCookie(await api.login({ password: RESET_PASSWORD }));
+  assert.ok(resumed);
+  assert.deepEqual(await (await api.request('/api/state', { cookie: resumed })).json(), before);
+  assert.deepEqual(
+    (await (await api.request('/api/player/profile', { cookie: resumed })).json()).user,
+    profile,
+  );
+  assert.equal(
+    (
+      await api.request(RESET_CONFIRM, {
+        method: 'POST',
+        body: { email: 'wolf@example.com', code, password: PASSWORD },
+      })
+    ).status,
+    400,
+  );
+});
+
+test('recovery requests hide account existence, keep pending accounts locked and enforce origin and input checks', async (t) => {
+  const api = await fixture(t);
+  await api.register();
+  const pending = await api.request('/api/auth/player/register', {
+    method: 'POST',
+    body: { email: 'pending@example.com', password: PASSWORD },
+  });
+  for (const email of [
+    'wolf@example.com',
+    'unknown@example.com',
+    'pending@example.com',
+    'wolf@example.com',
+  ]) {
+    const reply = await api.request(RESET_REQUEST, { method: 'POST', body: { email } });
+    assert.equal(reply.status, 200);
+    assert.deepEqual(await reply.json(), { ok: true });
+    assert.equal(reply.headers.get('cache-control'), 'no-store');
+  }
+  assert.equal(
+    api.messages.filter((mail) => mail.subject.includes('Reset your password')).length,
+    1,
+  );
+  assert.equal((await api.request('/api/state', { cookie: sessionCookie(pending) })).status, 403);
+  for (const [body, status] of [
+    [{ email: 'bad' }, 400],
+    [{ email: 'wolf@example.com', extra: true }, 400],
+  ])
+    assert.equal((await api.request(RESET_REQUEST, { method: 'POST', body })).status, status);
+  assert.equal(
+    (
+      await api.request(RESET_REQUEST, {
+        method: 'POST',
+        headers: { Origin: 'https://other.example' },
+        body: { email: 'wolf@example.com' },
+      })
+    ).status,
+    403,
+  );
+  for (const code of ['000000', 123456, '12345']) {
+    const reply = await api.request(RESET_CONFIRM, {
+      method: 'POST',
+      body: { email: 'unknown@example.com', code, password: RESET_PASSWORD },
+    });
+    assert.equal(reply.status, 400);
+    assert.equal((await reply.json()).error, 'recovery_code_invalid');
+  }
+});
+
+test('recovery delivery does not block its response or reveal SMTP failure and recovery requires configured mail', async (t) => {
+  let release, captured;
+  const sent = new Promise((resolve) => {
+    release = resolve;
+  });
+  // A disabled provider reports the same global configuration status for every address.
+  const separate = await fixture(t, { smtpPassword: '' });
+  const unavailable = await separate.request(RESET_REQUEST, {
+    method: 'POST',
+    body: { email: 'wolf@example.com' },
+  });
+  assert.equal(unavailable.status, 503);
+  assert.equal((await unavailable.json()).error, 'mail_unavailable');
+  const delayed = await fixture(t, {
+    mailSender: async (message) => {
+      captured = message;
+      if (message.subject.includes('Reset your password')) {
+        await sent;
+        throw new Error('Test SMTP failure');
+      }
+    },
+  });
+  const registration = await delayed.request('/api/auth/player/register', {
+    method: 'POST',
+    body: { email: 'wolf@example.com', password: PASSWORD },
+  });
+  await delayed.request('/api/auth/player/verify/confirm', {
+    method: 'POST',
+    cookie: sessionCookie(registration),
+    body: { code: /code: ([0-9]{6})/.exec(captured.text)[1] },
+  });
+  try {
+    const reply = await delayed.request(RESET_REQUEST, {
+      method: 'POST',
+      body: { email: 'wolf@example.com' },
+    });
+    assert.deepEqual(await reply.json(), { ok: true });
+    assert.equal(
+      (await delayed.request('/api/state', { cookie: sessionCookie(registration) })).status,
+      200,
+    );
+  } finally {
+    release();
+  }
+});
+
+test('two recovery confirmations race safely and a registration code cannot change the password', async (t) => {
+  const api = await fixture(t);
+  const registered = await api.register();
+  const verification = /code: ([0-9]{6})/.exec(api.messages[0].text)[1];
+  await api.request(RESET_REQUEST, { method: 'POST', body: { email: 'wolf@example.com' } });
+  const code = /code: ([0-9]{6})/.exec(api.messages.at(-1).text)[1];
+  if (code !== verification) {
+    assert.equal(
+      (
+        await api.request(RESET_CONFIRM, {
+          method: 'POST',
+          body: { email: 'wolf@example.com', code: verification, password: RESET_PASSWORD },
+        })
+      ).status,
+      400,
+    );
+  }
+  const replies = await Promise.all(
+    [RESET_PASSWORD, 'Another valid new password 2026!'].map((password) =>
+      api.request(RESET_CONFIRM, {
+        method: 'POST',
+        body: { email: 'wolf@example.com', code, password },
+      }),
+    ),
+  );
+  assert.deepEqual(replies.map((reply) => reply.status).sort(), [200, 400]);
+  assert.equal(
+    (await api.request('/api/state', { cookie: sessionCookie(registered) })).status,
+    401,
+  );
+  assert.equal((await api.login()).status, 401);
 });

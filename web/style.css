@@ -3185,6 +3185,27 @@ footer > span:first-child {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.forgot-password {
+  display: block;
+  margin: 12px auto 0;
+  font-size: 12px;
+}
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  margin-top: 14px;
+  font-size: 12px;
+}
+#recovery-code {
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 0.3em;
+}
+.recovery-modal .account-form input[readonly] {
+  color: var(--muted);
+}
 .account-google {
   display: flex;
   justify-content: center;

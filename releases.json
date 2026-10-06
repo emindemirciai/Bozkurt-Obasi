@@ -1,6 +1,18 @@
 {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "releases": [
+    {
+      "version": "1.7.0",
+      "date": "2026-10-06",
+      "changes": {
+        "tr": [
+          "Şifremi unuttum: görselli e-posta koduyla şifre yenileme, tüm cihaz oturumlarını kapatma ve aynı köyü koruma."
+        ],
+        "en": [
+          "Forgot password: illustrated email codes reset credentials, revoke every device session and preserve the same village."
+        ]
+      }
+    },
     {
       "version": "1.6.0",
       "date": "2026-10-06",
