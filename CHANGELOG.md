@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.8.0 — 2026-10-06
+
+**TR**
+
+- Savaş meydanında kurt, çakal, koyun ve büyükbaşlar doğal anatomi ve kürke sahip gerçekçi, saydam WebP görsellerine kavuştu.
+- Hilal/yıldız yerleşimi, karşı tarafa bakan hayvanlar, seçim, can göstergeleri ve hareketler korundu; TR/EN ve tema destekli çevrimdışı savaş önizlemesi eklendi.
+
+**EN**
+
+- Battlefield wolves, jackals, sheep and cows now use realistic transparent WebP cutouts with natural anatomy and fur.
+- Crescent/star placement, opponent-facing animals, selection, health bars and animations are preserved, with a bilingual themed offline battle preview.
+
 ## v1.7.0 — 2026-10-06
 
 **TR**

@@ -543,6 +543,13 @@ main {
   opacity: 0;
   pointer-events: none;
 }
+.battle-animal-image {
+  pointer-events: visiblePainted;
+  transition: opacity 0.2s;
+}
+.battle-wolf.is-wounded .battle-animal-image {
+  opacity: 0.72;
+}
 .battle-scene.is-active .battle-jackal .battle-motion {
   animation: jackal-charge 1.35s cubic-bezier(0.37, 0, 0.26, 1) var(--delay, 0s) infinite;
 }

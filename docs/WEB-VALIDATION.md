@@ -1,21 +1,25 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-06. Sürüm / Release: **v1.7.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-06. Sürüm / Release: **v1.8.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
-| Kontrol / Check | Sonuç / Result |
-| --- | --- |
-| Kaynak ve çeviriler / Source and translations | 57 JavaScript dosyası, 363 eşleşen TR/EN anahtar / files and matching keys |
-| Motor, hesap, profil, arkadaşlık, SMTP ve sürüm / Engine, accounts, profiles, friends, SMTP and release | 125 test: tümü geçti / all passed |
-| Tarayıcı / Browser | 39/39 geçti / passed; kod doğrulama, profil, iki oyuncu, maden gönderimi, oyun, TR/EN, temalar ve mobil / code verification, profiles, two players, stone gifts, gameplay, languages, themes and mobile |
-| Tam yedek / Full backup | Betik değişmedi; son yerel kontrol v1.6.0: 12/12. Yeni CI ayrıca çalıştırır / unchanged script; last local check v1.6.0: 12/12; CI reruns |
-| Üretim ve tek dosya / Production and standalone | Derleme geçti; `preview/index.html` güncel, `preview/mail.html` ve `preview/password-reset.html` görselli e-posta örnekleri / build passed; homepage and illustrated email previews |
-| Biçim ve diff / Formatting and diff | `npm run format:check`, `git diff --check` geçti / passed |
-| Sürüm artışı / Version increase | v1.6.0 → v1.7.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
-| Dört servis / Four services | `web`, `api`, `admin`, `analyze` derlendi; yerel sağlık ve konteyner kalıcılık kontrolleri geçti / builds, local health and container persistence passed |
+| Kontrol / Check                                                                                         | Sonuç / Result                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kaynak ve çeviriler / Source and translations                                                           | 59 JavaScript dosyası, 363 eşleşen TR/EN anahtar / files and matching keys                                                                                                                                                                  |
+| Motor, hesap, profil, arkadaşlık, SMTP ve sürüm / Engine, accounts, profiles, friends, SMTP and release | 125 test: tümü geçti / all passed                                                                                                                                                                                                           |
+| Tarayıcı / Browser                                                                                      | 40/40 geçti / passed; gerçekçi görseller, saydamlık, baş yönleri, kurt seçimi, çevrimdışı önizleme, hesaplar, oyun, TR/EN ve mobil / realistic assets, alpha, facing, selection, offline previews, accounts, gameplay, languages and mobile |
+| Tam yedek / Full backup                                                                                 | 12/12 Windows çevrimdışı entegrasyon testi geçti / Windows offline integration tests passed                                                                                                                                                 |
+| Üretim ve tek dosya / Production and standalone                                                         | Derleme geçti; `preview/index.html` ve `preview/battle.html` güncel; görselli mail örnekleri korunuyor / build passed; homepage and battle previews current; illustrated email previews retained                                            |
+| Biçim ve diff / Formatting and diff                                                                     | `npm run format:check`, `git diff --check` geçti / passed                                                                                                                                                                                   |
+| Sürüm artışı / Version increase                                                                         | v1.7.0 → v1.8.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree                                                                                                                                                |
+| Dört servis / Four services                                                                             | `web`, `api`, `admin`, `analyze` derlendi; yerel sağlık ve konteyner kalıcılık kontrolleri geçti / builds, local health and container persistence passed                                                                                    |
 
-Kaynak sayımı / Source count: **171 dosya, 32.815 fiziksel satır; 22.617 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
+Kaynak sayımı / Source count: **173 dosya, 33.079 fiziksel satır; 22.881 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
 
 ## Türkçe
+
+Savaşta dört gerçekçi WebP, Chromium ile 512 × 341 boyutunda çözüldü; boş köşe pikselleri saydam, hayvan pikselleri görünür. Kurtlar ve sürü sola, çakallar sağa bakıyor. Can göstergeleri, rastgele savaş taktiği ve animasyonlar test edildi. Mobilde görselin üstüne tıklamak muhafız detayını açıyor; yatay taşma yok. Masaüstü ve kahverengi koyu mobil ekran görüntüleri incelendi. Dört görsel Docker/Nginx üzerinden 200 ve `image/webp` döndü.
+
+`preview/battle.html`, gerçek sahneyi ve dört gömülü WebP'yi kullanır; TR/EN, tema, yakınlaştırma ve hareket kontrolleri `file://` altında çalışır. Dış HTTP isteği veya oyun erişimi yoktur. Ana sayfanın klasik betik paketinde görsel URL tabanı `document.baseURI` ile çözümlenir; böylece iki çevrimdışı önizleme de boş ekran ve paketleme uyarısı olmadan açılır. Üretim ESM ve Node mail çizimi importları korunur.
 
 Şifre kurtarma: altı haneli kod 15 dakika geçerli; yalnızca doğrulanmış şifre hesabında çalışır. E-posta varlığı ve SMTP süresi yanıtla açıklanmaz. Beş yanlış deneme, yeniden başlatma, 60 saniye/5 günlük gönderim kotası, SMTP hatasında önceki kodun korunması, 16 eşzamanlı gönderim sınırı, eski parola/kod yarışı ve işlem geri alma test edildi. Yenileme tüm e-posta/bağlı Google oturumlarını kapatır; köy, profil, arkadaşlar ve maden kayıtlarını korur. İki eşzamanlı onaydan yalnızca biri kabul edilir; kullanıcı yeni şifresiyle yeniden giriş yapar. Mobil TR/EN, kahverengi tema, alanların korunması ve şifre tekrarı kontrol edildi. Toplu tarayıcı senaryolarının test IP’leri ayrıldı; üretim giriş sınırları değişmedi.
 
@@ -32,6 +36,10 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+Chromium decoded all four realistic battlefield WebPs at 512 × 341, with transparent empty corners and visible animal pixels. Wolves and the herd face left, jackals face right. Health bars, random tactics and animations pass; clicking a wolf image on mobile still opens its guardian details without horizontal overflow. Desktop and brown dark mobile screenshots were inspected. Docker/Nginx serves all four assets with HTTP 200 and `image/webp`.
+
+The self-contained `preview/battle.html` reuses the actual scene and four embedded WebPs. File-based language, theme, zoom and motion controls work without external HTTP requests or game access. The homepage classic-script build resolves asset bases through `document.baseURI`; both offline previews open without blank screens or packaging warnings. Production ESM and Node email artwork imports remain supported.
 
 Recovery tests cover hashed six-digit 15-minute codes, eligible verified credentials, generic background responses, persisted five-guess locks, restart, 60-second/five-per-day send quotas, failed delivery preserving the prior challenge, a 16-send concurrency bound, password/code races and transaction rollback. Reset revokes every email and linked Google session, preserving village/profile/friend/stone data. Exactly one concurrent confirmation succeeds. Browser tests cover explicit fresh login, linked devices, mobile TR/EN themes, preserved drafts and password confirmation. Scenario IPs are isolated in the mock gateway; production rate limits remain unchanged.
 

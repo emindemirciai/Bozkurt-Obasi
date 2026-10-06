@@ -6,7 +6,9 @@
 
 [Görsel düzenleme kaydı ve tam istem / Artwork edit record and exact prompt](docs/HERO-ART.md)
 
-**Güncel sürüm / Current version: v1.7.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
+[Gerçekçi savaş hayvanları ve tam istemler / Realistic battle animals and exact prompts](docs/BATTLE-ART.md) · [Çevrimdışı savaş görseli / Offline battlefield preview](preview/battle.html)
+
+**Güncel sürüm / Current version: v1.8.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
 
 [Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Hesap kaydı / Account registration](docs/ACCOUNT-SIGNIN.md) · [Görselli mail önizlemesi / Email preview](preview/mail.html) · [Şifre yenileme maili / Password reset email](preview/password-reset.html) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
@@ -20,6 +22,8 @@ GitHub About bölümü oyun açıklamasını, `https://bozkurtobasi.com` site ba
 
 ### Ana sayfayı önizle ve oyuna giriş yap
 
+Savaş meydanındaki kurt, çakal, koyun ve büyükbaşlar gerçekçi saydam görsellerle çizilir. Dört WebP dosyası toplam yaklaşık 193 KiB'dir; kurtlar ve sürü çakallara bakar. [`preview/battle.html`](preview/battle.html), gerçek savaş sahnesinin tek dosyalık görsel önizlemesidir: TR/EN, açık/kahverengi koyu tema, yakınlaştırma ve görsel hareket kontrolleri internet olmadan kullanılabilir. Oyuncu hesabına veya oyun kaydına erişmez. `npm run build:preview` iki görsel önizlemeyi de yeniler.
+
 [`preview/index.html`](preview/index.html) dosyasını indirip tarayıcıda açın; internet veya sunucu gerektirmeyen, tek dosyalık **görsel ana sayfa önizlemesidir**. Oyun ekranları bu dosyada açılmaz. GitHub dosya görüntüleyicisi etkileşimli önizlemeyi çalıştırmaz. Node.js 24 ile yerel API ve kalıcı SQLite kullanmak için:
 
 ```bash
@@ -30,9 +34,7 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli hesap oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Ana sayfadaki **Kayıt ol** ile e-posta/şifre hesabı oluşturabilir veya **Giriş yap** ile mevcut hesabınızı açabilirsiniz. Şifre 12–128 karakterdir. Google seçeneği için [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md). [Hesap rehberi](docs/ACCOUNT-SIGNIN.md). Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v1.7.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında 15 dakika geçerli, altı haneli doğrulama kodu `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden görselli HTML e-postayla gider. Kod doğrulanmadan oyun ve oyuncu API'leri açılmaz; SMTP hatası bu kapıyı kaldırmaz. Google'ın doğruladığı hesaplar Google ile başlayabilir. Profilde ad soyad ve e-posta sabit, takma ad ve fotoğraf değiştirilebilir; özel fotoğraf Google fotoğrafından önceliklidir. Kalıcı oyuncu koduyla arkadaş isteği gönderilir, kabul edilmiş arkadaşlara depo kapasitesi dahilinde maden (taş) aktarılır. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. Giriş ekranındaki **Şifremi unuttum**, görselli e-postayla tek kullanımlık kod gönderir. Yeni şifre belirlenince tüm e-posta ve bağlı Google oturumları kapatılır; köy, profil ve arkadaşlar korunur. PvP, sohbet ve ödeme henüz yoktur.
-
-
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hareketli dalga savaşları, 4 bölge ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v1.8.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında 15 dakika geçerli, altı haneli doğrulama kodu `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden görselli HTML e-postayla gider. Kod doğrulanmadan oyun ve oyuncu API'leri açılmaz; SMTP hatası bu kapıyı kaldırmaz. Google'ın doğruladığı hesaplar Google ile başlayabilir. Profilde ad soyad ve e-posta sabit, takma ad ve fotoğraf değiştirilebilir; özel fotoğraf Google fotoğrafından önceliklidir. Kalıcı oyuncu koduyla arkadaş isteği gönderilir, kabul edilmiş arkadaşlara depo kapasitesi dahilinde maden (taş) aktarılır. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. Giriş ekranındaki **Şifremi unuttum**, görselli e-postayla tek kullanımlık kod gönderir. Yeni şifre belirlenince tüm e-posta ve bağlı Google oturumları kapatılır; köy, profil ve arkadaşlar korunur. PvP, sohbet ve ödeme henüz yoktur.
 
 Köydeki **İlk adımlar** rehberi kaynak toplama, yeni yapı, ilk görev ödülü, iki eğitim ve ilk zaferi kayıtlı ilerlemeden izler. Düğmeler ilgili kontrole götürür; kendiliğinden kaynak harcamaz. Önceden tamamlanan adımlar tanınır. Yeni hilal ve bozkurt logosu masaüstü/mobil, açık/koyu tema ve favicon için SVG olarak kullanılır; [logo dosyaları ve kullanım](docs/BRAND.md).
 
@@ -69,8 +71,6 @@ Portlar: oyun <http://127.0.0.1:3000>, API <http://127.0.0.1:3001>, yönetim <ht
 
 `npm run verify` kaynak kontrolü, motor/API testleri, üretim ve tek dosya derlemesi, tarayıcı testlerini çalıştırır. `npm run count:lines` aşağıdaki sayımı yeniler; `npm run backup` `artifacts/` altında temiz kaynak ZIP'i ve SHA-256 dosyası oluşturur. ZIP oyuncu veritabanlarını, sırları, bağımlılıkları veya Git geçmişini içermez. Güncel sonuçlar [doğrulama kaydında](docs/WEB-VALIDATION.md).
 
-
-
 Windows tesliminde kontroller geçtikten sonra [`push-and-backup.ps1`](push-and-backup.ps1) commit/push ve **tam proje yedeğini** birlikte yapar. İncelenen dosyaları `git add -- <dosyalar>` ile hazırlayıp `.\push-and-backup.ps1 -StagedOnly -CommitMessage "feat: açıklama"` çalıştırın; varsayılan çağrı bütün görünür değişiklikleri stage eder. Yayımlanmış sürümün yeni yedeği için `-BackupOnly` kullanın. Tam ZIP, `H:\Drive'ım\Artificial Intelligence - Projects\Bozkurt Obası\Bozkurt Obası_YYYY-MM-DD_HHMMSS.zip` yoluna yazılır; `.git`, `node_modules`, derlemeler, yerel `.env` ve boş klasörler dahil hiçbir içerik hariç tutulmaz. İçerik doğrulanır, son 30 tarihli yedek saklanır. Bu özel Drive ZIP'i GitHub'a yüklenmez; GitHub Release temiz kaynak ZIP'ini kullanır. Drive'ın bulut eşitleme durumu masaüstü istemcisinden kontrol edilir. [Tam yedek standardı](BACKUP-STANDARD.md), [teslim kuralları](PROJECT-BACKUP-RULES.md). Repo dışındaki Docker volume'ları ayrıca yedeklenir.
 
 ## English
@@ -83,11 +83,11 @@ Run `npm run release:version -- patch --tr "Türkçe değişiklik notu" --en "En
 
 ### Preview the homepage and sign in to play
 
+Battlefield wolves, jackals, sheep and cows use realistic transparent cutouts. The four WebP files total approximately 193 KiB; wolves and the herd face the jackals. [`preview/battle.html`](preview/battle.html) is a self-contained visual preview of the actual battlefield, with offline TR/EN, light/brown dark themes, zoom and visual motion controls. It does not access player accounts or game saves. `npm run build:preview` rebuilds both visual previews.
+
 Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, and register/sign in with email and password from the homepage, then confirm the emailed code. SMTP is required for new email accounts; Google can also verify ownership. A password must contain 12–128 characters. Alternatively, [configure Google OAuth](docs/GOOGLE-SIGNIN.md) to use Google. See the [account guide](docs/ACCOUNT-SIGNIN.md). The homepage and information pages are public; **the village and every other game screen require a valid account session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v1.7.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a six-digit, 15-minute verification code from `Bozkurtobasi.com <info@bozkurtobasi.com>` in illustrated HTML email. Game and player APIs stay locked until confirmation, including during SMTP failure. Google-verified accounts can start through Google. Profile email and full name are immutable; nickname and photo are editable, with custom uploads taking priority over Google pictures. Permanent player codes support accepted friendships and atomic stone gifts within warehouse capacity. Google and password sign-in for the same email open one account and village after ownership is confirmed. **Forgot password** sends a single-use code in illustrated email. Resetting revokes all email and linked Google sessions while preserving the village, profile and friends. PvP, chat and payments are not yet included.
-
-
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, four regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v1.8.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a six-digit, 15-minute verification code from `Bozkurtobasi.com <info@bozkurtobasi.com>` in illustrated HTML email. Game and player APIs stay locked until confirmation, including during SMTP failure. Google-verified accounts can start through Google. Profile email and full name are immutable; nickname and photo are editable, with custom uploads taking priority over Google pictures. Permanent player codes support accepted friendships and atomic stone gifts within warehouse capacity. Google and password sign-in for the same email open one account and village after ownership is confirmed. **Forgot password** sends a single-use code in illustrated email. Resetting revokes all email and linked Google sessions while preserving the village, profile and friends. PvP, chat and payments are not yet included.
 
 The village **First steps** guide follows gathering, construction, the first quest reward, two training actions and the first victory from saved progress. Buttons lead to the relevant control without spending resources. Previously completed steps are recognized. The new crescent-and-wolf SVG identity supports desktop/mobile, light/dark themes and the favicon; see [logo files and usage](docs/BRAND.md).
 
@@ -109,8 +109,6 @@ On production HTTPS, the site sends screen views and cumulative duration for hom
 
 Run `npm run verify` for checks, tests, builds, and browser tests. Run `npm run count:lines` to refresh the table below and `npm run backup` for a clean source ZIP and SHA-256 sidecar in `artifacts/`. The ZIP includes the visual preview but excludes player data, secrets, dependencies, production build directories, and Git history. See the [validation record](docs/WEB-VALIDATION.md) and [deployment guide](docs/WEB-DEPLOYMENT.md).
 
-
-
 On Windows, after checks pass, [`push-and-backup.ps1`](push-and-backup.ps1) commits/pushes and creates a **full project backup**. Stage reviewed files with `git add -- <files>` and run `.\push-and-backup.ps1 -StagedOnly -CommitMessage "feat: description"`; the default invocation stages every visible change. Use `-BackupOnly` to snapshot an already published revision. The full ZIP goes to `H:\Drive'ım\Artificial Intelligence - Projects\Bozkurt Obası\Bozkurt Obası_YYYY-MM-DD_HHMMSS.zip` with no exclusions, including `.git`, `node_modules`, builds, local `.env` and empty directories. Contents are verified and the latest 30 dated backups retained. This private Drive ZIP is separate from the clean GitHub Release archive. Check cloud sync status in the Drive desktop client. See [backup standard](BACKUP-STANDARD.md) and [delivery rules](PROJECT-BACKUP-RULES.md). Docker volumes outside the repo need separate backups.
 
 ## Depo yapısı / Repository layout
@@ -125,6 +123,7 @@ On Windows, after checks pass, [`push-and-backup.ps1`](push-and-backup.ps1) comm
 | `services/analyze/`                     | MIT lisanslı analiz paneli ve kolektör / MIT analytics dashboard and collector                                                                   |
 | `tests/`, `scripts/`                    | Test, önizleme, ölçüm ve ZIP / Tests, preview, metrics, and ZIP                                                                                  |
 | `preview/index.html`                    | Tek dosyalık görsel ana sayfa önizlemesi; oyun için hesap oturumu gerekir / Standalone visual homepage preview; game requires an account session |
+| `preview/battle.html`                   | Gerçekçi savaş sahnesi için çevrimdışı görsel önizleme / Offline visual preview of the realistic battlefield                                     |
 | `releases.json`, `CHANGELOG.md`         | İki dilli sürüm kayıtları / Bilingual release history                                                                                            |
 | `.env.production.example`               | Dokploy üretim ortamı örneği / Production environment example                                                                                    |
 | `docs/GOOGLE-SIGNIN.md`                 | İki dilli Google OAuth kurulumu / Bilingual Google OAuth setup                                                                                   |
@@ -133,17 +132,18 @@ On Windows, after checks pass, [`push-and-backup.ps1`](push-and-backup.ps1) comm
 ## Kaynak satırları / Source line counts
 
 <!-- metrics:start -->
-| Kapsam / Scope | Dosya / Files | Satır / Lines |
-| --- | ---: | ---: |
-| Web istemci / Web client | 13 | 6946 |
-| Web sunucu / Web server | 12 | 2733 |
-| Dağıtım servisleri / Deployment services | 30 | 4139 |
-| Paylaşılan oyun / Shared game | 1 | 718 |
-| Web test ve araçlar / Web tests and tools | 40 | 8081 |
-| Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **171** | **32815** |
 
-Aktif web kaynakları / Active web source: **22617** satır / lines.
+| Kapsam / Scope                                     | Dosya / Files | Satır / Lines |
+| -------------------------------------------------- | ------------: | ------------: |
+| Web istemci / Web client                           |            14 |          6991 |
+| Web sunucu / Web server                            |            12 |          2733 |
+| Dağıtım servisleri / Deployment services           |            30 |          4139 |
+| Paylaşılan oyun / Shared game                      |             1 |           718 |
+| Web test ve araçlar / Web tests and tools          |            41 |          8300 |
+| Korunan Unity kaynakları / Preserved Unity sources |            75 |         10198 |
+| **Toplam / Total**                                 |       **173** |     **33079** |
+
+Aktif web kaynakları / Active web source: **22881** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

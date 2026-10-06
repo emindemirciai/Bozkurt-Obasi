@@ -1,6 +1,20 @@
 {
-  "version": "1.7.0",
+  "version": "1.8.0",
   "releases": [
+    {
+      "version": "1.8.0",
+      "date": "2026-10-06",
+      "changes": {
+        "tr": [
+          "Savaş meydanında kurt, çakal, koyun ve büyükbaşlar doğal anatomi ve kürke sahip gerçekçi, saydam WebP görsellerine kavuştu.",
+          "Hilal/yıldız yerleşimi, karşı tarafa bakan hayvanlar, seçim, can göstergeleri ve hareketler korundu; TR/EN ve tema destekli çevrimdışı savaş önizlemesi eklendi."
+        ],
+        "en": [
+          "Battlefield wolves, jackals, sheep and cows now use realistic transparent WebP cutouts with natural anatomy and fur.",
+          "Crescent/star placement, opponent-facing animals, selection, health bars and animations are preserved, with a bilingual themed offline battle preview."
+        ]
+      }
+    },
     {
       "version": "1.7.0",
       "date": "2026-10-06",

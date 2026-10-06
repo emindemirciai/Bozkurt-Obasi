@@ -1,4 +1,6 @@
-// Original procedural vector artwork. No remote images, fonts or model downloads.
+import { battleAnimal } from './animal-sprites.mjs';
+
+// Original scene artwork with local wildlife cutouts for the battlefield.
 export function icon(name, size = 20) {
   const paths = {
     village: 'M3 11 12 3l9 8M5 10v11h14V10M9 21v-7h6v7',
@@ -78,10 +80,10 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
     }
     middle = `<path d="${'M' + star.join('L')}Z" fill="#efdda8" fill-opacity=".35" stroke="#e4d3a1" stroke-dasharray="5 7" stroke-width="2"/><path d="M410 179C219 174 219 474 410 477C304 410 304 247 410 179Z" fill="#dfeddc" fill-opacity=".6" stroke="#d9e9cd" stroke-width="2"/>`;
     const herdSpread = { tight: 0.8, balanced: 1, wide: 1.18 }[state.formation.herd];
-    middle += Array.from({ length: Math.min(state.herd.count, 24) }, (_, i) => {
+    middle += Array.from({ length: Math.min(state.herd.count, 28) }, (_, i) => {
       const a = i < 4 ? (i * Math.PI) / 2 : -Math.PI / 2 + (((i - 4) % 5) * Math.PI * 2) / 5,
         r = (i < 4 ? 12 : 34 + Math.floor((i - 4) / 5) * 20) * herdSpread;
-      return `<g class="battle-herd" style="--delay:-${(i % 7) * 0.28}s">${sheep(470 + Math.cos(a) * r, 326 + Math.sin(a) * r * 0.8, 0.66, i % 5 === 0, -1)}</g>`;
+      return `<g class="battle-herd" style="--delay:-${(i % 7) * 0.28}s"><g transform="translate(${470 + Math.cos(a) * r} ${326 + Math.sin(a) * r * 0.8})">${battleAnimal(i % 5 === 0 ? 'cow' : 'sheep', 1, -1)}</g></g>`;
     }).join('');
     const wolfSpread = { tight: 0.84, balanced: 1, wide: 1.14 }[state.formation.wolf];
     middle += state.wolves
@@ -89,7 +91,7 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
         const a = -1.18 + i * 0.59,
           x = 370 - Math.cos(a) * 66 * wolfSpread,
           y = 328 + Math.sin(a) * 139 * wolfSpread;
-        return `<g data-wolf="${w.id}" role="button" tabindex="0" aria-label="${t(w.name === 'healer' ? 'healerPath' : w.name)}" class="scene-building battle-wolf" transform="translate(${x} ${y})"><ellipse cy="9" rx="29" ry="17" fill="${w.hp > 0 ? '#c5dec3' : '#cfafa0'}" opacity=".75"/><g class="battle-motion" style="--delay:${(i % 5) * 0.16}s">${wolfArt(w.name === 'healer' ? '#749b78' : '#626e66', 0.85, -1)}</g><rect x="-21" y="-40" width="42" height="4" rx="2" fill="#708474"/><rect x="-21" y="-40" data-hp-bar width="${(42 * w.hp) / w.maxHp}" height="4" rx="2" fill="#c3df96"/></g>`;
+        return `<g data-wolf="${w.id}" role="button" tabindex="0" aria-label="${t(w.name === 'healer' ? 'healerPath' : w.name)}" class="scene-building battle-wolf ${w.hp < w.maxHp * 0.35 ? 'is-wounded' : ''}" transform="translate(${x} ${y})"><g class="battle-motion" style="--delay:${(i % 5) * 0.16}s">${battleAnimal('wolf', 1, -1)}</g><rect x="-21" y="-40" width="42" height="4" rx="2" fill="#708474"/><rect x="-21" y="-40" data-hp-bar width="${(42 * w.hp) / w.maxHp}" height="4" rx="2" fill="#c3df96"/></g>`;
       })
       .join('');
     const enemies = state.battle.enemies?.length
@@ -111,7 +113,7 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
                   ? 70
                   : -70
                 : 0;
-        return `<g class="enemy battle-jackal" data-enemy-id="${e.id}" style="${e.hp > 0 ? '' : 'display:none'}" transform="translate(${x} ${y})"><g class="battle-motion" style="--delay:${i * 0.2}s;--charge-x:${chargeX}px;--charge-y:${chargeY}px">${wolfArt('#ad7c55', 0.68)}<rect x="-16" y="-29" width="32" height="3" fill="#704c3b"/><rect data-hp-bar x="-16" y="-29" width="${(32 * e.hp) / e.maxHp}" height="3" fill="#bd7752"/></g></g>`;
+        return `<g class="enemy battle-jackal" data-enemy-id="${e.id}" style="${e.hp > 0 ? '' : 'display:none'}" transform="translate(${x} ${y})"><g class="battle-motion" style="--delay:${i * 0.2}s;--charge-x:${chargeX}px;--charge-y:${chargeY}px">${battleAnimal('jackal')}<rect x="-16" y="-29" width="32" height="3" fill="#704c3b"/><rect data-hp-bar x="-16" y="-29" width="${(32 * e.hp) / e.maxHp}" height="3" fill="#bd7752"/></g></g>`;
       })
       .join('');
     middle += `<g transform="translate(276 252)" aria-hidden="true"><g class="battle-impact"><path d="M0-13 0-4M-12 0-4 0M8-8 14-14M8 8 15 15" stroke="#fff4bf" stroke-width="3" stroke-linecap="round"/></g></g><g transform="translate(295 358)" aria-hidden="true"><g class="battle-impact" style="--delay:-.7s"><path d="M0-13 0-4M-12 0-4 0M8-8 14-14M8 8 15 15" stroke="#fff4bf" stroke-width="3" stroke-linecap="round"/></g></g>`;

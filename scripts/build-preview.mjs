@@ -6,6 +6,8 @@ import { resolve } from 'node:path';
 const result = await build({
   configFile: false,
   logLevel: 'warn',
+  // The classic-script preview needs a valid browser base after Vite inlines asset URLs.
+  define: { 'import.meta.url': 'document.baseURI' },
   build: {
     write: false,
     target: 'es2022',
@@ -33,3 +35,4 @@ const html = `<!doctype html>${legalNotice}<html lang="tr"><head><meta charset="
 await mkdir('preview', { recursive: true });
 await writeFile('preview/index.html', html, 'utf8');
 console.log(`Offline visual preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);
+await import('./build-battle-preview.mjs');

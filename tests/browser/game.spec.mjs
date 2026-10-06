@@ -41,6 +41,71 @@ test('village construction, quest reward, training and TR/EN work without runtim
   await expect(page.locator('.map-chip')).toHaveText('5 buildings');
   expect(errors).toEqual([]);
 });
+test('realistic battle cutouts load with alpha, face opponents and remain selectable on mobile', async ({
+  page,
+}) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/#village');
+  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
+  const images = page.locator('.battle-scene image[data-animal-kind]');
+  await expect(images).toHaveCount(32);
+  const decoded = await images.evaluateAll(async (nodes) => {
+    const urls = [...new Set(nodes.map((node) => node.getAttribute('href')))];
+    return Promise.all(
+      urls.map(async (url) => {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let painted = 0;
+        for (let index = 3; index < pixels.length; index += 4) if (pixels[index] > 0) painted++;
+        return {
+          webp: url.includes('.webp'),
+          width: canvas.width,
+          height: canvas.height,
+          transparentCorner: pixels[3] === 0,
+          painted,
+        };
+      }),
+    );
+  });
+  expect(decoded).toHaveLength(4);
+  for (const image of decoded) {
+    expect(image).toMatchObject({ webp: true, width: 512, height: 341, transparentCorner: true });
+    expect(image.painted).toBeGreaterThan(10_000);
+    expect(image.painted).toBeLessThan(512 * 341);
+  }
+  for (const group of ['.battle-wolf', '.battle-herd'])
+    for (const direction of await page
+      .locator(`${group} .battle-animal`)
+      .evaluateAll((nodes) => nodes.map((node) => node.dataset.facing)))
+      expect(direction).toBe('-1');
+  for (const direction of await page
+    .locator('.battle-jackal .battle-animal')
+    .evaluateAll((nodes) => nodes.map((node) => node.dataset.facing)))
+    expect(direction).toBe('1');
+  await mkdir('artifacts', { recursive: true });
+  await page.locator('.map-card').screenshot({ path: 'artifacts/battle-realistic-desktop.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page
+    .locator('.map-card')
+    .screenshot({ path: 'artifacts/battle-realistic-dark-mobile.png' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const wolf = page.locator('.battle-wolf').first();
+  const wolfId = await wolf.getAttribute('data-wolf');
+  await wolf.locator('image').click();
+  await expect(page.locator(`.guardian-card[data-wolf="${wolfId}"]`)).toHaveClass(/selected/);
+  await expect(page.locator('.wolf-detail')).toBeVisible();
+  expect(errors).toEqual([]);
+});
 
 test('battle reveals a random jackal tactic at start and animates both sides', async ({ page }) => {
   const errors = [];
@@ -174,5 +239,35 @@ test('mobile layout, modal keyboard dismissal and offline file preview', async (
   await expect(page.getByRole('heading', { name: /Obanı kur.*Sürünü koru/s })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toHaveCount(0);
   await expect(page.locator('.game-shell')).toHaveCount(0);
+  const external = [];
+  page.on('request', (request) => {
+    if (/^https?:/.test(request.url())) external.push(request.url());
+  });
+  await page.goto(pathToFileURL(resolve('preview/battle.html')).href);
+  await expect(page.getByRole('heading', { name: 'Savaş meydanı' })).toBeVisible();
+  await expect(page.locator('.battle-animal')).toHaveCount(32);
+  await expect(page.locator('.battle-scene defs image')).toHaveCount(4);
+  const offlineImages = await page.locator('.battle-scene defs image').evaluateAll((nodes) =>
+    Promise.all(
+      nodes.map(async (node) => {
+        const image = new Image();
+        image.src = node.getAttribute('href');
+        await image.decode();
+        return image.naturalWidth;
+      }),
+    ),
+  );
+  expect(offlineImages).toEqual([512, 512, 512, 512]);
+  await page.locator('#language').click();
+  await expect(page.getByRole('heading', { name: 'Battlefield' })).toBeVisible();
+  await page.getByRole('button', { name: 'Dark theme', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByRole('button', { name: 'Play animation', exact: true }).click();
+  await expect(page.locator('.battle-scene')).toHaveClass(/is-active/);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect(page.locator('.battle-scene')).toHaveAttribute('viewBox', '140 95 570 455');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: 'artifacts/battle-preview-dark-mobile.png', fullPage: true });
+  expect(external).toEqual([]);
   expect(errors).toEqual([]);
 });
