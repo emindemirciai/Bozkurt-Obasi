@@ -122,6 +122,8 @@ if (!/^GOOGLE_CLIENT_SECRET=$/m.test(environment))
   fail('Production environment example must not include a Google client secret.');
 if (!/^ADMIN_PASSWORD=$/m.test(environment))
   fail('Production environment example must not include a password or inline placeholder.');
+if (!/^ADMIN_BOOTSTRAP_PASSWORD=$/m.test(environment))
+  fail('Production environment example must not include a bootstrap password.');
 if (!/^SMTP_PASSWORD=$/m.test(environment))
   fail('Production environment example must not include an SMTP password or inline placeholder.');
 console.log(

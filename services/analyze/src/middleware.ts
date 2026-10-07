@@ -4,21 +4,26 @@ import {
   getAnalyzeSessionCookieName,
   type AnalyzeSiteConfig,
 } from "./lib/siteConfig";
+import { verifyPlatformAdminSession, type PlatformAuthError } from "./lib/platformAuth";
 
 function configurationError(error: unknown) {
   const message = error instanceof Error ? error.message : "Siteni Analiz Et yapılandırması okunamadı.";
   return NextResponse.json({ message }, { status: 500 });
 }
 
-function reject(request: NextRequest, site: AnalyzeSiteConfig, status: number, message: string) {
+function reject(request: NextRequest, site: AnalyzeSiteConfig, status: number, error: PlatformAuthError) {
   if (request.nextUrl.pathname.startsWith("/api/")) {
-    return NextResponse.json({ message }, { status });
+    return NextResponse.json({ error }, { status });
   }
 
   const loginUrl = new URL("/login", request.url);
-  if (status === 503) loginUrl.searchParams.set("error", "api");
+  if (error === "admin_unavailable") loginUrl.searchParams.set("error", "admin_unavailable");
+  else if (status === 503) loginUrl.searchParams.set("error", "api");
+  else if (status === 429) loginUrl.searchParams.set("error", "throttled");
   const response = NextResponse.redirect(loginUrl);
-  response.cookies.delete(getAnalyzeSessionCookieName(site));
+  if (status === 401 || status === 403) {
+    response.cookies.delete(getAnalyzeSessionCookieName(site));
+  }
   return response;
 }
 
@@ -42,22 +47,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get(getAnalyzeSessionCookieName(site))?.value;
-  if (!token) return reject(request, site, 401, "Yönetici girişi gerekli.");
+  if (!token) return reject(request, site, 401, "admin_session_required");
 
-  try {
-    const response = await fetch(`${site.authApiUrl}/api/admin/session`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return reject(request, site, 401, "Yönetici oturumu geçersiz veya süresi dolmuş.");
-    }
-
-    return NextResponse.next();
-  } catch {
-    return reject(request, site, 503, "Yetkilendirme sunucusuna ulaşılamadı.");
-  }
+  const result = await verifyPlatformAdminSession(site.authApiUrl, token);
+  if (result.ok === false) return reject(request, site, result.status, result.error);
+  return NextResponse.next();
 }
 
 export const config = {

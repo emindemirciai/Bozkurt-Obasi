@@ -11,9 +11,9 @@ const dictionary = {
     checking: 'Kontrol ediliyor', healthy: 'Çalışıyor', unhealthy: 'Erişilemiyor',
     analytics: 'Trafik analizini aç', game: 'Oyunu aç',
     private: 'Yalnızca yetkili yöneticiler', invalid: 'E-posta veya parola hatalı.',
-    unavailable: 'Yönetici girişi hazır değil. Dokploy ortamında ADMIN_PASSWORD (en az 12 karakter) tanımlayın.',
+    unavailable: 'Yönetici girişi hazır değil. Dokploy API servisinde ADMIN_EMAIL ve ADMIN_PASSWORD (en az 12 karakter) ayarlarını kontrol edip yeniden dağıtın.',
     denied: 'Oturum geçersiz veya süresi dolmuş. Yeniden giriş yapın.',
-    network: 'Sunucuya ulaşılamadı. Biraz sonra tekrar deneyin.',
+    network: 'Yönetici API bağlantısı kurulamadı. Dokploy yönlendirmesini ve API servisinin çalıştığını kontrol edin.',
     throttled: 'Çok sayıda hatalı deneme. 10 dakika sonra tekrar deneyin.',
     updated: 'Son güncelleme: ',
     switchToLight: 'Aydınlık görünüme geç', switchToDark: 'Karanlık görünüme geç',
@@ -30,9 +30,9 @@ const dictionary = {
     checking: 'Checking', healthy: 'Online', unhealthy: 'Unavailable',
     analytics: 'Open traffic analytics', game: 'Open game',
     private: 'Authorized administrators only', invalid: 'Incorrect email or password.',
-    unavailable: 'Admin sign-in is not ready. Set ADMIN_PASSWORD (at least 12 characters) in Dokploy.',
+    unavailable: 'Admin sign-in is not ready. Check ADMIN_EMAIL and ADMIN_PASSWORD (at least 12 characters) in the Dokploy API service, then redeploy.',
     denied: 'Session invalid or expired. Please sign in again.',
-    network: 'Could not reach the server. Please try again later.',
+    network: 'Could not connect to the admin API. Check the Dokploy routing and that the API service is running.',
     throttled: 'Too many failed attempts. Try again in 10 minutes.',
     updated: 'Last updated: ',
     switchToLight: 'Switch to light mode', switchToDark: 'Switch to dark mode',
@@ -47,6 +47,8 @@ const elements = {
 };
 let language = localStorage.getItem('bozkurt_admin_language') === 'en' ? 'en' : 'tr';
 let token = sessionStorage.getItem('bozkurt_admin_token') || '';
+let messageKey = '';
+let authVersion = 0;
 const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
 let theme = localStorage.getItem('bozkurt_admin_theme');
 if (theme !== 'dark' && theme !== 'light') theme = themeMedia.matches ? 'dark' : 'light';
@@ -72,9 +74,11 @@ function translate() {
   const languageButton = document.getElementById('language');
   languageButton.textContent = language === 'tr' ? 'EN' : 'TR';
   languageButton.setAttribute('aria-label', language === 'tr' ? 'Switch to English' : 'Türkçeye geç');
+  message(messageKey);
   applyTheme();
 }
 function message(key) {
+  messageKey = key;
   elements.message.textContent = key ? dictionary[language][key] : '';
   elements.message.classList.toggle('hidden', !key);
 }
@@ -84,40 +88,61 @@ function authenticated(value) {
   elements.logout.classList.toggle('hidden', !value);
 }
 function discardToken() {
+  authVersion += 1;
   token = '';
   sessionStorage.removeItem('bozkurt_admin_token');
   authenticated(false);
 }
+function failureMessage(response, data, session = false) {
+  if (response.status === 503 && data.error === 'admin_unavailable') return 'unavailable';
+  if (response.status === 429) return 'throttled';
+  if (response.status === 401) return session ? 'denied' : 'invalid';
+  return 'network';
+}
 async function request(path, options = {}) {
   const headers = { ...options.headers };
   if (token) headers.Authorization = 'Bearer ' + token;
-  const response = await fetch(path, { ...options, headers, cache: 'no-store' });
+  const response = await fetch(path, {
+    ...options, headers, cache: 'no-store', signal: AbortSignal.timeout(15_000),
+  });
   const data = await response.json().catch(() => ({}));
-  return { response, data };
+  return { response, data: data ?? {} };
+}
+async function checkConfiguration() {
+  const version = authVersion;
+  try {
+    const { response, data } = await request('/api/admin/session');
+    if (version !== authVersion || token || response.ok || response.status === 401) return;
+    message(failureMessage(response, data));
+  } catch {
+    if (version === authVersion && !token) message('network');
+  }
 }
 async function refresh() {
+  const version = authVersion;
   try {
     const [overview, health] = await Promise.all([
       request('/api/admin/overview'),
-      fetch('/api/health', { cache: 'no-store' }),
+      request('/api/health').catch(() => ({ response: { ok: false } })),
     ]);
-    if (overview.response.status === 401 || overview.response.status === 503) {
-      discardToken();
-      message(overview.response.status === 503 ? 'unavailable' : 'denied');
+    if (version !== authVersion) return;
+    if (!overview.response.ok) {
+      if (overview.response.status === 401) discardToken();
+      if (overview.data.error === 'admin_unavailable') authenticated(false);
+      message(failureMessage(overview.response, overview.data, true));
       return;
     }
-    if (!overview.response.ok) throw new Error('overview');
     document.getElementById('total').textContent = Number(overview.data.totalPlayers || 0).toLocaleString(language);
     document.getElementById('active').textContent = Number(overview.data.activePlayers || 0).toLocaleString(language);
     const healthElement = document.getElementById('health');
-    healthElement.dataset.i18n = health.ok ? 'healthy' : 'unhealthy';
+    healthElement.dataset.i18n = health.response.ok ? 'healthy' : 'unhealthy';
     healthElement.textContent = dictionary[language][healthElement.dataset.i18n];
     document.getElementById('updated').textContent = dictionary[language].updated +
       new Date(overview.data.generatedAt).toLocaleString(language);
     authenticated(true);
     message('');
   } catch {
-    message('network');
+    if (version === authVersion) message('network');
   }
 }
 document.getElementById('theme').addEventListener('click', () => {
@@ -138,6 +163,7 @@ document.getElementById('language').addEventListener('click', () => {
 });
 elements.form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  authVersion += 1;
   const button = elements.form.querySelector('button[type=submit]');
   button.disabled = true;
   message('');
@@ -150,8 +176,8 @@ elements.form.addEventListener('submit', async (event) => {
         password: elements.form.elements.namedItem('password').value,
       }),
     });
-    if (!response.ok || !data.token) {
-      message(response.status === 503 ? 'unavailable' : response.status === 429 ? 'throttled' : 'invalid');
+    if (!response.ok || typeof data.token !== 'string' || !data.token) {
+      message(failureMessage(response, data));
       return;
     }
     token = data.token;
@@ -173,3 +199,4 @@ document.getElementById('refresh').addEventListener('click', refresh);
 translate();
 authenticated(false);
 if (token) refresh();
+else checkConfiguration();

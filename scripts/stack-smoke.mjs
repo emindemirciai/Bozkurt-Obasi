@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 
 const base = {
-  web: 'http://127.0.0.1:3000',
-  api: 'http://127.0.0.1:3001',
-  admin: 'http://127.0.0.1:3002',
-  analyze: 'http://127.0.0.1:3003',
+  web: process.env.STACK_WEB_URL || 'http://127.0.0.1:3000',
+  api: process.env.STACK_API_URL || 'http://127.0.0.1:3001',
+  admin: process.env.STACK_ADMIN_URL || 'http://127.0.0.1:3002',
+  analyze: process.env.STACK_ANALYZE_URL || 'http://127.0.0.1:3003',
 };
-const password = process.env.ADMIN_PASSWORD || '';
+const password = process.env.ADMIN_PASSWORD || process.env.ADMIN_BOOTSTRAP_PASSWORD || '';
+const email =
+  process.env.ADMIN_EMAIL || process.env.ADMIN_BOOTSTRAP_EMAIL || 'info@bozkurtobasi.com';
 async function ready(url) {
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
@@ -61,7 +63,7 @@ async function main() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: process.env.ADMIN_EMAIL || 'info@bozkurtobasi.com',
+      email,
       password,
     }),
   });
@@ -77,7 +79,7 @@ async function main() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: process.env.ADMIN_EMAIL || 'info@bozkurtobasi.com',
+      email,
       password,
     }),
   });

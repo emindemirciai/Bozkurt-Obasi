@@ -4,6 +4,22 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.8.1 — 2026-10-07
+
+**TR**
+
+- Admin ve analiz girişinde eksik yönetici ayarı, bağlantı hatası, yanlış parola ve deneme sınırı ayrı TR/EN mesajlarıyla gösterilir; API kesintisi geçerli oturumu silmez.
+- Analiz yönetici doğrulaması varsayılan olarak dahili API üzerinden çalışır; web/admin ağ geçitleri API yeniden oluşturulduğunda Docker DNS bilgisini yeniler.
+- Dokploy admin:3000 port eşlemesi ve API ortamı tanısı belgelenir; giriş ve API IP değişimi senaryoları CI testlerine eklenir.
+- Mevcut ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD ortam adları API yönetici hesabına aktarılır; ADMIN_EMAIL/ADMIN_PASSWORD önceliği ve en az 12 karakter kuralı korunur.
+
+**EN**
+
+- Admin and analytics sign-in distinguish missing administrator configuration, transport failures, invalid credentials and rate limits in TR/EN; API outages preserve valid sessions.
+- Analytics administrator authentication defaults to the internal API; web/admin gateways refresh Docker DNS after API container replacement.
+- Document the Dokploy admin:3000 domain mapping and safe API environment diagnostics; add sign-in and API IP replacement regression checks to CI.
+- Existing ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD environment names configure the API administrator; ADMIN_EMAIL/ADMIN_PASSWORD precedence and the 12-character minimum remain enforced.
+
 ## v1.8.0 — 2026-10-06
 
 **TR**

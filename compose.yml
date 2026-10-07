@@ -39,8 +39,8 @@ services:
       SMTP_SECURE: "${SMTP_SECURE:-true}"
       SMTP_USER: "${SMTP_USER:-info@bozkurtobasi.com}"
       SMTP_PASSWORD: "${SMTP_PASSWORD:-}"
-      ADMIN_EMAIL: "${ADMIN_EMAIL:-info@bozkurtobasi.com}"
-      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-${ADMIN_BOOTSTRAP_EMAIL:-info@bozkurtobasi.com}}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-${ADMIN_BOOTSTRAP_PASSWORD:-}}"
       GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
       GOOGLE_REDIRECT_URIS: "${GOOGLE_REDIRECT_URIS:-https://bozkurtobasi.com/api/auth/google/callback,https://www.bozkurtobasi.com/api/auth/google/callback}"
@@ -112,7 +112,7 @@ services:
       ANALYZE_DESCRIPTION: "${ANALYZE_DESCRIPTION:-Bozkurtobasi.com için gerçek zamanlı trafik analiz paneli}"
       ANALYZE_HEALTH_NAME: "${ANALYZE_HEALTH_NAME:-Bozkurtobasi.com Siteni Analiz Et}"
       ANALYZE_AUTH_MODE: platform-admin
-      ANALYZE_AUTH_API_URL: "${ANALYZE_AUTH_API_URL:-https://api.bozkurtobasi.com}"
+      ANALYZE_AUTH_API_URL: "${ANALYZE_AUTH_API_URL:-http://api:3000}"
       ANALYZE_ALLOWED_ORIGINS: "${ANALYZE_ALLOWED_ORIGINS:-https://bozkurtobasi.com,https://www.bozkurtobasi.com}"
       ANALYZE_EVENT_SITES: "${ANALYZE_EVENT_SITES:-bozkurtobasi.com,www.bozkurtobasi.com}"
       ANALYZE_DATA_DIR: /app/data

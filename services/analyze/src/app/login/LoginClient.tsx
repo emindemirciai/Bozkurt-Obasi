@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Activity, LogIn, Moon, ShieldCheck, Sun } from "lucide-react";
 import { useAnalyzeTheme } from "../../lib/useAnalyzeTheme";
 
@@ -19,7 +19,10 @@ const messages = {
     submit: "Giriş yap",
     pending: "Kontrol ediliyor...",
     invalid: "Giriş yapılamadı. E-posta ve şifreyi kontrol edin.",
-    unavailable: "Yönetici girişi şu anda kullanılamıyor. API bağlantısını ve yönetici ayarlarını kontrol edin.",
+    unavailable: "Yetkilendirme API’sine ulaşılamadı veya yanıtı geçersiz. API bağlantısını kontrol edip yeniden deneyin.",
+    adminUnavailable: "Yönetici hesabı API’de hazır değil. Dokploy API servisinde ADMIN_EMAIL ve en az 12 karakterlik ADMIN_PASSWORD tanımlayıp yeniden dağıtın.",
+    throttled: "Çok sayıda hatalı deneme yapıldı. 10 dakika sonra tekrar deneyin.",
+    denied: "Bu panel yalnızca yetkili platform yöneticilerine açıktır.",
     switchLight: "Açık temaya geç",
     switchDark: "Koyu temaya geç",
     light: "Açık",
@@ -33,7 +36,10 @@ const messages = {
     submit: "Sign in",
     pending: "Checking...",
     invalid: "Sign-in failed. Check your email and password.",
-    unavailable: "Administrator sign-in is currently unavailable. Check the API connection and administrator settings.",
+    unavailable: "The authentication API could not be reached or returned an invalid response. Check the API connection and try again.",
+    adminUnavailable: "The administrator account is not ready in the API. Set ADMIN_EMAIL and an ADMIN_PASSWORD of at least 12 characters in the Dokploy API service, then redeploy.",
+    throttled: "Too many failed attempts. Try again in 10 minutes.",
+    denied: "Only authorized platform administrators may access this dashboard.",
     switchLight: "Switch to light theme",
     switchDark: "Switch to dark theme",
     light: "Light",
@@ -41,34 +47,61 @@ const messages = {
   },
 };
 
+type LoginMessage = "invalid" | "unavailable" | "adminUnavailable" | "throttled" | "denied" | "";
+
+function failureMessage(status: number, error: unknown): LoginMessage {
+  if (error === "admin_unavailable") return "adminUnavailable";
+  if (error === "auth_api_unavailable" || status >= 500) return "unavailable";
+  if (error === "login_rate_limited" || status === 429) return "throttled";
+  if (status === 403) return "denied";
+  return "invalid";
+}
+
 export default function LoginClient({ title, name }: LoginClientProps) {
   const [language, setLanguage] = useState<Language>("tr");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<LoginMessage>("");
   const [pending, setPending] = useState(false);
   const { theme, chooseTheme } = useAnalyzeTheme();
   const isDark = theme === "dark";
   const copy = messages[language];
 
+  useEffect(() => {
+    const error = new URLSearchParams(window.location.search).get("error");
+    if (error === "api") setMessage("unavailable");
+    else if (error === "admin_unavailable") setMessage("adminUnavailable");
+    else if (error === "throttled") setMessage("throttled");
+  }, []);
+
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
     setPending(true);
+    const controller = new AbortController();
+    // The server performs two separately bounded eight-second API requests.
+    const timeout = setTimeout(() => controller.abort(), 20_000);
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setMessage(response.status === 503 ? copy.unavailable : copy.invalid);
+        setMessage(failureMessage(response.status, data.error));
+        return;
+      }
+      if (data.ok !== true) {
+        setMessage("unavailable");
         return;
       }
       window.location.href = "/";
     } catch {
-      setMessage(copy.unavailable);
+      setMessage("unavailable");
     } finally {
+      clearTimeout(timeout);
       setPending(false);
     }
   }
@@ -76,7 +109,6 @@ export default function LoginClient({ title, name }: LoginClientProps) {
   function switchLanguage() {
     const next = language === "tr" ? "en" : "tr";
     setLanguage(next);
-    setMessage("");
     document.documentElement.lang = next;
   }
 
@@ -139,7 +171,7 @@ export default function LoginClient({ title, name }: LoginClientProps) {
               className="analyze-login-input mt-2 h-12 w-full rounded-md border px-4 transition"
             />
           </label>
-          {message && <p role="alert" className="analyze-login-error text-sm">{message}</p>}
+          {message && <p role="alert" className="analyze-login-error text-sm">{copy[message]}</p>}
           <button
             type="submit"
             disabled={pending}

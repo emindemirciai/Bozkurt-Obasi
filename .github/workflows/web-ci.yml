@@ -96,6 +96,7 @@ jobs:
         run: |
           docker compose -f compose.yml config --quiet
           docker compose -f docker-compose.yml config --quiet
+          node scripts/compose-env-smoke.mjs
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -109,9 +110,13 @@ jobs:
 
       - name: Build all Dokploy services
         run: docker compose -f compose.yml -f compose.local.yml build
+      - name: Gateways recover from API replacement
+        run: node scripts/proxy-smoke.mjs
+      - name: Analytics authentication handles upstream failures
+        run: node scripts/analyze-auth-smoke.mjs
       - name: Four-service auth and analytics smoke
         env:
-          ADMIN_PASSWORD: ci-only-test-password-2026
+          ADMIN_BOOTSTRAP_PASSWORD: ci-only-test-password-2026
         run: |
           docker compose -f compose.yml -f compose.local.yml up -d --no-build
           node scripts/stack-smoke.mjs
