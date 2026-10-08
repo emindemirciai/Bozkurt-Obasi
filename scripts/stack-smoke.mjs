@@ -75,6 +75,54 @@ async function main() {
   const overview = await json(base.admin + '/api/admin/overview', { headers: authorization });
   assert.equal(overview.response.status, 200);
   assert.ok(overview.data.totalPlayers >= 0);
+  const created = await json(base.admin + '/api/admin/users', {
+    method: 'POST',
+    headers: { ...authorization, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'Smoke Player',
+      email: `stack-player-${crypto.randomUUID()}@example.com`,
+      password: 'smoke-player-password-2026',
+    }),
+  });
+  assert.equal(created.response.status, 201);
+  const user = created.data.user;
+  try {
+    assert.equal(user.verified, false);
+    assert.equal(user.lastLoginAt, null);
+    const listing = await json(
+      base.admin + '/api/admin/users?query=' + encodeURIComponent(user.email),
+      { headers: authorization },
+    );
+    assert.equal(listing.response.status, 200);
+    assert.equal(listing.data.total, 1);
+    const detail = await json(base.admin + '/api/admin/users/' + user.id, {
+      headers: authorization,
+    });
+    assert.equal(detail.response.status, 200);
+    assert.equal(detail.data.user.villages.length, 1);
+    const incorrect = await json(base.admin + '/api/admin/users/' + user.id, {
+      method: 'DELETE',
+      headers: { ...authorization, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation: 'incorrect#0000' }),
+    });
+    assert.equal(incorrect.response.status, 400);
+  } finally {
+    const removed = await json(base.admin + '/api/admin/users/' + user.id, {
+      method: 'DELETE',
+      headers: { ...authorization, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation: user.userCode }),
+    });
+    assert.equal(removed.response.status, 200);
+  }
+  assert.equal(
+    (await fetch(base.admin + '/api/admin/users/' + user.id, { headers: authorization })).status,
+    404,
+  );
+  const activity = await json(base.admin + '/api/admin/logs?action=admin.user.delete', {
+    headers: authorization,
+  });
+  assert.equal(activity.response.status, 200);
+  assert.ok(activity.data.logs.some((entry) => entry.details.accounts === 1));
   const panelLogin = await json(base.analyze + '/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -127,7 +175,7 @@ async function main() {
   assert.equal(events.data.events.filter((item) => item.id === id).length, 1);
   assert.equal(events.data.events.find((item) => item.id === id).duration, 7);
   console.log(
-    'Four-service account login gate, admin auth, analytics auth, tracking, and duration smoke passed.',
+    'Four-service account gate, admin auth, user creation/deletion, audit logs, analytics auth, tracking, and duration smoke passed.',
   );
 }
 await main();

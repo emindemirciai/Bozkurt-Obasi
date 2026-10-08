@@ -205,6 +205,8 @@ export const translations = {
     googleLogout: 'Çıkış yap',
     googleWelcome: 'Google hesabınla giriş yaptın.',
     googleCancelled: 'Google girişi iptal edildi.',
+    accountDeleted:
+      'Hesap silindiği için bu giriş tamamlanamadı. Yeni bir hesap için giriş işlemini yeniden başlatın.',
     googleGameUnavailable: 'Giriş yapıldı; sunucu köyüne şu an ulaşılamıyor.',
     googleLoggedOut: 'Hesabından çıkış yaptın.',
     privacyPolicy: 'Gizlilik politikası',
@@ -595,6 +597,8 @@ export const translations = {
     googleLogout: 'Sign out',
     googleWelcome: 'You signed in with Google.',
     googleCancelled: 'Google sign-in was cancelled.',
+    accountDeleted:
+      'This sign-in could not finish because the account was deleted. Start sign-in again to create a new account.',
     googleGameUnavailable: 'Signed in; your server village is unavailable right now.',
     googleLoggedOut: 'You signed out.',
     privacyPolicy: 'Privacy policy',

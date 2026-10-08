@@ -635,3 +635,57 @@ test('Google profile pictures initialize once and cannot overwrite custom upload
   const mismatch = await api.callback(await api.start([renewed]), [renewed]);
   assert.equal(mismatch.headers.get('location'), '/?auth=account_link_email_mismatch');
 });
+
+test('admin deletion blocks an earlier anonymous Google flow and allows a fresh empty account', async (t) => {
+  let now = NOW;
+  const api = await fixture(t, {
+    clock: () => now,
+    adminEmail: 'admin@example.test',
+    adminPassword: 'admin-test-password-2026',
+  });
+  const initial = await api.callback(await api.start());
+  const oldCookie = cookie(initial, 'bozkurt_session');
+  const user = (await (await api.request('/api/player/profile', { cookies: [oldCookie] })).json())
+    .user;
+  const login = await api.request('/api/auth/login', {
+    method: 'POST',
+    body: { email: 'admin@example.test', password: 'admin-test-password-2026' },
+  });
+  const token = (await login.json()).token;
+  const listed = await api.request('/api/admin/users', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const id = (await listed.json()).users.find((row) => row.userCode === user.userCode).id;
+  const oldFlow = await api.start();
+  now += 10;
+  const removed = await api.request(`/api/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+    body: { confirmation: user.userCode },
+  });
+  assert.equal(removed.status, 200);
+  assert.equal((await api.request('/api/state', { cookies: [oldCookie] })).status, 401);
+  const stale = await api.callback(oldFlow);
+  assert.equal(stale.status, 303);
+  assert.equal(stale.headers.get('location'), '/?auth=account_deleted');
+  let db = new DatabaseSync(api.dbPath);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM google_accounts').get().n, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM player_profiles').get().n, 0);
+  const tombstone = db.prepare('SELECT * FROM deleted_google_accounts').get();
+  assert.equal(tombstone.sub_hash, createHash('sha256').update('google-sub-123').digest('hex'));
+  assert.equal(tombstone.expires_at - tombstone.deleted_at, 600_000);
+  db.close();
+  now += 10;
+  const fresh = await api.callback(await api.start());
+  assert.equal(fresh.headers.get('location'), '/?auth=success');
+  const newCookie = cookie(fresh, 'bozkurt_session');
+  const newUser = (
+    await (await api.request('/api/player/profile', { cookies: [newCookie] })).json()
+  ).user;
+  assert.notEqual(newUser.userCode, user.userCode);
+  const state = (await (await api.request('/api/state', { cookies: [newCookie] })).json()).state;
+  assert.equal(state.battle.wave, 1);
+  db = new DatabaseSync(api.dbPath);
+  assert.equal(db.prepare('SELECT last_login_at FROM google_accounts').get().last_login_at, now);
+  db.close();
+});

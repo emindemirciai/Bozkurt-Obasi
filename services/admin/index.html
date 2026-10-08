@@ -28,63 +28,326 @@
   SOFTWARE.
 -->
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="author" content="Emin DEMİRCİ">
-  <meta name="copyright" content="Copyright © 2026 Emin DEMİRCİ; MIT License">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#211a16">
-  <title>Bozkurt Obası · Yönetim</title>
-  <link rel="stylesheet" href="/app.css">
-  <script src="/app.js" defer></script>
-</head>
-<body>
-  <div class="shell">
-    <header class="topbar">
-      <a class="brand" href="https://bozkurtobasi.com" aria-label="Bozkurt Obası">
-        <span class="sigil">☾★</span>
-        <span><strong>Bozkurt Obası</strong><small data-i18n="subtitle">Obanı kur, sürünü koru.</small></span>
-      </a>
-      <div class="header-actions">
-        <button id="theme" class="ghost theme-toggle" type="button" aria-label="Aydınlık görünüme geç" aria-pressed="true" title="Aydınlık görünüme geç">☀</button>
-        <button id="language" class="ghost" type="button" aria-label="Change language">EN</button>
-        <button id="logout" class="ghost hidden" type="button" data-i18n="logout">Çıkış</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="author" content="Emin DEMİRCİ" />
+    <meta name="copyright" content="Copyright © 2026 Emin DEMİRCİ; MIT License" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#211a16" />
+    <title>Bozkurt Obası · Yönetim</title>
+    <link rel="stylesheet" href="/app.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="https://bozkurtobasi.com" aria-label="Bozkurt Obası">
+          <span class="sigil">☾★</span>
+          <span
+            ><strong>Bozkurt Obası</strong
+            ><small data-i18n="subtitle">Obanı kur, sürünü koru.</small></span
+          >
+        </a>
+        <div class="header-actions">
+          <button
+            id="theme"
+            class="ghost theme-toggle"
+            type="button"
+            aria-label="Aydınlık görünüme geç"
+            aria-pressed="true"
+            title="Aydınlık görünüme geç"
+          >
+            ☀
+          </button>
+          <button id="language" class="ghost" type="button" aria-label="Change language">EN</button>
+          <button id="logout" class="ghost hidden" type="button" data-i18n="logout">Çıkış</button>
+        </div>
+      </header>
+      <main>
+        <div class="eyebrow" data-i18n="eyebrow">YÖNETİM MERKEZİ</div>
+        <h1 data-i18n="title">Obanın nabzını takip et.</h1>
+        <p class="lead" data-i18n="lead">
+          Kullanıcıları, kayıtları ve hesap işlemlerini tek merkezden yönet.
+        </p>
+        <div id="message" class="message hidden" role="status" aria-live="polite"></div>
+        <section id="login-panel" class="panel login-panel">
+          <div>
+            <span class="section-index">01 / <span data-i18n="access">ERİŞİM</span></span>
+            <h2 data-i18n="loginTitle">Yönetici girişi</h2>
+            <p data-i18n="loginHint">
+              Dokploy ortamında tanımladığınız yönetici hesabıyla giriş yapın.
+            </p>
+          </div>
+          <form id="login-form">
+            <label for="email" data-i18n="email">E-posta</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="username"
+              required
+              maxlength="254"
+              placeholder="info@bozkurtobasi.com"
+            />
+            <label for="password" data-i18n="password">Parola</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+            <button class="primary" type="submit" data-i18n="signIn">
+              Panele gir <span aria-hidden="true">→</span>
+            </button>
+          </form>
+        </section>
+        <section id="dashboard" class="hidden">
+          <div class="section-head">
+            <nav
+              id="dashboard-tabs"
+              class="dashboard-tabs"
+              role="tablist"
+              aria-label="Yönetim bölümleri"
+              data-i18n-aria="sections"
+            >
+              <button
+                id="tab-overview"
+                class="tab active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="view-overview"
+                data-tab="overview"
+                data-i18n="overview"
+              >
+                Genel bakış
+              </button>
+              <button
+                id="tab-users"
+                class="tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="view-users"
+                tabindex="-1"
+                data-tab="users"
+                data-i18n="users"
+              >
+                Kullanıcılar
+              </button>
+              <button
+                id="tab-logs"
+                class="tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="view-logs"
+                tabindex="-1"
+                data-tab="logs"
+                data-i18n="logs"
+              >
+                İşlem günlüğü
+              </button>
+            </nav>
+            <button id="refresh" class="ghost compact" type="button" data-i18n="refresh">
+              Yenile
+            </button>
+          </div>
+          <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
+            <div class="metrics">
+              <article class="metric">
+                <span data-i18n="totalUsers">Kayıtlı kullanıcılar</span><strong id="total">—</strong
+                ><small data-i18n="totalHint">Tekil oyuncu hesapları</small>
+              </article>
+              <article class="metric">
+                <span data-i18n="verifiedUsers">Doğrulanmış hesaplar</span
+                ><strong id="verified-total">—</strong
+                ><small data-i18n="verifiedHint">E-posta doğrulaması tamamlandı</small>
+              </article>
+              <article class="metric">
+                <span data-i18n="pendingUsers">Doğrulama bekleyenler</span
+                ><strong id="pending-total">—</strong
+                ><small data-i18n="pendingHint">Henüz oyuna erişemez</small>
+              </article>
+              <article class="metric">
+                <span data-i18n="activePlayers">Son 24 saatte aktif</span
+                ><strong id="active">—</strong
+                ><small data-i18n="activeHint">Güncellenen oyun kayıtları</small>
+              </article>
+              <article class="metric">
+                <span data-i18n="emailUsers">E-posta ile giriş</span
+                ><strong id="email-total">—</strong
+                ><small data-i18n="linkedHint">Aynı hesap Google ile de bağlı olabilir</small>
+              </article>
+              <article class="metric">
+                <span data-i18n="googleUsers">Google ile bağlı</span
+                ><strong id="google-total">—</strong
+                ><small data-i18n="linkedHint">Aynı hesap Google ile de bağlı olabilir</small>
+              </article>
+            </div>
+            <div class="service-status">
+              <span class="status-dot" aria-hidden="true"></span
+              ><span data-i18n="status">Sistem durumu</span
+              ><strong id="health" data-i18n="checking">Kontrol ediliyor</strong>
+              <p id="updated" class="updated"></p>
+            </div>
+            <div class="links">
+              <a href="https://analiz.bozkurtobasi.com" target="_blank" rel="noopener noreferrer"
+                ><span data-i18n="analytics">Trafik analizini aç</span><b>↗</b></a
+              >
+              <a href="https://bozkurtobasi.com" target="_blank" rel="noopener noreferrer"
+                ><span data-i18n="game">Oyunu aç</span><b>↗</b></a
+              >
+            </div>
+          </section>
+          <section id="view-users" class="hidden" role="tabpanel" aria-labelledby="tab-users">
+            <div class="section-title">
+              <div>
+                <h2 data-i18n="users">Kullanıcılar</h2>
+                <p data-i18n="usersLead">
+                  Kayıt tarihlerini ve giriş yöntemlerini incele, hesapları yönet.
+                </p>
+              </div>
+              <button id="add-user" class="primary compact" type="button" data-i18n="addUser">
+                Kullanıcı ekle
+              </button>
+            </div>
+            <form id="users-filter" class="filters">
+              <div class="search-field">
+                <label for="users-query" data-i18n="searchUsers">Kullanıcı ara</label
+                ><input
+                  id="users-query"
+                  name="query"
+                  type="search"
+                  maxlength="100"
+                  data-i18n-placeholder="usersSearchPlaceholder"
+                  placeholder="Ad, e-posta veya oyuncu kodu"
+                />
+              </div>
+              <div>
+                <label for="users-verification" data-i18n="verification">Doğrulama</label
+                ><select id="users-verification" name="verification">
+                  <option value="all" data-i18n="all">Tümü</option>
+                  <option value="verified" data-i18n="verified">Doğrulanmış</option>
+                  <option value="pending" data-i18n="pending">Bekliyor</option>
+                </select>
+              </div>
+              <div>
+                <label for="users-provider" data-i18n="loginMethod">Giriş yöntemi</label
+                ><select id="users-provider" name="provider">
+                  <option value="all" data-i18n="all">Tümü</option>
+                  <option value="email" data-i18n="emailMethod">E-posta</option>
+                  <option value="google">Google</option>
+                </select>
+              </div>
+              <button class="ghost filter-submit" type="submit" data-i18n="search">Ara</button>
+            </form>
+            <p id="users-state" class="list-state" role="status" aria-live="polite"></p>
+            <div class="data-panel">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="player">Oyuncu</th>
+                    <th data-i18n="registeredAt">Kayıt tarihi</th>
+                    <th data-i18n="loginMethod">Giriş yöntemi</th>
+                    <th data-i18n="verification">Doğrulama</th>
+                    <th data-i18n="lastActive">Son etkinlik</th>
+                    <th data-i18n="actions">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody id="users-list"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button id="users-prev" class="ghost compact" type="button" data-i18n="previous">
+                Önceki</button
+              ><span id="users-page" aria-live="polite"></span
+              ><button id="users-next" class="ghost compact" type="button" data-i18n="next">
+                Sonraki
+              </button>
+            </div>
+          </section>
+          <section id="view-logs" class="hidden" role="tabpanel" aria-labelledby="tab-logs">
+            <div class="section-title">
+              <div>
+                <h2 data-i18n="logs">İşlem günlüğü</h2>
+                <p data-i18n="logsLead">Kayıt, giriş ve yönetici işlemlerinin tarihli kayıtları.</p>
+              </div>
+            </div>
+            <form id="logs-filter" class="filters">
+              <div class="search-field">
+                <label for="logs-query" data-i18n="searchLogs">Günlüklerde ara</label
+                ><input
+                  id="logs-query"
+                  name="query"
+                  type="search"
+                  maxlength="100"
+                  data-i18n-placeholder="logsSearchPlaceholder"
+                  placeholder="Oyuncu veya işlem ara"
+                />
+              </div>
+              <div>
+                <label for="logs-action" data-i18n="logAction">İşlem</label
+                ><select id="logs-action" name="action">
+                  <option value="" data-i18n="all">Tümü</option>
+                </select>
+              </div>
+              <div>
+                <label for="logs-level" data-i18n="level">Düzey</label
+                ><select id="logs-level" name="level">
+                  <option value="all" data-i18n="all">Tümü</option>
+                  <option value="info" data-i18n="info">Bilgi</option>
+                  <option value="warning" data-i18n="warning">Uyarı</option>
+                  <option value="error" data-i18n="error">Hata</option>
+                </select>
+              </div>
+              <button class="ghost filter-submit" type="submit" data-i18n="search">Ara</button>
+            </form>
+            <p class="muted" data-i18n="logsRetention">
+              Günlükler en fazla 90 gün ve 100.000 kayıt saklanır. Parolalar ve doğrulama kodları
+              kaydedilmez.
+            </p>
+            <p id="logs-state" class="list-state" role="status" aria-live="polite"></p>
+            <div class="data-panel">
+              <table class="data-table log-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="date">Tarih</th>
+                    <th data-i18n="logAction">İşlem</th>
+                    <th data-i18n="actor">İşlemi yapan</th>
+                    <th data-i18n="target">Hedef</th>
+                    <th data-i18n="details">Ayrıntılar</th>
+                  </tr>
+                </thead>
+                <tbody id="logs-list"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button id="logs-prev" class="ghost compact" type="button" data-i18n="previous">
+                Önceki</button
+              ><span id="logs-page" aria-live="polite"></span
+              ><button id="logs-next" class="ghost compact" type="button" data-i18n="next">
+                Sonraki
+              </button>
+            </div>
+          </section>
+        </section>
+      </main>
+      <footer>
+        Bozkurt Obası: Ay-Yıldız Nöbeti <span>·</span>
+        <span data-i18n="private">Yalnızca yetkili yöneticiler</span>
+      </footer>
+    </div>
+    <dialog id="admin-dialog" class="admin-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-head">
+        <h2 id="dialog-title"></h2>
+        <button id="dialog-close" class="ghost compact" type="button" data-i18n="close">
+          Kapat
+        </button>
       </div>
-    </header>
-    <main>
-      <div class="eyebrow" data-i18n="eyebrow">YÖNETİM MERKEZİ</div>
-      <h1 data-i18n="title">Obanın nabzını takip et.</h1>
-      <p class="lead" data-i18n="lead">Oyuncu oturumlarını güvenli bir panelden izle. Trafik ayrıntıları analiz panelinde.</p>
-      <div id="message" class="message hidden" role="status" aria-live="polite"></div>
-      <section id="login-panel" class="panel login-panel">
-        <div>
-          <span class="section-index">01 / <span data-i18n="access">ERİŞİM</span></span>
-          <h2 data-i18n="loginTitle">Yönetici girişi</h2>
-          <p data-i18n="loginHint">Dokploy ortamında tanımladığınız yönetici hesabıyla giriş yapın.</p>
-        </div>
-        <form id="login-form">
-          <label for="email" data-i18n="email">E-posta</label>
-          <input id="email" name="email" type="email" autocomplete="username" required maxlength="254" placeholder="info@bozkurtobasi.com">
-          <label for="password" data-i18n="password">Parola</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required>
-          <button class="primary" type="submit" data-i18n="signIn">Panele gir <span aria-hidden="true">→</span></button>
-        </form>
-      </section>
-      <section id="dashboard" class="hidden">
-        <div class="section-head"><span class="section-index">02 / <span data-i18n="overview">GENEL BAKIŞ</span></span><button id="refresh" class="ghost" type="button" data-i18n="refresh">Yenile</button></div>
-        <div class="metrics">
-          <article class="metric"><span data-i18n="totalPlayers">Toplam oyuncu oturumu</span><strong id="total">—</strong><small data-i18n="totalHint">Geçerli misafir köyleri</small></article>
-          <article class="metric"><span data-i18n="activePlayers">Son 24 saatte aktif</span><strong id="active">—</strong><small data-i18n="activeHint">Güncellenen oturumlar</small></article>
-          <article class="metric"><span data-i18n="status">Sistem durumu</span><strong id="health" data-i18n="checking">Kontrol ediliyor</strong><small data-i18n="statusHint">Oyun API sağlığı</small></article>
-        </div>
-        <div class="links">
-          <a href="https://analiz.bozkurtobasi.com" target="_blank" rel="noopener noreferrer"><span data-i18n="analytics">Trafik analizini aç</span><b>↗</b></a>
-          <a href="https://bozkurtobasi.com" target="_blank" rel="noopener noreferrer"><span data-i18n="game">Oyunu aç</span><b>↗</b></a>
-        </div>
-        <p id="updated" class="updated"></p>
-      </section>
-    </main>
-    <footer>Bozkurt Obası: Ay-Yıldız Nöbeti <span>·</span> <span data-i18n="private">Yalnızca yetkili yöneticiler</span></footer>
-  </div>
-</body>
+      <div id="dialog-message" class="message hidden" role="alert"></div>
+      <div id="dialog-content"></div>
+    </dialog>
+  </body>
 </html>

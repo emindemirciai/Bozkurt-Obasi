@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.9.0 — 2026-10-08
+
+**TR**
+
+- Yönetim paneline kullanıcı arama, filtreleme, kayıt ve son giriş tarihleri, köy ve oturum ayrıntıları eklendi.
+- Yönetici normal kullanıcı ekleyebilir ve oyuncu koduyla hesabı tüm bağlı kayıtlarıyla kalıcı silebilir. E-posta doğrulaması ve diğer köyler korunur.
+- Tarihli işlem günlükleri, TR/EN ayrıntılar, güvenli hesap silme kontrolleri ve salt okunur çevrimdışı admin önizlemesi eklendi.
+
+**EN**
+
+- The admin panel now includes user search, filters, registration and last-login dates, village details and sessions.
+- Administrators can add normal users and permanently delete accounts and related records using the exact player code. Email verification and other villages remain protected.
+- Dated activity logs, bilingual details, safe deletion checks and a read-only offline admin preview are included.
+
 ## v1.8.3 — 2026-10-08
 
 **TR**

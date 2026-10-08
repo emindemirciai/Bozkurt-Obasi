@@ -36,3 +36,4 @@ await mkdir('preview', { recursive: true });
 await writeFile('preview/index.html', html, 'utf8');
 console.log(`Offline visual preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);
 await import('./build-battle-preview.mjs');
+await import('./build-admin-preview.mjs');

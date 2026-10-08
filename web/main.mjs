@@ -288,6 +288,7 @@ async function initGoogleAuth() {
     history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     if (result === 'success' && auth.authenticated) toast('googleWelcome');
     else if (result === 'cancelled') toast('googleCancelled');
+    else if (result === 'account_deleted') toast('accountDeleted');
     else if (result === 'account_link_required' || result === 'account_link_email_mismatch') {
       clearAccountDraft();
       accountError =

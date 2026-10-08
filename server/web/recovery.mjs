@@ -56,7 +56,12 @@ export function createRecoveryStore(database, { mail, HttpError }) {
       if (!(await mail.sendPasswordReset(account.email, code))) return requested();
       const current = accountGet.get(email);
       // A concurrent password change cannot reactivate a code sent for the former password.
-      if (!eligible(current) || current.password_hash !== account.password_hash) return requested();
+      if (
+        !eligible(current) ||
+        current.sub !== account.sub ||
+        current.password_hash !== account.password_hash
+      )
+        return requested();
       database
         .prepare(
           `INSERT INTO password_recoveries(email_sub,token_hash,salt,password_hash,issued_at,

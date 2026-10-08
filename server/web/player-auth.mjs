@@ -8,7 +8,7 @@ const MAX_AUTH_ATTEMPTS = 20;
 const MAX_FAILED_LOGINS = 5;
 const MAX_KDF_JOBS = 4;
 
-function normalizedEmail(value) {
+export function normalizedEmail(value) {
   if (typeof value !== 'string') return null;
   const email = value.trim().toLowerCase();
   if (
@@ -21,7 +21,7 @@ function normalizedEmail(value) {
   return email;
 }
 
-function boundedPassword(value, minimum = 1) {
+export function boundedPassword(value, minimum = 1) {
   return (
     typeof value === 'string' &&
     value.length <= 256 &&
@@ -29,6 +29,34 @@ function boundedPassword(value, minimum = 1) {
     Array.from(value).length <= 128 &&
     !value.includes('\0')
   );
+}
+
+/** Share the same salted format and per-app KDF budget with administrator-created players. */
+export function createPlayerCredentials({ HttpError }) {
+  let activeJobs = 0;
+  async function passwordKey(password, salt) {
+    if (activeJobs >= MAX_KDF_JOBS) throw new HttpError(429, 'login_rate_limited');
+    activeJobs++;
+    try {
+      return await deriveKey(password, salt, 64, SCRYPT_OPTIONS);
+    } finally {
+      activeJobs--;
+    }
+  }
+  async function hashPassword(password) {
+    const salt = randomBytes(16);
+    const hash = await passwordKey(password, salt);
+    return `scrypt-v1$${salt.toString('base64url')}$${hash.toString('base64url')}`;
+  }
+  async function verifyPassword(password, encoded) {
+    const parts = /^scrypt-v1\$([A-Za-z0-9_-]{22})\$([A-Za-z0-9_-]{86})$/.exec(encoded || '');
+    const salt = parts ? Buffer.from(parts[1], 'base64url') : Buffer.alloc(16);
+    const expected = parts ? Buffer.from(parts[2], 'base64url') : Buffer.alloc(64);
+    // Unknown accounts perform the same expensive derivation and constant-time comparison.
+    const candidate = await passwordKey(password, salt);
+    return timingSafeEqual(candidate, expected) && Boolean(parts);
+  }
+  return { hashPassword, verifyPassword };
 }
 
 /** Player credentials never share the administrator token routes or Google identity namespace. */
@@ -54,6 +82,7 @@ export function createPlayerRoutes(
     changePassword,
     requestRecovery,
     confirmRecovery,
+    credentials,
   },
 ) {
   const findEmail = database.prepare(
@@ -64,7 +93,7 @@ export function createPlayerRoutes(
   );
   const attempts = new Map();
   const failures = new Map();
-  let activeJobs = 0;
+  const { hashPassword, verifyPassword } = credentials || createPlayerCredentials({ HttpError });
 
   function bucket(map, key, now) {
     const previous = map.get(key);
@@ -87,31 +116,6 @@ export function createPlayerRoutes(
     const value = bucket(attempts, address, now);
     if (value.count >= MAX_AUTH_ATTEMPTS) throw new HttpError(429, 'login_rate_limited');
     value.count++;
-  }
-
-  async function passwordKey(password, salt) {
-    if (activeJobs >= MAX_KDF_JOBS) throw new HttpError(429, 'login_rate_limited');
-    activeJobs++;
-    try {
-      return await deriveKey(password, salt, 64, SCRYPT_OPTIONS);
-    } finally {
-      activeJobs--;
-    }
-  }
-
-  async function hashPassword(password) {
-    const salt = randomBytes(16);
-    const hash = await passwordKey(password, salt);
-    return `scrypt-v1$${salt.toString('base64url')}$${hash.toString('base64url')}`;
-  }
-
-  async function verifyPassword(password, encoded) {
-    const parts = /^scrypt-v1\$([A-Za-z0-9_-]{22})\$([A-Za-z0-9_-]{86})$/.exec(encoded || '');
-    const salt = parts ? Buffer.from(parts[1], 'base64url') : Buffer.alloc(16);
-    const expected = parts ? Buffer.from(parts[2], 'base64url') : Buffer.alloc(64);
-    // Unknown accounts perform the same expensive derivation and constant-time comparison.
-    const candidate = await passwordKey(password, salt);
-    return timingSafeEqual(candidate, expected) && Boolean(parts);
   }
 
   async function handle(request, response, pathname, now) {

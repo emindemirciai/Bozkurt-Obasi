@@ -347,9 +347,15 @@ export function createGoogleRoutes(
       );
       const person = await identity(tokens.id_token, pending.nonce, now);
       try {
-        completeLogin(request, response, person, now);
+        completeLogin(request, response, person, now, {
+          flowStartedAt: pending.expires_at - FLOW_AGE_MS,
+        });
       } catch (error) {
-        if (['account_link_required', 'account_link_email_mismatch'].includes(error.code)) {
+        if (
+          ['account_link_required', 'account_link_email_mismatch', 'account_deleted'].includes(
+            error.code,
+          )
+        ) {
           redirect(response, `/?auth=${error.code}`);
           return true;
         }

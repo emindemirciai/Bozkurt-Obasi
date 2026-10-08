@@ -86,7 +86,16 @@ test('admin login, protected overview, restart, expiry and logout', async (t) =>
   const session = await api.request('/api/admin/session', { token });
   assert.deepEqual(await session.json(), { email: 'admin@example.test', expiresAt });
   const overview = await api.request('/api/admin/overview', { token });
-  assert.deepEqual(await overview.json(), { totalPlayers: 0, activePlayers: 0, generatedAt: now });
+  assert.deepEqual(await overview.json(), {
+    totalPlayers: 0,
+    activePlayers: 0,
+    generatedAt: now,
+    totalUsers: 0,
+    verifiedUsers: 0,
+    pendingUsers: 0,
+    emailUsers: 0,
+    googleUsers: 0,
+  });
   const guest = await api.request('/api/session', { method: 'POST', body: {} });
   assert.equal(guest.status, 401);
   api.seedLegacyPlayer();

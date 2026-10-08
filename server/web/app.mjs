@@ -1,7 +1,13 @@
 import { createServer } from 'node:http';
 import { createAdminRoutes } from './admin.mjs';
 import { appendCookie, createGoogleRoutes, googleAuthConfig } from './google.mjs';
-import { createPlayerRoutes } from './player-auth.mjs';
+import {
+  createPlayerRoutes,
+  createPlayerCredentials,
+  normalizedEmail,
+  boundedPassword,
+} from './player-auth.mjs';
+import { createAuditStore } from './audit.mjs';
 import { createMailService, mailConfig } from './mail.mjs';
 import { createVerificationStore } from './verification.mjs';
 import { createRecoveryStore } from './recovery.mjs';
@@ -372,6 +378,15 @@ export function createApp({
     );
     CREATE INDEX IF NOT EXISTS email_verifications_expiry ON email_verifications(expires_at);
   `);
+  for (const table of ['email_accounts', 'google_accounts']) {
+    if (
+      !database
+        .prepare(`PRAGMA table_info(${table})`)
+        .all()
+        .some((column) => column.name === 'last_login_at')
+    )
+      database.exec(`ALTER TABLE ${table} ADD COLUMN last_login_at INTEGER`);
+  }
   const statements = {
     health: database.prepare('SELECT 1 AS ready'),
     get: database.prepare(
@@ -427,15 +442,26 @@ export function createApp({
   };
   const profiles = createProfileStore(database, { HttpError });
   const social = createSocialStore(database, { HttpError, profiles });
-  const adminRoutes = createAdminRoutes(database, {
-    email: adminEmail,
-    password: adminPassword,
-    trustProxy,
-    checkMutation,
-    readJson,
-    json,
-    HttpError,
-  });
+  const audit = createAuditStore(database);
+  const credentials = createPlayerCredentials({ HttpError });
+  function recordPlayer(action, email, now, details = {}) {
+    const profile = typeof email === 'string' ? profiles.getByEmail(email) : null;
+    if (!profile) return;
+    try {
+      audit.record({
+        at: now,
+        level: 'info',
+        actorType: 'player',
+        actor: profile.user_code,
+        action,
+        targetId: profile.id,
+        targetLabel: profile.user_code,
+        details,
+      });
+    } catch {
+      console.error('Player audit write failed');
+    }
+  }
   const limits = new Map();
   let lastCleanup = 0;
   let closed = false;
@@ -536,6 +562,7 @@ export function createApp({
     if (!session?.accountSub || session.accountProvider !== 'email')
       throw new HttpError(401, 'account_session_required');
     verification.confirm(session.accountSub, code, now);
+    recordPlayer('player.email_verified', session.account.email, now);
     return publicPlayer(loadSession(request, now));
   }
 
@@ -569,6 +596,9 @@ export function createApp({
   }
 
   function logoutPlayer(request, response, session) {
+    recordPlayer('player.logout', session.account?.email, Math.floor(clock()), {
+      provider: session.accountProvider,
+    });
     statements.removeSession.run(session.hash);
     appendCookie(
       response,
@@ -619,6 +649,10 @@ export function createApp({
           now,
         );
       }
+      if (!registration)
+        database
+          .prepare('UPDATE email_accounts SET last_login_at=? WHERE sub=?')
+          .run(now, identity.sub);
       if (current) {
         statements.bindAccount.run(
           hash,
@@ -655,6 +689,9 @@ export function createApp({
       { email: canonical?.email ?? identity.email, name: canonical?.display_name ?? identity.name },
       now,
     );
+    recordPlayer(registration ? 'player.register' : 'player.login', profile.email, now, {
+      provider: 'email',
+    });
     return {
       ...profiles.publicProfile(profile.email),
       provider: 'email',
@@ -709,6 +746,7 @@ export function createApp({
       response,
       `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
     );
+    recordPlayer('player.password_added', email, now);
     return { ...publicPlayer(current), passwordEnabled: true };
   }
 
@@ -720,6 +758,7 @@ export function createApp({
     checkMutation,
     readJson,
     trustProxy,
+    credentials,
     getSession: loadSession,
     publicUser: publicPlayer,
     register: (request, response, identity, now) =>
@@ -763,6 +802,7 @@ export function createApp({
         database.exec('ROLLBACK');
         throw error;
       }
+      recordPlayer('player.password_changed', session.account.email, now);
       return publicPlayer(session);
     },
     logout: logoutPlayer,
@@ -775,6 +815,7 @@ export function createApp({
     },
     confirmRecovery(email, code, expectedHash, passwordHash) {
       recovery.confirm(email, code, expectedHash, passwordHash, Math.floor(clock()));
+      recordPlayer('player.password_reset', email, Math.floor(clock()));
     },
   });
 
@@ -794,8 +835,14 @@ export function createApp({
       session?.account && session.accountProvider === 'google'
         ? { name: session.account.display_name, email: session.account.email }
         : null,
-    completeLogin(request, response, identity, now) {
+    completeLogin(request, response, identity, now, { flowStartedAt } = {}) {
       now = Math.floor(clock());
+      database.prepare('DELETE FROM deleted_google_accounts WHERE expires_at<=?').run(now);
+      const deleted = database
+        .prepare('SELECT deleted_at FROM deleted_google_accounts WHERE sub_hash=?')
+        .get(createHash('sha256').update(identity.sub).digest('hex'));
+      if (deleted && (!Number.isFinite(flowStartedAt) || flowStartedAt <= deleted.deleted_at))
+        throw new HttpError(409, 'account_deleted');
       const current = loadSession(request, now);
       const email = identity.email.trim().toLowerCase();
       if (current?.accountProvider === 'email' && !current.credential.email_verified)
@@ -841,6 +888,9 @@ export function createApp({
             now,
           );
         }
+        database
+          .prepare('UPDATE google_accounts SET last_login_at=? WHERE sub=?')
+          .run(now, identity.sub);
         profiles.ensure(
           {
             email: existing?.email ?? identity.email,
@@ -894,8 +944,27 @@ export function createApp({
         response,
         `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_AGE_MS / 1000}${secureRequest(request, trustProxy) ? '; Secure' : ''}`,
       );
+      recordPlayer(linkingEmail ? 'player.google_linked' : 'player.google_login', email, now, {
+        provider: 'google',
+      });
     },
     logout: logoutPlayer,
+  });
+
+  const adminRoutes = createAdminRoutes(database, {
+    email: adminEmail,
+    password: adminPassword,
+    trustProxy,
+    checkMutation,
+    readJson,
+    json,
+    HttpError,
+    profiles,
+    audit,
+    hashPassword: credentials.hashPassword,
+    normalizedEmail,
+    boundedPassword,
+    clock,
   });
 
   const server = createServer(async (request, response) => {
@@ -951,22 +1020,35 @@ export function createApp({
           request,
           pathname === '/api/player/profile' ? 3 * 1024 * 1024 : BODY_LIMIT,
         );
-        if (pathname === '/api/player/profile')
-          return json(response, 200, {
-            user: { ...publicPlayer(session), ...profiles.update(email, body, now) },
-          });
+        // The account/session may have been deleted while its request body was arriving.
+        requirePlayer(request, Math.floor(clock()));
+        if (pathname === '/api/player/profile') {
+          const user = { ...publicPlayer(session), ...profiles.update(email, body, now) };
+          recordPlayer('player.profile_updated', email, now);
+          return json(response, 200, { user });
+        }
         const action = pathname.split('/').at(-1);
         const fields =
           action === 'transfer' ? ['userCode', 'amount', 'revision', 'requestId'] : ['userCode'];
         if (Object.keys(body).some((key) => !fields.includes(key)))
           throw new HttpError(400, 'unexpected_fields');
-        return json(
-          response,
-          200,
+        const result =
           action === 'transfer'
             ? social.transfer(email, body, now)
-            : social[action](email, body.userCode, now),
-        );
+            : social[action](email, body.userCode, now);
+        if (!result.duplicate)
+          recordPlayer(
+            {
+              request: 'player.friend_requested',
+              accept: 'player.friend_accepted',
+              remove: 'player.friend_removed',
+              transfer: 'player.stone_transferred',
+            }[action],
+            email,
+            now,
+            action === 'transfer' ? { amount: body.amount } : {},
+          );
+        return json(response, 200, result);
       }
       if (pathname === '/api/config' && request.method === 'GET') {
         return json(response, 200, { analytics: publicAnalytics }, { 'Cache-Control': 'no-store' });
@@ -1013,7 +1095,11 @@ export function createApp({
             /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(code) ? code : 'invalid_action',
           );
         }
-        return json(response, 200, persist(session, now, true));
+        const result = persist(session, now, true);
+        recordPlayer('player.game_action', session.account.email, now, {
+          actionType: body.action.type,
+        });
+        return json(response, 200, result);
       }
       if (
         ['/api/session', '/api/state', '/api/action', '/api/health', '/api/config'].includes(
@@ -1031,6 +1117,23 @@ export function createApp({
       }
       throw new HttpError(404, 'not_found');
     } catch (error) {
+      if (!(error instanceof HttpError) || error.status >= 500) {
+        try {
+          audit.record({
+            at: Math.floor(clock()),
+            level: 'error',
+            actorType: 'system',
+            actor: 'API',
+            action: 'system.api_error',
+            details: {
+              status: error instanceof HttpError ? error.status : 500,
+              error: error instanceof HttpError ? error.code : 'internal_error',
+            },
+          });
+        } catch {
+          console.error('System audit write failed');
+        }
+      }
       if (error.status === 429) response.setHeader('Retry-After', '60');
       json(response, error instanceof HttpError ? error.status : 500, {
         error: error instanceof HttpError ? error.code : 'internal_error',

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { createApp } from '../server/web/app.mjs';
+import { createAdminGateway } from './admin-gateway.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
 import { generateKeyPairSync, sign } from 'node:crypto';
 
@@ -60,6 +61,8 @@ const inbox = createServer((request, response) => {
 await new Promise((resolve) => inbox.listen(4174, '127.0.0.1', resolve));
 const app = createApp({
   dbPath: ':memory:',
+  adminEmail: 'admin@example.com',
+  adminPassword: 'e2e-admin-password-2026',
   mailProvider: 'smtp',
   smtpHost: 'smtp.hostinger.com',
   smtpPort: '465',
@@ -80,9 +83,11 @@ const app = createApp({
   googleFetch,
 });
 await app.listen(4173);
+const adminGateway = await createAdminGateway(4173, 4175);
 for (const signal of ['SIGINT', 'SIGTERM'])
   process.once(signal, async () => {
     inbox.close();
+    await adminGateway.close();
     await app.close();
     process.exit(0);
   });

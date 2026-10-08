@@ -1,6 +1,6 @@
 {
   "name": "bozkurt-obasi",
-  "version": "1.8.3",
+  "version": "1.9.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -24,8 +24,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "start": "node server/web/index.mjs",
     "check": "node scripts/check.mjs",
-    "format": "prettier --write web shared server/web scripts tests vite.config.mjs playwright.config.mjs index.html",
-    "format:check": "prettier --check web shared server/web scripts tests vite.config.mjs playwright.config.mjs index.html",
+    "format": "prettier --write web shared server/web services/admin scripts tests vite.config.mjs playwright.config.mjs index.html",
+    "format:check": "prettier --check web shared server/web services/admin scripts tests vite.config.mjs playwright.config.mjs index.html",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
     "count:lines": "node scripts/count-lines.mjs",
