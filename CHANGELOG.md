@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.8.3 — 2026-10-08
+
+**TR**
+
+- Admin ve analiz girişinde ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD uyumluluğu, ayar ve bağlantı hatalarını ayıran mesajlar korunur.
+- Dokploy admin 3000 portunu kullanır; analiz dahili API ile doğrulanır, ağ geçitleri API IP değişimini izler ve mobil sürüm notları taşmadan gösterilir.
+- API yenileme testi açık alt ağ tanımıyla Linux Docker ve Docker Desktop üzerinde aynı IP değişimi kontrolünü uygular.
+
+**EN**
+
+- Admin and analytics retain ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD compatibility and messages separating configuration from connectivity failures.
+- Dokploy admin uses port 3000; analytics authenticates through the internal API, gateways follow API IP changes and mobile release notes wrap without overflow.
+- The API replacement test uses an explicit subnet for the same IP-change check on Linux Docker and Docker Desktop.
+
 ## v1.8.2 — 2026-10-08
 
 **TR**

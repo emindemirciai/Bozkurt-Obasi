@@ -28,6 +28,27 @@ function inspect(name) {
   return JSON.parse(docker(['inspect', name]))[0];
 }
 
+function createTestNetwork() {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // Let Docker select a free pool, then declare it explicitly so Linux permits --ip.
+    // No containers attach until both creations finish.
+    docker(['network', 'create', network]);
+    const details = JSON.parse(docker(['network', 'inspect', network]))[0];
+    const pool = details.IPAM.Config.find(
+      (entry) => typeof entry.Subnet === 'string' && !entry.Subnet.includes(':'),
+    );
+    assert.ok(pool?.Subnet && pool?.Gateway, 'Docker must allocate an IPv4 subnet and gateway');
+    docker(['network', 'rm', network]);
+    try {
+      docker(['network', 'create', '--subnet', pool.Subnet, '--gateway', pool.Gateway, network]);
+      return;
+    } catch (error) {
+      // Another concurrent test can claim the pool between removal and recreation.
+      if (attempt === 2 || !/overlap/i.test(error.message)) throw error;
+    }
+  }
+}
+
 async function until(check, label) {
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
@@ -51,7 +72,7 @@ function startApi(name, marker) {
 }
 
 try {
-  docker(['network', 'create', network]);
+  createTestNetwork();
   const proxies = [];
   for (const [service, image] of [
     ['web', webImage],
