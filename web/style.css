@@ -2216,6 +2216,7 @@ footer > span:first-child {
   border: 1px solid var(--line);
   border-radius: 11px;
   background: #fbfcf5;
+  overflow-wrap: anywhere;
 }
 .release-card header {
   display: flex;

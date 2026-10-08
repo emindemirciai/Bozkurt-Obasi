@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.8.2 — 2026-10-08
+
+**TR**
+
+- Admin ve analiz girişinde ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD uyumluluğu korunur; API bağlantı ve yönetici ayar hataları açıkça ayrılır.
+- Dokploy admin servisi 3000 portunu kullanır; analiz varsayılan olarak dahili API üzerinden doğrulanır, ağ geçitleri değişen API adresini yeniler.
+- Uzun sürüm notları mobilde satıra bölünür; TR/EN sürüm geçmişinin yatay taşma kontrolü güçlendirilir.
+
+**EN**
+
+- Admin and analytics keep ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD compatibility and distinguish API connectivity from administrator configuration failures.
+- Dokploy admin uses port 3000; analytics defaults to internal API authentication and gateways refresh changed API addresses.
+- Long release notes wrap on mobile; strengthen the bilingual release-history horizontal overflow check.
+
 ## v1.8.1 — 2026-10-07
 
 **TR**

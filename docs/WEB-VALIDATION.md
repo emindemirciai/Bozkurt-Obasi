@@ -1,6 +1,6 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-07. Sürüm / Release: **v1.8.1**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-08. Sürüm / Release: **v1.8.2**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
 | Kontrol / Check                                                                                         | Sonuç / Result                                                                                                                                                                                                                              |
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10,15 +10,17 @@ Tarih / Date: 2026-10-07. Sürüm / Release: **v1.8.1**. Windows, Node.js 24, Do
 | Tam yedek / Full backup                                                                                 | 12/12 Windows çevrimdışı entegrasyon testi geçti / Windows offline integration tests passed                                                                                                                                                 |
 | Üretim ve tek dosya / Production and standalone                                                         | Derleme geçti; `preview/index.html` ve `preview/battle.html` güncel; görselli mail örnekleri korunuyor / build passed; homepage and battle previews current; illustrated email previews retained                                            |
 | Biçim ve diff / Formatting and diff                                                                     | `npm run format:check`, `git diff --check` geçti / passed                                                                                                                                                                                   |
-| Sürüm artışı / Version increase                                                                         | v1.8.0 → v1.8.1; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree                                                                                                                                                |
+| Sürüm artışı / Version increase                                                                         | v1.8.0 → v1.8.1 → v1.8.2; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree                                                                                                                                                |
 | Dört servis / Four services                                                                             | `web`, `api`, `admin`, `analyze` derlendi; yerel sağlık ve konteyner kalıcılık kontrolleri geçti / builds, local health and container persistence passed                                                                                    |
 | Yönetici dağıtımı / Administrator deployment | İki Compose dosyasında bootstrap aktarımı ve birincil önceliği; gerçek dört serviste bootstrap ile admin/analiz girişi geçti / aliases, precedence, real four-service login passed |
 | Ağ geçidi / Gateway | API DNS'i yokken statik başlangıç; farklı API IP'sine yeniden başlatmadan geçiş; yol, sorgu, Authorization ve fotoğraf sınırı korundu / startup without API, changed IP recovery and forwarding passed |
 | Analiz yetkilendirmesi / Analytics authentication | Gerçek Next konteynerinde 400/401/429/503, HTML 200 reddi, doğrulanmış giriş ve kesintide çerez koruma geçti / real Next input, error, login, cookie preservation and malformed response checks passed |
 
-Kaynak sayımı / Source count: **179 dosya, 34.163 fiziksel satır; 23.965 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
+Kaynak sayımı / Source count: **179 dosya, 34.184 fiziksel satır; 23.986 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
 
 ## Türkçe
+
+GitHub v1.8.1 kontrolü, yeni sürüm notundaki uzun ortam anahtarlarının 390 px mobil ekranda 449 px yatay taşma yaptığını yakaladı. Kart metnine `overflow-wrap: anywhere` eklendi; aynı tarayıcı testi gerçek uzun notu Türkçe/İngilizce ve 320/390 px genişliklerde sınar. Kontrol gevşetilmedi; v1.8.2 mevcut görünüm sınırını korur. 2026-10-08 canlı kontrolünde admin `/healthz` 200, oturumsuz API `/api/admin/session` 401 ve analiz `/api/health` 200 döndü; yönetici yapılandırması artık hazırdır.
 
 Canlı tanıda admin domain'inin 3001 portuna bağlı olduğu ve API'nin `ADMIN_PASSWORD` almadığı görüldü. Kullanıcının mevcut ayarları `ADMIN_BOOTSTRAP_*` adlarını kullanıyordu. Domain 3000 yapıldıktan sonra canlı admin `/healthz` 200 döndü; girişin açılması yeni Compose uyumluluğunun dağıtılmasını gerektirir. Sır değerleri okunmadı veya paylaşılmadı. Yeni sürümün bootstrap aktarımı, birincil ayar önceliği ve dört servisli giriş akışı ayrı geçici Docker yığınında doğrulandı; mevcut oyuncu volume'ları kullanılmadı.
 
@@ -43,6 +45,8 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+The v1.8.1 GitHub check caught a long environment-key release note overflowing a 390 px mobile screen to 449 px. Card text now uses `overflow-wrap: anywhere`; the existing browser test checks the actual long note in both languages at 320/390 px. The viewport limit remains enforced in v1.8.2. On 2026-10-08 live admin `/healthz` returned 200, anonymous API `/api/admin/session` returned 401 and analytics `/api/health` returned 200: administrator configuration is ready.
 
 Live diagnosis found the admin domain targeting port 3001 and the API missing `ADMIN_PASSWORD`: the existing environment used `ADMIN_BOOTSTRAP_*` names. After changing the domain to port 3000, live admin `/healthz` returned 200. Login still requires deployment of the new Compose compatibility mapping. No secret values were read or shared. Bootstrap mapping, primary-key precedence and real four-service login passed in a disposable Docker stack without using existing player volumes.
 

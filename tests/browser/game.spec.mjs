@@ -200,8 +200,28 @@ test('appearance persists and the bilingual release history remains readable on 
     await expect(page.locator('.release-card').first()).toContainText(change);
   await expect(page.locator('[data-release-version="1.1.0"]')).toContainText('light/dark theme');
   await expect(page.locator('.release-card').last()).toContainText('village builder');
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  for (const language of ['en', 'tr']) {
+    if (language === 'tr') await page.getByRole('button', { name: 'Türkçeye geç' }).click();
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+        .toBeLessThanOrEqual(width);
+      const longNote = page
+        .locator('.release-card li')
+        .filter({ hasText: 'ADMIN_BOOTSTRAP_PASSWORD' })
+        .first();
+      await expect(longNote).toBeVisible();
+      const textBounds = await longNote.evaluate((node) => ({
+        content: node.clientWidth,
+        scroll: node.scrollWidth,
+        right: node.getBoundingClientRect().right,
+      }));
+      expect(textBounds.scroll).toBeLessThanOrEqual(textBounds.content);
+      expect(textBounds.right).toBeLessThanOrEqual(width);
+    }
+  }
+  await page.getByRole('button', { name: 'Switch to English' }).click();
   await page.screenshot({ path: 'artifacts/updates-dark-mobile.png', fullPage: true });
 
   await page.getByRole('button', { name: 'Switch to light theme' }).click();
