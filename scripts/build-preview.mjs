@@ -37,3 +37,4 @@ await writeFile('preview/index.html', html, 'utf8');
 console.log(`Offline visual preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);
 await import('./build-battle-preview.mjs');
 await import('./build-admin-preview.mjs');
+await import('./build-village-preview.mjs');

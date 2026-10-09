@@ -4,6 +4,22 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v1.10.0 — 2026-10-09
+
+**TR**
+
+- Ana yurda beş kaynağın üretim, depo sınırı ve tahmini dolma süresini gösteren Oba planlaması paneli eklendi.
+- Dokuz yapı için yeni inşa veya sonraki yükseltme maliyeti, eksik kaynaklar ve mevcut üretimle bekleme süresi gösterilir. Seçim ücretsizdir; açık düğme onayı mevcut sunucu komutunu kullanır.
+- Kaynak güncellemeleri plan seçimini ve klavye odağını korur. Savaş, depo sınırı, üretim eksikliği ve son seviye durumları açıklanır.
+- TR/EN ve açık/kahverengi koyu temalı, internetsiz ve salt okunur köy önizlemesi ile planlama rehberi eklendi. Köy kayıt biçimi ve ekonomi kuralları korunur.
+
+**EN**
+
+- Added homeland Village planning with production, storage limits and estimated time until full for all five resources.
+- Nine building targets show new-build or next-upgrade costs, shortages and waiting time at current rates. Choosing a plan is free; explicit confirmation uses the existing server command.
+- Resource updates preserve target selection and keyboard focus. Battle, capacity, missing production and maximum-level states are explained.
+- Added a read-only offline village preview and planning guide with TR/EN and light/brown dark themes. Save schema and economy rules remain unchanged.
+
 ## v1.9.0 — 2026-10-08
 
 **TR**

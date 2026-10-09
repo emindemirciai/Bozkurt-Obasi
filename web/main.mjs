@@ -11,6 +11,8 @@ import {
 } from '../shared/game.mjs';
 import { translations } from './i18n.mjs';
 import { firstSteps } from './onboarding.mjs';
+import { constructionPlan } from './planning.mjs';
+import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
@@ -70,6 +72,8 @@ let mode = 'local',
 let polling = null,
   sessionGeneration = 0,
   renderedSignature = '';
+let plannedBuilding = 'quarry';
+const economyContext = () => ({ t, number, escape, language, busy });
 let notice = '',
   noticeUntil = 0;
 let profileDraft = {},
@@ -274,6 +278,7 @@ function denyGameAccess() {
   mode = 'local';
   view = 'home';
   modal = '';
+  plannedBuilding = 'quarry';
   clearAccountDraft();
   clearRecoveryDraft();
   if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
@@ -309,9 +314,11 @@ async function initGoogleAuth() {
   }
 }
 
-function render(restoreFocus) {
+function render(restoreFocus, preservePlanning = false) {
   const active = document.activeElement;
   const focusId = restoreFocus || active?.id;
+  const previousPlanning =
+    preservePlanning && view === 'village' ? root.querySelector('#economy-panel') : null;
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
   const visibleView = auth.authenticated && mode === 'online' ? view : 'home';
@@ -342,6 +349,10 @@ function render(restoreFocus) {
     ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : view === 'friends' ? friendsView({ t, escape, number, button, data: friendsData, user: auth.user, loaded: friendsLoaded, busy, draft: friendsDraft }) : updatesView()}
     <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="${privacyHref}">${t('privacyPolicy')}</a> · <a href="${termsHref}">${t('termsOfUse')}</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
+  if (previousPlanning) {
+    root.querySelector('#economy-panel')?.replaceWith(previousPlanning);
+    updateEconomyPanel(root, state, plannedBuilding, economyContext());
+  }
   identifyControls();
   renderedSignature = interfaceSignature();
   renderNotice();
@@ -389,7 +400,7 @@ function playView() {
   const isBattle = view === 'battle';
   return `<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div></section>
     <aside class="overview">${isBattle ? battlePanel() : villagePanel()}</aside></div>
-    ${isBattle ? battleRecovery() : buildingList()}`;
+    ${isBattle ? battleRecovery() : buildingList() + economyPanel(state, plannedBuilding, economyContext())}`;
 }
 
 function firstStepsView() {
@@ -979,6 +990,13 @@ root.addEventListener('input', (event) => {
 });
 
 root.addEventListener('change', async (event) => {
+  if (event.target.id === 'construction-plan') {
+    if (BUILDINGS.some((building) => building.id === event.target.value)) {
+      plannedBuilding = event.target.value;
+      updateEconomyPanel(root, state, plannedBuilding, economyContext());
+    }
+    return;
+  }
   if (event.target.id !== 'profile-upload' || busy) return;
   const file = event.target.files?.[0],
     request = accountRequest;
@@ -1370,6 +1388,16 @@ root.addEventListener('click', async (event) => {
     toast('exportDone');
     return;
   }
+  if (target.dataset.action === 'executePlan') {
+    const plan = constructionPlan(state, plannedBuilding);
+    if (plan.blocked || !plan.affordable || busy) return;
+    await command(
+      plan.mode === 'build'
+        ? { type: 'build', building: plan.type }
+        : { type: 'upgrade', id: plan.buildingId },
+    );
+    return;
+  }
   const actions = {
     collect: { type: 'collect' },
     upgrade: { type: 'upgrade', id: target.dataset.id },
@@ -1426,7 +1454,7 @@ setInterval(async () => {
   }
   if (interfaceSignature() !== renderedSignature && !modal) {
     if (view !== 'battle' || !refreshBattleView()) {
-      render();
+      render(undefined, true);
       return;
     }
   }
@@ -1435,6 +1463,7 @@ setInterval(async () => {
     if (el)
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
+  if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   const collectButton = document.querySelector('#collect-button');
   if (collectButton) {
     const remaining = Math.max(0, Math.ceil((state.collectReadyAt - Date.now()) / 1000));
