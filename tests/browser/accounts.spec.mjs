@@ -28,11 +28,9 @@ test('email registration, village progress and login survive logout and reload',
     .fill(await verificationCode(page, email));
   await page.getByRole('button', { name: 'Doğrula ve obaya gir' }).click();
   await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await expect(page.getByLabel('Takma ad', { exact: true })).toHaveValue('Bozkır Yolcusu');
   await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
@@ -45,9 +43,9 @@ test('email registration, village progress and login survive logout and reload',
     'current-password',
   );
   await page.getByRole('dialog').getByRole('button', { name: 'Giriş yap', exact: true }).click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.reload();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   expect(await page.evaluate(() => localStorage.getItem('bozkurt.web.v1'))).toBeNull();
   expect(
     await page.evaluate(
@@ -140,33 +138,31 @@ test('linking matching Google and email sign-in preserves one village across bot
   expect(registered.status()).toBe(201);
   await verifyEmail(page, email);
   await page.goto('/#village');
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await expect(
     page.getByRole('link', { name: 'Google hesabını bağla', exact: true }),
   ).toHaveAttribute('href', '/api/auth/google/start');
   await signIn(page, { email, identity });
   await page.goto('/?auth=success#village');
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await expect(page.getByRole('dialog')).toContainText('aynı hesaba ve köye bağlı');
   await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
   await signIn(page, { email, identity });
   await page.goto('/?auth=success#village');
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
   await page.getByRole('button', { name: 'Giriş yap', exact: true }).click();
   await page.getByLabel('E-posta', { exact: true }).fill(email);
   await page.getByLabel('Şifre', { exact: true }).fill(password);
   await page.getByRole('dialog').getByRole('button', { name: 'Giriş yap', exact: true }).click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.reload();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
 });
 
 test('a Google player can add a password and resume the same village through email sign-in', async ({
@@ -176,10 +172,8 @@ test('a Google player can add a password and resume the same village through ema
   const password = 'Google and password 2026!';
   await signIn(page, { email });
   await page.goto('/#village');
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
   await page.locator('[data-action="theme"]').click();
   await page.locator('.profile').click();
   await page.getByRole('button', { name: 'Şifre belirle', exact: true }).click();
@@ -196,7 +190,7 @@ test('a Google player can add a password and resume the same village through ema
   await page.getByLabel('E-posta', { exact: true }).fill(email);
   await page.getByLabel('Şifre', { exact: true }).fill(password);
   await page.getByRole('dialog').getByRole('button', { name: 'Giriş yap', exact: true }).click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
 });
 
 test('a matching Google sign-in guides the player through password proof before linking', async ({
@@ -211,10 +205,8 @@ test('a matching Google sign-in guides the player through password proof before 
   expect(registered.status()).toBe(201);
   await verifyEmail(page, email);
   await page.goto('/#village');
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
   await page.locator('.profile').click();
   await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
   await expect(page.locator('.game-shell')).toHaveCount(0);
@@ -228,14 +220,14 @@ test('a matching Google sign-in guides the player through password proof before 
   await dialog.getByLabel('E-posta', { exact: true }).fill(email);
   await dialog.getByLabel('Şifre', { exact: true }).fill(password);
   await dialog.getByRole('button', { name: 'Giriş yap', exact: true }).click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await expect(
     page.getByRole('link', { name: 'Google hesabını bağla', exact: true }),
   ).toBeVisible();
   await signIn(page, { email, identity });
   await page.goto('/?auth=success#village');
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await expect(page.getByRole('dialog')).toContainText('aynı hesaba ve köye bağlı');
   await page.getByRole('button', { name: 'Çıkış yap', exact: true }).click();
@@ -243,7 +235,7 @@ test('a matching Google sign-in guides the player through password proof before 
   await page.getByLabel('E-posta', { exact: true }).fill(email);
   await page.getByLabel('Şifre', { exact: true }).fill(password);
   await page.getByRole('dialog').getByRole('button', { name: 'Giriş yap', exact: true }).click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
 });
 
 test('a pending email login requires the emailed code and never places it in a URL', async ({

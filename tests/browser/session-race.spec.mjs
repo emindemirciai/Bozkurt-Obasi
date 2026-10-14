@@ -41,14 +41,14 @@ test('logout ignores a delayed poll and never opens or writes a guest village', 
   await signIn(page);
   await page.clock.install({ time: new Date(START) });
   const online = createGame(START);
-  applyAction(online, { type: 'build', building: 'quarry' }, START);
+  applyAction(online, { type: 'build', building: 'quarry', plotId: 'p0' }, START);
   await page.route('**/api/session', (route) =>
     route.fulfill(json({ state: online, revision: 1, mode: 'online' })),
   );
   const poll = heldPoll(page, online, 2);
   await poll.installed;
   await page.goto('/#village');
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.locator('.profile').click();
   await page.clock.fastForward(1000);
   await poll.started;
@@ -85,20 +85,20 @@ test('a user action waits for polling and sends its latest revision exactly once
     await route.fulfill(json({ state: online, revision: 5 }));
   });
   await page.goto('/#village');
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('0 yapı');
   await page.clock.fastForward(1000);
   await poll.started;
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Savaşı başlat', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Yola çık', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Ana Yurt', exact: true }).click();
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
   expect(actions).toHaveLength(0);
   poll.release();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
-  expect(actions).toEqual([{ action: { type: 'build', building: 'quarry' }, revision: 4 }]);
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
+  expect(actions).toEqual([
+    { action: { type: 'build', building: 'quarry', plotId: 'p0' }, revision: 4 },
+  ]);
 });
 
 test('invalid successful village responses keep the game closed without a local fallback', async ({
@@ -132,18 +132,25 @@ test('server production unlocks construction without navigating or clicking', as
   await signIn(page);
   await page.clock.install({ time: new Date(START) });
   const state = createGame(START);
+  applyAction(state, { type: 'build', building: 'lumber', plotId: 'p1' }, START);
   state.resources.wood = 69;
   state.resources.stone = 30;
   await mockVillage(page, state);
   await page.goto('/#village');
   const quarry = page
     .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true });
-  await expect(quarry).toBeDisabled();
+    .getByRole('button', { name: 'Yer seç · Taş Ocağı', exact: true });
+  await quarry.click();
+  await page.locator('[data-plot="p0"]').click();
+  const choice = page.locator('.placement-dialog [data-building-type="quarry"]');
+  await expect(choice).toBeDisabled();
+  await page.locator('[data-action="close"]').click();
   await page.clock.fastForward(6100);
   await expect(quarry).toBeEnabled();
   await quarry.click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
+  await expect(page.locator('.map-chip')).toHaveText('2 yapı');
 });
 
 test('battle refresh preserves keyboard focus and leaves an open account modal untouched', async ({
@@ -153,8 +160,8 @@ test('battle refresh preserves keyboard focus and leaves an open account modal u
   await page.clock.install({ time: new Date(START) });
   await mockVillage(page, createGame(START));
   await page.goto('/#village');
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
-  await page.getByRole('button', { name: 'Savaşı başlat', exact: true }).click();
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
+  await page.getByRole('button', { name: 'Yola çık', exact: true }).click();
   const language = page.getByRole('button', { name: 'Switch to English', exact: true });
   await language.focus();
   await page.clock.fastForward(2000);

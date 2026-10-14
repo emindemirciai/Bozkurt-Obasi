@@ -111,7 +111,7 @@ function planBody(plan, capacity, ctx) {
 }
 
 function executeLabel(plan, ctx) {
-  return `${ctx.t(plan.mode === 'build' ? 'build' : 'upgrade')} · ${targetLabel(plan, ctx)}`;
+  return `${ctx.t(plan.mode === 'build' ? 'chooseSite' : 'upgrade')} · ${targetLabel(plan, ctx)}`;
 }
 
 function executeCost(plan, { t, number }) {

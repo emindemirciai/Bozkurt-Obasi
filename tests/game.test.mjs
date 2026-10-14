@@ -6,20 +6,20 @@ import {
   TACTICS,
   advanceGame,
   applyAction,
-  createGame,
   getProduction,
   getUpgradeCost,
   resumeGame,
   validateGame,
 } from '../shared/game.mjs';
+import { establishedGame, establishedJourney } from './established-game.mjs';
 
 const START = 1_000_000;
 const clone = (state) => JSON.parse(JSON.stringify(state));
-const fresh = () => createGame(START);
+const fresh = () => establishedGame(START);
 const command = (state, action, at = state.updatedAt) => applyAction(state, action, at);
 const code = (expected) => (error) => error.code === expected && error.message === expected;
 
-test('new game is complete, serializable, isolated, and valid', () => {
+test('migrated established game is complete, serializable, isolated, and valid', () => {
   const state = fresh();
   assert.equal(validateGame(state), true);
   assert.equal(validateGame(clone(state)), true);
@@ -71,15 +71,15 @@ test('long offline periods credit only the most recent eight hours', () => {
 
 test('building and upgrading spend once, expose scaling costs, and increase production', () => {
   const state = fresh();
-  command(state, { type: 'build', building: 'quarry' });
+  command(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   assert.equal(state.resources.wood, 140);
   assert.equal(state.resources.stone, 120);
   assert.equal(state.stats.builds, 1);
   assert.equal(getProduction(state).stone, 9);
   assert.equal(state.quests.find((quest) => quest.id === 'first_build').progress, 1);
   assert.throws(
-    () => command(state, { type: 'build', building: 'quarry' }),
-    code('BUILDING_EXISTS'),
+    () => command(state, { type: 'build', building: 'quarry', plotId: 'p7' }),
+    code('PLOT_OCCUPIED'),
   );
   assert.equal(state.resources.wood, 140);
   const quarry = state.buildings.find((building) => building.type === 'quarry');
@@ -99,7 +99,7 @@ test('building and upgrading spend once, expose scaling costs, and increase prod
 
 test('storage capacity follows constructed levels and levels stop at five', () => {
   const state = fresh();
-  command(state, { type: 'build', building: 'storage' });
+  command(state, { type: 'build', building: 'storage', plotId: 'p31' });
   assert.equal(state.capacity, 750);
   const storage = state.buildings.find((building) => building.type === 'storage');
   for (let level = 2; level <= 5; level += 1) {
@@ -208,7 +208,7 @@ test('combat locks formation; victory must be acknowledged before the next wave'
   command(state, { type: 'startBattle' });
   for (const action of [
     { type: 'formation', unit: 'wolf', value: 'wide' },
-    { type: 'build', building: 'quarry' },
+    { type: 'build', building: 'quarry', plotId: 'p7' },
     { type: 'train', id: 'wolf-alpha', path: 'leader' },
     { type: 'rest' },
     { type: 'healHerd' },
@@ -248,9 +248,8 @@ test('defeat preserves wolves, costs herd members, and retries the same wave', (
   assert.equal(validateGame(state), true);
 });
 
-test('travel credits destination production only after arrival', () => {
-  const state = fresh();
-  command(state, { type: 'travel', destination: 'spring' });
+test('migrated travel credits destination production only after arrival', () => {
+  const state = establishedJourney(START, 'spring');
   assert.equal(state.journey.endsAt, START + 15_000);
   const frequent = clone(state);
   advanceGame(state, START + 30_000);
@@ -264,14 +263,13 @@ test('travel credits destination production only after arrival', () => {
   assert.equal(getProduction(state).water, 21);
   assert.throws(
     () => command(state, { type: 'travel', destination: 'spring' }),
-    code('ALREADY_THERE'),
+    code('USE_CARAVAN'),
   );
   assert.equal(validateGame(state), true);
 });
 
 test('battle pauses migration, and late polling resumes it at the exact end of combat', () => {
-  const oneStep = fresh();
-  command(oneStep, { type: 'travel', destination: 'highland' });
+  const oneStep = establishedJourney(START, 'highland');
   command(oneStep, { type: 'startBattle' }, START + 5000);
   const frequent = clone(oneStep);
   advanceGame(frequent, START + 10_000);
@@ -291,8 +289,7 @@ test('battle pauses migration, and late polling resumes it at the exact end of c
 });
 
 test('resume abandons an unfinished battle without restoring damage or awarding XP and loot', () => {
-  const state = fresh();
-  command(state, { type: 'travel', destination: 'meadow' });
+  const state = establishedJourney(START, 'meadow');
   applyAction(state, { type: 'startBattle' }, START, () => 0.5);
   advanceGame(state, START + 3000);
   const savedWolves = clone(state.wolves);

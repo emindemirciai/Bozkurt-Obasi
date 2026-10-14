@@ -25,6 +25,7 @@ import {
   resumeGame,
   applyAction,
   validateGame,
+  migrateGame,
 } from '../../shared/game.mjs';
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -508,7 +509,7 @@ export function createApp({
       : credential;
     if (credential?.google_sub && !account) throw new Error('Orphaned linked account');
     const serialized = account ? account.state_json : row.state_json;
-    const state = JSON.parse(serialized);
+    const state = migrateGame(JSON.parse(serialized));
     if (!validateGame(state)) throw new Error('Invalid persisted game');
     return {
       hash,
@@ -1005,16 +1006,40 @@ export function createApp({
           return json(response, 200, { user: publicPlayer(session) });
         if (pathname === '/api/player/friends' && request.method === 'GET')
           return json(response, 200, social.list(email));
+        if (pathname === '/api/player/friends/messages' && request.method === 'GET') {
+          const params = new URL(request.url, 'http://localhost').searchParams;
+          if (
+            [...params.keys()].some((key) => !['userCode', 'before', 'limit'].includes(key)) ||
+            ['userCode', 'before', 'limit'].some((key) => params.getAll(key).length > 1)
+          )
+            throw new HttpError(400, 'unexpected_fields');
+          return json(
+            response,
+            200,
+            social.conversation(email, {
+              userCode: params.get('userCode'),
+              ...(params.has('before') ? { before: Number(params.get('before')) } : {}),
+              ...(params.has('limit') ? { limit: Number(params.get('limit')) } : {}),
+            }),
+          );
+        }
         const allowed = [
           '/api/player/profile',
           '/api/player/friends/request',
           '/api/player/friends/accept',
           '/api/player/friends/remove',
           '/api/player/friends/transfer',
+          '/api/player/friends/gift',
+          '/api/player/friends/messages',
         ];
         if (!allowed.includes(pathname)) throw new HttpError(404, 'not_found');
         if (request.method !== 'POST')
-          return json(response, 405, { error: 'method_not_allowed' }, { Allow: 'POST' });
+          return json(
+            response,
+            405,
+            { error: 'method_not_allowed' },
+            { Allow: pathname === '/api/player/friends/messages' ? 'GET, POST' : 'POST' },
+          );
         checkMutation(request, trustProxy);
         const body = await readJson(
           request,
@@ -1029,13 +1054,18 @@ export function createApp({
         }
         const action = pathname.split('/').at(-1);
         const fields =
-          action === 'transfer' ? ['userCode', 'amount', 'revision', 'requestId'] : ['userCode'];
+          action === 'gift'
+            ? ['userCode', 'kind', 'assetId', 'amount', 'revision', 'requestId']
+            : action === 'messages'
+              ? ['userCode', 'body', 'requestId']
+              : action === 'transfer'
+                ? ['userCode', 'amount', 'revision', 'requestId']
+                : ['userCode'];
         if (Object.keys(body).some((key) => !fields.includes(key)))
           throw new HttpError(400, 'unexpected_fields');
-        const result =
-          action === 'transfer'
-            ? social.transfer(email, body, now)
-            : social[action](email, body.userCode, now);
+        const result = ['transfer', 'gift', 'messages'].includes(action)
+          ? social[action === 'messages' ? 'sendMessage' : action](email, body, now)
+          : social[action](email, body.userCode, now);
         if (!result.duplicate)
           recordPlayer(
             {
@@ -1043,10 +1073,16 @@ export function createApp({
               accept: 'player.friend_accepted',
               remove: 'player.friend_removed',
               transfer: 'player.stone_transferred',
+              gift: 'player.asset_gifted',
+              messages: 'player.message_sent',
             }[action],
             email,
             now,
-            action === 'transfer' ? { amount: body.amount } : {},
+            action === 'gift'
+              ? { amount: body.amount, asset: body.assetId, kind: body.kind }
+              : action === 'transfer'
+                ? { amount: body.amount }
+                : {},
           );
         return json(response, 200, result);
       }

@@ -19,11 +19,9 @@ test('password recovery signs out linked Google/email devices and keeps the same
   });
   await verifyEmail(page, email);
   await page.goto('/#village');
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await signIn(page, { email, identity });
   const profile = (await (await page.request.get('/api/player/profile')).json()).user;
   const emailDevice = await browser.newContext({ extraHTTPHeaders }),
@@ -73,13 +71,13 @@ test('password recovery signs out linked Google/email devices and keeps the same
     ).toBe(401);
     await page.locator('#account-password').fill(newPassword);
     await page.getByRole('dialog').getByRole('button', { name: 'Giriş yap', exact: true }).click();
-    await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+    await expect(page.locator('.map-chip')).toHaveText('1 yapı');
     const { provider, ...expectedProfile } = profile;
     expect((await (await page.request.get('/api/player/profile')).json()).user).toMatchObject(
       expectedProfile,
     );
     await page.reload();
-    await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+    await expect(page.locator('.map-chip')).toHaveText('1 yapı');
     expect(
       await page.evaluate(
         (secret) => Object.values(localStorage).some((value) => value.includes(secret)),

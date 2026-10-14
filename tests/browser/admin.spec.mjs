@@ -84,7 +84,7 @@ test('administrator can create, inspect, verify and permanently delete a real pl
   await expect(dialog).toContainText(code);
   await expect(dialog).toContainText('Kayıt tarihi');
   await expect(dialog).toContainText('Son giriş');
-  await expect(dialog).toContainText('150');
+  await expect(dialog).toContainText('350');
   await page.locator('#dialog-close').click();
   const login = await request.post('/api/auth/player/login', { data: { email, password } });
   expect(login.status()).toBe(200);

@@ -196,7 +196,10 @@ test('email login restores persistent progress across devices and keeps other vi
   const changed = await api.request('/api/action', {
     method: 'POST',
     cookie: first,
-    body: { action: { type: 'build', building: 'quarry' }, revision: initial.revision },
+    body: {
+      action: { type: 'build', building: 'quarry', plotId: 'p0' },
+      revision: initial.revision,
+    },
   });
   assert.equal(changed.status, 200);
   const expected = await changed.json();
@@ -587,6 +590,7 @@ test('accepted friendships and stone transfers persist across API restart withou
     200,
   );
   const prior = await (await api.request('/api/state', { cookie: alice })).json();
+  const recipientBefore = await (await api.request('/api/state', { cookie: bob })).json();
   const body = {
     userCode: b.userCode,
     amount: 40,
@@ -600,7 +604,9 @@ test('accepted friendships and stone transfers persist across API restart withou
   });
   assert.equal(sent.status, 200);
   const received = await (await api.request('/api/state', { cookie: bob })).json();
-  assert.equal(received.state.resources.stone, 190);
+  assert.equal(received.state.resources.stone, recipientBefore.state.resources.stone + body.amount);
+  const senderAfter = await sent.json();
+  assert.equal(senderAfter.state.resources.stone, prior.state.resources.stone - body.amount);
   assert.equal(
     (
       await (

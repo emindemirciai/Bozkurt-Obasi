@@ -35,6 +35,8 @@ test('first steps directs players without spending, advances through real action
   await expect(quarry).toBeFocused();
   expect(actions).toEqual(['collect']);
   await quarry.click();
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
   await expect(guide.locator('.guide-count')).toHaveText('2 / 5 tamamlandı');
   await expect(current).toContainText('İlk görev ödülünü al');
   await page.reload();
@@ -77,7 +79,7 @@ test('existing out-of-order progress stays legible in both languages and themes 
   expect(response.ok()).toBe(true);
   let save = await response.json();
   for (const action of [
-    { type: 'build', building: 'healer' },
+    { type: 'build', building: 'healer', plotId: 'p0' },
     { type: 'claimQuest', id: 'first_build' },
     { type: 'train', id: 'wolf-alpha', path: 'guardian' },
     { type: 'train', id: 'wolf-alpha', path: 'guardian' },

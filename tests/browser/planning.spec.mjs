@@ -81,25 +81,28 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Taş Ocağı · Seviye 1');
   const buildResponse = page.waitForResponse('**/api/action');
   await execute.click();
+  expect(actions).toHaveLength(0);
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
   const builtResponse = await buildResponse;
   expect(builtResponse.status()).toBe(200);
   const built = await builtResponse.json();
   expect(actions).toEqual([
-    { action: { type: 'build', building: 'quarry' }, revision: session.revision },
+    { action: { type: 'build', building: 'quarry', plotId: 'p0' }, revision: session.revision },
   ]);
   expect(built.state.buildings.filter((building) => building.type === 'quarry')).toEqual([
-    { id: 'building-quarry', type: 'quarry', level: 1, x: 1, y: 1 },
+    { id: 'building-quarry', type: 'quarry', level: 1, x: 0, y: 0 },
   ]);
   expect(built.state.stats.builds).toBe(1);
   expect(built.state.resources.wood).toBeCloseTo(
     session.state.resources.wood +
-      ((built.state.updatedAt - session.state.updatedAt) * 12) / 60_000 -
+      ((built.state.updatedAt - session.state.updatedAt) * 0) / 60_000 -
       70,
     6,
   );
   expect(built.state.resources.stone).toBe(session.state.resources.stone - 30);
   await expect(choice).toHaveValue('quarry');
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Taş Ocağı · Seviye 2');
   await expect(execute).toContainText('109 Odun');
   await expect(execute).toContainText('47 Taş');
@@ -110,13 +113,13 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   expect(upgradedResponse.status()).toBe(200);
   const upgraded = await upgradedResponse.json();
   expect(actions).toEqual([
-    { action: { type: 'build', building: 'quarry' }, revision: session.revision },
+    { action: { type: 'build', building: 'quarry', plotId: 'p0' }, revision: session.revision },
     { action: { type: 'upgrade', id: 'building-quarry' }, revision: built.revision },
   ]);
   expect(upgraded.state.buildings.find((building) => building.type === 'quarry').level).toBe(2);
   expect(upgraded.state.resources.wood).toBeCloseTo(
     built.state.resources.wood +
-      ((upgraded.state.updatedAt - built.state.updatedAt) * 12) / 60_000 -
+      ((upgraded.state.updatedAt - built.state.updatedAt) * 0) / 60_000 -
       109,
     6,
   );
@@ -126,15 +129,15 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
       47,
     6,
   );
-  await expect(execute).toBeDisabled();
+  await expect(execute).toBeEnabled();
   await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Taş Ocağı · Seviye 3');
   await page.getByRole('button', { name: 'Switch to English', exact: true }).click();
   await expect(choice).toHaveValue('quarry');
   await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Stone Quarry · Level 3');
-  await expect(execute).toBeDisabled();
+  await expect(execute).toBeEnabled();
   await pollVillage(page);
   await expect(choice).toHaveValue('quarry');
-  await expect(execute).toBeDisabled();
+  await expect(execute).toBeEnabled();
   expect(actions).toHaveLength(2);
   const savedResponse = await page.request.get('/api/state');
   expect(savedResponse.status()).toBe(200);
@@ -155,6 +158,7 @@ test('server production counts down and unlocks a focused plan without replacing
   await page.clock.install({ time: new Date(START - 1000) });
   await page.clock.pauseAt(new Date(START));
   const state = createGame(START);
+  applyAction(state, { type: 'build', building: 'lumber', plotId: 'p1' }, START);
   state.resources.wood = 69;
   state.resources.stone = 30;
   state.resources.herbs = state.capacity;
@@ -221,7 +225,7 @@ test('offline village preview keeps every plan read-only with bilingual themes a
   await page.goto(pathToFileURL(resolve('preview/village.html')).href);
   await expect(page.getByRole('heading', { name: 'Oba planlaması', level: 1 })).toBeVisible();
   await expect(page.locator('#offline-banner')).toContainText('Salt okunur');
-  await expect(page.locator('.map-chip')).toHaveText('4 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('9 yapı');
   await expect(page.locator('[data-economy-resource]')).toHaveCount(RESOURCE_KEYS.length);
   const stock = await page.locator('[data-economy-stock]').allTextContents();
   const choice = page.locator('#construction-plan');
@@ -261,7 +265,7 @@ test('offline village preview keeps every plan read-only with bilingual themes a
       }
     }
   }
-  await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Herd Shelter · Level 1');
+  await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Herd Shelter · Level 5');
   await expect(page.locator('#offline-banner')).toContainText('verified account');
   expect(external).toEqual([]);
   expect(errors).toEqual([]);

@@ -1,45 +1,37 @@
+import {
+  BUILDINGS,
+  initializeSettlement,
+  migrateSettlement,
+  validateSettlement,
+  placeBuilding,
+  relocateBuilding,
+  upgradeWall,
+} from './settlement.mjs';
+import {
+  initializeAdventureState,
+  migrateAdventureState,
+  validateAdventureState,
+  advanceAdventure,
+  startExpedition,
+  startCaravan,
+  equipWolf,
+  unequipWolf,
+  isWolfBusy,
+  equipmentBonuses,
+  grantWolfXp,
+} from './adventures.mjs';
+import { validateGame as validateLegacyGame } from './legacy-v1.mjs';
+export { BUILDINGS };
 /** Shared, deterministic simulation. All rates are per minute; all clocks are UTC ms. */
 export const RESOURCE_KEYS = Object.freeze(['water', 'feed', 'herbs', 'wood', 'stone']);
 export const TACTICS = Object.freeze(['direct', 'left', 'right', 'double', 'rush']);
 export const FORMATIONS = Object.freeze(['tight', 'balanced', 'wide']);
-export const LOCATIONS = Object.freeze(['homeland', 'spring', 'meadow', 'highland']);
-export const BUILDINGS = Object.freeze(
-  [
-    { id: 'hall', cost: { wood: 120, stone: 90 }, production: {}, maxLevel: 5 },
-    { id: 'lumber', cost: { wood: 60, stone: 25 }, production: { wood: 12 }, maxLevel: 5 },
-    { id: 'quarry', cost: { wood: 70, stone: 30 }, production: { stone: 9 }, maxLevel: 5 },
-    { id: 'well', cost: { wood: 45, stone: 20 }, production: { water: 14 }, maxLevel: 5 },
-    { id: 'pasture', cost: { wood: 60, stone: 30 }, production: { feed: 12 }, maxLevel: 5 },
-    { id: 'healer', cost: { wood: 95, stone: 65 }, production: { herbs: 6 }, maxLevel: 5 },
-    { id: 'storage', cost: { wood: 80, stone: 55 }, production: {}, maxLevel: 5 },
-    { id: 'watchtower', cost: { wood: 100, stone: 70 }, production: {}, maxLevel: 5 },
-    { id: 'shelter', cost: { wood: 85, stone: 60 }, production: {}, maxLevel: 5 },
-  ].map((building) =>
-    Object.freeze({
-      ...building,
-      cost: Object.freeze(building.cost),
-      production: Object.freeze(
-        Object.fromEntries(RESOURCE_KEYS.map((key) => [key, building.production[key] || 0])),
-      ),
-    }),
-  ),
-);
+export const LOCATIONS = Object.freeze(['homeland', 'spring', 'meadow', 'highland', 'ruins']);
 
 const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000;
 const MAX_TIME = 8_640_000_000_000_000;
 const PATHS = ['guardian', 'hunter', 'leader', 'healer'];
 const WOLF_ROLES = ['alpha', 'guardian', 'hunter', 'scout', 'healer'];
-const BUILDING_TILES = {
-  hall: [3, 3],
-  lumber: [1, 3],
-  quarry: [1, 1],
-  well: [3, 5],
-  pasture: [5, 3],
-  healer: [5, 5],
-  storage: [1, 5],
-  watchtower: [3, 1],
-  shelter: [5, 1],
-};
 const QUESTS = [
   { id: 'first_build', stat: 'builds', target: 1, reward: { wood: 35, stone: 25 } },
   { id: 'gatherer', stat: 'gathers', target: 3, reward: { water: 30, feed: 30, herbs: 10 } },
@@ -117,19 +109,13 @@ function makeBattle(wave = 1, tactic = 'direct') {
 
 export function createGame(now = Date.now()) {
   checkClock(now);
-  return {
-    version: 1,
+  const state = {
+    version: 2,
     updatedAt: now,
     collectReadyAt: now,
-    resources: { water: 180, feed: 180, herbs: 80, wood: 210, stone: 150 },
+    resources: { water: 180, feed: 180, herbs: 80, wood: 450, stone: 350 },
     capacity: 500,
-    buildings: ['hall', 'pasture', 'well', 'lumber'].map((type) => ({
-      id: `building-${type}`,
-      type,
-      level: 1,
-      x: BUILDING_TILES[type][0],
-      y: BUILDING_TILES[type][1],
-    })),
+    ...initializeSettlement(),
     wolves: WOLF_ROLES.map((name, index) => ({
       id: `wolf-${name}`,
       name,
@@ -154,6 +140,18 @@ export function createGame(now = Date.now()) {
     location: 'homeland',
     journey: null,
   };
+  return initializeAdventureState(state);
+}
+
+export function migrateGame(state) {
+  if (state?.version === 2) return state;
+  if (!validateLegacyGame(state)) fail('INVALID_SAVE');
+  const migrated = structuredClone(state);
+  migrateSettlement(migrated);
+  migrateAdventureState(migrated);
+  migrated.version = 2;
+  if (!validateGame(migrated)) fail('INVALID_SAVE');
+  return migrated;
 }
 
 export function getUpgradeCost(building) {
@@ -187,15 +185,7 @@ function finishBattle(state, won, at) {
     // Wounded guardians always return; there is no permanent wolf death.
     wolf.hp = Math.max(1, wolf.hp);
     if (won) {
-      wolf.xp += 35 + state.battle.wave * 5;
-      while (wolf.level < 20 && wolf.xp >= wolf.level * 45) {
-        wolf.xp -= wolf.level * 45;
-        wolf.level += 1;
-        wolf.points += 1;
-        wolf.maxHp += 6;
-        wolf.hp = Math.min(wolf.maxHp, wolf.hp + 18);
-      }
-      if (wolf.level === 20) wolf.xp = Math.min(wolf.xp, 899);
+      grantWolfXp(wolf, 35 + state.battle.wave * 5);
     }
   }
   if (won) {
@@ -222,6 +212,7 @@ function finishBattle(state, won, at) {
 function battleTick(state, at) {
   const battle = state.battle;
   battle.tick += 1;
+  if (battle.tick <= 6) return;
   const livingWolves = state.wolves.filter((wolf) => wolf.hp > 0);
   const livingEnemies = battle.enemies.filter((enemy) => enemy.hp > 0);
   if (!livingWolves.length || state.herd.hp <= 0 || state.herd.panic >= 100)
@@ -231,7 +222,13 @@ function battleTick(state, at) {
   const formationAttack = { tight: 0.9, balanced: 1, wide: 1.15 }[state.formation.wolf];
   const formationDefense = { tight: 0.78, balanced: 1, wide: 1.2 }[state.formation.wolf];
   const teamAttack = livingWolves.reduce(
-    (sum, wolf) => sum + 4 + wolf.level * 0.8 + wolf.ranks.hunter * 1.2 + wolf.ranks.leader * 0.3,
+    (sum, wolf) =>
+      sum +
+      4 +
+      wolf.level * 0.8 +
+      wolf.ranks.hunter * 1.2 +
+      wolf.ranks.leader * 0.3 +
+      equipmentBonuses(wolf).attack,
     0,
   );
   let damage = Math.round(
@@ -250,7 +247,12 @@ function battleTick(state, at) {
   if (!survivingEnemies.length) return finishBattle(state, true, at);
   const pressure = survivingEnemies.length / battle.enemies.length;
   const defender = livingWolves[(battle.tick - 1) % livingWolves.length];
-  const reduction = 1 / (1 + defender.ranks.guardian * 0.12 + levelOf(state, 'shelter') * 0.08);
+  const reduction =
+    1 /
+    (1 +
+      defender.ranks.guardian * 0.12 +
+      levelOf(state, 'shelter') * 0.08 +
+      equipmentBonuses(defender).defense * 0.04);
   defender.hp = Math.max(
     0,
     defender.hp -
@@ -284,7 +286,10 @@ function battleTick(state, at) {
   );
   if (battle.tick % 4 === 0) {
     const heal =
-      livingWolves.reduce((sum, wolf) => sum + wolf.ranks.healer, 0) * 3 +
+      livingWolves.reduce(
+        (sum, wolf) => sum + wolf.ranks.healer * 3 + equipmentBonuses(wolf).healing,
+        0,
+      ) +
       levelOf(state, 'healer') * 2;
     const wounded = [...state.wolves].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
     if (wounded.hp > 0) wounded.hp = Math.min(wounded.maxHp, wounded.hp + heal);
@@ -313,6 +318,25 @@ export function advanceGame(state, now = Date.now()) {
     const activeUntil =
       state.battle.status === 'active' ? now : state.battle.startedAt + state.battle.tick * 1000;
     if (state.journey) state.journey.endsAt += Math.max(0, activeUntil - state.updatedAt);
+  }
+  if (state.adventure.active && state.adventure.active.endsAt <= now) {
+    const arrival = state.adventure.active.endsAt;
+    const before = Math.max(0, Math.min(elapsed, arrival - start));
+    const rates = getProduction(state);
+    addResources(
+      state,
+      Object.fromEntries(RESOURCE_KEYS.map((key) => [key, (rates[key] * before) / 60000])),
+    );
+    advanceAdventure(state, now);
+    const afterRates = getProduction(state);
+    addResources(
+      state,
+      Object.fromEntries(
+        RESOURCE_KEYS.map((key) => [key, (afterRates[key] * (elapsed - before)) / 60000]),
+      ),
+    );
+    state.updatedAt = now;
+    return state;
   }
   // Split production at arrival so polling frequency cannot grant destination bonuses early.
   if (state.journey && state.journey.endsAt <= now) {
@@ -364,7 +388,7 @@ function requirePeace(state) {
 }
 
 function requireHome(state) {
-  if (state.journey) fail('JOURNEY_ACTIVE');
+  if (state.journey || state.adventure.active) fail('JOURNEY_ACTIVE');
 }
 
 /** Apply one command. The authoritative caller supplies time and persists the result. */
@@ -381,25 +405,33 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
   const at = state.updatedAt;
   switch (action.type) {
     case 'build': {
-      requirePeace(state);
-      const definition = BUILDINGS.find((entry) => entry.id === action.building);
-      if (!definition) fail('INVALID_BUILDING');
-      if (state.buildings.some((building) => building.type === definition.id))
-        fail('BUILDING_EXISTS');
-      spend(state, definition.cost);
-      const [x, y] = BUILDING_TILES[definition.id];
-      state.buildings.push({
-        id: `building-${definition.id}`,
-        type: definition.id,
-        level: 1,
-        x,
-        y,
-      });
+      placeBuilding(state, action.building, action.plotId);
       state.stats.builds += 1;
-      if (definition.id === 'storage') state.capacity += 250;
       log(state, 'buildingBuilt', at);
       break;
     }
+    case 'moveBuilding':
+      relocateBuilding(state, action.id, action.plotId);
+      log(state, 'buildingMoved', at);
+      break;
+    case 'upgradeWall':
+      upgradeWall(state);
+      log(state, 'wallUpgraded', at);
+      break;
+    case 'expedition':
+      startExpedition(state, action, at);
+      log(state, 'expeditionStarted', at);
+      break;
+    case 'caravan':
+      startCaravan(state, action, at);
+      log(state, 'caravanStarted', at);
+      break;
+    case 'equip':
+      equipWolf(state, action);
+      break;
+    case 'unequip':
+      unequipWolf(state, action);
+      break;
     case 'upgrade': {
       requirePeace(state);
       const building = state.buildings.find((entry) => entry.id === action.id);
@@ -427,6 +459,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       log(state, 'formationChanged', at);
       break;
     case 'startBattle':
+      if (state.adventure.active) fail('JOURNEY_ACTIVE');
       if (state.battle.status !== 'preparing')
         fail(state.battle.status === 'active' ? 'BATTLE_ACTIVE' : 'BATTLE_FINISHED');
       if (
@@ -481,6 +514,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       requirePeace(state);
       const wolf = state.wolves.find((entry) => entry.id === action.id);
       if (!wolf || !PATHS.includes(action.path)) fail('INVALID_TRAINING');
+      if (isWolfBusy(state, wolf.id)) fail('WOLF_BUSY');
       if (wolf.points <= 0) fail('NO_SKILL_POINTS');
       if (wolf.ranks[action.path] >= 5) fail('MAX_LEVEL');
       spend(state, { herbs: 8, feed: 12 });
@@ -494,15 +528,9 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       break;
     }
     case 'travel': {
-      requirePeace(state);
-      requireHome(state);
       if (!LOCATIONS.includes(action.destination)) fail('INVALID_DESTINATION');
-      if (state.location === action.destination) fail('ALREADY_THERE');
-      spend(state, { water: 20, feed: 20 });
-      const duration = { homeland: 15, spring: 15, meadow: 22, highland: 30 }[action.destination];
-      state.journey = { destination: action.destination, endsAt: at + duration * 1000 };
-      log(state, 'journeyStarted', at);
-      break;
+      // Existing saved journeys finish above, but new travel must select an escort party.
+      fail('USE_CARAVAN');
     }
     case 'claimQuest': {
       const quest = state.quests.find((entry) => entry.id === action.id);
@@ -557,11 +585,14 @@ export function validateGame(state) {
         'log',
         'location',
         'journey',
+        'walls',
+        'inventory',
+        'adventure',
       ])
     )
       return false;
     if (
-      state.version !== 1 ||
+      state.version !== 2 ||
       !time(state.updatedAt) ||
       !time(state.collectReadyAt) ||
       !integer(state.capacity, 500, 2150)
@@ -572,37 +603,27 @@ export function validateGame(state) {
       !RESOURCE_KEYS.every((key) => number(state.resources[key], 0, state.capacity))
     )
       return false;
-    if (!Array.isArray(state.buildings) || state.buildings.length < 4 || state.buildings.length > 9)
-      return false;
-    const buildingTypes = new Set();
-    for (const building of state.buildings) {
-      if (
-        !exactKeys(building, ['id', 'type', 'level', 'x', 'y']) ||
-        !Object.hasOwn(BUILDING_TILES, building.type) ||
-        building.id !== `building-${building.type}` ||
-        buildingTypes.has(building.type) ||
-        !integer(building.level, 1, 5)
-      )
-        return false;
-      if (
-        building.x !== BUILDING_TILES[building.type][0] ||
-        building.y !== BUILDING_TILES[building.type][1]
-      )
-        return false;
-      buildingTypes.add(building.type);
-    }
-    if (!['hall', 'pasture', 'well', 'lumber'].every((type) => buildingTypes.has(type)))
-      return false;
+    if (!validateSettlement(state) || !validateAdventureState(state)) return false;
     if (
       state.capacity !==
-      500 + (levelOf(state, 'hall') - 1) * 100 + levelOf(state, 'storage') * 250
+      500 + Math.max(0, levelOf(state, 'hall') - 1) * 100 + levelOf(state, 'storage') * 250
     )
       return false;
     if (!Array.isArray(state.wolves) || state.wolves.length !== 5) return false;
     const names = new Set();
     for (const wolf of state.wolves) {
       if (
-        !exactKeys(wolf, ['id', 'name', 'level', 'xp', 'points', 'hp', 'maxHp', 'ranks']) ||
+        !exactKeys(wolf, [
+          'id',
+          'name',
+          'level',
+          'xp',
+          'points',
+          'hp',
+          'maxHp',
+          'ranks',
+          'equipment',
+        ]) ||
         !WOLF_ROLES.includes(wolf.name) ||
         names.has(wolf.name) ||
         wolf.id !== `wolf-${wolf.name}`

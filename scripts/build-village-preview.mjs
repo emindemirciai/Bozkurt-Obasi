@@ -39,7 +39,7 @@ const html = `<!doctype html>${legal}<html lang="tr"><head><meta charset="UTF-8"
 .village-preview-header>.wordmark svg{width:44px;height:44px;flex-shrink:0}
 .village-preview-header>div:last-child{display:flex;gap:8px}
 .village-preview main{padding:0}.village-preview .map-card{margin-bottom:28px}
-.village-preview .scene-wrap{height:360px;min-height:240px}
+.village-preview .scene-wrap{height:620px;min-height:240px}.preview-tier{display:flex;gap:12px;align-items:center;margin:20px 0}.preview-tier select{padding:8px;background:var(--surface);border:1px solid var(--line)}.preview-guardians{margin:28px 0}.preview-guardians>div{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.preview-guardians article{text-align:center;min-width:0}.preview-guardians svg{height:180px}.preview-guardians h3{font-size:14px}@media(max-width:600px){.preview-guardians>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.village-preview{padding:0 14px 24px}.village-preview-header{flex-wrap:wrap}.village-preview-header>div:last-child{margin-left:auto}.village-preview .scene-wrap{height:260px}}
 </style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });

@@ -1,3 +1,4 @@
+import { v2Translations } from './v2-i18n.mjs';
 export const translations = {
   tr: {
     forgotPassword: 'Şifremi unuttum',
@@ -846,3 +847,6 @@ export const translations = {
     recovery: 'Backup save restored.',
   },
 };
+
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], v2Translations[language]);

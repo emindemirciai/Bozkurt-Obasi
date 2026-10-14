@@ -65,7 +65,7 @@ test('production screens send one upserted visit, cumulative duration, and no ga
   });
   await expect(page).toHaveTitle(/Bozkurt Obası: Ay-Yıldız Nöbeti/);
   await page.clock.fastForward(5000);
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
   await expect.poll(() => events.length).toBe(3);
   expect(events[1].body).toMatchObject({
     id: initial.id,
@@ -131,11 +131,9 @@ test('analytics failure does not interrupt gameplay', async ({ page }) => {
   page.on('pageerror', (error) => errors.push(error.message));
   await productionSite(page, { fail: true });
   await page.goto(`${SITE}/#village`);
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   expect(errors).toEqual([]);
 });
 
@@ -148,8 +146,8 @@ for (const preference of ['doNotTrack', 'globalPrivacyControl']) {
     );
     const events = await productionSite(page);
     await page.goto(`${SITE}/#village`);
-    await page.getByRole('button', { name: 'Savunma', exact: true }).click();
-    await expect(page.locator('.map-title')).toContainText('Savunma hattı');
+    await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
+    await expect(page.locator('.map-title')).toContainText('Savaş meydanı');
     expect(events).toHaveLength(0);
     expect(await page.evaluate(() => localStorage.getItem('bozkurt.analytics.visitor'))).toBeNull();
   });
@@ -162,7 +160,7 @@ test('localhost never sends analytics traffic', async ({ page }) => {
   });
   await signIn(page);
   await page.goto('/#village');
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => localStorage.getItem('bozkurt.analytics.visitor'))).toBeNull();
 });

@@ -78,6 +78,12 @@ export function createAdminUserStore(
   const deleteTransfers = database.prepare(
     'DELETE FROM stone_transfers WHERE sender_id=? OR recipient_id=?',
   );
+  const deleteGifts = database.prepare(
+    'DELETE FROM asset_gifts WHERE sender_id=? OR recipient_id=?',
+  );
+  const deleteMessages = database.prepare(
+    'DELETE FROM private_messages WHERE sender_id=? OR recipient_id=?',
+  );
   const purgeTombstones = database.prepare(
     'DELETE FROM deleted_google_accounts WHERE expires_at<=?',
   );
@@ -351,6 +357,8 @@ export function createAdminUserStore(
       }
       const friendships = deleteFriends.run(profile.id, profile.id).changes;
       const transfers = deleteTransfers.run(profile.id, profile.id).changes;
+      const gifts = deleteGifts.run(profile.id, profile.id).changes;
+      const messages = deleteMessages.run(profile.id, profile.id).changes;
       audit.purgeIdentity({ id: profile.id, userCode: profile.user_code, email: profile.email });
       deleteProfile.run(profile.id);
       audit.record({
@@ -363,6 +371,8 @@ export function createAdminUserStore(
           sessions,
           friendships,
           transfers,
+          gifts,
+          messages,
         },
       });
       database.exec('COMMIT');
@@ -373,6 +383,8 @@ export function createAdminUserStore(
           sessions,
           friendships,
           transfers,
+          gifts,
+          messages,
         },
       };
     } catch (error) {

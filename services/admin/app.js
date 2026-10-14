@@ -222,6 +222,12 @@ const dashboardCopy = {
   friendAccepted: ['Arkadaşlık kabul edildi', 'Friend request accepted'],
   friendRemoved: ['Arkadaşlık kaldırıldı', 'Friendship removed'],
   stoneTransferred: ['Taş gönderildi', 'Stone transferred'],
+  assetGifted: ['Eşya veya malzeme gönderildi', 'Item or material gifted'],
+  messageSent: ['Özel mesaj gönderildi', 'Private message sent'],
+  metaGifts: ['Silinen hediye kayıtları', 'Deleted gift records'],
+  metaMessages: ['Silinen mesaj kayıtları', 'Deleted message records'],
+  metaKind: ['Hediye türü', 'Gift kind'],
+  metaAsset: ['Eşya/malzeme', 'Item/material'],
   gameAction: ['Oyun işlemi', 'Game action'],
   apiError: ['API hatası', 'API error'],
   metaProvider: ['Giriş yöntemi', 'Sign-in method'],
@@ -267,6 +273,8 @@ const actionLabels = {
   'player.friend_accepted': 'friendAccepted',
   'player.friend_removed': 'friendRemoved',
   'player.stone_transferred': 'stoneTransferred',
+  'player.asset_gifted': 'assetGifted',
+  'player.message_sent': 'messageSent',
   'player.game_action': 'gameAction',
   'system.api_error': 'apiError',
 };
@@ -282,6 +290,10 @@ const detailLabels = {
   sessions: 'metaSessions',
   friendships: 'metaFriendships',
   transfers: 'metaTransfers',
+  gifts: 'metaGifts',
+  messages: 'metaMessages',
+  kind: 'metaKind',
+  assetId: 'metaAsset',
 };
 const elements = {
   message: document.getElementById('message'),

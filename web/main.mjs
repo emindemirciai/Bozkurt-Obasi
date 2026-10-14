@@ -1,4 +1,17 @@
 import './style.css';
+import './v2.css';
+import { PLOTS, getWallUpgradeCost } from '../shared/settlement.mjs';
+import { isWolfBusy, adventureQuote } from '../shared/adventures.mjs';
+import {
+  placementDialog,
+  settlementControls,
+  narrativePanel,
+  battlePhase,
+  wolfPortrait,
+  equipmentView,
+  adventureView,
+} from './v2-view.mjs';
+import { socialPanel } from './social-view.mjs';
 import heroImage from './assets/hero-bozkurt.webp';
 import googleIcon from './assets/google-g.png';
 import {
@@ -73,6 +86,18 @@ let polling = null,
   sessionGeneration = 0,
   renderedSignature = '';
 let plannedBuilding = 'quarry';
+let selectedPlot = '',
+  movingId = '';
+let adventureSelection = {
+  kind: 'expedition',
+  region: 'spring',
+  difficulty: 'easy',
+  wolfIds: ['wolf-alpha'],
+};
+let conversation = { userCode: '', messages: [], nextBefore: null },
+  conversationRequest = 0,
+  conversationPending = 0,
+  conversationPollAt = 0;
 const economyContext = () => ({ t, number, escape, language, busy });
 let notice = '',
   noticeUntil = 0;
@@ -151,6 +176,8 @@ function interfaceSignature() {
   const costs = [
     ...BUILDINGS.map((building) => building.cost),
     ...state.buildings.map(getUpgradeCost),
+    getWallUpgradeCost(state.walls) || {},
+    adventureQuote(state, adventureSelection).cost,
     { herbs: 1 },
     { water: 25, feed: 30 },
     { herbs: 8, feed: 12 },
@@ -279,6 +306,19 @@ function denyGameAccess() {
   view = 'home';
   modal = '';
   plannedBuilding = 'quarry';
+  selectedPlot = movingId = '';
+  adventureSelection = {
+    kind: 'expedition',
+    region: 'spring',
+    difficulty: 'easy',
+    wolfIds: ['wolf-alpha'],
+  };
+  conversationRequest++;
+  conversationPending = 0;
+  conversation = { userCode: '', messages: [], nextBefore: null };
+  friendsDraft = {};
+  friendsData = { friends: [], incoming: [], outgoing: [], transfers: [], gifts: [] };
+  friendsLoaded = false;
   clearAccountDraft();
   clearRecoveryDraft();
   if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
@@ -316,7 +356,12 @@ async function initGoogleAuth() {
 
 function render(restoreFocus, preservePlanning = false) {
   const active = document.activeElement;
+  const oldScene = root.querySelector('.scene-wrap:has(.settlement-scene)');
+  const sceneScroll = oldScene ? [oldScene.scrollLeft, oldScene.scrollTop] : null;
   const focusId = restoreFocus || active?.id;
+  const textSelection = active?.matches('textarea, input[type=text]')
+    ? [active.selectionStart, active.selectionEnd]
+    : null;
   const previousPlanning =
     preservePlanning && view === 'village' ? root.querySelector('#economy-panel') : null;
   document.documentElement.lang = language;
@@ -346,9 +391,16 @@ function render(restoreFocus, preservePlanning = false) {
     <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${number(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
-    ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : view === 'friends' ? friendsView({ t, escape, number, button, data: friendsData, user: auth.user, loaded: friendsLoaded, busy, draft: friendsDraft }) : updatesView()}
+    ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : view === 'friends' ? friendsView({ t, escape, number, button, data: friendsData, user: auth.user, loaded: friendsLoaded, busy, draft: friendsDraft }) + socialPanel({ t, escape, data: friendsData, conversation, draft: friendsDraft, busy, language }) : updatesView()}
     <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="${privacyHref}">${t('privacyPolicy')}</a> · <a href="${termsHref}">${t('termsOfUse')}</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
+  if (sceneScroll) {
+    const scroller = root.querySelector('.scene-wrap:has(.settlement-scene)');
+    if (scroller) {
+      scroller.scrollLeft = sceneScroll[0];
+      scroller.scrollTop = sceneScroll[1];
+    }
+  }
   if (previousPlanning) {
     root.querySelector('#economy-panel')?.replaceWith(previousPlanning);
     updateEconomyPanel(root, state, plannedBuilding, economyContext());
@@ -357,6 +409,8 @@ function render(restoreFocus, preservePlanning = false) {
   renderedSignature = interfaceSignature();
   renderNotice();
   if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
+  if (textSelection && focusId)
+    document.getElementById(focusId)?.setSelectionRange?.(...textSelection);
   focusDialog();
 }
 
@@ -398,7 +452,7 @@ function closeDialog() {
 
 function playView() {
   const isBattle = view === 'battle';
-  return `<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div></section>
+  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div></section>
     <aside class="overview">${isBattle ? battlePanel() : villagePanel()}</aside></div>
     ${isBattle ? battleRecovery() : buildingList() + economyPanel(state, plannedBuilding, economyContext())}`;
 }
@@ -440,9 +494,11 @@ function followFirstSteps() {
 
 function villagePanel() {
   const b = state.buildings.find((b) => b.id === selected) || state.buildings[0];
+  if (!b)
+    return `<section class="detail-card"><h2>${t('emptyVillage')}</h2><p class="empty-village-hint">${t('emptyVillageText')}</p></section>${firstStepsView()}`;
   const def = BUILDINGS.find((d) => d.id === b.type),
     cost = getUpgradeCost(b);
-  return `<section class="detail-card"><div class="section-label">${t('villageOverview')}${icon('sun', 16)}</div><div class="selected-building-art">${miniBuilding(b.type)}</div><div class="building-detail-title"><h2>${t(b.type)}</h2><span>${t('level')} ${b.level}</span></div><p class="muted">${t(`${b.type}Desc`)}</p><div class="detail-stats">${
+  return `<section class="detail-card"><div class="section-label">${t('villageOverview')}${icon('sun', 16)}</div><div class="selected-building-art">${miniBuilding(b.type, b.level)}</div><div class="building-detail-title"><h2>${t(b.type)}</h2><span>${t('level')} ${b.level}</span></div><p class="muted">${t(`${b.type}Desc`)}</p><div class="detail-stats">${
     Object.entries(def.production)
       .filter(([, v]) => v > 0)
       .map(
@@ -452,7 +508,7 @@ function villagePanel() {
       .join('') ||
     `<div><span>${t('capacity')}</span><strong>${number(state.capacity)}</strong></div>`
   }</div>${b.level < 5 ? `<div class="upgrade-row">${costView(cost)}${button(t('upgrade') + icon('arrow', 15), 'upgrade', 'button outline', !affordable(cost) || busy, `data-id="${b.id}"`)}</div>` : `<div class="completed">${icon('check', 16)}${t('maxLevel')}</div>`}</section>
-    ${firstStepsView()}
+    ${button(t('moveBuilding'), 'moveBuilding', 'button outline move-building', busy || state.battle.status === 'active', `data-id="${b.id}"`)}${firstStepsView()}
     <section class="activity-card"><h3>${t('activity')}<span class="pulse"></span></h3>${state.log
       .slice(-3)
       .reverse()
@@ -464,14 +520,12 @@ function villagePanel() {
 }
 
 function buildingList() {
-  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('buildingDesc')}</p></div><span class="subtle-count">${state.buildings.length} / ${BUILDINGS.length}</span></div><div class="buildings-grid">${BUILDINGS.filter(
-    (b) => b.id !== 'hall',
-  )
-    .map((def) => {
-      const b = state.buildings.find((b) => b.type === def.id);
-      return `<article class="build-card ${b ? 'is-built' : ''}"><div class="build-art">${miniBuilding(def.id)}${b ? `<span class="level-badge">${t('level')} ${b.level}</span>` : ''}</div><h3>${t(def.id)}</h3><p>${t(`${def.id}Desc`)}</p><div class="build-card-bottom">${b ? `<span class="built-label">${icon('check', 13)}${t('built')}</span>${button(icon('arrow', 17), 'selectBuilding', 'small-button', false, `data-id="${b.id}" aria-label="${t(def.id)}"`)}` : `${costView(def.cost)}${button(icon('plus', 17), 'build', 'small-button', !affordable(def.cost) || state.battle.status === 'active' || busy, `data-building-type="${def.id}" aria-label="${t('build')} ${t(def.id)}"`)}`}</div></article>`;
-    })
-    .join('')}</div></section>`;
+  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p></div><span class="subtle-count">${state.buildings.length} / ${PLOTS.length}</span></div><div class="buildings-grid">${BUILDINGS.map(
+    (def) => {
+      const owned = state.buildings.filter((b) => b.type === def.id);
+      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)} · ${owned.length}/${def.maxCount}</h3><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + (PLOTS.findIndex((p) => p.x === b.x && p.y === b.y) + 1), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom">${costView(def.cost)}${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active', `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
+    },
+  ).join('')}</div></section>`;
 }
 
 function battlePanel() {
@@ -489,6 +543,9 @@ function refreshBattleView() {
     svg.dataset.startedAt !== String(state.battle.startedAt)
   )
     return false;
+  svg.dataset.phase = battlePhase(state);
+  const story = root.querySelector('.battle-narrative');
+  if (story) story.outerHTML = narrativePanel(state, { t });
   for (const actor of svg.querySelectorAll('[data-enemy-id]')) {
     const enemy = state.battle.enemies.find((entry) => entry.id === actor.dataset.enemyId);
     if (!enemy) return false;
@@ -531,11 +588,19 @@ function battleRecovery() {
 
 function wolvesView() {
   const wolf = state.wolves.find((w) => w.id === selectedWolf) || state.wolves[0];
-  return `<div class="guardian-layout"><section class="guardian-cards">${state.wolves.map((w) => `<button class="guardian-card ${w.id === wolf.id ? 'selected' : ''}" data-wolf="${w.id}"><span class="guardian-portrait"><svg viewBox="-55 -45 110 90">${wolfArt(w.name === 'healer' ? '#7c9877' : '#657975', 1.3)}</svg></span><span class="guardian-info"><small>${t('level')} ${w.level}</small><strong>${roleName(w.name)}</strong>${progress(w.hp, w.maxHp)}<span>${Math.ceil(w.hp)} / ${w.maxHp} ${t('health')}</span></span>${icon('arrow', 18)}</button>`).join('')}</section><section class="wolf-detail detail-card"><div class="section-label">${t('wolfDetails')}${icon('wolves', 20)}</div><div class="large-wolf"><svg viewBox="-60 -40 120 80">${wolfArt(wolf.name === 'healer' ? '#7c9877' : '#657975', 1.2)}</svg></div><h2>${roleName(wolf.name)}</h2><p>${t('level')} ${wolf.level} · ${wolf.xp} / ${wolf.level * 45} ${t('xp')}</p>${progress(wolf.xp, wolf.level * 45)}<div class="training-points">${t('points')} <b>${wolf.points}</b></div>${['guardian', 'hunter', 'leader', 'healer'].map((path) => `<div class="training-row"><span>${roleName(path)} <small>${wolf.ranks[path]} / 5</small></span>${button(t('train') + icon('plus', 14), 'train', 'button outline', wolf.points <= 0 || wolf.ranks[path] >= 5 || busy || state.battle.status === 'active', `data-id="${wolf.id}" data-path="${path}"`)}</div>`).join('')}<div class="training-cost">${costView({ herbs: 8, feed: 12 })}</div></section></div>${battleRecovery()}`;
+  return `<div class="guardian-layout"><section class="guardian-cards">${state.wolves.map((w) => `<button class="guardian-card ${w.id === wolf.id ? 'selected' : ''}" data-wolf="${w.id}"><span class="guardian-portrait">${wolfPortrait(w)}</span><span class="guardian-info"><small>${t('level')} ${w.level}</small><strong>${roleName(w.name)}</strong>${progress(w.hp, w.maxHp)}<span>${Math.ceil(w.hp)} / ${w.maxHp} ${t('health')}</span></span>${icon('arrow', 18)}</button>`).join('')}</section><section class="wolf-detail detail-card"><div class="section-label">${t('wolfDetails')}${icon('wolves', 20)}</div><div class="large-wolf">${wolfPortrait(wolf)}</div><h2>${roleName(wolf.name)}</h2><p>${t('level')} ${wolf.level} · ${wolf.xp} / ${wolf.level * 45} ${t('xp')}</p>${progress(wolf.xp, wolf.level * 45)}<div class="training-points">${t('points')} <b>${wolf.points}</b></div>${['guardian', 'hunter', 'leader', 'healer'].map((path) => `<div class="training-row"><span>${roleName(path)} <small>${wolf.ranks[path]} / 5</small></span>${button(t('train') + icon('plus', 14), 'train', 'button outline', wolf.points <= 0 || wolf.ranks[path] >= 5 || busy || isWolfBusy(state, wolf.id) || state.battle.status === 'active', `data-id="${wolf.id}" data-path="${path}"`)}</div>`).join('')}<div class="training-cost">${costView({ herbs: 8, feed: 12 })}</div>${equipmentView(state, wolf, { t, busy })}</section></div>${battleRecovery()}`;
 }
 
 function worldView() {
-  return `<section class="world-banner"><div><div class="eyebrow">${t('world')}</div><h2>${t(state.location)}</h2><p>${t('journeyNote')}</p>${state.journey ? `<div class="journey-pill">${icon('world', 19)}${t('travelling')} → ${t(state.journey.destination)} <b data-journey>${Math.max(0, Math.ceil((state.journey.endsAt - Date.now()) / 1000))} ${t('seconds')}</b></div>` : ''}</div><div class="world-mountain"><span></span><span></span><span></span><i>☽</i></div></section><div class="region-grid">${['homeland', 'spring', 'meadow', 'highland'].map((location, i) => `<article class="region-card"><div class="region-art region-${i}">${icon(['village', 'water', 'herbs', 'world'][i], 64)}<span>0${i + 1}</span></div><div class="region-body"><h2>${t(location)}</h2><p>${t(`${location}Detail`)}</p><div>${costView({ water: 20, feed: 20 })}${button(t(state.location === location ? 'arrived' : 'travel'), 'travel', 'button outline', state.location === location || Boolean(state.journey) || state.battle.status === 'active' || busy, `data-destination="${location}"`)}</div></div></article>`).join('')}</div>`;
+  if (state.adventure.active) {
+    const { kind, region, difficulty, wolfIds } = state.adventure.active;
+    adventureSelection = { kind, region, difficulty, wolfIds: [...wolfIds] };
+  }
+  if (!state.adventure.active)
+    adventureSelection.wolfIds = adventureSelection.wolfIds.filter((id) =>
+      state.wolves.some((w) => w.id === id && w.hp >= 20),
+    );
+  return adventureView(state, { t, busy, selection: adventureSelection, language });
 }
 
 function questsView() {
@@ -614,6 +679,7 @@ function accountFormView() {
 
 function modalView() {
   if (!modal) return '';
+  if (modal === 'placement') return placementDialog(state, { plotId: selectedPlot, t, busy });
   if (['login', 'register', 'password'].includes(modal)) return accountFormView();
   if (modal === 'recovery')
     return recoveryDialog({
@@ -657,6 +723,15 @@ function modalView() {
 }
 
 const accountErrorKeys = {
+  insufficient_gift: 'resourcesError',
+  invalid_message: 'invalidMessage',
+  invalid_gift: 'invalidGift',
+  insufficient_resources: 'resourcesError',
+  insufficient_items: 'itemUnavailable',
+  recipient_inventory_full: 'inventoryFull',
+  gift_conflict: 'transferConflict',
+  message_conflict: 'transferConflict',
+  message_rate_limited: 'accountRateLimited',
   invalid_avatar: 'invalidAvatar',
   invalid_verification_code: 'invalidVerificationCode',
   verification_expired: 'verificationExpired',
@@ -952,29 +1027,88 @@ async function loadFriends() {
   }
 }
 
+async function loadConversation(userCode, older = false, refresh = false) {
+  // Explicit contact selections take priority over the periodic refresh.
+  if (refresh && conversationPending) return;
+  const generation = sessionGeneration,
+    request = ++conversationRequest;
+  conversationPending = request;
+  const before = older && conversation.userCode === userCode ? conversation.nextBefore : null;
+  try {
+    const result = await playerRequest(
+      'player/friends/messages?' +
+        new URLSearchParams({ userCode, ...(before ? { before } : {}), limit: '30' }),
+    );
+    if (generation !== sessionGeneration || request !== conversationRequest || !auth.authenticated)
+      return;
+    const sameContact = conversation.userCode === userCode;
+    const overlaps =
+      sameContact &&
+      result.messages.some((message) =>
+        conversation.messages.some((previous) => previous.id === message.id),
+      );
+    // A sleeping tab may miss more than one page. Keep only a contiguous range,
+    // so the returned cursor can still retrieve every intervening message.
+    const keepHistory = sameContact && (older || (refresh && overlaps));
+    const combined = keepHistory ? [...result.messages, ...conversation.messages] : result.messages;
+    const previous = JSON.stringify(conversation);
+    conversation = {
+      userCode,
+      messages: [...new Map(combined.map((m) => [m.id, m])).values()].sort((a, b) => a.id - b.id),
+      nextBefore: refresh && keepHistory ? conversation.nextBefore : result.nextBefore,
+    };
+    if (view === 'friends' && previous !== JSON.stringify(conversation)) render();
+  } catch (error) {
+    if (generation === sessionGeneration && request === conversationRequest)
+      toast(accountErrorKeys[error.code] || 'failed');
+  } finally {
+    if (conversationPending === request) conversationPending = 0;
+  }
+}
 async function socialAction(action, body) {
   if (busy || !auth.authenticated) return;
+  let generation = sessionGeneration;
   busy = true;
-  if (polling) await polling;
-  const generation = ++sessionGeneration;
   render();
+  const transfer = action === 'transfer' || action === 'gift';
   try {
-    if (action === 'transfer') {
+    if (polling) await polling;
+    if (generation !== sessionGeneration || !auth.authenticated) return;
+    generation = ++sessionGeneration;
+    if (transfer) {
       await api('state', undefined, generation);
       body = { ...body, revision };
     }
     await playerRequest(`player/friends/${action}`, body);
-    if (action === 'transfer') {
+    if (generation !== sessionGeneration || !auth.authenticated) return;
+    if (transfer) {
       await api('state', undefined, generation);
       delete friendsDraft[body.userCode];
       delete friendsDraft[`pending:${body.userCode}`];
+      delete friendsDraft[`gift-pending:${body.userCode}`];
+    } else if (action === 'messages') {
+      delete friendsDraft[`message:${body.userCode}`];
+      delete friendsDraft[`message-pending:${body.userCode}`];
+      await loadConversation(body.userCode);
     } else if (action === 'request') friendsDraft.code = '';
+    else if (action === 'remove' && conversation.userCode === body.userCode) {
+      conversationRequest++;
+      conversation = { userCode: '', messages: [], nextBefore: null };
+    }
     await loadFriends();
-    toast(action === 'transfer' ? 'stoneTransferDone' : 'friendUpdated');
+    toast(
+      action === 'transfer'
+        ? 'stoneTransferDone'
+        : action === 'gift'
+          ? 'giftSent'
+          : action === 'messages'
+            ? 'messageSent'
+            : 'friendUpdated',
+    );
   } catch (error) {
-    if (action === 'transfer' && error.code === 'stale_revision')
+    if (transfer && error.code === 'stale_revision')
       await api('state', undefined, generation).catch(() => {});
-    toast(accountErrorKeys[error.code] || 'failed');
+    if (generation === sessionGeneration) toast(accountErrorKeys[error.code] || 'failed');
   } finally {
     busy = false;
     render();
@@ -982,6 +1116,15 @@ async function socialAction(action, body) {
 }
 
 root.addEventListener('input', (event) => {
+  if (event.target.dataset.messageCode)
+    friendsDraft['message:' + event.target.dataset.messageCode] = event.target.value;
+  if (event.target.dataset.giftField) {
+    const key = 'gift:' + event.target.dataset.code;
+    friendsDraft[key] = {
+      ...(friendsDraft[key] || { asset: 'resource:wood', amount: 1 }),
+      [event.target.dataset.giftField]: event.target.value,
+    };
+  }
   const field = event.target.dataset.profileField;
   if (field) profileDraft[field] = event.target.value;
   if (event.target.hasAttribute('data-friend-code')) friendsDraft.code = event.target.value;
@@ -990,6 +1133,17 @@ root.addEventListener('input', (event) => {
 });
 
 root.addEventListener('change', async (event) => {
+  if (event.target.id.startsWith('adventure-') || event.target.name === 'adventure-wolf') {
+    if (event.target.name === 'adventure-wolf')
+      adventureSelection.wolfIds = [
+        ...root.querySelectorAll('[name="adventure-wolf"]:checked'),
+      ].map((input) => input.value);
+    else adventureSelection[event.target.id.slice(10)] = event.target.value;
+    if (adventureSelection.kind === 'expedition' && adventureSelection.region === 'homeland')
+      adventureSelection.region = 'spring';
+    render();
+    return;
+  }
   if (event.target.id === 'construction-plan') {
     if (BUILDINGS.some((building) => building.id === event.target.value)) {
       plannedBuilding = event.target.value;
@@ -1028,6 +1182,24 @@ root.addEventListener('change', async (event) => {
 
 root.addEventListener('submit', (event) => {
   const form = event.target;
+  if (form.matches('.asset-gift,.private-message-form')) {
+    event.preventDefault();
+    if (busy || !auth.authenticated) return;
+    const values = new FormData(form),
+      userCode = form.dataset.code,
+      isGift = form.matches('.asset-gift');
+    const [kind, assetId] = String(values.get('asset') || '').split(':');
+    const payload = isGift
+      ? { userCode, kind, assetId, amount: Number(values.get('amount')) }
+      : { userCode, body: String(values.get('body') || '').trim() };
+    const key = (isGift ? 'gift-pending:' : 'message-pending:') + userCode,
+      signature = JSON.stringify(payload),
+      old = friendsDraft[key];
+    const requestId = old?.signature === signature ? old.requestId : crypto.randomUUID();
+    friendsDraft[key] = { signature, requestId };
+    void socialAction(isGift ? 'gift' : 'messages', { ...payload, requestId });
+    return;
+  }
   if (
     !['verification-form', 'profile-form', 'friend-request-form'].includes(form.id) &&
     !form.matches('.stone-transfer')
@@ -1101,6 +1273,18 @@ function pollOnline() {
 function reportError(error) {
   const code = String(error.code || error.message).toUpperCase();
   const keys = {
+    USE_CARAVAN: 'adventureIntro',
+    PLOT_REQUIRED: 'choosePlot',
+    INVALID_PLOT: 'choosePlot',
+    PLOT_OCCUPIED: 'plotOccupied',
+    BUILDING_LIMIT: 'buildingLimit',
+    WOLF_BUSY: 'wolfBusy',
+    INVALID_PARTY: 'invalidParty',
+    PARTY_TOO_SMALL: 'partyTooSmall',
+    REGION_LOCKED: 'regionLocked',
+    ITEM_UNAVAILABLE: 'itemUnavailable',
+    INVENTORY_FULL: 'inventoryFull',
+    ADVENTURE_ACTIVE: 'expeditionActive',
     INSUFFICIENT_RESOURCES: 'resourcesError',
     BATTLE_ACTIVE: 'activeError',
     COLLECT_COOLDOWN: 'cooldownError',
@@ -1131,7 +1315,12 @@ async function command(action) {
     if (polling) await polling;
     if (generation !== sessionGeneration) return;
     await api('action', { action, revision }, generation);
-    if (action.type === 'build') selected = `building-${action.building}`;
+    if (action.type === 'build') {
+      const plot = PLOTS.find((p) => p.id === action.plotId);
+      selected = state.buildings.find((b) => b.x === plot?.x && b.y === plot?.y)?.id || selected;
+      modal = '';
+    }
+    if (action.type === 'moveBuilding') movingId = '';
     toast(logLabels[state.log.at(-1)?.key] || 'actionDone');
   } catch (error) {
     reportError(error);
@@ -1171,12 +1360,50 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (target.dataset.plot) {
-    document
-      .querySelector(`[data-building-type="${target.dataset.plot}"]`)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (busy) return;
+    selectedPlot = target.dataset.plot;
+    if (movingId) await command({ type: 'moveBuilding', id: movingId, plotId: selectedPlot });
+    else {
+      accountOpener = target.id;
+      modal = 'placement';
+      render();
+    }
     return;
   }
   const a = target.dataset.action;
+  if (a === 'placeBuilding') {
+    await command({
+      type: 'build',
+      building: target.dataset.buildingType,
+      plotId: target.dataset.plotId,
+    });
+    return;
+  }
+  if (a === 'moveBuilding' || a === 'cancelMove') {
+    movingId = a === 'moveBuilding' ? target.dataset.id : '';
+    render();
+    root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
+    return;
+  }
+  if (a === 'build') {
+    plannedBuilding = target.dataset.buildingType;
+    toast('choosePlot');
+    root.querySelector('[data-plot]')?.focus({ preventScroll: true });
+    root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
+    return;
+  }
+  if (a === 'startAdventure') {
+    await command({
+      type: adventureSelection.kind,
+      ...adventureSelection,
+      wolfIds: [...adventureSelection.wolfIds],
+    });
+    return;
+  }
+  if (a === 'openConversation' || a === 'olderMessages') {
+    void loadConversation(target.dataset.code, a === 'olderMessages');
+    return;
+  }
   if (a === 'forgotPassword') {
     if (busy || modal !== 'login') return;
     const email = accountDraft.email;
@@ -1391,6 +1618,12 @@ root.addEventListener('click', async (event) => {
   if (target.dataset.action === 'executePlan') {
     const plan = constructionPlan(state, plannedBuilding);
     if (plan.blocked || !plan.affordable || busy) return;
+    if (plan.mode === 'build') {
+      toast('choosePlot');
+      root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
+      root.querySelector('[data-plot]')?.focus({ preventScroll: true });
+      return;
+    }
     await command(
       plan.mode === 'build'
         ? { type: 'build', building: plan.type }
@@ -1399,9 +1632,11 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const actions = {
+    upgradeWall: { type: 'upgradeWall' },
+    equip: { type: 'equip', id: target.dataset.id, item: target.dataset.item },
+    unequip: { type: 'unequip', id: target.dataset.id },
     collect: { type: 'collect' },
     upgrade: { type: 'upgrade', id: target.dataset.id },
-    build: { type: 'build', building: target.dataset.buildingType },
     formation: { type: 'formation', unit: target.dataset.unit, value: target.dataset.value },
     startBattle: { type: 'startBattle' },
     newBattle: { type: 'newBattle' },
@@ -1464,6 +1699,22 @@ setInterval(async () => {
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
+  // Keep an open placement chooser current without replacing its focused controls.
+  if (modal === 'placement') {
+    for (const choice of root.querySelectorAll('[data-action="placeBuilding"]')) {
+      const definition = BUILDINGS.find((building) => building.id === choice.dataset.buildingType);
+      const plot = PLOTS.find((entry) => entry.id === choice.dataset.plotId);
+      choice.disabled =
+        busy ||
+        state.battle.status === 'active' ||
+        !definition ||
+        !plot ||
+        state.buildings.some((building) => building.x === plot.x && building.y === plot.y) ||
+        state.buildings.filter((building) => building.type === definition.id).length >=
+          definition.maxCount ||
+        !affordable(definition.cost);
+    }
+  }
   const collectButton = document.querySelector('#collect-button');
   if (collectButton) {
     const remaining = Math.max(0, Math.ceil((state.collectReadyAt - Date.now()) / 1000));
@@ -1471,6 +1722,22 @@ setInterval(async () => {
     collectButton.querySelector('[data-collect-label]').textContent = remaining
       ? `${t('collecting')} · ${remaining}${t('seconds')}`
       : t('collect');
+  }
+  if (
+    view === 'friends' &&
+    conversation.userCode &&
+    !busy &&
+    !conversationPending &&
+    Date.now() - conversationPollAt > 5000
+  ) {
+    conversationPollAt = Date.now();
+    void loadConversation(conversation.userCode, false, true);
+  }
+  const activeAdventure = root.querySelector('[data-active-adventure]');
+  if (activeAdventure && state.adventure.active) {
+    const fragment = document.createElement('template');
+    fragment.innerHTML = worldView();
+    activeAdventure.replaceWith(fragment.content.querySelector('[data-active-adventure]'));
   }
   const journey = document.querySelector('[data-journey]');
   if (journey && state.journey)

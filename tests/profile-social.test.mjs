@@ -103,10 +103,13 @@ test('stone transfer conserves resources, increments both revisions and is idemp
   social.accept('bob@example.com', profiles.publicProfile('alice@example.com').userCode);
   const body = { userCode: code, amount: 40, revision: 0, requestId: randomUUID() },
     receipt = social.transfer('alice@example.com', body, now);
-  assert.equal(receipt.state.resources.stone, 110);
+  assert.equal(receipt.state.resources.stone, createGame(now).resources.stone - body.amount);
   assert.equal(receipt.revision, 1);
   const recipient = db.prepare("SELECT * FROM email_accounts WHERE sub='bob'").get();
-  assert.equal(JSON.parse(recipient.state_json).resources.stone, 190);
+  assert.equal(
+    JSON.parse(recipient.state_json).resources.stone,
+    createGame(now).resources.stone + body.amount,
+  );
   assert.equal(recipient.revision, 1);
   assert.ok(validateGame(JSON.parse(recipient.state_json)));
   assert.equal(social.transfer('alice@example.com', body, now).duplicate, true);
@@ -125,7 +128,12 @@ test('failed transfers roll back both villages and capacity/amount checks preven
   social.request('alice@example.com', code, now);
   social.accept('bob@example.com', profiles.publicProfile('alice@example.com').userCode);
   const before = db.prepare('SELECT * FROM email_accounts').all(),
-    body = { userCode: code, amount: 151, revision: 0, requestId: randomUUID() };
+    body = {
+      userCode: code,
+      amount: createGame(now).resources.stone + 1,
+      revision: 0,
+      requestId: randomUUID(),
+    };
   assert.throws(() => social.transfer('alice@example.com', body, now), /insufficient_stone/);
   assert.deepEqual(db.prepare('SELECT * FROM email_accounts').all(), before);
   const state = createGame(now);

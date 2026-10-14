@@ -10,6 +10,14 @@ const releaseHistory = JSON.parse(
 
 test.beforeEach(async ({ page }) => signIn(page));
 
+async function buildQuarry(page, plotId = 'p0') {
+  await page.locator(`[data-plot="${plotId}"]`).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('[data-action="placeBuilding"][data-building-type="quarry"]').click();
+  await expect(dialog).toHaveCount(0);
+}
+
 test('village construction, quest reward, training and TR/EN work without runtime errors', async ({
   page,
 }) => {
@@ -19,12 +27,9 @@ test('village construction, quest reward, training and TR/EN work without runtim
   await expect(page.getByRole('heading', { name: 'Yurduna hoş geldin.' })).toBeVisible();
   await mkdir('artifacts', { recursive: true });
   await page.screenshot({ path: 'artifacts/village-desktop.png', fullPage: true });
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
+  await buildQuarry(page);
   await expect(page.locator('.building-detail-title h2')).toHaveText('Taş Ocağı');
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.getByRole('button', { name: 'Görevler', exact: true }).click();
   const quest = page.locator('.quest-card').filter({ hasText: 'Yurdun ilk adımı' });
   await quest.getByRole('button', { name: 'Ödülü al' }).click();
@@ -38,7 +43,7 @@ test('village construction, quest reward, training and TR/EN work without runtim
   await expect(page.getByRole('heading', { name: 'Guardians', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Homeland', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Welcome to your homeland.' })).toBeVisible();
-  await expect(page.locator('.map-chip')).toHaveText('5 buildings');
+  await expect(page.locator('.map-chip')).toHaveText('1 buildings');
   expect(errors).toEqual([]);
 });
 test('realistic battle cutouts load with alpha, face opponents and remain selectable on mobile', async ({
@@ -47,7 +52,7 @@ test('realistic battle cutouts load with alpha, face opponents and remain select
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/#village');
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
   const images = page.locator('.battle-scene image[data-animal-kind]');
   await expect(images).toHaveCount(32);
   const decoded = await images.evaluateAll(async (nodes) => {
@@ -111,7 +116,7 @@ test('battle reveals a random jackal tactic at start and animates both sides', a
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/#village');
-  await page.getByRole('button', { name: 'Savunma', exact: true }).click();
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
   await expect(page.locator('.tactic-reveal')).toContainText('Savaş başlayınca belli olacak');
   await expect(page.locator('.tactic-list')).toHaveCount(0);
   await expect(page.locator('[data-action="tactic"]')).toHaveCount(0);
@@ -124,7 +129,14 @@ test('battle reveals a random jackal tactic at start and animates both sides', a
   );
   await mkdir('artifacts', { recursive: true });
   await page.screenshot({ path: 'artifacts/battle-desktop.png', fullPage: true });
-  await page.getByRole('button', { name: 'Savaşı başlat' }).click();
+  await page.getByRole('button', { name: 'Yola çık', exact: true }).click();
+  await expect(page.locator('.battle-scene')).toHaveAttribute('data-phase', 'march');
+  await expect(page.locator('.battle-narrative [data-battle-story]')).not.toBeEmpty();
+  await expect(page.locator('.battle-jackal').first()).toHaveCSS('opacity', '0');
+  await expect(page.locator('.battle-wolf .battle-motion').first()).toHaveCSS(
+    'animation-name',
+    'none',
+  );
 
   await expect(page.locator('.tactic-reveal')).toContainText(
     /Doğrudan saldırı|Sol kanat|Sağ kanat|Çift kanat|Sürü hücumu/,
@@ -137,6 +149,17 @@ test('battle reveals a random jackal tactic at start and animates both sides', a
   );
   await expect(page.locator('.battle-jackal')).toHaveCount(3);
   await expect(page.locator('.battle-wolf')).toHaveCount(5);
+  await expect(page.locator('.battle-scene')).toHaveAttribute('data-phase', 'ambush', {
+    timeout: 6_000,
+  });
+  await expect(page.locator('.battle-jackal').first()).toHaveCSS('opacity', '1');
+  await expect(page.locator('.battle-scene')).toHaveAttribute('data-phase', 'forming', {
+    timeout: 6_000,
+  });
+  await expect(page.locator('.formation-guide')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.battle-scene')).toHaveAttribute('data-phase', 'clash', {
+    timeout: 6_000,
+  });
   const jackalAnimation = await page
     .locator('.battle-jackal .battle-motion')
     .first()
@@ -234,13 +257,10 @@ test('authenticated village survives browser reload without a guest-mode switch'
 }) => {
   await page.goto('/#village');
   await expect(page.locator('.connection')).toContainText('Çevrim içi');
-  await page
-    .locator('.buildings-grid')
-    .getByRole('button', { name: 'İnşa et Taş Ocağı', exact: true })
-    .click();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await buildQuarry(page);
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await page.reload();
-  await expect(page.locator('.map-chip')).toHaveText('5 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
   await expect(page.getByRole('button', { name: 'Yerel köye dön' })).toHaveCount(0);
 });
 
@@ -278,6 +298,11 @@ test('mobile layout, modal keyboard dismissal and offline file preview', async (
     ),
   );
   expect(offlineImages).toEqual([512, 512, 512, 512]);
+  await expect(page.locator('.battlefield-terrain')).toHaveAttribute(
+    'href',
+    /^data:image\/webp;base64,/,
+  );
+  await expect(page.locator('.battle-scene')).toHaveAttribute('data-phase', 'clash');
   await page.locator('#language').click();
   await expect(page.getByRole('heading', { name: 'Battlefield' })).toBeVisible();
   await page.getByRole('button', { name: 'Dark theme', exact: true }).click();

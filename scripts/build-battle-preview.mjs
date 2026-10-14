@@ -47,6 +47,14 @@ const text = {
   },
 };
 let artwork = scene(state, { battle: true, t: (key) => translations.tr[key] || key });
+// Preview the completed formation without starting an account or a game simulation.
+artwork = artwork.replace('data-phase="preparing"', 'data-phase="clash"');
+const terrain = artwork.match(/<image class="battlefield-terrain"[^>]*href="([^"]+)"/);
+if (!terrain) throw new Error('The battlefield terrain is missing.');
+artwork = artwork.replace(
+  terrain[1],
+  `data:image/webp;base64,${(await readFile(fileURLToPath(terrain[1]))).toString('base64')}`,
+);
 const sources = new Map();
 for (const match of artwork.matchAll(
   /<image[^>]*data-animal-kind="([^"]+)"[^>]*href="([^"]+)"[^>]*\/>/g,
@@ -70,7 +78,8 @@ artwork = artwork.replace('<defs>', `<defs>${[...sources.values()].join('')}`);
 artwork = artwork.replaceAll('role="button" tabindex="0"', '');
 const legalNotice = (await readFile('index.html', 'utf8')).match(/<!--[\s\S]*?-->/)?.[0];
 if (!legalNotice?.includes('MIT License')) throw new Error('MIT source notice is missing.');
-const css = await readFile('web/style.css', 'utf8');
+const css =
+  (await readFile('web/style.css', 'utf8')) + '\n' + (await readFile('web/v2.css', 'utf8'));
 const version = JSON.parse(await readFile('package.json', 'utf8')).version;
 const favicon = `data:image/svg+xml;base64,${(await readFile('public/brand/logo-mark.svg')).toString('base64')}`;
 const html = `<!doctype html>${legalNotice}

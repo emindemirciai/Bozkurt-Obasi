@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUILDINGS, RESOURCE_KEYS, applyAction, createGame } from '../shared/game.mjs';
+import { BUILDINGS, RESOURCE_KEYS, applyAction } from '../shared/game.mjs';
+import { establishedGame, establishedJourney } from './established-game.mjs';
 import { constructionPlan, resourceOutlook } from '../web/planning.mjs';
 
 const START = 1_000_000;
-const fresh = () => createGame(START);
+const fresh = () => establishedGame(START);
 const act = (state, action) => applyAction(state, action, state.updatedAt);
 const row = (plan, key) => plan.deficits.find((deficit) => deficit.key === key);
 
@@ -49,7 +50,7 @@ test('full stores have a zero ETA even without passive production and fractional
 
 test('resource outlook includes the existing regional production bonuses', () => {
   const state = fresh();
-  act(state, { type: 'build', building: 'quarry' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   for (const [location, key, rate] of [
     ['spring', 'water', 21],
     ['meadow', 'feed', 18],
@@ -81,7 +82,7 @@ test('affordable new buildings include satisfied cost rows and agree with the co
     waitSeconds: 0,
     blocked: null,
   });
-  act(state, { type: 'build', building: 'quarry' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   assert.equal(state.resources.wood, 140);
   assert.equal(state.resources.stone, 120);
 });
@@ -106,7 +107,7 @@ test('missing passive production reports an unobtainable cost while preserving o
 
 test('upgrade estimates use the target level, scaling cost, region bonus and slowest shortage', () => {
   const state = fresh();
-  act(state, { type: 'build', building: 'quarry' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   state.location = 'highland';
   state.resources.wood = 108;
   state.resources.stone = 40;
@@ -179,7 +180,7 @@ test('active battles prevent otherwise affordable construction and upgrading', (
     assert.ok(plan.deficits.every((deficit) => deficit.missing === 0 && deficit.seconds === 0));
     const action =
       plan.mode === 'build'
-        ? { type: 'build', building: plan.type }
+        ? { type: 'build', building: plan.type, plotId: 'p7' }
         : { type: 'upgrade', id: plan.buildingId };
     assert.throws(() => act(state, action), { code: 'BATTLE_ACTIVE' });
   }
@@ -200,11 +201,10 @@ test('battle blockers retain the resource ETA and override production and capaci
 });
 
 test('journeys allow construction and keep estimates at the current location production', () => {
-  const state = fresh();
-  act(state, { type: 'travel', destination: 'highland' });
+  const state = establishedJourney(START, 'highland');
   assert.ok(state.journey);
   assert.equal(constructionPlan(state).affordable, true);
-  act(state, { type: 'build', building: 'quarry' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   state.resources.stone = 40;
   const plan = constructionPlan(state);
   assert.equal(plan.blocked, null);

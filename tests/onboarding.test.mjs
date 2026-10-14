@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, applyAction, advanceGame, TACTICS, validateGame } from '../shared/game.mjs';
 import { firstSteps } from '../web/onboarding.mjs';
+import { establishedGame } from './established-game.mjs';
 
 const START = 1_000_000;
 const act = (state, action) => applyAction(state, action, state.updatedAt);
@@ -11,7 +12,7 @@ const train = (state) => act(state, { type: 'train', id: 'wolf-alpha', path: 'gu
 function preparedVillage() {
   const state = createGame(START);
   act(state, { type: 'collect' });
-  act(state, { type: 'build', building: 'quarry' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   act(state, { type: 'claimQuest', id: 'first_build' });
   train(state);
   train(state);
@@ -34,7 +35,7 @@ test('guide follows accepted actions, requires claiming the reward and preserves
   assert.throws(() => act(state, { type: 'collect' }), { code: 'COLLECT_COOLDOWN' });
   assert.deepEqual(firstSteps(state), afterGather);
 
-  act(state, { type: 'build', building: 'quarry' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   assert.equal(firstSteps(state).completed, 2);
   assert.equal(firstSteps(state).next, 'reward');
   assert.equal(step(state, 'reward').complete, false);
@@ -50,11 +51,11 @@ test('guide follows accepted actions, requires claiming the reward and preserves
   assert.equal(validateGame(state), true);
 });
 
-test('older saves recognize out-of-order actions and any new structure without a migration', () => {
-  const state = createGame(START);
+test('migrated saves recognize out-of-order actions and any new structure', () => {
+  const state = establishedGame(START);
   act(state, { type: 'upgrade', id: 'building-lumber' });
   assert.equal(step(state, 'build').complete, false);
-  act(state, { type: 'build', building: 'healer' });
+  act(state, { type: 'build', building: 'healer', plotId: 'p35' });
   train(state);
   train(state);
   trainOtherWolf(state);

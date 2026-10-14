@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.0.0 — 2026-10-14
+
+**TR**
+
+- 36 parselde serbest inşa ve taşıma, çoklu üreticiler, beş seviyeli surlar ve gerçekçi bina/kurt görselleri.
+- Hikâyeli pusu ve hilal-yıldız savaş geçişi; seçilen muhafızlarla beş bölgede keşif, sevkiyat, XP ve ekipman.
+- Arkadaşlara özel mesaj ve malzeme/eşya hediyesi; atomik ve tekrarda çift kesintiyi önleyen işlemler. Eski köyler kayıpsız v2 biçimine taşınır.
+
+**EN**
+
+- Free construction and relocation across 36 plots, multiple producers, five-level walls and realistic building/wolf artwork.
+- Narrative ambush and crescent-star deployment; selected guardians explore and escort across five regions for XP and equipment.
+- Private friend messages and material/item gifts with atomic, idempotent transactions. Existing villages migrate to schema v2 without reset.
+
 ## v1.10.0 — 2026-10-09
 
 **TR**

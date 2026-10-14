@@ -23,12 +23,22 @@ const ACTIONS = new Set([
   'player.friend_accepted',
   'player.friend_removed',
   'player.stone_transferred',
+  'player.asset_gifted',
+  'player.message_sent',
   'player.game_action',
   'system.api_error',
 ]);
 const LEVELS = new Set(['info', 'warning', 'error']);
 const ACTOR_TYPES = new Set(['admin', 'player', 'system']);
-const TEXT_DETAILS = new Set(['provider', 'actionType', 'result', 'error', 'status']);
+const TEXT_DETAILS = new Set([
+  'provider',
+  'actionType',
+  'result',
+  'error',
+  'status',
+  'asset',
+  'kind',
+]);
 const COUNT_DETAILS = new Set([
   'amount',
   'count',
@@ -36,6 +46,8 @@ const COUNT_DETAILS = new Set([
   'sessions',
   'friendships',
   'transfers',
+  'gifts',
+  'messages',
   'status',
 ]);
 

@@ -6,9 +6,9 @@ Ana yurt ekranındaki **Oba planlaması** paneli beş kaynağın mevcut miktarı
 
 Dokuz yapıdan birini seçerek yeni yapının veya mevcut yapının sonraki seviyesinin maliyetini inceleyebilirsin. Panel her kaynak için mevcut/gerekli miktarı, eksik miktarı ve mevcut üretimle bekleme süresini gösterir. Eksik kaynak üretilmiyorsa toplama veya üretici yapı önerilir. Maliyet depo sınırını aşıyorsa yalnızca beklemek yeterli değildir. Son seviyeye ulaşan yapı yükseltilemez.
 
-Hedef seçmek kaynak harcamaz. Açıkça **İnşa et** veya **Yükselt** düğmesine basmak, oyunun mevcut sunucu komutunu çalıştırır. Aktif savaş, kaynak eksikliği ve son seviye durumlarında düğme kapalıdır; sunucu kaynakları ve kayıt revizyonunu ayrıca doğrular. Kaynaklar güncellenirken seçim ve klavye odağı korunur. Hesaptan çıkıldığında plan seçimi sıfırlanır.
+Hedef seçmek kaynak harcamaz. **Yer seç** haritadaki parsellere götürür. Bir **+** alanı ve ardından bina seçildiğinde yapı tam o konuma kurulur. **Yükselt** mevcut binayı geliştirir. Aktif savaş, kaynak eksikliği ve son seviye durumlarında düğme kapalıdır; sunucu kaynakları ve kayıt revizyonunu ayrıca doğrular. Kaynaklar güncellenirken seçim ve klavye odağı korunur. Hesaptan çıkıldığında plan seçimi sıfırlanır.
 
-Süreler mevcut üretimin sabit kalacağını varsayan tahminlerdir. Toplama, harcama, savaş ödülleri, yeni yapılar ve yolculukta bölge değişimi bu süreleri değiştirebilir. Otomatik inşaat kuyruğu veya yapım süresi eklenmez; köy kayıt biçimi ve oyun ekonomisi korunur.
+Süreler mevcut üretimin sabit kalacağını varsayan tahminlerdir. Toplama, harcama, savaş ödülleri, yeni yapılar ve yolculukta bölge değişimi bu süreleri değiştirebilir. Otomatik inşaat kuyruğu veya yapım süresi eklenmez; eski köy kayıtları kayıpsız v2 biçimine taşınır.
 
 ### Çevrimdışı görsel test
 
@@ -24,9 +24,9 @@ The homeland **Village planning** panel displays all five resource balances, sto
 
 Choose one of nine buildings to inspect the cost of a new building or the next level of an existing one. Each required resource shows available/required quantities, its shortfall and estimated waiting time at the current production rate. When a missing resource has no producer, gathering or a producer building is suggested. If a cost exceeds storage capacity, waiting alone cannot resolve it. Maximum-level buildings cannot be upgraded.
 
-Choosing a target spends nothing. Explicitly pressing **Build** or **Upgrade** sends the existing authoritative game command. Active battles, shortages and maximum level disable the button; the server independently checks balances and save revisions. Resource updates preserve the selected target and keyboard focus. Signing out resets the selection.
+Choosing a target spends nothing. **Choose plot** leads to the map. Select a **+** plot, then a building to construct at that exact location; **Upgrade** improves the existing building. Active battles, shortages and maximum level disable the button; the server independently checks balances and save revisions. Resource updates preserve the selected target and keyboard focus. Signing out resets the selection.
 
-Estimates assume current production stays fixed. Gathering, spending, battle rewards, new buildings and region changes during travel can alter them. There is no automatic construction queue or new construction duration, and the save schema and game economy remain unchanged.
+Estimates assume current production stays fixed. Gathering, spending, battle rewards, new buildings and region changes during travel can alter them. There is no automatic construction queue or new construction duration, and old saves migrate to the v2 schema without resetting progress.
 
 ### Offline visual test
 
@@ -35,3 +35,9 @@ Estimates assume current production stays fixed. Gathering, spending, battle rew
 ```bash
 npm run build:preview
 ```
+
+## Serbest yerleşim / Free placement
+
+**TR:** 36 parsel, ücretsiz taşıma, beş üretici türünden altışar bina ve beş seviye sur vardır. Parsel p0–p35, 6×6 koordinatın sabit kimliğidir. Bina menüsü tür sınırı dolmuş seçenekleri gizler; kaynak eksik seçenekleri kapalı gösterir. Yapı görselleri 1/3/5 seviyelerinde değişir. Önizlemenin mimari aşama seçicisi yalnızca örnek sahneyi değiştirir.
+
+**EN:** 36 plots, free relocation, six copies of each of five producer types, and five wall levels are available. Plot IDs p0–p35 map to fixed 6×6 coordinates. The placement menu omits types at their count limit and disables unaffordable choices. Building visuals change at levels 1/3/5. The offline architecture selector changes only the fictional scene.

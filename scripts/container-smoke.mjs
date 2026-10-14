@@ -94,7 +94,7 @@ try {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      action: { type: 'build', building: 'quarry' },
+      action: { type: 'build', building: 'quarry', plotId: 'p0' },
       revision: 0,
     }),
   });
@@ -136,7 +136,7 @@ try {
     method: 'POST',
     headers: { Cookie: cookie, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      action: { type: 'build', building: 'quarry' },
+      action: { type: 'build', building: 'quarry', plotId: 'p0' },
       revision: village.revision,
     }),
   });

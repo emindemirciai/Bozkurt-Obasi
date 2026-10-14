@@ -7,7 +7,11 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomBytes } from 'node:crypto';
 import { createApp } from '../server/web/app.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
-import { createGame } from '../shared/game.mjs';
+import { createGame, validateGame } from '../shared/game.mjs';
+import {
+  createGame as createLegacyGame,
+  applyAction as applyLegacyAction,
+} from '../shared/legacy-v1.mjs';
 
 async function fixture(t, options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'bozkurt-api-'));
@@ -184,12 +188,19 @@ test('Google account session persists across restart and remains isolated from o
   const action = await api.request('/api/action', {
     method: 'POST',
     cookie: first.cookie,
-    body: { action: { type: 'build', building: 'quarry' }, revision: first.data.revision },
+    body: {
+      action: { type: 'build', building: 'quarry', plotId: 'p35' },
+      revision: first.data.revision,
+    },
   });
   assert.equal(action.status, 200);
   const changed = await action.json();
   assert.equal(changed.revision, 1);
   assert.notDeepEqual(changed.state, first.data.state);
+  assert.equal(changed.state.version, 2);
+  assert.deepEqual(changed.state.buildings, [
+    { id: 'building-quarry', type: 'quarry', level: 1, x: 5, y: 5 },
+  ]);
 
   const otherState = await api.request('/api/state', { cookie: second.cookie });
   assert.deepEqual((await otherState.json()).state, second.data.state);
@@ -225,7 +236,7 @@ test('resuming an interrupted battle preserves injuries and XP without replaying
     body: { action: { type: 'startBattle' }, revision: guest.data.revision },
   });
   assert.equal(started.status, 200);
-  now += 4000;
+  now += 8000;
   const running = await (await api.request('/api/state', { cookie: guest.cookie })).json();
   assert.equal(running.state.battle.status, 'active');
   assert.ok(running.state.wolves.some((wolf) => wolf.hp < wolf.maxHp));
@@ -252,6 +263,60 @@ test('invalid stored state is rejected instead of being accepted or silently res
   const response = await api.request('/api/state', { cookie: guest.cookie });
   assert.equal(response.status, 500);
   assert.deepEqual(await response.json(), { error: 'internal_error' });
+});
+
+test('a v1 account migrates once on read and retains its buildings and resources across restart', async (t) => {
+  const api = await fixture(t);
+  const session = await api.session();
+  const legacy = createLegacyGame(100_000);
+  applyLegacyAction(legacy, { type: 'build', building: 'quarry' }, 100_000);
+  const database = new DatabaseSync(api.dbPath);
+  database
+    .prepare('UPDATE google_accounts SET state_json = ?, revision = 7')
+    .run(JSON.stringify(legacy));
+  database.close();
+  const migratedResponse = await api.request('/api/state', { cookie: session.cookie });
+  assert.equal(migratedResponse.status, 200);
+  const migrated = await migratedResponse.json();
+  assert.equal(migrated.state.version, 2);
+  assert.equal(validateGame(migrated.state), true);
+  assert.deepEqual(migrated.state.buildings, legacy.buildings);
+  assert.deepEqual(migrated.state.resources, legacy.resources);
+  assert.equal(migrated.revision, 8);
+  await api.restart();
+  const restored = await api.session(session.cookie);
+  assert.deepEqual(restored.data.state, migrated.state);
+  assert.equal(restored.data.revision, migrated.revision);
+});
+
+test('an expedition persists through restart and completes once for only its selected wolves', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const session = await api.session();
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: session.cookie,
+    body: {
+      action: { type: 'expedition', region: 'spring', difficulty: 'easy', wolfIds: ['wolf-scout'] },
+      revision: session.data.revision,
+    },
+  });
+  assert.equal(response.status, 200);
+  const started = await response.json();
+  assert.equal(started.state.adventure.active.kind, 'expedition');
+  await api.restart();
+  now = started.state.adventure.active.endsAt;
+  const restored = await api.session(session.cookie);
+  assert.equal(restored.data.state.adventure.active, null);
+  assert.equal(restored.data.state.inventory.leather_vest, 1);
+  assert.deepEqual(
+    restored.data.state.wolves.map((w) => w.xp),
+    [0, 0, 0, 30, 0],
+  );
+  assert.equal(validateGame(restored.data.state), true);
+  const repeated = await (await api.request('/api/state', { cookie: session.cookie })).json();
+  assert.deepEqual(repeated.state, restored.data.state);
+  assert.equal(repeated.revision, restored.data.revision);
 });
 
 test('same origin and JSON guards block cross-site state mutations', async (t) => {
@@ -302,7 +367,10 @@ test('trusted proxy headers never create a guest gameplay cookie', async (t) => 
 test('stale revisions cannot overwrite a newer action', async (t) => {
   const api = await fixture(t);
   const guest = await api.session();
-  const body = { action: { type: 'build', building: 'quarry' }, revision: guest.data.revision };
+  const body = {
+    action: { type: 'build', building: 'quarry', plotId: 'p0' },
+    revision: guest.data.revision,
+  };
   const first = await api.request('/api/action', { method: 'POST', cookie: guest.cookie, body });
   assert.equal(first.status, 200);
   const expected = await first.json();

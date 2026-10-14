@@ -390,7 +390,7 @@ async function buildVillage(api, accountCookie, building) {
   const response = await api.request('/api/action', {
     method: 'POST',
     cookies: [accountCookie],
-    body: { action: { type: 'build', building }, revision: initial.revision },
+    body: { action: { type: 'build', building, plotId: 'p0' }, revision: initial.revision },
   });
   assert.equal(response.status, 200);
   return response.json();
