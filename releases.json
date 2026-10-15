@@ -1,6 +1,18 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "releases": [
+    {
+      "version": "2.1.1",
+      "date": "2026-10-15",
+      "changes": {
+        "tr": [
+          "Savaş zemini yakınlaştırma, geniş ekran, mobil ve tam ekran görünümünde alanı tamamen doldurur; yaralı kurtlar saydamlaşmaz, düşük can kırmızı göstergeyle belirtilir."
+        ],
+        "en": [
+          "Battlefield terrain fills the viewport at every zoom on wide, mobile and fullscreen displays; wounded wolves stay opaque, with a red low-health indicator."
+        ]
+      }
+    },
     {
       "version": "2.1.0",
       "date": "2026-10-15",

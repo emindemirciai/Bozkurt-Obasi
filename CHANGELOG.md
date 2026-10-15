@@ -4,6 +4,16 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.1.1 — 2026-10-15
+
+**TR**
+
+- Savaş zemini yakınlaştırma, geniş ekran, mobil ve tam ekran görünümünde alanı tamamen doldurur; yaralı kurtlar saydamlaşmaz, düşük can kırmızı göstergeyle belirtilir.
+
+**EN**
+
+- Battlefield terrain fills the viewport at every zoom on wide, mobile and fullscreen displays; wounded wolves stay opaque, with a red low-health indicator.
+
 ## v2.1.0 — 2026-10-15
 
 **TR**

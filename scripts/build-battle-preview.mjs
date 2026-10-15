@@ -122,7 +122,7 @@ function translate() {
 document.querySelector('#language').addEventListener('click', () => {language = language === 'tr' ? 'en' : 'tr';translate();});
 theme.addEventListener('click', () => {const dark = document.documentElement.dataset.theme !== 'dark';document.documentElement.dataset.theme = dark ? 'dark' : 'light';theme.dataset.text = dark ? 'light' : 'dark';translate();});
 motion.addEventListener('click', () => {const active = battlefield.classList.toggle('is-active');motion.setAttribute('aria-pressed', String(active));motion.dataset.text = active ? 'pause' : 'motion';translate();});
-zoom.addEventListener('click', () => {const close = zoom.getAttribute('aria-pressed') !== 'true';zoom.setAttribute('aria-pressed', String(close));zoom.dataset.text = close ? 'reset' : 'zoom';battlefield.setAttribute('viewBox', close ? '140 95 570 455' : '0 0 900 650');translate();});
+zoom.addEventListener('click', () => {const close = zoom.getAttribute('aria-pressed') !== 'true';zoom.setAttribute('aria-pressed', String(close));zoom.dataset.text = close ? 'reset' : 'zoom';battlefield.querySelector('.battle-actors').setAttribute('viewBox', close ? '140 95 570 455' : '0 0 900 650');translate();});
 translate();
 </script></body></html>`;
 await mkdir('preview', { recursive: true });

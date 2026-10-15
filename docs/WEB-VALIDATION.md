@@ -1,24 +1,26 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-15. Sürüm / Release: **v2.1.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-15. Sürüm / Release: **v2.1.1**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| Kaynak ve çeviriler / Source and translations | 96 JavaScript dosyası; 544 eşleşen TR/EN anahtar / files and matching keys |
+| Kaynak ve çeviriler / Source and translations | 97 JavaScript dosyası; 544 eşleşen TR/EN anahtar / files and matching keys |
 | Motor, API ve planlama / Engine, API and planning | 197/197 test geçti / tests passed |
-| Tarayıcı / Browser | 62/62 geçti; yeni sefer hazırlığı, bina kopyası planları, hesaplar, yönetim ve eski oynanış senaryoları / new adventure preparation, building copies, accounts, administration and existing gameplay passed |
+| Tarayıcı / Browser | 65/65 geçti; savaş zemini/yaralı kurt, geniş ekran/mobil/tam ekran, açık/koyu tema ve mevcut oyun/hesap senaryoları / battle surface/injured wolves, wide/mobile/fullscreen, light/dark and existing gameplay/account scenarios passed |
 | Windows tam yedek / Full backup | 12/12 çevrimdışı entegrasyon testi geçti / offline integration tests passed |
 | Derlemeler / Builds | Üretim; ana sayfa, savaş, admin, köy ve sefer tek dosya önizlemeleri güncel / production and five standalone previews current |
 | Biçim ve diff / Formatting and diff | Prettier ve Git diff kontrolleri geçti / formatting and Git diff checks passed |
-| Sürüm artışı / Version increase | v2.0.0 → v2.1.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
+| Sürüm artışı / Version increase | v2.1.0 → v2.1.1; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
 | Dört servis / Four services | web, api, admin, analyze imajları derlendi; Compose ortam aktarımı doğrulandı / all images built and environment forwarding passed |
 | API kalıcılığı / API persistence | Salt okunur ayrıcalıksız konteyner; hesap kapısı, kayıt ve yeniden başlatmada köy/oturum kontrolü geçti / non-root read-only runtime, account gate and restart persistence passed |
 | Ağ geçitleri / Gateways | API olmadan başlangıç ve farklı IP'ye geçiş, yetkilendirme ve fotoğraf sınırları geçti / startup without API, changed-IP recovery, authorization and photo limits passed |
 | Analiz / Analytics | Gerçek Next konteynerinde doğrulanmış giriş, hatalar ve kesintide çerez koruma geçti / real Next verified login, failures and outage cookie preservation passed |
 
-Kaynak sayımı / Source count: **212 dosya, 45.177 fiziksel satır; 34.979 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
+Kaynak sayımı / Source count: **213 dosya, 45.270 fiziksel satır; 35.072 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
 
 ## Türkçe
+
+v2.1.1 savaş zemini 1920 px masaüstü ve 390 px mobilde yakınlaştırma, uzaklaştırma ve sıfırlama boyunca ekran kenarlarına kadar uzanır. Açık/koyu tema ve masaüstü tam ekran giriş/çıkışı doğrulandı. Yaralı muhafızın görseli opak kalır, can çubuğu kırmızı uyarı rengine geçer. Hikâye evreleri, animasyon, mobil kurt seçimi ve internetsiz savaş önizlemesi de geçti; masaüstü ve mobil ekran görüntüleri incelendi.
 
 v2.1.0 hazırlık hesabı 18 farklı durumda gerçek sunucu eylemiyle karşılaştırıldı; plan kaydı değiştirmiyor. Rota seçimi kaynak harcamıyor; kilitli rota, mevcut hedef, kurt sayısı/canı, sürü canı, eksik erzak ve dolu envanter açıklamaları doğrulandı. Üretim eşiği geçilirken seçici, muhafız kutusu ve başlat düğmesi aynı DOM düğümleri olarak kalır; otomatik komut gönderilmez. Yeni sefer önizlemesi internetsiz, salt okunur, TR/EN ve 320/390/1440 px açık/koyu görünümde test edildi; masaüstü ve mobil koyu ekran görüntüleri incelendi.
 
@@ -55,6 +57,8 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+v2.1.1 battlefield terrain covers every viewport edge across zoom in/out/reset at 1920 px desktop and 390 px mobile. Light/dark themes and desktop fullscreen entry/exit passed. Injured guardian sprites remain opaque while their health bars change to a red warning. Story phases, animations, mobile wolf selection and the network-free battle preview also passed; desktop and mobile screenshots were inspected.
 
 v2.1.0 readiness is compared with actual server departure actions across 18 cases without mutating saves. Route inspection spends nothing; tests cover locked/current routes, party count, guardian/herd health, supplies and full inventory. Production crossing a cost threshold preserves the exact select, checkbox and departure button DOM nodes and sends no command. The new offline read-only adventure preview passes TR/EN, light/dark and 320/390/1440 px checks; desktop and mobile dark screenshots were inspected.
 

@@ -310,7 +310,7 @@ test('mobile layout, modal keyboard dismissal and offline file preview', async (
   await page.getByRole('button', { name: 'Play animation', exact: true }).click();
   await expect(page.locator('.battle-scene')).toHaveClass(/is-active/);
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-  await expect(page.locator('.battle-scene')).toHaveAttribute('viewBox', '140 95 570 455');
+  await expect(page.locator('.battle-actors')).toHaveAttribute('viewBox', '140 95 570 455');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: 'artifacts/battle-preview-dark-mobile.png', fullPage: true });
   expect(external).toEqual([]);
