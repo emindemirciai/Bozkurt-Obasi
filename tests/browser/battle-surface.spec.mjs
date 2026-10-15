@@ -88,3 +88,75 @@ test('wounded wolves stay opaque and their health bar shows an injury warning', 
   expect(red).toBeGreaterThan(green);
   expect(red).toBeGreaterThan(blue);
 });
+
+test('dark terrain keeps wolf bodies readable without dimming them', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/#village');
+  await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
+  const scene = page.locator('.battle-scene');
+  await expect(scene).toHaveAttribute('data-phase', 'preparing');
+  await scene.evaluate(async (node) => {
+    await Promise.all(
+      [...node.querySelectorAll('image')].map(async (element) => {
+        const image = new Image();
+        image.src = element.getAttribute('href');
+        await image.decode();
+      }),
+    );
+  });
+
+  async function paintedColors() {
+    const points = await scene.evaluate((node) => {
+      const frame = node.getBoundingClientRect();
+      const image = node.querySelector('.battle-wolf .battle-animal-image');
+      // Sample the opaque torso, away from fur edges, health bars and contact shadows.
+      const body = new DOMPoint(270, 150).matrixTransform(image.getScreenCTM());
+      return {
+        body: { x: body.x - frame.x, y: body.y - frame.y },
+        terrain: { x: frame.width * 0.92, y: frame.height * 0.18 },
+      };
+    });
+    const png = await scene.screenshot({ animations: 'disabled' });
+    return page.evaluate(
+      async ({ base64, points }) => {
+        const image = new Image();
+        image.src = 'data:image/png;base64,' + base64;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        return Object.fromEntries(
+          Object.entries(points).map(([name, point]) => {
+            const pixels = context.getImageData(
+              Math.round(point.x) - 1,
+              Math.round(point.y) - 1,
+              3,
+              3,
+            ).data;
+            const rgb = [0, 1, 2].map((channel) => {
+              let total = 0;
+              for (let index = channel; index < pixels.length; index += 4) total += pixels[index];
+              return total / 9;
+            });
+            return [name, rgb];
+          }),
+        );
+      },
+      { base64: png.toString('base64'), points },
+    );
+  }
+
+  const light = await paintedColors();
+  await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const dark = await paintedColors();
+  const brightness = (rgb) => rgb.reduce((sum, channel) => sum + channel, 0) / 3;
+  expect(brightness(light.terrain)).toBeGreaterThan(20);
+  expect(brightness(dark.terrain)).toBeLessThan(brightness(light.terrain) * 0.9);
+  // The nearly opaque source may mix a little terrain color into the body pixels.
+  for (let channel = 0; channel < 3; channel++) {
+    expect(Math.abs(dark.body[channel] - light.body[channel])).toBeLessThanOrEqual(5);
+  }
+});

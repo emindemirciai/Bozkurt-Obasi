@@ -1,6 +1,18 @@
 {
-  "version": "2.1.1",
+  "version": "2.1.2",
   "releases": [
+    {
+      "version": "2.1.2",
+      "date": "2026-10-15",
+      "changes": {
+        "tr": [
+          "Savaş hayvanlarının soluk görünümü ölçülü gövde kontrastı ve ince gölgelerle giderildi; koyu tema yalnızca zemini karartır, muhafızların ve sürünün görünürlüğü korunur."
+        ],
+        "en": [
+          "Battle animals stand out with balanced body contrast and subtle shadows; dark mode dims only the terrain, preserving guardian and herd visibility."
+        ]
+      }
+    },
     {
       "version": "2.1.1",
       "date": "2026-10-15",

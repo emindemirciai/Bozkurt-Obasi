@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+v2.1.2 sahne çizimi, hayvanlara ölçülü kontrast ve ince temas gölgesi uygular. Taşlık zemin ayrı karartılır; koyu temanın genel harita filtresi hayvanlara uygulanmaz. Böylece doğal renkleri korunurken gövdeler zeminden daha net ayrılır. PNG/WebP kaynakları değiştirilmedi; gövde piksellerinin alfa değeri yaklaşık 252–253/255, tüy kenarları ise saydam geçişlidir.
+
 Savaş meydanındaki kurt, çakal, koyun ve büyükbaş görselleri, yerleşik `image_gen` aracıyla bu proje için üretildi. Doğal yetişkin anatomisi, gerçekçi kürk ve yaklaşık 30° yukarıdan bakış kullanıldı. Dört hayvan da sağa bakacak şekilde üretildi; savaşta kurtlar ve sürü sola, çakallar sağa çevrilir. Böylece savunmacılar saldırganlara bakar.
 
 Bu varlıklar yalnızca savaş sahnesinde kullanılır. Köy çizimleri, logo ve e-posta görselleri bu değişiklik kapsamında değildir. Hilal/yıldız düzeni, can göstergeleri ve savaş animasyonları mevcut sahneyle birlikte çalışır. Dosyalar yereldir; çalışma sırasında görsel üretimi veya harici görsel servisi çağrısı yapılmaz.
@@ -9,6 +11,8 @@ Bu varlıklar yalnızca savaş sahnesinde kullanılır. Köy çizimleri, logo ve
 Saydam PNG kaynakları `web/assets/animals/` altında korunur. Tarayıcı, aynı klasördeki WebP dosyalarını yükler. PNG kaynaklar 1536 × 1024 RGBA; WebP sürümler 512 × 341 boyutundadır. Pillow ile LANCZOS küçültme ve WebP `quality=90`, `method=6`, `exact=True` ayarları kullanıldı. Arka planın alfa kanalı korundu; çalışma dosyalarının toplamı **197.544 bayt (yaklaşık 193 KiB)**. Saydam kenar boşluklarını hesaba katan sahne kırpma ve ölçek verileri [animal-sprites.mjs](../web/animal-sprites.mjs) dosyasında bulunur. PNG kaynakları yeniden boyutlandırma veya farklı çözünürlükler için kullanılabilir.
 
 ## English
+
+v2.1.2 rendering applies balanced contrast and a subtle contact shadow to animals. Rocky terrain is dimmed separately; the general dark-map filter no longer dims animals. Their natural colors remain while bodies separate more clearly from the ground. PNG/WebP sources are unchanged: body alpha is approximately 252–253/255, with transparent antialiased fur edges.
 
 The wolf, jackal, sheep and cow cutouts were generated for this project with the built-in `image_gen` tool. They use natural adult anatomy, realistic fur and an elevated camera angle of approximately 30°. All four animals were generated facing right; the battlefield flips wolves and the herd to face left while jackals face right. The defenders therefore look toward the attackers.
 

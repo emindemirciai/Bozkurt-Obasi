@@ -546,8 +546,15 @@ main {
 .battle-scene {
   background: #675b42;
 }
+.battlefield-terrain {
+  filter: brightness(0.78) saturate(0.82);
+}
+.battle-animal {
+  filter: drop-shadow(0 1.5px 1px #16130ee0);
+}
 .battle-animal-image {
   pointer-events: visiblePainted;
+  filter: contrast(1.15) saturate(1.08);
 }
 .battle-wolf.is-wounded [data-hp-bar] {
   fill: #e3785f;
@@ -2374,6 +2381,12 @@ footer > span:first-child {
 }
 :root[data-theme='dark'] .landscape {
   filter: brightness(0.75) saturate(0.85);
+}
+:root[data-theme='dark'] .battle-scene {
+  filter: none;
+}
+:root[data-theme='dark'] .battlefield-terrain {
+  filter: brightness(0.58) saturate(0.75);
 }
 :root[data-theme='dark'] .map-chip,
 :root[data-theme='dark'] .map-location,

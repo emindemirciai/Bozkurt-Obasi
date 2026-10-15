@@ -4,6 +4,16 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.1.2 — 2026-10-15
+
+**TR**
+
+- Savaş hayvanlarının soluk görünümü ölçülü gövde kontrastı ve ince gölgelerle giderildi; koyu tema yalnızca zemini karartır, muhafızların ve sürünün görünürlüğü korunur.
+
+**EN**
+
+- Battle animals stand out with balanced body contrast and subtle shadows; dark mode dims only the terrain, preserving guardian and herd visibility.
+
 ## v2.1.1 — 2026-10-15
 
 **TR**
