@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.1.0 — 2026-10-15
+
+**TR**
+
+- Keşif ve sevkiyata bölge kartları, açık hazırlık nedenleri, erzak/sağlık kontrolleri ve depo taşma tahminleri eklendi; TR/EN çevrimdışı sefer önizlemesi hazır.
+- Oba planlayıcısı aynı türün ayrı bina kopyalarını ve yeni inşayı seçer; ilk kopyanın son seviyesi diğerlerini engellemez.
+- Bayılan kurtlar yaşayan yaralıların savaş iyileştirmesini engellemiyor; kayıt biçimi ve sefer maliyetleri korunuyor.
+
+**EN**
+
+- Exploration and escorts now include region cards, explicit readiness reasons, supply/health checks and storage overflow estimates, with a bilingual offline adventure preview.
+- Village planning selects individual building copies and new construction; a max-level first copy no longer blocks the others.
+- Downed guardians no longer block combat healing for living wounded wolves; save format and expedition costs are preserved.
+
 ## v2.0.0 — 2026-10-14
 
 **TR**

@@ -1,4 +1,5 @@
 import { BUILDINGS } from '../shared/game.mjs';
+import { PLOTS } from '../shared/settlement.mjs';
 import { icon } from './art.mjs';
 import { resourceOutlook, constructionPlan } from './planning.mjs';
 
@@ -72,6 +73,9 @@ function statusLabel(plan, ctx) {
         maxLevel: 'planningMaxLevel',
         capacity: 'planningCapacityBlocked',
         production: 'planningProductionBlocked',
+        buildingLimit: 'buildingLimit',
+        plotsFull: 'planningPlotsFull',
+        targetMissing: 'planningTargetMissing',
       }[plan.blocked],
     );
   }
@@ -122,18 +126,29 @@ function executeCost(plan, { t, number }) {
   return costs ? `${t('planningCost')}: ${costs}` : t('maxLevel');
 }
 
-function buildingOptionLabel(state, definition, { t }) {
-  const building = state.buildings.find((entry) => entry.type === definition.id);
-  const detail = !building
-    ? `${t('build')} · ${t('level')} 1`
-    : building.level >= definition.maxLevel
-      ? t('maxLevel')
-      : `${t('upgrade')} · ${t('level')} ${building.level + 1}`;
-  return `${t(definition.id)} — ${detail}`;
+function buildingOptions(state, selected, { t }) {
+  const options = BUILDINGS.flatMap((definition) => {
+    const owned = state.buildings.filter((entry) => entry.type === definition.id);
+    const targets = [definition.id, ...owned.slice(1).map((entry) => `building:${entry.id}`)];
+    if (owned.length && owned.length < definition.maxCount) targets.push(`new:${definition.id}`);
+    return targets;
+  });
+  // Retain an unavailable selection so a refresh explains why it cannot execute.
+  if (!options.includes(selected)) options.push(selected);
+  return options.map((target) => {
+    const plan = constructionPlan(state, target);
+    const building = state.buildings.find((entry) => entry.id === plan.buildingId);
+    const plot =
+      building && PLOTS.findIndex((entry) => entry.x === building.x && entry.y === building.y) + 1;
+    const detail = building
+      ? `${t('plot')} ${plot} · ${t('level')} ${building.level} · ${t(plan.blocked === 'maxLevel' ? 'maxLevel' : 'upgrade')}${plan.blocked === 'maxLevel' ? '' : ` ${plan.level}`}`
+      : `${target.startsWith('new:') ? t('planningNewCopy') : t('build')} · ${t('level')} 1`;
+    return { value: target, label: `${t(plan.type)} — ${detail}` };
+  });
 }
 
-function buildingOption(state, definition, selected, ctx) {
-  return `<option value="${definition.id}" ${definition.id === selected ? 'selected' : ''}>${ctx.escape(buildingOptionLabel(state, definition, ctx))}</option>`;
+function buildingOption(option, selected, { escape }) {
+  return `<option value="${escape(option.value)}" ${option.value === selected ? 'selected' : ''}>${escape(option.label)}</option>`;
 }
 
 export function economyPanel(state, planType = 'quarry', ctx) {
@@ -145,9 +160,17 @@ export function economyPanel(state, planType = 'quarry', ctx) {
       .map((resource) => resourceCard(resource, ctx))
       .join('')}</div>
     <div class="economy-construction">
-      <div class="economy-plan-choice"><label for="construction-plan">${escape(t('planningChooseBuilding'))}</label><select id="construction-plan" aria-describedby="construction-plan-hint">${BUILDINGS.map((definition) => buildingOption(state, definition, plan.type, ctx)).join('')}</select><p id="construction-plan-hint">${escape(t('planningChoiceHint'))}</p></div>
+      <div class="economy-plan-choice"><label for="construction-plan">${escape(t('planningChooseBuilding'))}</label><select id="construction-plan" aria-describedby="construction-plan-hint">${buildingOptions(
+        state,
+        plan.target,
+        ctx,
+      )
+        .map((option) => buildingOption(option, plan.target, ctx))
+        .join(
+          '',
+        )}</select><p id="construction-plan-hint">${escape(t('planningChoiceHint'))}</p></div>
       <div class="economy-plan-detail"><div data-economy-plan-body>${planBody(plan, state.capacity, ctx)}</div>
-        <button class="button primary economy-execute" id="execute-construction-plan" data-action="executePlan" data-plan-type="${plan.type}" ${busy || plan.blocked || !plan.affordable ? 'disabled' : ''}><span data-economy-execute-label>${escape(executeLabel(plan, ctx))}</span><span class="economy-execute-cost" data-economy-execute-cost>${escape(executeCost(plan, ctx))}</span></button>
+        <button class="button primary economy-execute" id="execute-construction-plan" data-action="executePlan" data-plan-type="${plan.type}" data-plan-target="${plan.target}" ${busy || plan.blocked || !plan.affordable ? 'disabled' : ''}><span data-economy-execute-label>${escape(executeLabel(plan, ctx))}</span><span class="economy-execute-cost" data-economy-execute-cost>${escape(executeCost(plan, ctx))}</span></button>
       </div>
     </div>
     <p class="economy-estimate-note">${escape(t('planningEstimateNote'))}</p>
@@ -177,12 +200,22 @@ export function updateEconomyPanel(root, state, planType = 'quarry', ctx) {
   const button = panel.querySelector('#execute-construction-plan');
   button.disabled = Boolean(ctx.busy || plan.blocked || !plan.affordable);
   button.dataset.planType = plan.type;
+  button.dataset.planTarget = plan.target;
   button.querySelector('[data-economy-execute-label]').textContent = executeLabel(plan, ctx);
   button.querySelector('[data-economy-execute-cost]').textContent = executeCost(plan, ctx);
   const select = panel.querySelector('#construction-plan');
-  for (const definition of BUILDINGS) {
-    const option = select.querySelector(`option[value="${definition.id}"]`);
-    if (option) option.textContent = buildingOptionLabel(state, definition, ctx);
+  const options = buildingOptions(state, plan.target, ctx);
+  const wanted = new Set(options.map((option) => option.value));
+  for (const option of [...select.options]) if (!wanted.has(option.value)) option.remove();
+  for (const [index, entry] of options.entries()) {
+    let option = [...select.options].find((option) => option.value === entry.value);
+    if (!option) {
+      option = document.createElement('option');
+      option.value = entry.value;
+    }
+    if (option.textContent !== entry.label) option.textContent = entry.label;
+    if (select.options[index] !== option)
+      select.insertBefore(option, select.options[index] || null);
   }
-  if (select.value !== plan.type) select.value = plan.type;
+  if (select.value !== plan.target) select.value = plan.target;
 }

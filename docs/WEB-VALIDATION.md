@@ -1,24 +1,28 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-14. Sürüm / Release: **v2.0.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-15. Sürüm / Release: **v2.1.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
-| Kontrol / Check                                   | Sonuç / Result                                                                                                                                                                                              |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Kaynak ve çeviriler / Source and translations     | 89 JavaScript dosyası, 503 eşleşen TR/EN anahtar / files and matching keys                                                                                                                                  |
-| Motor, API ve planlama / Engine, API and planning | 189/189 test geçti / tests passed                                                                                                                                                                          |
-| Tarayıcı / Browser                                | 54/54 geçti: gerçek inşa/yükseltme, üretim eşiği/odak, hesaplar, admin, günlükler, oyun, çevrimdışı önizlemeler, TR/EN ve mobil / real construction, production/focus, accounts, admin, previews and mobile passed |
-| Windows tam yedek / Full backup                   | 12/12 çevrimdışı entegrasyon testi geçti / offline integration tests passed                                                                                                                                 |
-| Derlemeler / Builds                               | Üretim; ana sayfa, savaş, admin ve köy tek dosya önizlemeleri güncel / production, homepage, battlefield, admin and village previews current                                                               |
-| Biçim ve diff / Formatting and diff               | Prettier kontrolü ve Git diff kontrolü geçti / formatting and Git diff checks passed                                                                                                                        |
-| Sürüm artışı / Version increase                   | v1.10.0 → v2.0.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree                                                                                                               |
-| Dört servis / Four services                       | web, api, admin, analyze imajları derlendi; Compose ortam aktarımı, ağ geçitleri ve gerçek analiz girişi geçici Docker kaynaklarında doğrulandı / images built; environment, gateways and actual analytics login passed |
-| API kalıcılığı / API persistence                  | Salt okunur ve ayrıcalıksız konteyner; kayıt/doğrulama kapısı, yeniden başlatmada köy ve oturum kontrolleri geçti / non-root read-only container, account gate, restart persistence and sessions passed     |
-| Ağ geçidi / Gateway                               | API olmadan başlangıç, farklı API IP adresine geçiş, yol/sorgu/yetkilendirme ve fotoğraf sınırı korundu / startup without API, changed IP recovery and forwarding passed                                    |
-| Analiz yetkilendirmesi / Analytics authentication | Gerçek Next konteynerinde hatalar, HTML 200 reddi, doğrulanmış giriş ve kesintide çerez koruma geçti / real Next error, login, cookie and malformed-response checks passed                                  |
+| Kontrol / Check | Sonuç / Result |
+| --- | --- |
+| Kaynak ve çeviriler / Source and translations | 96 JavaScript dosyası; 544 eşleşen TR/EN anahtar / files and matching keys |
+| Motor, API ve planlama / Engine, API and planning | 197/197 test geçti / tests passed |
+| Tarayıcı / Browser | 62/62 geçti; yeni sefer hazırlığı, bina kopyası planları, hesaplar, yönetim ve eski oynanış senaryoları / new adventure preparation, building copies, accounts, administration and existing gameplay passed |
+| Windows tam yedek / Full backup | 12/12 çevrimdışı entegrasyon testi geçti / offline integration tests passed |
+| Derlemeler / Builds | Üretim; ana sayfa, savaş, admin, köy ve sefer tek dosya önizlemeleri güncel / production and five standalone previews current |
+| Biçim ve diff / Formatting and diff | Prettier ve Git diff kontrolleri geçti / formatting and Git diff checks passed |
+| Sürüm artışı / Version increase | v2.0.0 → v2.1.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
+| Dört servis / Four services | web, api, admin, analyze imajları derlendi; Compose ortam aktarımı doğrulandı / all images built and environment forwarding passed |
+| API kalıcılığı / API persistence | Salt okunur ayrıcalıksız konteyner; hesap kapısı, kayıt ve yeniden başlatmada köy/oturum kontrolü geçti / non-root read-only runtime, account gate and restart persistence passed |
+| Ağ geçitleri / Gateways | API olmadan başlangıç ve farklı IP'ye geçiş, yetkilendirme ve fotoğraf sınırları geçti / startup without API, changed-IP recovery, authorization and photo limits passed |
+| Analiz / Analytics | Gerçek Next konteynerinde doğrulanmış giriş, hatalar ve kesintide çerez koruma geçti / real Next verified login, failures and outage cookie preservation passed |
 
-Kaynak sayımı / Source count: **192 dosya, 39.240 fiziksel satır; 29.042 aktif web satırı**. Üretilen önizlemeler ve bağımlılıklar hariç / files, physical source lines and active web lines, excluding generated previews and dependencies.
+Kaynak sayımı / Source count: **212 dosya, 45.177 fiziksel satır; 34.979 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
 
 ## Türkçe
+
+v2.1.0 hazırlık hesabı 18 farklı durumda gerçek sunucu eylemiyle karşılaştırıldı; plan kaydı değiştirmiyor. Rota seçimi kaynak harcamıyor; kilitli rota, mevcut hedef, kurt sayısı/canı, sürü canı, eksik erzak ve dolu envanter açıklamaları doğrulandı. Üretim eşiği geçilirken seçici, muhafız kutusu ve başlat düğmesi aynı DOM düğümleri olarak kalır; otomatik komut gönderilmez. Yeni sefer önizlemesi internetsiz, salt okunur, TR/EN ve 320/390/1440 px açık/koyu görünümde test edildi; masaüstü ve mobil koyu ekran görüntüleri incelendi.
+
+İlk üretici son seviyedeyken ikinci kopyanın doğru kimlikle yükseltilmesi, yeni kopyanın seçilen parsele kurulması, altı bina sınırı, boş parsel kontrolü ve kaybolan hedefin başka binaya dönüşmemesi doğrulandı. Bayılan kurt, yaşayan yaralının iyileşmesini engellemiyor; son kurt düşerse normal yenilgi akışı sürüyor. Ekonomi, kayıt şeması ve hesap yetkilendirmesi değiştirilmedi.
 
 v1.10.0 planlama testleri mevcut kayıt/üretimden hesap yapmayı, bölge bonuslarını, kesirli eksik miktarların yuvarlanmasını, kapasiteyi aşan ve üreticisi olmayan maliyetleri, son seviye ve savaş engellerini doğrular. Hesaplama kaydı değiştirmez ve köyü yerel saatle ilerletmez. Gerçek oturumla hedef seçimi istek göndermeden kalır; açık düğme onayından sonra inşa ve yükseltme maliyetleri gerçek API'de bir kez düşer ve kayıt korunur. Kontrollü sunucu üretimi beş saniyelik eksiği kapatırken aynı seçici/düğme ve klavye odağı kalır; düğme açılması otomatik komut göndermez. Çevrimdışı köy önizlemesi dokuz hedefi salt okunur tutar; TR/EN, açık/kahverengi koyu tema ve 320/390 px görünümde dış HTTP isteği veya yatay taşma yoktur. Masaüstü ve mobil koyu görüntüler incelendi. Mevcut ekonomi kuralları ve kayıt şeması değişmedi.
 
@@ -51,6 +55,10 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+v2.1.0 readiness is compared with actual server departure actions across 18 cases without mutating saves. Route inspection spends nothing; tests cover locked/current routes, party count, guardian/herd health, supplies and full inventory. Production crossing a cost threshold preserves the exact select, checkbox and departure button DOM nodes and sends no command. The new offline read-only adventure preview passes TR/EN, light/dark and 320/390/1440 px checks; desktop and mobile dark screenshots were inspected.
+
+With the first producer at maximum level, an additional instance upgrades by its own ID; a new copy is placed at the explicitly selected plot. Tests cover the six-copy limit, full plots and missing targets without fallback upgrades. Downed wolves no longer prevent living wounded guardians from healing; losing the final wolf safely follows the defeat transition. Economy, save schema and account authorization are unchanged.
 
 v1.10.0 planning tests cover saved amounts/current rates, regional bonuses, fractional-shortage rounding, capacity/unproduced costs, maximum levels and battle blockers. Calculation neither mutates nor advances a save against local time. With a real session, choosing a target sends no command; explicit construction and upgrading spend once through the real API and persist. Controlled server production resolves a five-second shortage while preserving the same select/button nodes and keyboard focus; unlocking never sends an automatic command. The offline village preview keeps all nine targets read-only, with no HTTP requests or horizontal overflow across TR/EN, light/brown dark and 320/390 px layouts. Desktop and mobile dark screenshots were inspected. Existing economy rules and save schema remain unchanged.
 

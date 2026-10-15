@@ -291,8 +291,10 @@ function battleTick(state, at) {
         0,
       ) +
       levelOf(state, 'healer') * 2;
-    const wounded = [...state.wolves].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-    if (wounded.hp > 0) wounded.hp = Math.min(wounded.maxHp, wounded.hp + heal);
+    const wounded = state.wolves
+      .filter((wolf) => wolf.hp > 0)
+      .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    if (wounded) wounded.hp = Math.min(wounded.maxHp, wounded.hp + heal);
     battle.log.push('battleExchange');
   }
   if (

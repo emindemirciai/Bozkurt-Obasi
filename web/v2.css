@@ -467,3 +467,271 @@
     flex-wrap: wrap;
   }
 }
+
+/* Trail planning keeps choice, readiness and consequences visible together. */
+.adventure-routes {
+  margin-bottom: 24px;
+}
+.route-map-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.route-map-heading h3 {
+  font:
+    25px Georgia,
+    serif;
+  margin: 8px 0 0;
+}
+.route-map-heading p {
+  max-width: 330px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.route-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.route-card {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 18px 14px 0;
+  min-height: 205px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent) 10%, var(--panel)),
+    var(--panel) 65%
+  );
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.route-card::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  width: 115px;
+  height: 85px;
+  border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+  border-radius: 48% 42% 65% 28%;
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+.route-card.selected {
+  border: 2px solid var(--accent);
+  padding: 17px 13px 0;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent) 20%, var(--panel)),
+    var(--panel) 85%
+  );
+}
+.route-card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.route-card:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.route-card:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.route-number {
+  font:
+    29px Georgia,
+    serif;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.route-status {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.route-card strong {
+  font:
+    18px Georgia,
+    serif;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.route-detail {
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 10px 0 18px;
+}
+.route-affordance {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 0;
+  font-size: 10px;
+}
+.adventure-preparation,
+.adventure-brief {
+  min-width: 0;
+}
+.adventure-brief {
+  align-self: start;
+}
+.adventure-cost {
+  padding: 14px 0;
+  font-size: 12px;
+  border-top: 1px solid var(--line);
+}
+.preparation-summary {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 16px;
+  border-radius: 12px;
+}
+.preparation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.preparation-heading h3 {
+  font:
+    18px Georgia,
+    serif;
+}
+.preparation-status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+.preparation-status.ready {
+  background: var(--accent);
+  color: var(--paper);
+}
+.preparation-checks {
+  padding: 0;
+  margin: 14px 0 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.preparation-checks li {
+  display: flex;
+  gap: 9px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.check-mark {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: 0 0 20px;
+  display: grid;
+  place-content: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-weight: 700;
+}
+.preparation-checks [data-ok='false'] .check-mark {
+  background: #895025;
+  color: #fff4dc;
+  border-color: #895025;
+}
+.preparation-checks small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+.adventure-depart {
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.guardian-needs-rest {
+  border-style: dashed !important;
+}
+.adventure-party svg {
+  flex-shrink: 0;
+}
+.reward-warning {
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, #a16b32 65%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, #bb873d 10%, var(--panel));
+  font-size: 12px;
+}
+.reward-warning small {
+  font-size: 10px;
+  line-height: 1.7;
+  display: block;
+}
+.fatigue-note {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.storage-planning-note {
+  color: var(--muted);
+}
+@media (max-width: 1100px) {
+  .route-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .route-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .route-map-heading {
+    display: block;
+  }
+  .route-map-heading p {
+    margin-top: 12px;
+    max-width: none;
+  }
+  .route-card {
+    min-height: 200px;
+  }
+}
+@media (max-width: 420px) {
+  .route-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .route-card {
+    min-height: 0;
+  }
+  .route-number {
+    position: absolute;
+    right: 16px;
+    top: 14px;
+    font-size: 24px;
+  }
+  .route-status {
+    max-width: calc(100% - 35px);
+  }
+  .route-card::before {
+    display: none;
+  }
+  .preparation-summary {
+    padding: 12px;
+  }
+}

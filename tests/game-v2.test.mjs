@@ -391,6 +391,44 @@ test('healer equipment increases the real periodic combat heal', () => {
   assert.equal(equipped.wolves[3].hp - plain.wolves[3].hp, 3);
 });
 
+test('combat heal reaches living wounded wolves when another guardian is down', () => {
+  const plain = fresh();
+  plain.wolves[3].hp = 50;
+  const equipped = structuredClone(plain);
+  equipped.inventory.healer_satchel = 1;
+  act(equipped, { type: 'equip', id: 'wolf-guardian', item: 'healer_satchel' });
+  for (const state of [plain, equipped]) {
+    act(state, { type: 'startBattle' });
+    state.wolves[0].hp = 0;
+    assert.equal(validateGame(state), true);
+    advanceGame(state, START + 7000);
+  }
+  const injuredScoutHp = plain.wolves[3].hp;
+  advanceGame(plain, START + 8000);
+  advanceGame(equipped, START + 8000);
+  assert.ok(plain.wolves[3].hp > injuredScoutHp);
+  assert.equal(equipped.wolves[3].hp - plain.wolves[3].hp, 3);
+  for (const state of [plain, equipped]) {
+    assert.equal(state.battle.status, 'active');
+    assert.equal(state.wolves[0].hp, 0);
+    assert.equal(validateGame(state), true);
+  }
+});
+
+test('a healing tick safely ends combat when the last standing guardian falls', () => {
+  const state = fresh();
+  act(state, { type: 'startBattle' });
+  advanceGame(state, START + 7000);
+  for (const wolf of state.wolves) wolf.hp = wolf.name === 'healer' ? 1 : 0;
+  assert.equal(validateGame(state), true);
+  advanceGame(state, START + 8000);
+  assert.equal(state.battle.status, 'lost');
+  assert.equal(state.battle.tick, 8);
+  // Defeat recovery returns guardians at one HP; combat healing does not revive them.
+  assert.ok(state.wolves.every((wolf) => wolf.hp === 1));
+  assert.equal(validateGame(state), true);
+});
+
 test('v2 validators reject forged plots, inventory, mission parties, route unlocks and reward reports', () => {
   const state = fresh();
   act(state, { type: 'build', building: 'quarry', plotId: 'p0' });

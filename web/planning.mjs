@@ -1,4 +1,5 @@
 import { BUILDINGS, RESOURCE_KEYS, getProduction, getUpgradeCost } from '../shared/game.mjs';
+import { PLOTS } from '../shared/settlement.mjs';
 
 // Estimates keep current production fixed; they never advance or change the authoritative save.
 export function resourceOutlook(state) {
@@ -19,16 +20,36 @@ export function resourceOutlook(state) {
   });
 }
 
-export function constructionPlan(state, type = 'quarry') {
-  const definition =
-    BUILDINGS.find((building) => building.id === type) ||
-    BUILDINGS.find((building) => building.id === 'quarry');
-  const building = state.buildings.find((entry) => entry.type === definition.id);
-  const mode = building ? 'upgrade' : 'build';
+export function constructionPlan(state, selection = 'quarry') {
+  let definition = BUILDINGS.find((entry) => entry.id === selection);
+  let target = definition?.id;
+  let building = definition && state.buildings.find((entry) => entry.type === definition.id);
+  let missing = false;
+  if (!definition && typeof selection === 'string' && selection.startsWith('new:')) {
+    definition = BUILDINGS.find((entry) => entry.id === selection.slice(4));
+    if (definition) target = selection;
+  } else if (!definition && typeof selection === 'string' && selection.startsWith('building:')) {
+    const id = selection.slice(9);
+    definition = BUILDINGS.find((entry) =>
+      new RegExp(`^building-${entry.id}(?:-[2-6])?$`).test(id),
+    );
+    if (definition) {
+      target = selection;
+      building = state.buildings.find((entry) => entry.id === id && entry.type === definition.id);
+      missing = !building;
+    }
+  }
+  if (!definition) {
+    definition = BUILDINGS.find((entry) => entry.id === 'quarry');
+    target = definition.id;
+    building = state.buildings.find((entry) => entry.type === definition.id);
+  }
+  const mode = building || missing ? 'upgrade' : 'build';
   const buildingId = building?.id || null;
   const level = building ? Math.min(building.level + 1, definition.maxLevel) : 1;
-  if (building && building.level >= definition.maxLevel) {
+  if (missing || (building && building.level >= definition.maxLevel)) {
     return {
+      target,
       type: definition.id,
       mode,
       buildingId,
@@ -37,7 +58,7 @@ export function constructionPlan(state, type = 'quarry') {
       deficits: [],
       affordable: false,
       waitSeconds: null,
-      blocked: 'maxLevel',
+      blocked: missing ? 'targetMissing' : 'maxLevel',
     };
   }
 
@@ -59,15 +80,26 @@ export function constructionPlan(state, type = 'quarry') {
   const waitSeconds = shortages.some((deficit) => deficit.seconds === null)
     ? null
     : Math.max(0, ...shortages.map((deficit) => deficit.seconds));
+  const atLimit =
+    !building &&
+    state.buildings.filter((entry) => entry.type === definition.id).length >= definition.maxCount;
+  const hasEmptyPlot = PLOTS.some(
+    (plot) => !state.buildings.some((entry) => entry.x === plot.x && entry.y === plot.y),
+  );
   const blocked =
     state.battle.status === 'active'
       ? 'battle'
-      : shortages.some((deficit) => deficit.required > state.capacity)
-        ? 'capacity'
-        : shortages.some((deficit) => production[deficit.key] <= 0)
-          ? 'production'
-          : null;
+      : atLimit
+        ? 'buildingLimit'
+        : !building && !hasEmptyPlot
+          ? 'plotsFull'
+          : shortages.some((deficit) => deficit.required > state.capacity)
+            ? 'capacity'
+            : shortages.some((deficit) => production[deficit.key] <= 0)
+              ? 'production'
+              : null;
   return {
+    target,
     type: definition.id,
     mode,
     buildingId,

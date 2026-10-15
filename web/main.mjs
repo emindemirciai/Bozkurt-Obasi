@@ -10,6 +10,7 @@ import {
   wolfPortrait,
   equipmentView,
   adventureView,
+  updateAdventurePlanning,
 } from './v2-view.mjs';
 import { socialPanel } from './social-view.mjs';
 import heroImage from './assets/hero-bozkurt.webp';
@@ -185,7 +186,9 @@ function interfaceSignature() {
   ];
   return JSON.stringify([
     visibleState,
-    costs.map((cost) => Object.entries(cost).map(([key, value]) => resources[key] >= value)),
+    view === 'world'
+      ? []
+      : costs.map((cost) => Object.entries(cost).map(([key, value]) => resources[key] >= value)),
   ]);
 }
 
@@ -1145,10 +1148,8 @@ root.addEventListener('change', async (event) => {
     return;
   }
   if (event.target.id === 'construction-plan') {
-    if (BUILDINGS.some((building) => building.id === event.target.value)) {
-      plannedBuilding = event.target.value;
-      updateEconomyPanel(root, state, plannedBuilding, economyContext());
-    }
+    plannedBuilding = constructionPlan(state, event.target.value).target;
+    updateEconomyPanel(root, state, plannedBuilding, economyContext());
     return;
   }
   if (event.target.id !== 'profile-upload' || busy) return;
@@ -1390,6 +1391,12 @@ root.addEventListener('click', async (event) => {
     toast('choosePlot');
     root.querySelector('[data-plot]')?.focus({ preventScroll: true });
     root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
+    return;
+  }
+  if (a === 'selectRegion') {
+    if (busy || state.battle.status === 'active' || state.adventure.active || state.journey) return;
+    adventureSelection.region = target.dataset.region;
+    render();
     return;
   }
   if (a === 'startAdventure') {
@@ -1699,6 +1706,8 @@ setInterval(async () => {
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
+  if (view === 'world')
+    updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection });
   // Keep an open placement chooser current without replacing its focused controls.
   if (modal === 'placement') {
     for (const choice of root.querySelectorAll('[data-action="placeBuilding"]')) {

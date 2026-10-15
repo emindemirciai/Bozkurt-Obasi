@@ -69,6 +69,7 @@ test('resource outlook includes the existing regional production bonuses', () =>
 test('affordable new buildings include satisfied cost rows and agree with the construction command', () => {
   const state = fresh();
   assert.deepEqual(constructionPlan(state), {
+    target: 'quarry',
     type: 'quarry',
     mode: 'build',
     buildingId: null,
@@ -216,6 +217,7 @@ test('level-five structures return a terminal plan without a fictitious next cos
   const state = fresh();
   state.buildings.find((building) => building.type === 'lumber').level = 5;
   assert.deepEqual(constructionPlan(state, 'lumber'), {
+    target: 'lumber',
     type: 'lumber',
     mode: 'upgrade',
     buildingId: 'building-lumber',
@@ -251,4 +253,69 @@ test('planning accepts frozen saves and changing returned rows cannot modify sta
   assert.equal(constructionPlan(state).cost.wood, 70);
   assert.equal(constructionPlan(state, 'lumber').cost.wood, 93);
   assert.equal(resourceOutlook(state)[0].amount, 180);
+});
+
+test('explicit duplicate targets plan and upgrade the chosen building independently', () => {
+  const state = fresh();
+  act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
+  act(state, { type: 'build', building: 'quarry', plotId: 'p35' });
+  state.buildings.find((entry) => entry.id === 'building-quarry').level = 5;
+  for (const key of RESOURCE_KEYS) state.resources[key] = state.capacity;
+  const before = JSON.stringify(state);
+  const plan = constructionPlan(state, 'building:building-quarry-2');
+  assert.equal(plan.target, 'building:building-quarry-2');
+  assert.equal(plan.buildingId, 'building-quarry-2');
+  assert.equal(plan.type, 'quarry');
+  assert.equal(plan.level, 2);
+  assert.equal(plan.affordable, true);
+  assert.equal(constructionPlan(state, 'quarry').blocked, 'maxLevel');
+  assert.equal(JSON.stringify(state), before);
+  act(state, { type: 'upgrade', id: plan.buildingId });
+  assert.equal(state.buildings.find((entry) => entry.id === 'building-quarry').level, 5);
+  assert.equal(state.buildings.find((entry) => entry.id === 'building-quarry-2').level, 2);
+  assert.equal(state.resources.wood, 500 - plan.cost.wood);
+  assert.equal(state.resources.stone, 500 - plan.cost.stone);
+});
+
+test('new copy planning uses base cost, remains a new copy after construction and obeys limits', () => {
+  const state = fresh();
+  let plan;
+  for (let n = 0; n < 6; n++) {
+    for (const key of RESOURCE_KEYS) state.resources[key] = state.capacity;
+    const snapshot = JSON.stringify(state);
+    plan = constructionPlan(state, 'new:quarry');
+    assert.equal(plan.target, 'new:quarry');
+    assert.equal(plan.mode, 'build');
+    assert.equal(plan.buildingId, null);
+    assert.equal(plan.level, 1);
+    assert.deepEqual(plan.cost, { wood: 70, stone: 30 });
+    assert.equal(plan.affordable, true);
+    assert.equal(JSON.stringify(state), snapshot);
+    act(state, { type: 'build', building: plan.type, plotId: `p${24 + n}` });
+  }
+  assert.equal(constructionPlan(state, 'new:quarry').blocked, 'buildingLimit');
+  assert.equal(constructionPlan(state, 'new:quarry').affordable, false);
+  assert.equal(constructionPlan(state, 'new:hall').blocked, 'buildingLimit');
+  act(state, { type: 'startBattle' });
+  assert.equal(constructionPlan(state, 'new:quarry').blocked, 'battle');
+});
+
+test('new copy planning rejects a full grid and stale instance targets never upgrade another copy', () => {
+  const state = fresh();
+  // The placement limit is below 36 today; full-grid handling also protects future plot limits.
+  state.buildings = Array.from({ length: 36 }, (_, index) => ({
+    id: `occupied-${index}`,
+    type: 'lumber',
+    level: 1,
+    x: index % 6,
+    y: Math.floor(index / 6),
+  }));
+  const plan = constructionPlan(state, 'new:quarry');
+  assert.equal(plan.blocked, 'plotsFull');
+  assert.equal(plan.affordable, false);
+  const stale = constructionPlan(fresh(), 'building:building-quarry-2');
+  assert.equal(stale.target, 'building:building-quarry-2');
+  assert.equal(stale.blocked, 'targetMissing');
+  assert.equal(stale.buildingId, null);
+  assert.equal(stale.affordable, false);
 });
