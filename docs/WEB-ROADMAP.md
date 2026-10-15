@@ -12,6 +12,8 @@
 
 **v2.2.0:** Yenilgi sonrası sürü takviyesi tamamlandı. Kurulu otlakta su/yem karşılığında bir işlemde 1–5 hayvan eklenir; sürü 24'ü aşamaz. Ortak hazırlık hesabı kaynakları ve savaş/yolculuk engellerini açıklar; mevcut yaralar, panik ve muhafız ilerlemesi korunur. Köy önizlemesinde takviye maliyeti salt okunur olarak incelenebilir.
 
+**v2.3.0:** Muhafız gelişim ekranı eğitim etkileri, seviye sınırı, ekipman istatistik karşılaştırmaları ve işlem engelleriyle detaylandırıldı. Rol portrelerinin ekipmanla değişmediği açıkça belirtilir. Gerçek bileşeni kullanan TR/EN çevrimdışı muhafız önizlemesi, hazır/erzak eksik/seferde/seviye sınırı durumlarını gösterir. Oyun dengesi ve kayıt biçimi korunur.
+
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
 
 1. **Oynanış doğrulaması:** İnşaat maliyetleri, üretim süreleri, savaş güçlüğü ve yenilgi sonrası toparlanmayı gerçek oyuncularla deneyin. Küçük bir oyun günlüğüyle ilk 15 dakikada nerede takılındığını kaydedin. Tamamlanan otlak takviyesinin maliyetini ve yenilgi sonrası yeniden savaşa hazırlanma süresini oyuncularla doğrulayın; tedavi kalan sürünün yaralarını, takviye kaybedilen hayvanları karşılar. Bu aşama yeni içerikten önce oyunun temel döngüsünü doğrular.
@@ -32,6 +34,8 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 **v2.1.0:** Free construction across 36 plots, evolving walls/buildings, narrative battles, five-region exploration/escorts, guardian equipment and friend messages/gifts are implemented. Region cards and mission readiness explain routes and requirements in the initial play loop; an offline adventure preview is included.
 
 **v2.2.0:** Herd replenishment after defeat is implemented. A built pasture permits batches of 1–5 animals for water/feed, up to 24 animals. Shared readiness explains costs and battle/journey restrictions; existing wounds, panic and guardian progression are preserved. The village preview includes read-only replenishment quotes.
+
+**v2.3.0:** Guardian progression now explains training effects, the level cap, equipment stat comparisons and action blockers. Role portraits are explicitly distinguished from equipped items. An offline TR/EN guardian preview reuses the actual component with ready/low-supplies/away/level-cap examples. Game balance and save format are preserved.
 
 **Current web release:** A playable village, production, construction/progression, guardian and formation choices, jackal battles, Turkish/English interface, an offline visual homepage preview, and Google- or email-linked progress in SQLite. The homepage is public; the village and game screens require a valid account session. Delivery uses GitHub → Docker → Dokploy and includes local previews, tests, line counts, and clean source archives. Concurrent players have independent villages; a shared world and PvP are outside this release.
 

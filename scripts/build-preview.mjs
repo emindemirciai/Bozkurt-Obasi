@@ -39,3 +39,4 @@ await import('./build-battle-preview.mjs');
 await import('./build-admin-preview.mjs');
 await import('./build-village-preview.mjs');
 await import('./build-adventure-preview.mjs');
+await import('./build-guardian-preview.mjs');

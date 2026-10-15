@@ -1,12 +1,5 @@
 import { BUILDINGS, PLOTS, visualTier, getWallUpgradeCost } from '../shared/settlement.mjs';
-import {
-  REGIONS,
-  DIFFICULTIES,
-  ITEM_DEFINITIONS,
-  adventureQuote,
-  isWolfBusy,
-  equipmentBonuses,
-} from '../shared/adventures.mjs';
+import { REGIONS, DIFFICULTIES, ITEM_DEFINITIONS, adventureQuote } from '../shared/adventures.mjs';
 import { adventureReadiness } from './adventure-planning.mjs';
 const atlas = new URL('./assets/v2/building-tiers.webp', import.meta.url).href;
 const portraits = new URL('./assets/v2/wolf-roles.webp', import.meta.url).href;
@@ -39,9 +32,9 @@ export function buildingImage(type, level = 1) {
   return `<svg x="-78" y="-118" width="156" height="156" viewBox="${crop.join(' ')}" aria-hidden="true"><foreignObject x="${x}" y="${y}" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background-image:url(&quot;${escape(atlas)}&quot;);background-repeat:no-repeat;background-size:2172px 724px;background-position:${-x}px ${-y}px"></div></foreignObject></svg>`;
 }
 
-export function wolfPortrait(wolf) {
+export function wolfPortrait(wolf, label = wolf.name) {
   const col = ['alpha', 'guardian', 'hunter', 'scout', 'healer'].indexOf(wolf.name);
-  return `<svg class="real-wolf-portrait" viewBox="${(col * 2172) / 5} 120 ${2172 / 5} 500" role="img" aria-label="${escape(wolf.name)}"><image href="${portraits}" width="2172" height="724"/></svg>`;
+  return `<svg class="real-wolf-portrait" viewBox="${(col * 2172) / 5} 120 ${2172 / 5} 500" role="img" aria-label="${escape(label)}"><image href="${portraits}" width="2172" height="724"/></svg>`;
 }
 const point = (x, y) => [720 + (x - y) * 98, 240 + (x + y) * 57];
 export function settlementScene(state, { t, zoom = 1, selected = '' }) {
@@ -102,19 +95,6 @@ export function narrativePanel(state, { t }) {
             ? 'battleLostStory'
             : phase + 'Story';
   return `<section class="battle-narrative detail-card"><span class="eyebrow">${t('battleStory')} · ${state.battle.wave}</span><h2>${t('battleChapter' + ((state.battle.wave - 1) % 3))}</h2><div class="story-stages">${['march', 'ambush', 'forming', 'clash'].map((stage) => `<span class="${stage === phase ? 'current' : ''}">${t(stage)}</span>`).join('')}</div><p data-battle-story>${t(key)}</p></section>`;
-}
-export function equipmentView(state, wolf, { t, busy }) {
-  const b = equipmentBonuses(wolf);
-  return `<section class="equipment-panel"><h3>${t('equipment')}</h3><p>${t(wolf.equipment || 'noEquipment')} ${isWolfBusy(state, wolf.id) ? ' · ' + t('away') : ''}</p><div class="equipment-bonuses">${[
-    ['attackBonus', b.attack],
-    ['defenseBonus', b.defense],
-    ['scoutBonus', b.scouting],
-    ['healBonus', b.healing],
-  ]
-    .map(([k, n]) => `<span>${t(k)} <b>+${n}${k === 'scoutBonus' ? '%' : ''}</b></span>`)
-    .join(
-      '',
-    )}</div><div class="equipment-options">${ITEM_DEFINITIONS.map((i) => `<button class="button outline" data-action="equip" data-id="${wolf.id}" data-item="${i.id}" ${busy || state.battle.status === 'active' || isWolfBusy(state, wolf.id) || !state.inventory[i.id] ? 'disabled' : ''}>${t(i.id)} · ${state.inventory[i.id]}<small>${t('equip')}</small></button>`).join('')}</div><button class="button outline" data-action="unequip" data-id="${wolf.id}" ${!wolf.equipment || busy || isWolfBusy(state, wolf.id) || state.battle.status === 'active' ? 'disabled' : ''}>${t('unequip')}</button></section>`;
 }
 const phrase = (t, key, values = {}) =>
   escape(

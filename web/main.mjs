@@ -1,14 +1,12 @@
 import './style.css';
 import './v2.css';
 import { PLOTS, getWallUpgradeCost } from '../shared/settlement.mjs';
-import { isWolfBusy, adventureQuote } from '../shared/adventures.mjs';
+import { adventureQuote } from '../shared/adventures.mjs';
 import {
   placementDialog,
   settlementControls,
   narrativePanel,
   battlePhase,
-  wolfPortrait,
-  equipmentView,
   adventureView,
   updateAdventurePlanning,
 } from './v2-view.mjs';
@@ -28,6 +26,7 @@ import { firstSteps } from './onboarding.mjs';
 import { constructionPlan } from './planning.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { herdPanel, updateHerdPanel } from './herd-panel.mjs';
+import { guardianPanel, updateGuardianPanel } from './guardian-panel.mjs';
 import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
@@ -371,6 +370,8 @@ function render(restoreFocus, preservePlanning = false) {
   const previousPlanning =
     preservePlanning && view === 'village' ? root.querySelector('#economy-panel') : null;
   const previousHerd = preservePlanning ? root.querySelector('#herd-recovery-panel') : null;
+  const previousGuardian =
+    preservePlanning && view === 'wolves' ? root.querySelector('#guardian-panel') : null;
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
   const visibleView = auth.authenticated && mode === 'online' ? view : 'home';
@@ -415,6 +416,10 @@ function render(restoreFocus, preservePlanning = false) {
   if (previousHerd) {
     root.querySelector('#herd-recovery-panel')?.replaceWith(previousHerd);
     updateHerdPanel(root, state, herdAmount, economyContext());
+  }
+  if (previousGuardian) {
+    root.querySelector('#guardian-panel')?.replaceWith(previousGuardian);
+    updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   }
   identifyControls();
   renderedSignature = interfaceSignature();
@@ -598,8 +603,7 @@ function battleRecovery() {
 }
 
 function wolvesView() {
-  const wolf = state.wolves.find((w) => w.id === selectedWolf) || state.wolves[0];
-  return `<div class="guardian-layout"><section class="guardian-cards">${state.wolves.map((w) => `<button class="guardian-card ${w.id === wolf.id ? 'selected' : ''}" data-wolf="${w.id}"><span class="guardian-portrait">${wolfPortrait(w)}</span><span class="guardian-info"><small>${t('level')} ${w.level}</small><strong>${roleName(w.name)}</strong>${progress(w.hp, w.maxHp)}<span>${Math.ceil(w.hp)} / ${w.maxHp} ${t('health')}</span></span>${icon('arrow', 18)}</button>`).join('')}</section><section class="wolf-detail detail-card"><div class="section-label">${t('wolfDetails')}${icon('wolves', 20)}</div><div class="large-wolf">${wolfPortrait(wolf)}</div><h2>${roleName(wolf.name)}</h2><p>${t('level')} ${wolf.level} · ${wolf.xp} / ${wolf.level * 45} ${t('xp')}</p>${progress(wolf.xp, wolf.level * 45)}<div class="training-points">${t('points')} <b>${wolf.points}</b></div>${['guardian', 'hunter', 'leader', 'healer'].map((path) => `<div class="training-row"><span>${roleName(path)} <small>${wolf.ranks[path]} / 5</small></span>${button(t('train') + icon('plus', 14), 'train', 'button outline', wolf.points <= 0 || wolf.ranks[path] >= 5 || busy || isWolfBusy(state, wolf.id) || state.battle.status === 'active', `data-id="${wolf.id}" data-path="${path}"`)}</div>`).join('')}<div class="training-cost">${costView({ herbs: 8, feed: 12 })}</div>${equipmentView(state, wolf, { t, busy })}</section></div>${battleRecovery()}`;
+  return guardianPanel(state, selectedWolf, { t, language, busy }) + battleRecovery();
 }
 
 function worldView() {
@@ -1724,6 +1728,7 @@ setInterval(async () => {
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
   updateHerdPanel(root, state, herdAmount, economyContext());
+  if (view === 'wolves') updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   if (view === 'world')
     updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection });

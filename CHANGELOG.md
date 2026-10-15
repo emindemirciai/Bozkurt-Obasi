@@ -4,6 +4,16 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.3.0 — 2026-10-15
+
+**TR**
+
+- Muhafız gelişim ekranında gerçek savaş değerleri, eğitim kazanımları, ekipman karşılaştırması ve anlaşılır işlem engelleri; 20. seviye göstergesi ve TR/EN çevrimdışı muhafız önizlemesi.
+
+**EN**
+
+- Guardian progression now shows actual combat contributions, training gains, equipment comparisons and clear action blockers; level-20 display and a bilingual offline guardian preview.
+
 ## v2.2.0 — 2026-10-15
 
 **TR**

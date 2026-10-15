@@ -876,3 +876,211 @@
   outline: 3px solid #c28c3c;
   outline-offset: 3px;
 }
+
+.guardian-planning {
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+  align-items: start;
+}
+.guardian-planning .guardian-cards {
+  position: sticky;
+  top: 92px;
+}
+.guardian-card-content {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+  min-width: 0;
+}
+.guardian-planning .guardian-card {
+  padding: 14px;
+  gap: 8px;
+}
+.guardian-planning .guardian-card > svg {
+  margin-left: 0;
+}
+.guardian-planning .guardian-portrait {
+  flex-shrink: 0;
+  width: 82px;
+}
+.guardian-planning .guardian-info {
+  min-width: 0;
+}
+.guardian-name {
+  font:
+    30px Georgia,
+    serif;
+  text-align: center;
+}
+.guardian-xp {
+  text-align: center;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.guardian-xp-hint,
+.guardian-stats-hint,
+.guardian-equipment-hint,
+.guardian-portrait-hint,
+.guardian-readonly {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 14px 0;
+}
+.guardian-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+.guardian-stat-grid > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+.guardian-stat-grid dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.guardian-stat-grid dd {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  margin: 6px 0 0;
+}
+.guardian-planning .training-row {
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 0;
+}
+.guardian-planning .training-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.guardian-planning .training-row h3 {
+  font-size: 15px;
+}
+.guardian-planning .training-row small {
+  margin-left: 0;
+}
+.guardian-planning .training-row h3 small {
+  margin-left: 6px;
+}
+.guardian-effect,
+.guardian-action-cost {
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.guardian-action-cost,
+.guardian-plan-reason,
+.guardian-no-change {
+  color: var(--muted);
+}
+.guardian-plan-reason,
+.guardian-no-change {
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+.guardian-comparison {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.guardian-comparison li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  font-size: 11px;
+  padding: 5px 0;
+}
+.guardian-comparison li > span {
+  flex: 1;
+}
+.guardian-comparison strong {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.guardian-comparison small {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 11px;
+}
+.guardian-comparison .positive {
+  color: #477145;
+}
+.guardian-comparison .negative {
+  color: #ab4c35;
+}
+.guardian-item {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+.guardian-item h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.guardian-item p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.guardian-item .button {
+  margin-top: 8px;
+}
+.guardian-remove {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.guardian-readonly {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+:root[data-theme='dark'] .guardian-comparison .positive {
+  color: #bed2a4;
+}
+:root[data-theme='dark'] .guardian-comparison .negative {
+  color: #f3b6a3;
+}
+@media (max-width: 1000px) {
+  .guardian-planning {
+    grid-template-columns: 1fr;
+  }
+  .guardian-planning .guardian-cards {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .guardian-planning .guardian-cards {
+    grid-template-columns: 1fr;
+  }
+  .guardian-planning .wolf-detail {
+    padding: 20px 16px;
+  }
+  .guardian-planning .equipment-options {
+    grid-template-columns: 1fr;
+  }
+  .guardian-planning .training-row {
+    flex-wrap: wrap;
+  }
+  .guardian-planning .training-row > div {
+    flex-basis: 100%;
+  }
+  .guardian-planning .training-row .button {
+    width: 100%;
+  }
+}
+
+.guardian-planning .large-wolf {
+  text-align: center;
+}
+.guardian-planning .large-wolf svg {
+  max-width: 100%;
+}

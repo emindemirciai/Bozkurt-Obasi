@@ -1,24 +1,26 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-15. Sürüm / Release: **v2.2.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-15. Sürüm / Release: **v2.3.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| Kaynak ve çeviriler / Source and translations | 101 JavaScript dosyası; 562 eşleşen TR/EN anahtar / files and matching keys |
-| Motor, API ve planlama / Engine, API and planning | 211/211 test geçti / tests passed |
-| Tarayıcı / Browser | 70/70 geçti; sürü takviyesi, savaş zemini/yaralı kurt, geniş ekran/mobil/tam ekran, açık/koyu tema ve mevcut oyun/hesap senaryoları / herd replenishment, battle surface/injured wolves, wide/mobile/fullscreen, light/dark and existing gameplay/account scenarios passed |
+| Kaynak ve çeviriler / Source and translations | 107 JavaScript dosyası; 593 eşleşen TR/EN anahtar / files and matching keys |
+| Motor, API ve planlama / Engine, API and planning | 221/221 test geçti / tests passed |
+| Tarayıcı / Browser | 75/75 geçti; muhafız eğitimi/ekipmanı, sürü takviyesi, savaş zemini/yaralı kurt, geniş ekran/mobil/tam ekran, açık/koyu tema ve mevcut oyun/hesap senaryoları / guardian training/equipment, herd replenishment, battle surface/injured wolves, wide/mobile/fullscreen, light/dark and existing gameplay/account scenarios passed |
 | Windows tam yedek / Full backup | 12/12 çevrimdışı entegrasyon testi geçti / offline integration tests passed |
-| Derlemeler / Builds | Üretim; ana sayfa, savaş, admin, köy ve sefer tek dosya önizlemeleri güncel / production and five standalone previews current |
+| Derlemeler / Builds | Üretim; ana sayfa, savaş, admin, köy, sefer ve muhafız tek dosya önizlemeleri güncel / production and six standalone previews current |
 | Biçim ve diff / Formatting and diff | Prettier ve Git diff kontrolleri geçti / formatting and Git diff checks passed |
-| Sürüm artışı / Version increase | v2.1.2 → v2.2.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
+| Sürüm artışı / Version increase | v2.2.0 → v2.3.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
 | Dört servis / Four services | web, api, admin, analyze imajları derlendi; Compose ortam aktarımı doğrulandı / all images built and environment forwarding passed |
 | API kalıcılığı / API persistence | Salt okunur ayrıcalıksız konteyner; hesap kapısı, kayıt ve yeniden başlatmada köy/oturum kontrolü geçti / non-root read-only runtime, account gate and restart persistence passed |
 | Ağ geçitleri / Gateways | API olmadan başlangıç ve farklı IP'ye geçiş, yetkilendirme ve fotoğraf sınırları geçti / startup without API, changed-IP recovery, authorization and photo limits passed |
 | Analiz / Analytics | Gerçek Next konteynerinde doğrulanmış giriş, hatalar ve kesintide çerez koruma geçti / real Next verified login, failures and outage cookie preservation passed |
 
-Kaynak sayımı / Source count: **217 dosya, 46.215 fiziksel satır; 36.017 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
+Kaynak sayımı / Source count: **223 dosya, 47.392 fiziksel satır; 37.194 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
 
 ## Türkçe
+
+v2.3.0 muhafız gelişimi için bütün eğitim yolları ve ekipman karşılaştırmaları mevcut oyun komutlarının sonuçlarıyla karşılaştırıldı. Kişisel hasar azaltma doğrusal olmayan formülden hesaplanır; karşılaştırma yüzde puanıdır. Gerçek API eğitimi tek maliyet düşümü ve yeniden yüklemede kalıcılıkla doğrulandı. Ekipman değiştirme/çıkarma envanteri korur; dolu envanter, görev, savaş, puan ve kaynak engelleri açıklanır. Üretim uygunluğu değiştirirken seçili muhafız, kontrol düğümleri ve klavye odağı korunur. 20. seviye doğru gösterilir. Altıncı çevrimdışı önizleme gerçek bileşeni kullanır; beş muhafız, dört örnek durum, TR/EN ve 320/390/1440 px açık/koyu tema kontrolleri geçti. Önizleme ağ isteği veya oyun işlemi yapmaz. Masaüstü/mobil görseller incelendi. Oyun dengesi, kayıt şeması ve ENV anahtarları değişmedi.
 
 v2.2.0 sürü takviyesi; otlak önkoşulu, katı 1–5 miktar denetimi, 24 hayvan sınırı ve su/yem maliyetleriyle sınandı. Kaynak yetersizliği hiçbir kısmi harcama yapmaz; aynı revizyonla eşzamanlı tekrar yalnızca bir kez işler. Gerçek API, SQLite yeniden başlatma ve hesap izolasyonu geçti. Mevcut yaralar, panik, kurt XP’si ve v1→v2 kayıt geçişi korunur. Tarayıcıda seçim kaynak harcamaz, açık onay tek komut gönderir; üretim güncellemesi miktarı, kontrol düğümlerini ve odağı korur. Ana Yurt/Savaş/Muhafızlar paneli ve salt okunur köy önizlemesi TR/EN, açık/koyu tema ve 320/390/1440 px genişliklerde doğrulandı. Masaüstü ve mobil koyu ekran görüntüleri incelendi. Yeni ENV veya veritabanı şeması değişikliği yoktur.
 
@@ -61,6 +63,8 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+v2.3.0 guardian progression compares every training path and equipment preview against existing game-command results. Personal damage mitigation uses the nonlinear formula; differences are percentage points. A real API training action spends once and persists after reload. Equipment replacement/removal conserves inventory; full inventory, mission, battle, point and resource blockers are explained. Production updates preserve the selected guardian, control nodes and keyboard focus. Level 20 displays the cap correctly. The sixth offline preview reuses the actual component; five guardians, four scenarios, TR/EN and 320/390/1440 px light/dark checks passed. It makes no network requests or game mutations. Desktop/mobile visuals were inspected. Game balance, save schema and environment keys are unchanged.
 
 v2.2.0 herd replenishment verifies the pasture prerequisite, strict amounts of 1–5, the 24-animal limit and water/feed costs. Shortages never partially spend resources; concurrent requests at one revision succeed only once. Real API, SQLite restart and account isolation passed. Existing wounds, panic, guardian XP and v1→v2 migration are preserved. Browser selection spends nothing and explicit confirmation sends one command; production updates retain the amount, control nodes and keyboard focus. Homeland/Battle/Guardians panels and the read-only village preview passed TR/EN, light/dark and 320/390/1440 px checks. Desktop and dark mobile screenshots were inspected. No new environment variables or database schema changes are required.
 

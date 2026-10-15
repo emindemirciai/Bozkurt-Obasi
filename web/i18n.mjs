@@ -1,6 +1,44 @@
 import { v2Translations } from './v2-i18n.mjs';
 export const translations = {
   tr: {
+    guardianPreviewReady: 'Gereksinimler uygun. Bu önizlemede işlem yapılamaz.',
+    guardianStat_attack: 'Saldırı katkısı',
+    guardianStat_mitigation: 'Kişisel hasar azaltma',
+    guardianStat_healing: 'Şifa katkısı',
+    guardianStat_scouting: 'İzcilik bonusu',
+    guardianStat_maxHp: 'Azami can',
+    guardianPercentagePoints: 'puan',
+    guardianUnchanged: 'Değerler değişmez.',
+    guardianBattleBlocked: 'Savaş bitince eğitim yapabilirsin.',
+    guardianBusyBlocked: 'Savaş veya bu muhafızın görevi bitene kadar bekle.',
+    guardianPointsBlocked: 'Eğitim puanı yok. Keşif, sevkiyat veya savaşla deneyim kazan.',
+    guardianRankMax: 'Bu eğitim yolu en üst seviyede.',
+    guardianResourceBlocked: 'Eksik kaynak:',
+    guardianItemMissing: 'Bu eşya çantanda yok. Bölge keşiflerinden kazanabilirsin.',
+    guardianInventoryFull: 'Çıkarılacak eşyanın çantası dolu; önce yer aç.',
+    guardianEquipped: 'Kuşanılmış',
+    guardianReady: 'Hazır. Düğmeyle onaylayabilirsin.',
+    guardianLevelCap: 'En yüksek seviye',
+    guardianLevelCapHint:
+      '20. seviyeye ulaştı. Kalan puanlarla eğitim yapabilir ve ekipman değiştirebilirsin.',
+    guardianXpHint:
+      'Savaş, keşif ve sevkiyattan deneyim kazanır. Her yeni seviye 1 eğitim puanı ve 6 azami can verir.',
+    guardianStatsHint:
+      'Bireysel değerlerdir; yapılar, formasyonlar ve takım etkileri dahil değildir. Şifa katkıları her dört çatışma adımında birleşir. Göreve seçilen kurtların izcilik bonusları toplamda en fazla %30 süre kazandırır.',
+    guardianEffect_guardian: 'Gelen hasarı azaltır; mevcut ve azami canı 4 artırır.',
+    guardianEffect_hunter: 'Saldırı katkısını 1,2 ve mevcut/azami canı 2 artırır.',
+    guardianEffect_leader:
+      'Saldırı katkısını 0,3 ve mevcut/azami canı 2 artırır. Takımın panik artışını yavaşlatır.',
+    guardianEffect_healer: 'Takımın şifa katkısını 3 ve mevcut/azami canı 2 artırır.',
+    guardianTrainingCost: '1 eğitim puanı · 8 şifalı ot · 12 yem',
+    guardianCurrentEquipment: 'Kuşanılan eşya',
+    guardianEquipmentHint:
+      'Değerler mevcut ekipmana göre karşılaştırılır. Kuşanınca eski eşya çantaya döner. Her kurt bir eşya taşır.',
+    guardianInBag: 'Çantada',
+    guardianPortraitHint:
+      'Portre muhafızın rolünü gösterir. Kuşanılan eşya adı ve etkileri ekipman bölümündeki değerlerden izlenir; portre eşyayla değişmez.',
+    guardianPreviewHint:
+      'Salt okunur örnek: muhafızları ve kazanımları inceleyebilirsin. Eğitim veya ekipman işlemi yapılmaz.',
     herdReplenish: 'Sürüyü tamamla',
     herdReplenishIntro:
       'Kaybettiğin hayvanların yerine otlağına yeni hayvanlar kat. Sürünün üst sınırı 24 hayvandır.',
@@ -445,6 +483,45 @@ export const translations = {
     recovery: 'Yedek kayıt geri yüklendi.',
   },
   en: {
+    guardianPreviewReady: 'Requirements are met. Actions are disabled in this preview.',
+    guardianStat_attack: 'Attack contribution',
+    guardianStat_mitigation: 'Personal damage reduction',
+    guardianStat_healing: 'Healing contribution',
+    guardianStat_scouting: 'Scouting bonus',
+    guardianStat_maxHp: 'Maximum health',
+    guardianPercentagePoints: 'pp',
+    guardianUnchanged: 'No stat changes.',
+    guardianBattleBlocked: 'Wait for the battle to end before training.',
+    guardianBusyBlocked: 'Wait for the battle or this guardian’s mission to end.',
+    guardianPointsBlocked:
+      'No training points. Gain experience from exploration, escorts or battles.',
+    guardianRankMax: 'This training path is at maximum rank.',
+    guardianResourceBlocked: 'Missing resources:',
+    guardianItemMissing: 'This item is not in your bag. Earn it through region exploration.',
+    guardianInventoryFull: 'The returned item’s inventory is full; make room first.',
+    guardianEquipped: 'Equipped',
+    guardianReady: 'Ready. Confirm with the button.',
+    guardianLevelCap: 'Maximum level',
+    guardianLevelCapHint:
+      'Level 20 reached. You can spend remaining training points and change equipment.',
+    guardianXpHint:
+      'Gain experience from battles, expeditions and escorts. Each new level grants 1 training point and 6 maximum health.',
+    guardianStatsHint:
+      'Individual values exclude buildings, formations and team effects. Healing contributions combine every fourth combat step. Scouting bonuses of selected guardians shorten missions by at most 30% in total.',
+    guardianEffect_guardian: 'Reduces incoming damage and adds 4 current and maximum health.',
+    guardianEffect_hunter: 'Adds 1.2 attack contribution and 2 current and maximum health.',
+    guardianEffect_leader:
+      'Adds 0.3 attack contribution and 2 current and maximum health. Slows the pack’s panic gain.',
+    guardianEffect_healer: 'Adds 3 team healing contribution and 2 current and maximum health.',
+    guardianTrainingCost: '1 training point · 8 herbs · 12 feed',
+    guardianCurrentEquipment: 'Equipped item',
+    guardianEquipmentHint:
+      'Values compare with current equipment. The old item returns to your bag when swapped. Each wolf carries one item.',
+    guardianInBag: 'In bag',
+    guardianPortraitHint:
+      'The portrait depicts the guardian’s role. The equipped item and its effects are shown in the values; equipment does not change the portrait.',
+    guardianPreviewHint:
+      'Read-only example: inspect guardians and improvements. Training and equipment actions are disabled.',
     herdReplenish: 'Replenish herd',
     herdReplenishIntro:
       'Replace animals lost in battle with new arrivals at your pasture. Your herd can hold up to 24 animals.',
