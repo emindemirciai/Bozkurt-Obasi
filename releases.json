@@ -1,6 +1,20 @@
 {
-  "version": "2.3.0",
+  "version": "2.4.0",
   "releases": [
+    {
+      "version": "2.4.0",
+      "date": "2026-10-15",
+      "changes": {
+        "tr": [
+          "İlk Nöbet: sekiz bağlantılı hikâye görevi, köyde sıradaki hedef, kalıcı ilerleme ve tek seferlik ödüller; mevcut köyleri koruyan geçiş ve TR/EN çevrimdışı bölüm önizlemesi.",
+          "Analiz panelinde yeni ve geri dönen oyuncu örnekleri için bölüm ilerleme ölçümü; görev ve zafer göstergeleri trafik istatistiklerinden ayrı tutulur."
+        ],
+        "en": [
+          "First Watch: eight connected story objectives, a village next-goal card, persistent progression and one-time rewards; existing villages are preserved and a bilingual offline chapter preview is included.",
+          "The analytics dashboard measures chapter progression separately for new and returning samples, with objective and victory metrics kept separate from traffic statistics."
+        ]
+      }
+    },
     {
       "version": "2.3.0",
       "date": "2026-10-15",

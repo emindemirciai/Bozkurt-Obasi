@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { readTrackPayload, normalizeProgressionPayload } from "../../../lib/progression.mjs";
 import {
   saveAnalyzeEvent,
   type StoredAnalyzeEvent,
@@ -317,8 +318,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payload = (await request.json()) as IncomingTrackPayload;
+    const payload = (await readTrackPayload(request)) as IncomingTrackPayload;
     const now = new Date().toISOString();
+    if (payload.eventType === "progression") {
+      // No geolocation, user-agent or URL processing is needed for gameplay milestones.
+      const event = normalizeProgressionPayload(payload, deploymentSite.eventSites, now);
+      await saveAnalyzeEvent(event);
+      return Response.json({ ok: true }, { headers: corsHeaders(request, deploymentSite.allowedOrigins) });
+    }
     const userAgent = getString(payload, "userAgent") || request.headers.get("user-agent") || "";
 
     const payloadCountryIso2 = getString(payload, "countryCode").toUpperCase();
@@ -382,14 +389,14 @@ export async function POST(request: Request) {
         headers: corsHeaders(request, deploymentSite.allowedOrigins),
       }
     );
-  } catch {
+  } catch (error) {
     return Response.json(
       {
         ok: false,
         error: "Invalid analyze payload",
       },
       {
-        status: 400,
+        status: error instanceof Error && error.message === "AnalyzeIdentityConflict" ? 409 : 400,
         headers: corsHeaders(request, deploymentSite.allowedOrigins),
       }
     );

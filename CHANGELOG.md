@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.4.0 — 2026-10-15
+
+**TR**
+
+- İlk Nöbet: sekiz bağlantılı hikâye görevi, köyde sıradaki hedef, kalıcı ilerleme ve tek seferlik ödüller; mevcut köyleri koruyan geçiş ve TR/EN çevrimdışı bölüm önizlemesi.
+- Analiz panelinde yeni ve geri dönen oyuncu örnekleri için bölüm ilerleme ölçümü; görev ve zafer göstergeleri trafik istatistiklerinden ayrı tutulur.
+
+**EN**
+
+- First Watch: eight connected story objectives, a village next-goal card, persistent progression and one-time rewards; existing villages are preserved and a bilingual offline chapter preview is included.
+- The analytics dashboard measures chapter progression separately for new and returning samples, with objective and victory metrics kept separate from traffic statistics.
+
 ## v2.3.0 — 2026-10-15
 
 **TR**

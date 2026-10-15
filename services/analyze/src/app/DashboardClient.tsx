@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import WorldMap from "../components/WorldMap";
+import FirstWatchProgress from "../components/FirstWatchProgress";
 import type { AnalyzeSitePublicConfig } from "../lib/siteConfig";
 import { useAnalyzeTheme } from "../lib/useAnalyzeTheme";
 
@@ -686,8 +687,9 @@ function buildDashboardData(
   language: LanguageType,
   now: Date
 ): DashboardData {
-  const events = filterEventsByRange(rawEvents, range, now);
-  const previousEvents = filterEventsByPreviousRange(rawEvents, range, now);
+  const traffic = rawEvents.filter((event) => event.eventType === "pageview");
+  const events = filterEventsByRange(traffic, range, now);
+  const previousEvents = filterEventsByPreviousRange(traffic, range, now);
 
   const current = periodStats(events);
   const previous = periodStats(previousEvents);
@@ -915,7 +917,7 @@ function TrafficChart({
     );
 
     return (
-      <div key={item.time} className="flex flex-1 flex-col items-center justify-end gap-1">
+      <div key={item.time} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
         {/* o saatteki ziyaretçi sayısı — barın üstünde (0 ise boş) */}
         <span
           className={`${narrow ? "text-[10px]" : "text-xs"} font-bold leading-none ${
@@ -936,7 +938,7 @@ function TrafficChart({
           title={`${item.time} · ${item.value} ziyaretçi`}
         />
         <span
-          className={`${narrow ? "text-[10px]" : "text-sm"} ${
+          className={`w-full break-words text-center ${narrow ? "text-[10px]" : "text-xs sm:text-sm"} ${
             isDark ? "analyze-dark-muted" : "text-slate-400"
           }`}
         >
@@ -946,7 +948,7 @@ function TrafficChart({
     );
   };
 
-  // 12'den fazla bar (24 saatlik görünüm) → iki satır: 12 saat üstte, 12 saat altta
+  // Hour labels use six columns on small screens and twelve when there is room.
   if (data.length > 12) {
     const half = Math.ceil(data.length / 2);
     const rows = [data.slice(0, half), data.slice(half)];
@@ -954,7 +956,7 @@ function TrafficChart({
     return (
       <div className="flex flex-col gap-5 border-t border-current/10 pt-6">
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex h-[120px] items-end gap-1.5 px-1">
+          <div key={rowIndex} className="grid grid-cols-6 items-end gap-x-1.5 gap-y-5 px-1 sm:h-[120px] sm:grid-cols-12">
             {row.map((item) => renderBar(item, true))}
           </div>
         ))}
@@ -963,7 +965,7 @@ function TrafficChart({
   }
 
   return (
-    <div className="flex h-[230px] items-end gap-4 border-t border-current/10 px-2 pb-8 pt-8">
+    <div className="flex h-[230px] items-end gap-2 border-t border-current/10 px-2 pb-8 pt-8 sm:gap-4">
       {data.map((item) => renderBar(item, false))}
     </div>
   );
@@ -1339,6 +1341,8 @@ export default function DashboardClient({ site }: { site: AnalyzeSitePublicConfi
           <MetricCard title={t.bounceRate} value={`%${dashboardData.bounceRate}`} change={dashboardData.bounceChange} theme={theme} />
           <MetricCard title={t.averageDuration} value={averageDuration} change={dashboardData.durationChange} theme={theme} />
         </section>
+
+        <FirstWatchProgress events={rawEvents} sites={site.eventSites} start={getRangeStartDate(range, now).getTime()} end={now.getTime()} language={language} theme={theme} />
 
         <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
           <SectionCard title={t.visitChart} theme={theme}>

@@ -15,7 +15,7 @@ export type AnalyzeSiteConfig = {
 
 export type AnalyzeSitePublicConfig = Pick<
   AnalyzeSiteConfig,
-  "id" | "dashboardTitle" | "authMode"
+  "id" | "dashboardTitle" | "authMode" | "eventSites"
 >;
 
 type AnalyzeEnvironment = Record<string, string | undefined>;
@@ -119,5 +119,6 @@ export function toAnalyzeSitePublicConfig(site: AnalyzeSiteConfig): AnalyzeSiteP
     id: site.id,
     dashboardTitle: site.dashboardTitle,
     authMode: site.authMode,
+    eventSites: site.eventSites,
   };
 }

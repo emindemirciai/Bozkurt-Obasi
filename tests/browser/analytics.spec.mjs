@@ -6,6 +6,7 @@ const COLLECTOR = 'https://analiz.bozkurtobasi.com/api/track';
 
 async function productionSite(page, options = {}) {
   const events = [];
+  events.progressions = [];
   if (options.authenticated !== false) await signIn(page);
   const cookies = await page.context().cookies('http://127.0.0.1:4173');
   const cookieHeader = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
@@ -37,7 +38,11 @@ async function productionSite(page, options = {}) {
       });
     }
     if (options.fail) return route.abort('failed');
-    events.push({ body: route.request().postDataJSON(), headers: route.request().headers() });
+    const body = route.request().postDataJSON();
+    (body.eventType === 'progression' ? events.progressions : events).push({
+      body,
+      headers: route.request().headers(),
+    });
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -149,6 +154,10 @@ for (const preference of ['doNotTrack', 'globalPrivacyControl']) {
     await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
     await expect(page.locator('.map-title')).toContainText('Savaş meydanı');
     expect(events).toHaveLength(0);
+    expect(events.progressions).toHaveLength(0);
+    expect(
+      await page.evaluate(() => localStorage.getItem('bozkurt.analytics.first-watch')),
+    ).toBeNull();
     expect(await page.evaluate(() => localStorage.getItem('bozkurt.analytics.visitor'))).toBeNull();
   });
 }
@@ -163,4 +172,40 @@ test('localhost never sends analytics traffic', async ({ page }) => {
   await page.getByRole('button', { name: 'Savaş meydanı', exact: true }).click();
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => localStorage.getItem('bozkurt.analytics.visitor'))).toBeNull();
+});
+
+test('confirmed story progress upserts one anonymous chapter and reloads without duplicates', async ({
+  page,
+}) => {
+  const events = await productionSite(page);
+  await page.goto(SITE + '/#village');
+  await expect.poll(() => events.progressions.length).toBe(1);
+  const first = events.progressions[0].body;
+  expect(first.progression).toMatchObject({
+    chapter: 'first-watch',
+    cohort: 'new',
+    completed: [],
+    claimed: [],
+    firstWin: false,
+  });
+  await page.locator('[data-plot="p0"]').click();
+  await page.locator('.placement-dialog [data-building-type="quarry"]').click();
+  await expect.poll(() => events.progressions.length).toBe(2);
+  expect(events.progressions[1].body.id).toBe(first.id);
+  expect(events.progressions[1].body.progression.completed).toContain('build');
+  await page.reload();
+  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
+  // The next confirmed snapshot and a language render must retain the successful fingerprint.
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('.map-title')).toContainText('Homeland');
+  expect(events.progressions).toHaveLength(2);
+  for (const event of events.progressions) {
+    expect(Object.keys(event.body).sort()).toEqual(
+      ['createdAt', 'eventType', 'id', 'progression', 'sessionId', 'site', 'visitorId'].sort(),
+    );
+    expect(event.headers.cookie).toBeUndefined();
+    expect(JSON.stringify(event.body)).not.toMatch(
+      /@|resources|wolves|revision|userCode|startedAt|secret/,
+    );
+  }
 });

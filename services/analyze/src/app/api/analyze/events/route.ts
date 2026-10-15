@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     if (!all && eventDate < startDate) return false;
     if (!visibleSites.includes(event.site.trim().toLowerCase())) return false;
 
-    return event.eventType !== "duration";
+    return event.eventType === "pageview" || event.eventType === "progression";
   });
 
   return Response.json(

@@ -22,7 +22,8 @@ import {
   getUpgradeCost,
 } from '../shared/game.mjs';
 import { translations } from './i18n.mjs';
-import { firstSteps } from './onboarding.mjs';
+import { firstWatchProgress } from '../shared/first-watch.mjs';
+import { firstWatchPanel, updateFirstWatchPanel } from './first-watch-panel.mjs';
 import { constructionPlan } from './planning.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { herdPanel, updateHerdPanel } from './herd-panel.mjs';
@@ -138,6 +139,7 @@ const logLabels = {
   journeyStarted: 'logTravel',
   journeyArrived: 'logArrived',
   questClaimed: 'logClaimed',
+  firstWatchClaimed: 'logClaimed',
   formationChanged: 'formation',
   battlePrepared: 'prepare',
   battleResumed: 'prepare',
@@ -305,6 +307,7 @@ async function refreshGoogleAuth() {
 }
 
 function denyGameAccess() {
+  analytics.reset();
   sessionGeneration++;
   polling = null;
   mode = 'local';
@@ -394,7 +397,7 @@ function render(restoreFocus, preservePlanning = false) {
   const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'friends', 'updates'];
   root.innerHTML = `<div class="game-shell">
     <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}">${brandMark}</a>
-    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key === 'friends' ? 'wolves' : key, 24)}<span>${t(key)}</span>${key === 'quests' && state.quests.some((q) => !q.claimed && q.progress === q.target) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
+    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key === 'friends' ? 'wolves' : key, 24)}<span>${t(key)}</span>${key === 'quests' && (state.quests.some((q) => !q.claimed && q.progress === q.target) || firstWatchProgress(state).steps.some((step) => step.claimable)) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
     <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
@@ -474,33 +477,33 @@ function playView() {
 }
 
 function firstStepsView() {
-  const guide = firstSteps(state);
-  return `<section class="quest-callout first-steps" aria-labelledby="first-steps-title">
-    <div class="guide-heading"><h3 id="first-steps-title">${t('guideTitle')}</h3><span class="guide-count" role="status" aria-live="polite">${guide.completed} / ${guide.steps.length} ${t('guideCompleted')}</span></div>
-    <ol class="guide-list">${guide.steps.map((step, index) => `<li class="${step.complete ? 'is-complete' : ''}" ${step.id === guide.next ? 'aria-current="step"' : ''}><span class="guide-marker" aria-hidden="true">${step.complete ? icon('check', 13) : index + 1}</span><span>${t(`guide_${step.id}`)}</span><small>${step.progress}/${step.target}<span class="sr-only"> ${t(step.complete ? 'guideCompleted' : 'inProgress')}</span></small></li>`).join('')}</ol>
-    <p class="guide-description">${t(`guide_${guide.next}Desc`)}</p>
-    ${button(t(`guide_${guide.next}Action`) + icon('arrow', 17), 'guide', 'guide-action', busy)}
-  </section>`;
+  return firstWatchPanel(state, { t, language, compact: true, busy });
 }
 
-function followFirstSteps() {
-  const next = firstSteps(state).next;
+function followFirstWatch(id) {
+  const chapter = firstWatchProgress(state);
+  const step = chapter.steps.find((entry) => entry.id === id);
+  if (!step || step.locked || step.claimed) return;
   const targets = {
     gather: ['village', '#collect-button'],
-    build: ['village', '[data-building-type="quarry"]'],
-    reward: ['quests', '[data-action="claimQuest"][data-id="first_build"]'],
+    build: ['village', '[data-plot]'],
     train: ['wolves', '[data-action="train"]:not(:disabled)'],
-    win: ['battle', '[data-action="startBattle"], [data-action="newBattle"]'],
-    explore: ['world', '.page-heading h1'],
+    battle: ['battle', '[data-action="startBattle"], [data-action="newBattle"]'],
+    recover: ['wolves', '[data-action="rest"]'],
+    explore: ['world', '#adventure-difficulty'],
+    equip: ['wolves', '[data-action="equip"]:not(:disabled)'],
+    escort: ['world', '#adventure-difficulty'],
   };
-  if (next === 'train')
+  if (id === 'train')
     selectedWolf = state.wolves.find((wolf) => wolf.points > 0)?.id || selectedWolf;
-  const [destination, selector] = targets[next];
+  if ((id === 'explore' || id === 'escort') && !state.adventure.active)
+    adventureSelection.kind = id === 'escort' ? 'caravan' : 'expedition';
+  const [destination, selector] = targets[id];
   navigate(destination);
   const control = root.querySelector(selector);
   const target = control && !control.disabled ? control : root.querySelector('.page-heading h1');
   if (!target) return;
-  if (!target.matches('button, a')) target.tabIndex = -1;
+  if (!target.matches('button, a, input, select, [role="button"]')) target.tabIndex = -1;
   target.focus({ preventScroll: true });
   target.scrollIntoView({
     behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
@@ -619,7 +622,7 @@ function worldView() {
 }
 
 function questsView() {
-  return `<div class="quest-grid">${state.quests.map((q, i) => `<article class="quest-card ${q.claimed ? 'quest-complete' : ''}"><div class="quest-number">0${i + 1}</div><div class="quest-icon">${icon(['village', 'feed', 'battle', 'wolves'][i], 34)}</div><span class="quest-tag">${t(q.claimed ? 'claimed' : 'inProgress')}</span><h2>${t(q.id)}</h2><p>${t(`${q.id}Desc`)}</p><div class="quest-progress-label"><span>${t('quests')}</span><strong>${q.progress} / ${q.target}</strong></div>${progress(q.progress, q.target)}${button((q.claimed ? icon('check', 17) : icon('flag', 17)) + t(q.claimed ? 'claimed' : 'claim'), 'claimQuest', 'button ' + (q.claimed ? 'outline' : 'primary'), q.claimed || q.progress < q.target || busy, `data-id="${q.id}"`)}</article>`).join('')}</div>`;
+  return `${firstWatchPanel(state, { t, language, busy })}<section class="first-watch-legacy"><h2>${t('fwLegacy')}</h2><p>${t('fwLegacyText')}</p></section><div class="quest-grid">${state.quests.map((q, i) => `<article class="quest-card ${q.claimed ? 'quest-complete' : ''}"><div class="quest-number">0${i + 1}</div><div class="quest-icon">${icon(['village', 'feed', 'battle', 'wolves'][i], 34)}</div><span class="quest-tag">${t(q.claimed ? 'claimed' : 'inProgress')}</span><h2>${t(q.id)}</h2><p>${t(`${q.id}Desc`)}</p><div class="quest-progress-label"><span>${t('quests')}</span><strong>${q.progress} / ${q.target}</strong></div>${progress(q.progress, q.target)}${button((q.claimed ? icon('check', 17) : icon('flag', 17)) + t(q.claimed ? 'claimed' : 'claim'), 'claimQuest', 'button ' + (q.claimed ? 'outline' : 'primary'), q.claimed || q.progress < q.target || busy, `data-id="${q.id}"`)}</article>`).join('')}</div>`;
 }
 
 function updatesView() {
@@ -1262,6 +1265,8 @@ async function api(path, body, generation = sessionGeneration) {
     }
     state = payload.state;
     revision = payload.revision;
+    if (auth.authenticated)
+      void analytics.progress(state, auth.user?.userCode || auth.user?.email || '');
   }
   if (!response.ok && response.status === 401) {
     auth.authenticated = false;
@@ -1291,6 +1296,11 @@ function pollOnline() {
 function reportError(error) {
   const code = String(error.code || error.message).toUpperCase();
   const keys = {
+    FIRST_WATCH_INVALID_STEP: 'fwClaimError',
+    FIRST_WATCH_CLAIMED: 'fwClaimError',
+    FIRST_WATCH_LOCKED: 'fwClaimError',
+    FIRST_WATCH_INCOMPLETE: 'fwClaimError',
+    FIRST_WATCH_STORAGE_FULL: 'fwStorageFull',
     INVALID_REPLENISH_AMOUNT: 'herdInvalidAmount',
     HERD_FULL: 'herdFull',
     PASTURE_REQUIRED: 'herdPastureRequired',
@@ -1330,6 +1340,7 @@ async function command(action) {
   }
   const focusId = document.activeElement?.id;
   const generation = sessionGeneration;
+  let succeeded = false;
   busy = true;
   render();
   try {
@@ -1337,6 +1348,7 @@ async function command(action) {
     if (polling) await polling;
     if (generation !== sessionGeneration) return;
     await api('action', { action, revision }, generation);
+    succeeded = true;
     if (action.type === 'build') {
       const plot = PLOTS.find((p) => p.id === action.plotId);
       selected = state.buildings.find((b) => b.x === plot?.x && b.y === plot?.y)?.id || selected;
@@ -1349,6 +1361,19 @@ async function command(action) {
   } finally {
     busy = false;
     render(focusId);
+    if (succeeded && generation === sessionGeneration && action.type === 'claimFirstWatch') {
+      const next = firstWatchProgress(state).current;
+      const target =
+        (next &&
+          root.querySelector(
+            `#fw-action-${next.id}:not(:disabled), #fw-storage-${next.id}:not([hidden]):not(:disabled)`,
+          )) ||
+        root.querySelector('#fw-title');
+      if (target) {
+        if (!target.matches('button')) target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      }
+    }
   }
 }
 
@@ -1464,8 +1489,20 @@ root.addEventListener('click', async (event) => {
     render('account-password');
     return;
   }
-  if (a === 'guide') {
-    if (!busy) followFirstSteps();
+  if (a === 'firstWatchStorage') {
+    if (busy) return;
+    plannedBuilding = 'storage';
+    navigate('village');
+    const target = root.querySelector('#economy-panel');
+    if (target) {
+      target.tabIndex = -1;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: 'center' });
+    }
+    return;
+  }
+  if (a === 'firstWatchGo') {
+    if (!busy) followFirstWatch(target.dataset.id);
     return;
   }
   if (a === 'scroll') {
@@ -1674,6 +1711,7 @@ root.addEventListener('click', async (event) => {
     train: { type: 'train', id: target.dataset.id, path: target.dataset.path },
     travel: { type: 'travel', destination: target.dataset.destination },
     claimQuest: { type: 'claimQuest', id: target.dataset.id },
+    claimFirstWatch: { type: 'claimFirstWatch', id: target.dataset.id },
   };
   if (actions[a]) await command(actions[a]);
 });
@@ -1728,6 +1766,7 @@ setInterval(async () => {
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
   updateHerdPanel(root, state, herdAmount, economyContext());
+  updateFirstWatchPanel(root, state, { t, language, busy });
   if (view === 'wolves') updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   if (view === 'world')

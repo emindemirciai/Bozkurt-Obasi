@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const analyzeImage = process.argv[2] || 'bozkurt-obasi-analyze';
@@ -236,6 +236,72 @@ try {
   assert.equal(authorized.status, 200);
   assert.deepEqual((await authorized.json()).events, []);
   assert.equal((await request(base + '/', { headers })).status, 200);
+
+  // Exercise the real Next collector and on-disk upsert, not just helper functions.
+  const progression = {
+    id: 'progression-' + randomUUID(),
+    eventType: 'progression',
+    site: 'bozkurtobasi.com',
+    visitorId: 'visitor-' + randomUUID(),
+    sessionId: 'session-' + randomUUID(),
+    createdAt: new Date().toISOString(),
+    progression: {
+      chapter: 'first-watch',
+      cohort: 'new',
+      completed: ['gather'],
+      claimed: [],
+      firstWin: false,
+    },
+  };
+  const track = (body, origin = 'https://bozkurtobasi.com') =>
+    request(base + '/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: origin },
+      body: JSON.stringify(body),
+    });
+  assert.equal((await track(progression)).status, 200);
+  assert.equal((await track(progression)).status, 200);
+  const advanced = {
+    ...progression,
+    progression: {
+      ...progression.progression,
+      completed: ['gather', 'build'],
+      claimed: ['gather'],
+    },
+  };
+  assert.equal((await track(advanced)).status, 200);
+  assert.equal((await track(progression)).status, 200, 'A late snapshot must not erase progress.');
+  assert.equal((await track({ ...advanced, email: 'forbidden@example.test' })).status, 400);
+  assert.equal(
+    (await track({ ...advanced, progression: { ...advanced.progression, firstWin: true } })).status,
+    400,
+  );
+  assert.equal((await track({ ...advanced, visitorId: 'visitor-' + randomUUID() })).status, 409);
+  assert.equal((await track({ ...advanced, site: 'unrelated.example' })).status, 400);
+  assert.equal((await track(advanced, 'https://unrelated.example')).status, 403);
+  assert.equal((await track({ ...advanced, padding: 'x'.repeat(9000) })).status, 400);
+  const pageview = {
+    id: 'pageview-' + randomUUID(),
+    eventType: 'pageview',
+    site: progression.site,
+    visitorId: progression.visitorId,
+    sessionId: progression.sessionId,
+    createdAt: progression.createdAt,
+    path: '/quests',
+    url: 'https://bozkurtobasi.com/quests',
+    duration: 12,
+  };
+  assert.equal((await track(pageview)).status, 200);
+  const measured = await (await request(base + '/api/events?range=all', { headers })).json();
+  assert.equal(measured.events.length, 2);
+  const storedProgress = measured.events.find((event) => event.eventType === 'progression');
+  assert.deepEqual(storedProgress.progression, advanced.progression);
+  assert.equal(measured.events.filter((event) => event.eventType === 'pageview').length, 1);
+  assert.equal(storedProgress.userAgent, '');
+  assert.equal(storedProgress.country, '');
+  console.log(
+    'First Watch collector passed: closed payload, CORS/site guards, bounded body, identity conflicts, idempotent monotonic upsert and separate traffic rows.',
+  );
 
   await controlled(apiBase, 'success', 'unavailable');
   await expectFailure(await signIn(base), 503, 'auth_api_unavailable');

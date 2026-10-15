@@ -1,10 +1,12 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { mergeAnalyzeEvent } from "./progression.mjs";
 
 export type StoredAnalyzeEvent = {
   id: string;
   site: string;
-  eventType: "pageview" | "duration";
+  eventType: "pageview" | "duration" | "progression";
+  progression?: { chapter: string; cohort: string; completed: string[]; claimed: string[]; firstWin: boolean };
   createdAt: string;
   updatedAt: string;
   visitorId: string;
@@ -68,12 +70,7 @@ async function saveAnalyzeEventNow(event: StoredAnalyzeEvent) {
   const existingIndex = events.findIndex((item) => item.id === event.id);
 
   if (existingIndex >= 0) {
-    events[existingIndex] = {
-      ...events[existingIndex],
-      ...event,
-      createdAt: events[existingIndex].createdAt,
-      updatedAt: new Date().toISOString(),
-    };
+    events[existingIndex] = mergeAnalyzeEvent(events[existingIndex], event);
   } else {
     events.push(event);
   }

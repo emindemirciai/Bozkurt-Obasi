@@ -14,6 +14,8 @@
 
 **v2.3.0:** Muhafız gelişim ekranı eğitim etkileri, seviye sınırı, ekipman istatistik karşılaştırmaları ve işlem engelleriyle detaylandırıldı. Rol portrelerinin ekipmanla değişmediği açıkça belirtilir. Gerçek bileşeni kullanan TR/EN çevrimdışı muhafız önizlemesi, hazır/erzak eksik/seferde/seviye sınırı durumlarını gösterir. Oyun dengesi ve kayıt biçimi korunur.
 
+**v2.4.0:** İlk Nöbet bölümü sekiz bağlantılı görevi, sıradaki hedef kartını ve tek seferlik sıralı ödülleri ekler. Eski kayıtlar korunur; erken başarımlar sayılır, yenilgi hikâyeyi kilitlemez. Yeni/geri dönen bölüm örnekleri analizde trafik sayılarından ayrı izlenir. Sonraki adım bu başlangıcı oyuncularla doğrulamak, ardından aktif savaş komutlarını geliştirmektir. [Bölüm rehberi](FIRST-WATCH.md).
+
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
 
 1. **Oynanış doğrulaması:** İnşaat maliyetleri, üretim süreleri, savaş güçlüğü ve yenilgi sonrası toparlanmayı gerçek oyuncularla deneyin. Küçük bir oyun günlüğüyle ilk 15 dakikada nerede takılındığını kaydedin. Tamamlanan otlak takviyesinin maliyetini ve yenilgi sonrası yeniden savaşa hazırlanma süresini oyuncularla doğrulayın; tedavi kalan sürünün yaralarını, takviye kaybedilen hayvanları karşılar. Bu aşama yeni içerikten önce oyunun temel döngüsünü doğrular.
@@ -36,6 +38,8 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 **v2.2.0:** Herd replenishment after defeat is implemented. A built pasture permits batches of 1–5 animals for water/feed, up to 24 animals. Shared readiness explains costs and battle/journey restrictions; existing wounds, panic and guardian progression are preserved. The village preview includes read-only replenishment quotes.
 
 **v2.3.0:** Guardian progression now explains training effects, the level cap, equipment stat comparisons and action blockers. Role portraits are explicitly distinguished from equipped items. An offline TR/EN guardian preview reuses the actual component with ready/low-supplies/away/level-cap examples. Game balance and save format are preserved.
+
+**v2.4.0:** First Watch adds eight connected objectives, a next-goal card and ordered one-time rewards. Older saves are preserved, early achievements count, and defeat does not block the story. New/returning chapter samples are measured separately from traffic totals. Next: validate the opening with players, then develop active combat commands. [Chapter guide](FIRST-WATCH.md).
 
 **Current web release:** A playable village, production, construction/progression, guardian and formation choices, jackal battles, Turkish/English interface, an offline visual homepage preview, and Google- or email-linked progress in SQLite. The homepage is public; the village and game screens require a valid account session. Delivery uses GitHub → Docker → Dokploy and includes local previews, tests, line counts, and clean source archives. Concurrent players have independent villages; a shared world and PvP are outside this release.
 

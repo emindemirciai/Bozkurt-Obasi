@@ -21,6 +21,14 @@ import {
   grantWolfXp,
 } from './adventures.mjs';
 import { replenishHerd } from './herd.mjs';
+import {
+  initializeFirstWatch,
+  migrateFirstWatch,
+  validateFirstWatch,
+  recordFirstWatch,
+  recordFirstWatchBattle,
+  claimFirstWatch,
+} from './first-watch.mjs';
 import { validateGame as validateLegacyGame } from './legacy-v1.mjs';
 export { BUILDINGS };
 /** Shared, deterministic simulation. All rates are per minute; all clocks are UTC ms. */
@@ -141,16 +149,27 @@ export function createGame(now = Date.now()) {
     location: 'homeland',
     journey: null,
   };
-  return initializeAdventureState(state);
+  return initializeFirstWatch(initializeAdventureState(state));
 }
 
 export function migrateGame(state) {
-  if (state?.version === 2) return state;
-  if (!validateLegacyGame(state)) fail('INVALID_SAVE');
+  if (state?.version === 2 && Object.hasOwn(state, 'firstWatch')) {
+    if (!validateGame(state)) fail('INVALID_SAVE');
+    return state;
+  }
+  if (
+    state?.version === 2
+      ? !validateGame(state, { allowLegacyFirstWatch: true })
+      : !validateLegacyGame(state)
+  )
+    fail('INVALID_SAVE');
   const migrated = structuredClone(state);
-  migrateSettlement(migrated);
-  migrateAdventureState(migrated);
-  migrated.version = 2;
+  if (migrated.version !== 2) {
+    migrateSettlement(migrated);
+    migrateAdventureState(migrated);
+    migrated.version = 2;
+  }
+  migrateFirstWatch(migrated);
   if (!validateGame(migrated)) fail('INVALID_SAVE');
   return migrated;
 }
@@ -207,6 +226,7 @@ function finishBattle(state, won, at) {
     );
     state.herd.panic = Math.min(100, state.herd.panic + 10);
   }
+  recordFirstWatchBattle(state, won, at);
   refreshQuests(state);
 }
 
@@ -330,7 +350,9 @@ export function advanceGame(state, now = Date.now()) {
       state,
       Object.fromEntries(RESOURCE_KEYS.map((key) => [key, (rates[key] * before) / 60000])),
     );
+    const completedKind = state.adventure.active.kind;
     advanceAdventure(state, now);
+    recordFirstWatch(state, completedKind === 'expedition' ? 'explore' : 'escort', arrival);
     const afterRates = getProduction(state);
     addResources(
       state,
@@ -411,6 +433,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       placeBuilding(state, action.building, action.plotId);
       state.stats.builds += 1;
       log(state, 'buildingBuilt', at);
+      recordFirstWatch(state, 'build', at);
       break;
     }
     case 'moveBuilding':
@@ -429,9 +452,12 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       startCaravan(state, action, at);
       log(state, 'caravanStarted', at);
       break;
-    case 'equip':
+    case 'equip': {
+      const previous = state.wolves.find((wolf) => wolf.id === action.id)?.equipment;
       equipWolf(state, action);
+      if (previous !== action.item) recordFirstWatch(state, 'equip', at);
       break;
+    }
     case 'unequip':
       unequipWolf(state, action);
       break;
@@ -453,6 +479,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       state.collectReadyAt = at + 8000;
       state.stats.gathers += 1;
       log(state, 'resourcesCollected', at);
+      recordFirstWatch(state, 'gather', at);
       break;
     case 'formation':
       requirePeace(state);
@@ -501,6 +528,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       state.herd.hp = Math.min(state.herd.maxHp, state.herd.hp + 75);
       state.herd.panic = Math.max(0, state.herd.panic - 25);
       log(state, 'herdHealed', at);
+      recordFirstWatch(state, 'recover', at);
       break;
     case 'rest':
       requirePeace(state);
@@ -516,6 +544,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       state.herd.hp = Math.min(state.herd.maxHp, state.herd.hp + 25);
       state.herd.panic = Math.max(0, state.herd.panic - 30);
       log(state, 'packRested', at);
+      recordFirstWatch(state, 'recover', at);
       break;
     case 'train': {
       requirePeace(state);
@@ -532,6 +561,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       wolf.hp += health;
       state.stats.trained += 1;
       log(state, 'wolfTrained', at);
+      recordFirstWatch(state, 'train', at);
       break;
     }
     case 'travel': {
@@ -539,6 +569,10 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       // Existing saved journeys finish above, but new travel must select an escort party.
       fail('USE_CARAVAN');
     }
+    case 'claimFirstWatch':
+      claimFirstWatch(state, action.id, at);
+      log(state, 'firstWatchClaimed', at);
+      break;
     case 'claimQuest': {
       const quest = state.quests.find((entry) => entry.id === action.id);
       if (!quest) fail('INVALID_QUEST');
@@ -573,7 +607,7 @@ const machineKey = (value) =>
   typeof value === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(value);
 
 /** Reject corrupted/imported states, including every nested non-finite numeric value. */
-export function validateGame(state) {
+export function validateGame(state, { allowLegacyFirstWatch = false } = {}) {
   try {
     if (
       !exactKeys(state, [
@@ -595,6 +629,7 @@ export function validateGame(state) {
         'walls',
         'inventory',
         'adventure',
+        ...(allowLegacyFirstWatch && !Object.hasOwn(state, 'firstWatch') ? [] : ['firstWatch']),
       ])
     )
       return false;
@@ -739,6 +774,7 @@ export function validateGame(state) {
         state.journey.endsAt <= state.updatedAt)
     )
       return false;
+    if (Object.hasOwn(state, 'firstWatch') && !validateFirstWatch(state)) return false;
     return true;
   } catch {
     return false;

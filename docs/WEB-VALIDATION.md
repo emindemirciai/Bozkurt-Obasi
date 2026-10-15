@@ -1,24 +1,28 @@
 # Bozkurt Obası · doğrulama / Validation
 
-Tarih / Date: 2026-10-15. Sürüm / Release: **v2.3.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
+Tarih / Date: 2026-10-15. Sürüm / Release: **v2.4.0**. Windows, Node.js 24, Docker Desktop, Playwright Chromium, Windows PowerShell 5.1.
 
 | Kontrol / Check | Sonuç / Result |
 | --- | --- |
-| Kaynak ve çeviriler / Source and translations | 107 JavaScript dosyası; 593 eşleşen TR/EN anahtar / files and matching keys |
-| Motor, API ve planlama / Engine, API and planning | 221/221 test geçti / tests passed |
-| Tarayıcı / Browser | 75/75 geçti; muhafız eğitimi/ekipmanı, sürü takviyesi, savaş zemini/yaralı kurt, geniş ekran/mobil/tam ekran, açık/koyu tema ve mevcut oyun/hesap senaryoları / guardian training/equipment, herd replenishment, battle surface/injured wolves, wide/mobile/fullscreen, light/dark and existing gameplay/account scenarios passed |
+| Kaynak ve çeviriler / Source and translations | 115 JavaScript dosyası; 643 eşleşen TR/EN anahtar / files and matching keys |
+| Motor, API ve planlama / Engine, API and planning | 244/244 test geçti / tests passed |
+| Tarayıcı / Browser | 84/84 geçti; İlk Nöbet görevleri/ödülleri ve analiz ölçümü, muhafız eğitimi/ekipmanı, sürü takviyesi, savaş zemini/yaralı kurt, geniş ekran/mobil/tam ekran, açık/koyu tema ve mevcut oyun/hesap senaryoları / guardian training/equipment, herd replenishment, battle surface/injured wolves, wide/mobile/fullscreen, light/dark and existing gameplay/account scenarios passed |
 | Windows tam yedek / Full backup | 12/12 çevrimdışı entegrasyon testi geçti / offline integration tests passed |
-| Derlemeler / Builds | Üretim; ana sayfa, savaş, admin, köy, sefer ve muhafız tek dosya önizlemeleri güncel / production and six standalone previews current |
+| Derlemeler / Builds | Üretim; ana sayfa, savaş, admin, köy, sefer, muhafız ve İlk Nöbet tek dosya önizlemeleri güncel / production and seven standalone previews current |
 | Biçim ve diff / Formatting and diff | Prettier ve Git diff kontrolleri geçti / formatting and Git diff checks passed |
-| Sürüm artışı / Version increase | v2.2.0 → v2.3.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
+| Sürüm artışı / Version increase | v2.3.0 → v2.4.0; paket, kilit, README, CHANGELOG ve geçmiş eşleşiyor / version records agree |
 | Dört servis / Four services | web, api, admin, analyze imajları derlendi; Compose ortam aktarımı doğrulandı / all images built and environment forwarding passed |
 | API kalıcılığı / API persistence | Salt okunur ayrıcalıksız konteyner; hesap kapısı, kayıt ve yeniden başlatmada köy/oturum kontrolü geçti / non-root read-only runtime, account gate and restart persistence passed |
 | Ağ geçitleri / Gateways | API olmadan başlangıç ve farklı IP'ye geçiş, yetkilendirme ve fotoğraf sınırları geçti / startup without API, changed-IP recovery, authorization and photo limits passed |
-| Analiz / Analytics | Gerçek Next konteynerinde doğrulanmış giriş, hatalar ve kesintide çerez koruma geçti / real Next verified login, failures and outage cookie preservation passed |
+| Analiz / Analytics | Gerçek Next konteynerinde giriş, kapalı olay şeması, 8 KB sınırı, tekil/giderek ilerleyen kayıt, site/origin ve kimlik kontrolleri geçti / real Next auth, closed event schema, 8 KB limit, monotonic upserts, site/origin and identity checks passed |
 
-Kaynak sayımı / Source count: **223 dosya, 47.392 fiziksel satır; 37.194 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
+Kaynak sayımı / Source count: **234 dosya, 49.828 fiziksel satır; 39.630 aktif web satırı**. Yorumlar/boş satırlar dahil; üretilen önizlemeler, bağımlılıklar ve kilit dosyaları hariç / including comments and blank lines; excluding generated previews, dependencies and lockfiles.
 
 ## Türkçe
+
+v2.4.0 İlk Nöbet sekiz gerçek oyun eylemiyle tamamlandı; sıralı ve tek seferlik ödüller, eksiksiz depo kapasitesi kontrolü, yenilgi sonrası devam ve kesilen savaşta yanlış ilerleme olmaması doğrulandı. Yeni 15 motor testi ve 3 API testi eski v1/v2 geçişini, önceki köy verilerini, hesap ayrımını, eski revizyon ve tekrarlanan ödülleri, SQLite yeniden başlatmasını kapsar. Zaten takılı ekipmana yeniden tıklamak tam bir etkisiz işlem olarak korunur. Tarayıcıda gerçek API ile toplama/inşaat/eğitim, ödül sonrası sıradaki hedef odağı, reddedilen istekte odağın korunması; keşif/ekipman/sevkiyat sonuçları ve depoya yönlendirme doğrulandı. Yedinci tek dosya önizlemesi 320/390/1440 genişlikte TR/EN, açık/koyu tema ve altı örnek durumla test edildi; görseller incelendi.
+
+Analiz için 5 yardımcı/depo testi ve 5 yeni tarayıcı senaryosu; geciken yapılandırma, doğrulanmış sunucu durumu, yenilemede tekrar önleme, hesap ayrımı, başarısız istekte aynı kimlikle yeniden deneme ve DNT/GPC tercihlerini kapsar. Olaylar sayfa görüntülemelerinden ayrı tutulur; yeni/geri dönen örnekler ve mevcut ödül adımı gösterilir. Dokploy analiz imajı Next.js/TypeScript üretim derlemesinden geçti. Gerçek HTTP kolektörü ayrı geçici konteynerde gövde sınırı, yanlış origin/site, ek kişisel alanlar, kimlik çatışması ve gecikmiş olayların ilerlemeyi geriletmemesiyle sınandı. Analiz panelinin saat grafiği dar ekranda altı sütuna geçer; TR/EN × 24 saat/7 gün/30 gün × 320/390/1440 piksel olmak üzere 18 birleşimde sayfa taşması olmadığı gerçek konteynerde doğrulandı. SMTP veya canlı VPS ayarları değiştirilmedi; mevcut kalıcı volume'larla dağıtım gereklidir.
 
 v2.3.0 muhafız gelişimi için bütün eğitim yolları ve ekipman karşılaştırmaları mevcut oyun komutlarının sonuçlarıyla karşılaştırıldı. Kişisel hasar azaltma doğrusal olmayan formülden hesaplanır; karşılaştırma yüzde puanıdır. Gerçek API eğitimi tek maliyet düşümü ve yeniden yüklemede kalıcılıkla doğrulandı. Ekipman değiştirme/çıkarma envanteri korur; dolu envanter, görev, savaş, puan ve kaynak engelleri açıklanır. Üretim uygunluğu değiştirirken seçili muhafız, kontrol düğümleri ve klavye odağı korunur. 20. seviye doğru gösterilir. Altıncı çevrimdışı önizleme gerçek bileşeni kullanır; beş muhafız, dört örnek durum, TR/EN ve 320/390/1440 px açık/koyu tema kontrolleri geçti. Önizleme ağ isteği veya oyun işlemi yapmaz. Masaüstü/mobil görseller incelendi. Oyun dengesi, kayıt şeması ve ENV anahtarları değişmedi.
 
@@ -63,6 +67,10 @@ Nginx üretim yapılandırması Google resim origin'ine izin verir. Yalnızca pr
 GitHub Linux işleri, [resmi runner listesinde](https://github.com/actions/runner-images#available-images) desteklenen Ubuntu 24.04'e sabitlendi. Önceki v1.5.0 koşusunda Linux testi başlamadan GitHub çalıştırıcı ayıramamıştı. Yeni Release yalnızca üç CI işi başarılıysa otomatik yayımlanır. Yerel başarı, GitHub çalıştırıcı kapasitesini veya canlı VPS/SMTP teslimatını garanti etmez.
 
 ## English
+
+v2.4.0 First Watch was completed through eight real gameplay actions. Ordered one-time rewards, full reward-capacity checks, progress after defeat and no completion for interrupted combat were verified. Fifteen new engine and three API tests cover v1/v2 migration, preserved village data, account isolation, stale/duplicate claims and SQLite restart. Selecting already-equipped gear remains a complete no-op. Browser checks cover real API gathering/building/training, next-objective focus after a reward, retained focus after rejected claims, expedition/equipment/caravan outcomes and storage navigation. The seventh standalone preview passed six scenarios at 320/390/1440 px in TR/EN and light/dark themes; visuals were inspected.
+
+Five analytics helper/store tests and five new browser scenarios cover delayed configuration, confirmed server state, reload deduplication, account separation, same-ID retries and DNT/GPC. Progression is excluded from traffic totals and split into new/returning samples with the current reward step. The Dokploy analytics image passed the Next.js/TypeScript production build. Its real HTTP collector passed bounded-body, wrong-origin/site, extra personal-field, identity-conflict and monotonic-late-update checks in disposable containers. The analytics hourly chart uses six columns on narrow screens; real-container visual checks passed TR/EN × 24h/7d/30d × 320/390/1440 px (18 combinations) without viewport overflow. Live VPS and SMTP settings were not changed; deployment must preserve persistent volumes.
 
 v2.3.0 guardian progression compares every training path and equipment preview against existing game-command results. Personal damage mitigation uses the nonlinear formula; differences are percentage points. A real API training action spends once and persists after reload. Equipment replacement/removal conserves inventory; full inventory, mission, battle, point and resource blockers are explained. Production updates preserve the selected guardian, control nodes and keyboard focus. Level 20 displays the cap correctly. The sixth offline preview reuses the actual component; five guardians, four scenarios, TR/EN and 320/390/1440 px light/dark checks passed. It makes no network requests or game mutations. Desktop/mobile visuals were inspected. Game balance, save schema and environment keys are unchanged.
 

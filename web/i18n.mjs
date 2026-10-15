@@ -971,3 +971,139 @@ export const translations = {
 
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], v2Translations[language]);
+
+const firstWatchTranslations = {
+  tr: {
+    fwTitle: 'İlk Nöbet',
+    fwChapter: 'Bölüm 01 · Ay-Yıldız Nöbeti',
+    fwIntro:
+      'Bozkırda bir yuva kurdun. Şimdi suyunu güvenceye al, muhafızlarını hazırla ve sürünü ilk yolculuğundan sağ salim getir. Obanın hikâyesi senin adımlarınla yazılıyor.',
+    fwProgressLabel: 'ödül alındı',
+    fwNext: 'Sıradaki hedef',
+    fwAll: 'Bölümdeki tüm görevler',
+    fwOrder:
+      'Görevleri dilediğin sırada yapabilirsin. Önceki başarıların korunur; hikâye ödüllerini sırayla, her görev için bir kez alırsın.',
+    fwLocked: 'Önceki görevin ödülünü alarak bu adımı aç.',
+    fwLater: 'Sonraki adım',
+    fwRewardReady: 'Ödül hazır',
+    fwClaimed: 'Ödül alındı',
+    fwObjectiveDone: 'Hedef tamamlandı',
+    fwManageStorage: 'Depoyu düzenle',
+    fwStorageFull: 'Ödülün tamamı için depoda yer aç veya depoyu geliştir. Gereken boş alan:',
+    fwFinale:
+      'İlk nöbet tamamlandı. Sürün yeni otlağa ulaştı; muhafızların artık bozkırın yolunu biliyor. Yeni bölgeleri keşfet, obanı büyüt ve bir sonraki yolculuğa hazırlan.',
+    fwLegacy: 'Obanın başarıları',
+    fwLegacyText:
+      'Önceden var olan başarı görevlerin ve ödüllerin korunur. Bu görevler İlk Nöbet bölümünden bağımsızdır.',
+    fwClaimError: 'Görev güncellendi. Önceki ödülü ve görev hedefini kontrol et.',
+    fw_gather: 'Bozkırın ilk azığı',
+    fw_gatherStory:
+      'Otağın çevresinde su kapları ve yem çuvalları bekliyor. Geceyi karşılamak için ilk erzağı birlikte topla.',
+    fw_gatherGoal: 'Bir kez kaynak topla.',
+    fw_gatherAction: 'Kaynak toplamaya git',
+    fw_build: 'Yurdun ilk temeli',
+    fw_buildStory:
+      'Bu topraklarda nasıl bir oba kurulacağına sen karar verirsin. Boş bir yer seç; sürüye ve muhafızlara hizmet edecek ilk yapını kur.',
+    fw_buildGoal: 'Seçtiğin boş alana bir yapı inşa et.',
+    fw_buildAction: 'İnşa alanına git',
+    fw_train: 'Muhafızların sözü',
+    fw_trainStory:
+      'Bir uluma sessizliği böler. Muhafızlarından birini eğit; yaklaşan yolculukta her yeteneğin bir yeri olacak.',
+    fw_trainGoal: 'Bir muhafızı bir kez eğit.',
+    fw_trainAction: 'Muhafız eğitimine git',
+    fw_battle: 'Geçitteki pusu',
+    fw_battleStory:
+      'Sürü patikada ilerlerken çakallar kayaların arasından çıkar. Kurtlar hilal olur, sürü yıldızın içinde toplanır. Sonucu ne olursa olsun bu nöbet sana bir ders bırakacak.',
+    fw_battleGoal: 'Bir savaşı zafer veya geri çekilmeyle tamamla.',
+    fw_battleAction: 'Savaş meydanına git',
+    fw_recover: 'Köz başında toparlanma',
+    fw_recoverStory:
+      'Geçitten dönenleri kampın sıcaklığı karşılar. Yaraları sar, suyu ve yemi paylaş. Yeni yola çıkmadan önce sürünün güvenini yeniden kazan.',
+    fw_recoverGoal:
+      'Savaş sonrası kampta dinlen veya sürüyü tedavi et. Herkes sağlıklıysa bu adım kendiliğinden tamamlanır.',
+    fw_recoverAction: 'Kamp bakımına git',
+    fw_explore: 'Kaynağın izi',
+    fw_exploreStory:
+      'İzci, tepelerin ardında taze su kokusu aldı. Seçtiğin muhafızları keşfe gönder; döndüklerinde yeni bir bölgenin hikâyesini ve ilk ekipmanını getirsinler.',
+    fw_exploreGoal: 'Bir keşif seferini tamamla.',
+    fw_exploreAction: 'Keşif planına git',
+    fw_equip: 'İlk emanet',
+    fw_equipStory:
+      'Keşiften gelen ekipman yalnızca bir ödül değil, yolda kazanılan deneyimin izidir. Onu bir muhafıza kuşatıp bir sonraki nöbete hazırlan.',
+    fw_equipGoal: 'Bir muhafıza envanterindeki bir ekipmanı kuşat.',
+    fw_equipAction: 'Ekipmana git',
+    fw_escort: 'Yıldız yeni yurda varıyor',
+    fw_escortStory:
+      'Artık patikayı tanıyorsun. Sürüyü seçtiğin bölgeye muhafızlarla gönder. Hilalin koruduğu yıldız yeni otlağa vardığında ilk nöbetin tamamlanacak.',
+    fw_escortGoal: 'Bir sürü sevkiyatını tamamla.',
+    fw_escortAction: 'Sevkiyat planına git',
+  },
+  en: {
+    fwTitle: 'First Watch',
+    fwChapter: 'Chapter 01 · Crescent-Star Watch',
+    fwIntro:
+      'You have founded a home on the steppe. Secure its supplies, prepare your guardians and bring your herd safely through its first journey. Your choices write the homeland’s story.',
+    fwProgressLabel: 'rewards claimed',
+    fwNext: 'Next objective',
+    fwAll: 'View all chapter quests',
+    fwOrder:
+      'Complete objectives in any order. Earlier achievements count; claim story rewards in sequence, once per quest.',
+    fwLocked: 'Claim the previous quest reward to unlock this step.',
+    fwLater: 'Later step',
+    fwRewardReady: 'Reward ready',
+    fwClaimed: 'Reward claimed',
+    fwObjectiveDone: 'Objective complete',
+    fwManageStorage: 'Manage storage',
+    fwStorageFull:
+      'Make room or upgrade storage to receive the full reward. Additional space needed:',
+    fwFinale:
+      'Your first watch is complete. The herd has reached its new pasture, and your guardians know the roads of the steppe. Explore new regions, grow your homeland and prepare for the next journey.',
+    fwLegacy: 'Homeland achievements',
+    fwLegacyText:
+      'Your existing achievement quests and rewards remain available. They are separate from the First Watch chapter.',
+    fwClaimError: 'The quest was updated. Check its objective and the previous reward.',
+    fw_gather: 'Supplies for the steppe',
+    fw_gatherStory:
+      'Water vessels and feed sacks wait beside the yurt. Gather your first supplies together before night falls.',
+    fw_gatherGoal: 'Gather resources once.',
+    fw_gatherAction: 'Go to resource gathering',
+    fw_build: 'The first foundation',
+    fw_buildStory:
+      'You decide what kind of home will rise here. Choose an empty plot and build a place that serves your herd and guardians.',
+    fw_buildGoal: 'Construct a building on an empty plot of your choice.',
+    fw_buildAction: 'Go to a building plot',
+    fw_train: 'The guardians’ promise',
+    fw_trainStory:
+      'A howl breaks the silence. Train one guardian; every skill will have a purpose on the journey ahead.',
+    fw_trainGoal: 'Train a guardian once.',
+    fw_trainAction: 'Go to guardian training',
+    fw_battle: 'Ambush in the pass',
+    fw_battleStory:
+      'As the herd follows the path, jackals emerge from the rocks. Wolves form a crescent; the herd gathers into a star. Whatever the outcome, this watch will teach you something.',
+    fw_battleGoal: 'Finish a battle with either victory or retreat.',
+    fw_battleAction: 'Go to the battlefield',
+    fw_recover: 'Rest beside the embers',
+    fw_recoverStory:
+      'The warmth of camp welcomes those returning from the pass. Tend wounds and share water and feed before taking to the road again.',
+    fw_recoverGoal:
+      'Rest at camp or treat the herd after battle. If everyone is healthy, this step completes automatically.',
+    fw_recoverAction: 'Go to camp recovery',
+    fw_explore: 'A trace of fresh water',
+    fw_exploreStory:
+      'The scout caught the scent of water beyond the hills. Send your chosen guardians to explore and return with a new region’s story and your first equipment.',
+    fw_exploreGoal: 'Complete an expedition.',
+    fw_exploreAction: 'Go to expedition planning',
+    fw_equip: 'The first keepsake',
+    fw_equipStory:
+      'Equipment brought home is a mark of experience earned on the road. Give it to a guardian and prepare for the next watch.',
+    fw_equipGoal: 'Equip a guardian with an item from your inventory.',
+    fw_equipAction: 'Go to equipment',
+    fw_escort: 'The star reaches a new home',
+    fw_escortStory:
+      'Now you know the path. Send the herd to your chosen region with its guardians. When the crescent’s star reaches fresh pasture, your first watch will be complete.',
+    fw_escortGoal: 'Complete a herd caravan.',
+    fw_escortAction: 'Go to caravan planning',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], firstWatchTranslations[language]);

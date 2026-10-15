@@ -604,3 +604,89 @@ test('herd replenishment rejects missing and forged sessions without changing a 
     revision: account.revision,
   });
 });
+
+test('v2.4 upgrades a v2 account once without changing village, old quests or balances', async (t) => {
+  const api = await fixture(t);
+  const session = await api.session();
+  const previous = structuredClone(session.data.state);
+  delete previous.firstWatch;
+  previous.stats.gathers = 3;
+  previous.quests.find((q) => q.id === 'gatherer').progress = 3;
+  previous.quests.find((q) => q.id === 'gatherer').claimed = true;
+  const database = new DatabaseSync(api.dbPath);
+  database
+    .prepare('UPDATE google_accounts SET state_json = ?, revision = 11')
+    .run(JSON.stringify(previous));
+  database.close();
+  const response = await api.request('/api/state', { cookie: session.cookie });
+  assert.equal(response.status, 200);
+  const migrated = await response.json();
+  const { firstWatch, ...preserved } = migrated.state;
+  assert.deepEqual(preserved, previous);
+  assert.equal(firstWatch.cohort, 'returning');
+  assert.equal(firstWatch.milestones.gather, previous.updatedAt);
+  assert.deepEqual(firstWatch.claims, []);
+  assert.equal(migrated.revision, 12);
+  await api.restart();
+  const resumed = await api.session(session.cookie);
+  assert.deepEqual(resumed.data, { ...migrated, mode: 'online' });
+});
+
+test('first-watch reward survives restart and cannot be repeated with stale or current revisions', async (t) => {
+  const api = await fixture(t);
+  const session = await api.session();
+  const other = await api.session();
+  const send = async (action, revision) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: session.cookie,
+      body: { action, revision },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const locked = await send({ type: 'claimFirstWatch', id: 'build' }, session.data.revision);
+  assert.equal(locked.status, 400);
+  assert.equal(locked.data.error, 'FIRST_WATCH_LOCKED');
+  const incomplete = await send({ type: 'claimFirstWatch', id: 'gather' }, session.data.revision);
+  assert.equal(incomplete.data.error, 'FIRST_WATCH_INCOMPLETE');
+  const collected = await send({ type: 'collect' }, session.data.revision);
+  assert.equal(collected.status, 200);
+  const claimed = await send({ type: 'claimFirstWatch', id: 'gather' }, collected.data.revision);
+  assert.equal(claimed.status, 200);
+  assert.equal(claimed.data.state.firstWatch.claims.length, 1);
+  const stale = await send({ type: 'claimFirstWatch', id: 'gather' }, collected.data.revision);
+  assert.equal(stale.status, 409);
+  const duplicate = await send({ type: 'claimFirstWatch', id: 'gather' }, claimed.data.revision);
+  assert.equal(duplicate.status, 400);
+  assert.equal(duplicate.data.error, 'FIRST_WATCH_CLAIMED');
+  const otherState = await (await api.request('/api/state', { cookie: other.cookie })).json();
+  assert.equal(otherState.state.firstWatch.milestones.gather, null);
+  assert.deepEqual(otherState.state.firstWatch.claims, []);
+  await api.restart();
+  const resumed = await api.session(session.cookie);
+  assert.deepEqual(resumed.data.state, claimed.data.state);
+  assert.equal(resumed.data.revision, claimed.data.revision);
+});
+
+test('a full store blocks all first-watch reward mutations until space exists', async (t) => {
+  const api = await fixture(t);
+  const session = await api.session();
+  const full = structuredClone(session.data.state);
+  full.stats.gathers = 1;
+  full.quests.find((q) => q.id === 'gatherer').progress = 1;
+  full.firstWatch.milestones.gather = full.updatedAt;
+  for (const key of Object.keys(full.resources)) full.resources[key] = full.capacity;
+  const database = new DatabaseSync(api.dbPath);
+  database.prepare('UPDATE google_accounts SET state_json = ?').run(JSON.stringify(full));
+  database.close();
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: session.cookie,
+    body: { action: { type: 'claimFirstWatch', id: 'gather' }, revision: session.data.revision },
+  });
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, 'FIRST_WATCH_STORAGE_FULL');
+  const persisted = await (await api.request('/api/state', { cookie: session.cookie })).json();
+  assert.deepEqual(persisted.state, full);
+  assert.equal(persisted.revision, session.data.revision);
+});
