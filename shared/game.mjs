@@ -20,6 +20,7 @@ import {
   equipmentBonuses,
   grantWolfXp,
 } from './adventures.mjs';
+import { replenishHerd } from './herd.mjs';
 import { validateGame as validateLegacyGame } from './legacy-v1.mjs';
 export { BUILDINGS };
 /** Shared, deterministic simulation. All rates are per minute; all clocks are UTC ms. */
@@ -488,6 +489,10 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
         state.battle.tactic,
       );
       log(state, 'battlePrepared', at);
+      break;
+    case 'replenishHerd':
+      replenishHerd(state, action.amount);
+      log(state, 'herdReplenished', at);
       break;
     case 'healHerd':
       requirePeace(state);

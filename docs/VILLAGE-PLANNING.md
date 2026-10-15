@@ -10,9 +10,17 @@ Hedef seçmek kaynak harcamaz. **Yer seç** haritadaki parsellere götürür. Bi
 
 Süreler mevcut üretimin sabit kalacağını varsayan tahminlerdir. Toplama, harcama, savaş ödülleri, yeni yapılar ve yolculukta bölge değişimi bu süreleri değiştirebilir. Otomatik inşaat kuyruğu veya yapım süresi eklenmez; eski köy kayıtları kayıpsız v2 biçimine taşınır.
 
+### Yenilgi sonrası sürü takviyesi
+
+**Sürü takviyesi** paneli mevcut hayvan sayısını, 24 hayvan sınırını, eksik sayıyı ve seçtiğin miktarın kaynak maliyetini gösterir. Kurulu en az bir **Otlak** gerekir; seviyesi maliyeti değiştirmez. Bir seferde 1–5 hayvan alınabilir ve miktar eksik hayvan sayısını aşamaz. Her hayvan **6 su + 12 yem** ister. Miktarı değiştirmek kaynak harcamaz; takviye düğmesi açık onaydır.
+
+Aktif savaş veya devam eden keşif/sevkiyat sırasında takviye kapalıdır. Eski kayıtlardan taşınmış bir yolculuğun da bitmesi gerekir. Otlağın yoksa, sürü zaten 24 ise veya kaynak yetersizse panel nedeni gösterir. Sunucu tüm koşulları yeniden doğrular; başarısız istekte takviye için kaynak kesilmez ve hayvan eklenmez. Yeni hayvan başına hem mevcut hem azami can 10 artar; önceki yaralar ve panik aynı kalır. Muhafız canı, XP, eğitim puanları ve ekipmanı değişmez. Kalan hayvanların yaraları için mevcut tedavi/dinlenme seçenekleri kullanılır.
+
+Bu özellik v2 kayıt biçimini korur; yeni veri alanı, ortam değişkeni veya servis gerektirmez.
+
 ### Çevrimdışı görsel test
 
-[`preview/village.html`](../preview/village.html), gerçek köy sahnesini ve planlama panelini örnek bir köyle gösteren tek dosyalık önizlemedir. Dosyayı tarayıcıda aç; TR/EN, açık/kahverengi koyu tema ve yapı seçimi internet olmadan çalışır. Örnek köy salt okunurdur: inşaat kapalıdır, sunucuya bağlanmaz ve hesabına/kaydına erişmez. Gerçek oyun için doğrulanmış hesapla giriş gerekir.
+[`preview/village.html`](../preview/village.html), gerçek köy sahnesini ve planlama panelini örnek bir köyle gösteren tek dosyalık önizlemedir. Dosyayı tarayıcıda aç; TR/EN, açık/kahverengi koyu tema ve yapı seçimi internet olmadan çalışır. Örnek köyde bir otlak ve 20/24 hayvan vardır; takviye miktarı seçilince maliyet yenilenir. Örnek köy salt okunurdur: inşaat ve takviye kapalıdır, kaynak harcanmaz, sunucuya bağlanmaz ve hesabına/kaydına erişmez. Gerçek oyun için doğrulanmış hesapla giriş gerekir.
 
 ```bash
 npm run build:preview
@@ -28,9 +36,17 @@ Choosing a target spends nothing. **Choose plot** leads to the map. Select a **+
 
 Estimates assume current production stays fixed. Gathering, spending, battle rewards, new buildings and region changes during travel can alter them. There is no automatic construction queue or new construction duration, and old saves migrate to the v2 schema without resetting progress.
 
+### Herd replenishment after defeat
+
+The **Herd replenishment** panel shows the current animal count, the 24-animal limit, missing animals and the selected quantity's cost. At least one built **Pasture** is required; its level does not change the price. A batch contains 1–5 animals and cannot exceed the missing count. Each animal costs **6 water + 12 feed**. Changing the quantity spends nothing; the replenish button explicitly confirms the action.
+
+Active battles, expeditions and escorts block replenishment. A journey migrated from an older save must also finish first. The panel explains missing pastures, a full herd and resource shortages. The server rechecks every condition; rejected replenishment requests neither deduct supplies for the purchase nor add animals. Each new animal adds 10 current and maximum health, retaining existing wounds and panic. Guardian health, XP, training points and equipment stay unchanged. Existing healing/rest options treat the remaining animals' injuries.
+
+The feature retains save schema v2 and requires no new fields, environment variables or services.
+
 ### Offline visual test
 
-[`preview/village.html`](../preview/village.html) is a self-contained preview of the actual village scene and planning panel using a fictional village. Open it in a browser: TR/EN, light/brown dark themes and building selection work offline. The village is read-only: construction is disabled, it cannot contact a server or access an account/save. Actual gameplay requires a verified account session.
+[`preview/village.html`](../preview/village.html) is a self-contained preview of the actual village scene and planning panel using a fictional village. Open it in a browser: TR/EN, light/brown dark themes and building selection work offline. The fictional village has a pasture and 20/24 animals; selecting a replenishment quantity updates its cost. The village is read-only: construction and replenishment are disabled, no resources are spent, and it cannot contact a server or access an account/save. Actual gameplay requires a verified account session.
 
 ```bash
 npm run build:preview

@@ -27,6 +27,7 @@ import { translations } from './i18n.mjs';
 import { firstSteps } from './onboarding.mjs';
 import { constructionPlan } from './planning.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
+import { herdPanel, updateHerdPanel } from './herd-panel.mjs';
 import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
@@ -87,6 +88,7 @@ let polling = null,
   sessionGeneration = 0,
   renderedSignature = '';
 let plannedBuilding = 'quarry';
+let herdAmount = 1;
 let selectedPlot = '',
   movingId = '';
 let adventureSelection = {
@@ -132,6 +134,7 @@ const logLabels = {
   battleLost: 'logLost',
   wolfTrained: 'logTrained',
   herdHealed: 'logHealed',
+  herdReplenished: 'logHerdReplenished',
   packRested: 'logRested',
   journeyStarted: 'logTravel',
   journeyArrived: 'logArrived',
@@ -367,6 +370,7 @@ function render(restoreFocus, preservePlanning = false) {
     : null;
   const previousPlanning =
     preservePlanning && view === 'village' ? root.querySelector('#economy-panel') : null;
+  const previousHerd = preservePlanning ? root.querySelector('#herd-recovery-panel') : null;
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
   const visibleView = auth.authenticated && mode === 'online' ? view : 'home';
@@ -407,6 +411,10 @@ function render(restoreFocus, preservePlanning = false) {
   if (previousPlanning) {
     root.querySelector('#economy-panel')?.replaceWith(previousPlanning);
     updateEconomyPanel(root, state, plannedBuilding, economyContext());
+  }
+  if (previousHerd) {
+    root.querySelector('#herd-recovery-panel')?.replaceWith(previousHerd);
+    updateHerdPanel(root, state, herdAmount, economyContext());
   }
   identifyControls();
   renderedSignature = interfaceSignature();
@@ -457,7 +465,7 @@ function playView() {
   const isBattle = view === 'battle';
   return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div></section>
     <aside class="overview">${isBattle ? battlePanel() : villagePanel()}</aside></div>
-    ${isBattle ? battleRecovery() : buildingList() + economyPanel(state, plannedBuilding, economyContext())}`;
+    ${isBattle ? battleRecovery() : buildingList() + battleRecovery() + economyPanel(state, plannedBuilding, economyContext())}`;
 }
 
 function firstStepsView() {
@@ -586,7 +594,7 @@ function refreshBattleView() {
 }
 
 function battleRecovery() {
-  return `<div class="recovery-bar"><div><h3>${t('herd')}</h3><p>${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}</p></div><div class="recovery-actions">${button(icon('herbs', 18) + t('healHerd') + costView({ herbs: 1 }), 'healHerd', 'button outline', state.battle.status === 'active' || busy)}${button(icon('heart', 18) + t('rest') + costView({ water: 25, feed: 30 }), 'rest', 'button outline', state.battle.status === 'active' || busy)}</div></div>`;
+  return `<div class="recovery-bar"><div><h3>${t('herd')}</h3><p>${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}</p></div><div class="recovery-actions">${button(icon('herbs', 18) + t('healHerd') + costView({ herbs: 1 }), 'healHerd', 'button outline', state.battle.status === 'active' || busy)}${button(icon('heart', 18) + t('rest') + costView({ water: 25, feed: 30 }), 'rest', 'button outline', state.battle.status === 'active' || busy)}</div></div>${herdPanel(state, herdAmount, economyContext())}`;
 }
 
 function wolvesView() {
@@ -1136,6 +1144,11 @@ root.addEventListener('input', (event) => {
 });
 
 root.addEventListener('change', async (event) => {
+  if (event.target.id === 'herd-replenish-amount') {
+    herdAmount = Number(event.target.value);
+    updateHerdPanel(root, state, herdAmount, economyContext());
+    return;
+  }
   if (event.target.id.startsWith('adventure-') || event.target.name === 'adventure-wolf') {
     if (event.target.name === 'adventure-wolf')
       adventureSelection.wolfIds = [
@@ -1274,6 +1287,10 @@ function pollOnline() {
 function reportError(error) {
   const code = String(error.code || error.message).toUpperCase();
   const keys = {
+    INVALID_REPLENISH_AMOUNT: 'herdInvalidAmount',
+    HERD_FULL: 'herdFull',
+    PASTURE_REQUIRED: 'herdPastureRequired',
+    HERD_LIMIT: 'herdLimit',
     USE_CARAVAN: 'adventureIntro',
     PLOT_REQUIRED: 'choosePlot',
     INVALID_PLOT: 'choosePlot',
@@ -1648,6 +1665,7 @@ root.addEventListener('click', async (event) => {
     startBattle: { type: 'startBattle' },
     newBattle: { type: 'newBattle' },
     healHerd: { type: 'healHerd' },
+    replenishHerd: { type: 'replenishHerd', amount: herdAmount },
     rest: { type: 'rest' },
     train: { type: 'train', id: target.dataset.id, path: target.dataset.path },
     travel: { type: 'travel', destination: target.dataset.destination },
@@ -1705,6 +1723,7 @@ setInterval(async () => {
     if (el)
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
+  updateHerdPanel(root, state, herdAmount, economyContext());
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   if (view === 'world')
     updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection });

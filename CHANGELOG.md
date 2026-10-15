@@ -4,6 +4,16 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.2.0 — 2026-10-15
+
+**TR**
+
+- Otlakta su ve yem karşılığında 1–5 hayvanla sürü takviyesi; 24 hayvan sınırı, kaynak/seyahat/savaş kontrolleri ve mevcut yaraları koruyan kayıt desteği.
+
+**EN**
+
+- Replenish the herd at a pasture with 1–5 animals for water and feed; a 24-animal limit, resource/travel/battle checks and saved recovery that preserves existing wounds.
+
 ## v2.1.2 — 2026-10-15
 
 **TR**

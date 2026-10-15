@@ -451,3 +451,156 @@ test('rate limiting rejects excessive API traffic without breaking health probes
   assert.equal((await limited.json()).error, 'rate_limited');
   assert.equal((await api.request('/api/health')).status, 200);
 });
+
+// Recreate a saved, battle-damaged account in the fixture's disposable database.
+async function herdAccount(api, { count = 20, pasture = true, resources = {} } = {}) {
+  const session = await api.session();
+  const state = structuredClone(session.data.state);
+  state.herd = { count, hp: count * 10 - 60, maxHp: count * 10, panic: 35 };
+  if (pasture)
+    state.buildings.push({ id: 'building-pasture', type: 'pasture', level: 1, x: 0, y: 0 });
+  Object.assign(state.resources, resources);
+  assert.equal(validateGame(state), true);
+  const token = session.cookie.slice('bozkurt_session='.length);
+  const database = new DatabaseSync(api.dbPath);
+  try {
+    const saved = database
+      .prepare(
+        'UPDATE google_accounts SET state_json = ? WHERE sub = (SELECT account_sub FROM sessions WHERE token_hash = ?)',
+      )
+      .run(JSON.stringify(state), createHash('sha256').update(token).digest('hex'));
+    assert.equal(saved.changes, 1);
+  } finally {
+    database.close();
+  }
+  return { cookie: session.cookie, state, revision: session.data.revision };
+}
+
+test('herd replenishment spends exactly the selected price, preserves injuries, and survives restart', async (t) => {
+  const api = await fixture(t);
+  const account = await herdAccount(api, { count: 19, resources: { water: 30, feed: 60 } });
+  const other = await api.session();
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: account.cookie,
+    body: { action: { type: 'replenishHerd', amount: 5 }, revision: account.revision },
+  });
+  assert.equal(response.status, 200);
+  const saved = await response.json();
+  assert.equal(saved.revision, account.revision + 1);
+  assert.deepEqual(saved.state.herd, { count: 24, hp: 180, maxHp: 240, panic: 35 });
+  assert.deepEqual(saved.state.resources, { ...account.state.resources, water: 0, feed: 0 });
+  assert.deepEqual(saved.state.wolves, account.state.wolves);
+  assert.deepEqual(saved.state.buildings, account.state.buildings);
+  assert.equal(saved.state.log.at(-1).key, 'herdReplenished');
+  assert.equal(validateGame(saved.state), true);
+  assert.deepEqual(
+    (await (await api.request('/api/state', { cookie: other.cookie })).json()).state,
+    other.data.state,
+  );
+  await api.restart();
+  const restored = await api.session(account.cookie);
+  assert.deepEqual(restored.data.state, saved.state);
+  assert.equal(restored.data.revision, saved.revision);
+});
+
+test('herd replenishment requires an explicit integer quantity and rejects coercion without spending', async (t) => {
+  const api = await fixture(t);
+  const account = await herdAccount(api);
+  for (const amount of [undefined, null, '2', true, 0, -1, 1.5, 6, {}, []]) {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: account.cookie,
+      body: { action: { type: 'replenishHerd', amount }, revision: account.revision },
+    });
+    assert.equal(response.status, 400, String(amount));
+    assert.deepEqual(await response.json(), { error: 'INVALID_REPLENISH_AMOUNT' });
+  }
+  assert.deepEqual(await (await api.request('/api/state', { cookie: account.cookie })).json(), {
+    state: account.state,
+    revision: account.revision,
+  });
+});
+
+test('herd replenishment requires a pasture and enforces the saved herd capacity', async (t) => {
+  const api = await fixture(t);
+  for (const [options, amount, error] of [
+    [{ pasture: false }, 1, 'PASTURE_REQUIRED'],
+    [{ count: 23 }, 2, 'HERD_LIMIT'],
+    [{ count: 24 }, 1, 'HERD_FULL'],
+  ]) {
+    const account = await herdAccount(api, options);
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: account.cookie,
+      body: { action: { type: 'replenishHerd', amount }, revision: account.revision },
+    });
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error });
+    assert.deepEqual(await (await api.request('/api/state', { cookie: account.cookie })).json(), {
+      state: account.state,
+      revision: account.revision,
+    });
+  }
+});
+
+test('herd replenishment never partially spends when the second resource is insufficient', async (t) => {
+  const api = await fixture(t);
+  const account = await herdAccount(api, { resources: { water: 100, feed: 23 } });
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: account.cookie,
+    body: { action: { type: 'replenishHerd', amount: 2 }, revision: account.revision },
+  });
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: 'INSUFFICIENT_RESOURCES' });
+  assert.deepEqual(await (await api.request('/api/state', { cookie: account.cookie })).json(), {
+    state: account.state,
+    revision: account.revision,
+  });
+});
+
+test('concurrent herd replenishment and stale replay cannot spend or replenish twice', async (t) => {
+  const api = await fixture(t);
+  const account = await herdAccount(api);
+  const body = { action: { type: 'replenishHerd', amount: 2 }, revision: account.revision };
+  const responses = await Promise.all([
+    api.request('/api/action', { method: 'POST', cookie: account.cookie, body }),
+    api.request('/api/action', { method: 'POST', cookie: account.cookie, body }),
+  ]);
+  assert.deepEqual(responses.map((response) => response.status).sort(), [200, 409]);
+  const saved = await responses.find((response) => response.status === 200).json();
+  assert.equal(saved.state.herd.count, 22);
+  assert.equal(saved.state.resources.water, account.state.resources.water - 12);
+  assert.equal(saved.state.resources.feed, account.state.resources.feed - 24);
+  assert.equal(saved.revision, account.revision + 1);
+  assert.deepEqual(await responses.find((response) => response.status === 409).json(), {
+    error: 'stale_revision',
+    ...saved,
+  });
+  const replay = await api.request('/api/action', { method: 'POST', cookie: account.cookie, body });
+  assert.equal(replay.status, 409);
+  assert.deepEqual(await replay.json(), { error: 'stale_revision', ...saved });
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: account.cookie })).json(),
+    saved,
+  );
+});
+
+test('herd replenishment rejects missing and forged sessions without changing a player account', async (t) => {
+  const api = await fixture(t);
+  const account = await herdAccount(api);
+  for (const cookie of [undefined, 'bozkurt_session=forged']) {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie,
+      body: { action: { type: 'replenishHerd', amount: 1 }, revision: account.revision },
+    });
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'account_session_required' });
+  }
+  assert.deepEqual(await (await api.request('/api/state', { cookie: account.cookie })).json(), {
+    state: account.state,
+    revision: account.revision,
+  });
+});

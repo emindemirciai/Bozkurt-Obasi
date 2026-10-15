@@ -1,6 +1,28 @@
 import { v2Translations } from './v2-i18n.mjs';
 export const translations = {
   tr: {
+    herdReplenish: 'Sürüyü tamamla',
+    herdReplenishIntro:
+      'Kaybettiğin hayvanların yerine otlağına yeni hayvanlar kat. Sürünün üst sınırı 24 hayvandır.',
+    herdAmount: 'Eklenecek hayvan sayısı',
+    herdSelectionHint:
+      'Her hayvan için 6 su ve 12 yem gerekir. Bir işlemde en fazla 5 hayvan ekleyebilirsin. Miktar seçmek kaynak harcamaz.',
+    herdCost: 'Maliyet',
+    herdAvailable: 'Mevcut',
+    herdShortage: 'Eksik',
+    herdReady: 'Otlak hazır. Seçtiğin miktarı onaylayarak sürüne katabilirsin.',
+    herdInvalidAmount: '1–5 arasında tam bir hayvan sayısı seç.',
+    herdBattleBlocked: 'Savaş sürerken sürüye takviye yapılamaz.',
+    herdJourneyBlocked: 'Takviye için devam eden keşif veya sevkiyatın bitmesini bekle.',
+    herdFull: 'Sürün tam: 24 hayvan. Yeni takviye gerekmiyor.',
+    herdPastureRequired: 'Takviye için önce boş bir parsele otlak inşa et.',
+    herdLimit: 'Seçtiğin miktar sürünün 24 hayvan sınırını aşıyor. Miktarı azalt.',
+    herdResourcesRequired: 'Takviye için su veya yem eksik. Üretimi bekle ya da kaynak topla.',
+    herdWoundsHint:
+      'Yeni hayvanlar sağlıklı gelir. Mevcut yaralar ve panik değişmez; bunlar için Sürüyü tedavi et seçeneğini kullan.',
+    herdPreviewHint:
+      'Salt okunur örnek: miktarı ve maliyeti inceleyebilirsin. Takviye yapılmaz, kaynak harcanmaz.',
+    logHerdReplenished: 'Otlaktan gelen yeni hayvanlar sürüye katıldı.',
     forgotPassword: 'Şifremi unuttum',
     recoverTitle: 'Şifreni yenile.',
     recoverIntro:
@@ -423,6 +445,28 @@ export const translations = {
     recovery: 'Yedek kayıt geri yüklendi.',
   },
   en: {
+    herdReplenish: 'Replenish herd',
+    herdReplenishIntro:
+      'Replace animals lost in battle with new arrivals at your pasture. Your herd can hold up to 24 animals.',
+    herdAmount: 'Animals to add',
+    herdSelectionHint:
+      'Each animal costs 6 water and 12 feed. Add up to 5 at a time. Choosing an amount spends nothing.',
+    herdCost: 'Cost',
+    herdAvailable: 'Available',
+    herdShortage: 'Missing',
+    herdReady: 'Your pasture is ready. Confirm the selected amount to add animals to your herd.',
+    herdInvalidAmount: 'Choose a whole number from 1 to 5.',
+    herdBattleBlocked: 'You cannot replenish the herd during battle.',
+    herdJourneyBlocked: 'Wait for the active expedition or caravan to finish before replenishing.',
+    herdFull: 'Your herd is full: 24 animals. No replenishment needed.',
+    herdPastureRequired: 'Build a pasture on an empty plot before replenishing your herd.',
+    herdLimit: 'This amount exceeds the 24-animal herd limit. Choose fewer animals.',
+    herdResourcesRequired: 'Not enough water or feed. Wait for production or gather resources.',
+    herdWoundsHint:
+      'New animals arrive healthy. Existing wounds and panic remain; use Heal herd to treat them.',
+    herdPreviewHint:
+      'Read-only example: explore amounts and costs. No animals are added and no resources are spent.',
+    logHerdReplenished: 'New animals from the pasture joined the herd.',
     forgotPassword: 'Forgot password',
     recoverTitle: 'Reset your password.',
     recoverIntro:

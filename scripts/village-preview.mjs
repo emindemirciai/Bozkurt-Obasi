@@ -5,6 +5,7 @@ import { BUILDINGS } from '../shared/settlement.mjs';
 import { createGame } from '../shared/game.mjs';
 import { translations } from '../web/i18n.mjs';
 import { economyPanel, updateEconomyPanel } from '../web/economy-panel.mjs';
+import { herdPanel, updateHerdPanel } from '../web/herd-panel.mjs';
 import { scene } from '../web/art.mjs';
 import { brandMark, brandName } from '../web/logo.mjs';
 import { version as releaseVersion } from '../releases.json';
@@ -19,11 +20,13 @@ state.buildings = BUILDINGS.map((b, i) => ({
   y: 1 + Math.floor(i / 3) * 2,
 }));
 state.walls.level = 3;
+state.herd = { count: 20, maxHp: 200, hp: 150, panic: 30 };
 state.resources.wood = 42;
 state.resources.stone = 12;
 let language = 'tr',
   theme = 'light',
-  plannedBuilding = 'quarry';
+  plannedBuilding = 'quarry',
+  replenishAmount = 1;
 const root = document.querySelector('#app');
 const labels = {
   tr: {
@@ -31,7 +34,7 @@ const labels = {
     tier: 'Mimari aşama',
     guardians: 'Gerçekçi muhafızlar',
     notice:
-      'Çevrimdışı görsel önizleme · Örnek köy · Salt okunur. Oyuna giriş için doğrulanmış hesabın gerekir.',
+      'Çevrimdışı görsel önizleme · Örnek köy · Salt okunur. Kaynak harcanmaz. Oyuna giriş için doğrulanmış hesabın gerekir.',
     theme: 'Koyu tema',
     light: 'Açık tema',
     language: 'Switch to English',
@@ -41,7 +44,7 @@ const labels = {
     tier: 'Architecture tier',
     guardians: 'Realistic guardians',
     notice:
-      'Offline visual preview · Fictional village · Read-only. A verified account is required to play.',
+      'Offline visual preview · Fictional village · Read-only. No resources are spent. A verified account is required to play.',
     theme: 'Dark theme',
     light: 'Light theme',
     language: 'Türkçeye geç',
@@ -55,10 +58,13 @@ const escape = (value) =>
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
 const context = () => ({ t, number, escape, language });
+const recoveryContext = () => ({ ...context(), busy: false, readOnly: true });
 function lock() {
   const button = document.querySelector('#execute-construction-plan');
   if (button) button.disabled = true;
-  root.querySelectorAll('[data-action=upgradeWall]').forEach((b) => (b.disabled = true));
+  root
+    .querySelectorAll('[data-action=upgradeWall], [data-action=replenishHerd]')
+    .forEach((b) => (b.disabled = true));
   root.querySelectorAll('.scene-building').forEach((e) => {
     e.removeAttribute('role');
     e.removeAttribute('tabindex');
@@ -76,7 +82,7 @@ function render() {
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${labels[language].title}</h1></div></section>
       <section class="map-card"><div class="map-top"><span class="map-title">${t('homeland')}</span><span class="map-chip">${state.buildings.length} ${t('buildingCount')}</span></div>
         <div class="scene-wrap">${scene(state, { battle: false, zoom: 1, selected: 'building-hall', t })}</div></section>
-      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option></select></label><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}</main></div>`;
+      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option></select></label><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}</main></div>`;
   lock();
 }
 root.addEventListener('click', (event) => {
@@ -95,6 +101,12 @@ root.addEventListener('change', (event) => {
     state.walls.level = level;
     render();
     root.querySelector('#preview-tier').value = String(level);
+    return;
+  }
+  if (event.target.id === 'herd-replenish-amount') {
+    replenishAmount = Number(event.target.value);
+    updateHerdPanel(root, state, replenishAmount, recoveryContext());
+    lock();
     return;
   }
   if (event.target.id !== 'construction-plan') return;
