@@ -160,8 +160,12 @@ test('strict v1 migration preserves every old field and rejects damaged saves', 
   const migrated = migrateGame(legacy);
   assert.deepEqual(legacy, before);
   assert.equal(migrated.version, 2);
-  for (const key of Object.keys(legacy).filter((key) => !['version', 'wolves'].includes(key)))
+  for (const key of Object.keys(legacy).filter(
+    (key) => !['version', 'wolves', 'battle'].includes(key),
+  ))
     assert.deepEqual(migrated[key], legacy[key], key);
+  assert.deepEqual((({ commands, ...battle }) => battle)(migrated.battle), legacy.battle);
+  assert.deepEqual(migrated.battle.commands, []);
   assert.deepEqual(
     migrated.wolves.map(({ equipment, ...wolf }) => wolf),
     legacy.wolves,

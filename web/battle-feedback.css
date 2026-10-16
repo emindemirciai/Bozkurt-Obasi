@@ -1,0 +1,58 @@
+/* Command cues affect formation and ground markings; animal sprites remain opaque. */
+.battle-order {
+  transition: transform 0.45s ease;
+}
+.battle-guide-crescent,
+.battle-guide-star {
+  transition:
+    stroke 0.25s,
+    fill-opacity 0.25s;
+}
+.battle-scene[data-command='brace'] .battle-order {
+  transform: translate(var(--brace-x), var(--brace-y));
+}
+.battle-scene[data-command='brace'] .battle-guide-crescent {
+  stroke: #d8f1b6;
+  stroke-width: 4;
+  fill-opacity: 0.35;
+}
+.battle-scene[data-command='focus'] .battle-order {
+  transform: translate(-14px, 0);
+}
+.battle-scene[data-command='focus'] .battle-guide-crescent {
+  stroke: #f4bd78;
+  stroke-width: 3;
+}
+.battle-rally-wave {
+  opacity: 0;
+  transform-origin: 470px 325px;
+}
+.battle-scene[data-rally='true'] .battle-rally-wave {
+  opacity: 1;
+  animation: command-rally 1s ease-out infinite;
+}
+.battle-scene[data-rally='true'] .battle-guide-star {
+  stroke: #fff1c4;
+  stroke-width: 3;
+}
+@keyframes command-rally {
+  from {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .battle-order,
+  .battle-guide-crescent,
+  .battle-guide-star {
+    transition: none;
+  }
+  .battle-scene[data-rally='true'] .battle-rally-wave {
+    animation: none;
+    opacity: 0.8;
+  }
+}

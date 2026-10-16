@@ -1,4 +1,5 @@
 import { battleAnimal } from './animal-sprites.mjs';
+import { battleCommandStatus } from '../shared/battle-commands.mjs';
 import { buildingImage, settlementScene, battlefieldUrl, battlePhase } from './v2-view.mjs';
 
 // Original scene artwork with local wildlife cutouts for the battlefield.
@@ -51,13 +52,21 @@ function deployment(art, fromX, fromY, toX, toY) {
 
 export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
   if (!battle) return settlementScene(state, { t, zoom, selected });
+  const command = battleCommandStatus(state).activeCommand || '';
+  const lastCommand = state.battle.commands.at(-1);
+  const rally =
+    state.battle.status === 'active' &&
+    lastCommand?.id === 'rally' &&
+    state.battle.tick - lastCommand.tick < 2;
   const star = [];
   for (let i = 0; i < 10; i++) {
     const a = -Math.PI / 2 + (i * Math.PI) / 5;
     const r = i % 2 ? 47 : 109;
     star.push(`${470 + Math.cos(a) * r},${325 + Math.sin(a) * r * 0.8}`);
   }
-  let middle = `<g class="formation-guide" aria-hidden="true"><path d="${'M' + star.join('L')}Z" fill="#efdda8" fill-opacity=".2" stroke="#e4d3a1" stroke-dasharray="5 7" stroke-width="2"/><path d="M410 179C219 174 219 474 410 477C304 410 304 247 410 179Z" fill="#dfeddc" fill-opacity=".24" stroke="#d9e9cd" stroke-width="2"/></g>`;
+  let middle = `<g class="formation-guide" aria-hidden="true"><path class="battle-guide-star" d="${'M' + star.join('L')}Z" fill="#efdda8" fill-opacity=".2" stroke="#e4d3a1" stroke-dasharray="5 7" stroke-width="2"/><path class="battle-guide-crescent" d="M410 179C219 174 219 474 410 477C304 410 304 247 410 179Z" fill="#dfeddc" fill-opacity=".24" stroke="#d9e9cd" stroke-width="2"/></g>`;
+  middle +=
+    '<g class="battle-command-effects" aria-hidden="true"><ellipse class="battle-rally-wave" cx="470" cy="325" rx="125" ry="110" fill="none" stroke="#f3dc9a" stroke-width="3"/></g>';
   const herdSpread = { tight: 0.8, balanced: 1, wide: 1.18 }[state.formation.herd];
   middle += Array.from({ length: Math.min(state.herd.count, 28) }, (_, i) => {
     const a = i < 4 ? (i * Math.PI) / 2 : -Math.PI / 2 + (((i - 4) % 5) * Math.PI * 2) / 5;
@@ -76,7 +85,7 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
       const x = 370 - Math.cos(a) * 66 * wolfSpread;
       const y = 328 + Math.sin(a) * 139 * wolfSpread;
       const art = `<g class="battle-motion" style="--delay:${(i % 5) * 0.16}s">${battleAnimal('wolf', 1, -1)}</g><rect x="-21" y="-40" width="42" height="4" rx="2" fill="#708474"/><rect x="-21" y="-40" data-hp-bar width="${(42 * w.hp) / w.maxHp}" height="4" rx="2" fill="#c3df96"/>`;
-      return `<g data-wolf="${w.id}" role="button" tabindex="0" aria-label="${t(w.name === 'healer' ? 'healerPath' : w.name)}" class="scene-building battle-wolf ${w.hp < w.maxHp * 0.35 ? 'is-wounded' : ''}" transform="translate(${x} ${y})">${deployment(art, 555 - i * 8, 185 + i * 67, x, y)}</g>`;
+      return `<g data-wolf="${w.id}" role="button" tabindex="0" aria-label="${t(w.name === 'healer' ? 'healerPath' : w.name)}" class="scene-building battle-wolf ${w.hp < w.maxHp * 0.35 ? 'is-wounded' : ''}" transform="translate(${x} ${y})">${deployment(`<g class="battle-order" style="--brace-x:${((370 - x) * 0.18).toFixed(2)}px;--brace-y:${((328 - y) * 0.18).toFixed(2)}px">${art}</g>`, 555 - i * 8, 185 + i * 67, x, y)}</g>`;
     })
     .join('');
   const enemies = state.battle.enemies?.length
@@ -104,5 +113,5 @@ export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
   middle +=
     '<g transform="translate(276 252)" aria-hidden="true"><g class="battle-impact"><path d="M0-13 0-4M-12 0-4 0M8-8 14-14M8 8 15 15" stroke="#fff4bf" stroke-width="3" stroke-linecap="round"/></g></g><g transform="translate(295 358)" aria-hidden="true"><g class="battle-impact" style="--delay:-.7s"><path d="M0-13 0-4M-12 0-4 0M8-8 14-14M8 8 15 15" stroke="#fff4bf" stroke-width="3" stroke-linecap="round"/></g></g>';
   // Fill the viewport independently of zoom; the nested viewBox keeps animals proportional.
-  return `<svg class="landscape battle-scene ${state.battle.status === 'active' ? 'is-active' : ''}" data-phase="${battlePhase(state)}" data-tactic="${state.battle.status === 'active' ? state.battle.tactic : ''}" data-started-at="${state.battle.startedAt ?? ''}" role="img" aria-label="${t('battle')}"><defs></defs><image class="battlefield-terrain" href="${battlefieldUrl}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/><svg class="battle-actors" width="100%" height="100%" viewBox="0 0 900 650"><g transform="translate(${450 * (1 - zoom)} ${325 * (1 - zoom)}) scale(${zoom})">${middle}</g></svg></svg>`;
+  return `<svg class="landscape battle-scene ${state.battle.status === 'active' ? 'is-active' : ''}" data-phase="${battlePhase(state)}" data-command="${command}" data-rally="${rally}" data-tactic="${state.battle.status === 'active' ? state.battle.tactic : ''}" data-started-at="${state.battle.startedAt ?? ''}" role="img" aria-label="${t('battle')}"><defs></defs><image class="battlefield-terrain" href="${battlefieldUrl}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/><svg class="battle-actors" width="100%" height="100%" viewBox="0 0 900 650"><g transform="translate(${450 * (1 - zoom)} ${325 * (1 - zoom)}) scale(${zoom})">${middle}</g></svg></svg>`;
 }

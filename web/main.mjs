@@ -1,5 +1,15 @@
 import './style.css';
 import './v2.css';
+import './battle-feedback.css';
+import { battleCommandStatus } from '../shared/battle-commands.mjs';
+import {
+  battleCommandPanel,
+  battleCommandQuickbar,
+  updateBattleCommandQuickbar,
+  updateBattleCommandPanel,
+  battleCommandBadge,
+  updateBattleCommandBadge,
+} from './battle-command-panel.mjs';
 import { PLOTS, getWallUpgradeCost } from '../shared/settlement.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
 import {
@@ -132,6 +142,9 @@ const logLabels = {
   battleStarted: 'logBattle',
   battleWon: 'logWon',
   battleLost: 'logLost',
+  battleCommandBrace: 'bcBrace',
+  battleCommandFocus: 'bcFocus',
+  battleCommandRally: 'bcRally',
   wolfTrained: 'logTrained',
   herdHealed: 'logHealed',
   herdReplenished: 'logHerdReplenished',
@@ -471,9 +484,9 @@ function closeDialog() {
 
 function playView() {
   const isBattle = view === 'battle';
-  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div></section>
+  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}${isBattle ? battleCommandBadge(state, { t }) : ''}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div>${isBattle ? battleCommandQuickbar(state, { t, busy }) : ''}</section>
     <aside class="overview">${isBattle ? battlePanel() : villagePanel()}</aside></div>
-    ${isBattle ? battleRecovery() : buildingList() + battleRecovery() + economyPanel(state, plannedBuilding, economyContext())}`;
+    ${isBattle ? battleCommandPanel(state, { t, busy }) + battleRecovery() : buildingList() + battleRecovery() + economyPanel(state, plannedBuilding, economyContext())}`;
 }
 
 function firstStepsView() {
@@ -563,6 +576,13 @@ function refreshBattleView() {
   )
     return false;
   svg.dataset.phase = battlePhase(state);
+  svg.dataset.command = battleCommandStatus(state).activeCommand || '';
+  const lastCommand = state.battle.commands.at(-1);
+  svg.dataset.rally =
+    lastCommand?.id === 'rally' && state.battle.tick - lastCommand.tick < 2 ? 'true' : 'false';
+  updateBattleCommandPanel(root, state, { t, busy });
+  updateBattleCommandQuickbar(root, state, { t, busy });
+  updateBattleCommandBadge(root, state, { t });
   const story = root.querySelector('.battle-narrative');
   if (story) story.outerHTML = narrativePanel(state, { t });
   for (const actor of svg.querySelectorAll('[data-enemy-id]')) {
@@ -1317,6 +1337,11 @@ function reportError(error) {
     ITEM_UNAVAILABLE: 'itemUnavailable',
     INVENTORY_FULL: 'inventoryFull',
     ADVENTURE_ACTIVE: 'expeditionActive',
+    INVALID_BATTLE_COMMAND: 'bcInvalidError',
+    BATTLE_NOT_ACTIVE: 'bcInactiveError',
+    BATTLE_COMMAND_INTRO: 'bcIntroError',
+    BATTLE_COMMAND_COOLDOWN: 'bcCooldownError',
+    BATTLE_COMMAND_NO_PANIC: 'bcNoPanicError',
     INSUFFICIENT_RESOURCES: 'resourcesError',
     BATTLE_ACTIVE: 'activeError',
     COLLECT_COOLDOWN: 'cooldownError',
@@ -1341,8 +1366,11 @@ async function command(action) {
   const focusId = document.activeElement?.id;
   const generation = sessionGeneration;
   let succeeded = false;
+  // Keep the active battlefield and its animation nodes while an order awaits the server.
+  const updateCombat = () =>
+    action.type === 'battleCommand' && view === 'battle' && !modal && refreshBattleView();
   busy = true;
-  render();
+  if (!updateCombat()) render();
   try {
     // A click during polling waits for its revision instead of being dropped or sent stale.
     if (polling) await polling;
@@ -1360,7 +1388,27 @@ async function command(action) {
     reportError(error);
   } finally {
     busy = false;
-    render(focusId);
+    if (!updateCombat()) render(focusId);
+    else if (
+      generation === sessionGeneration &&
+      focusId?.startsWith('battle-command-') &&
+      (document.activeElement === document.body || document.activeElement?.id === focusId)
+    ) {
+      // Native disabled controls lose focus. Keep keyboard users in the command area.
+      const previous = document.getElementById(focusId);
+      const target =
+        succeeded || previous?.disabled
+          ? root.querySelector(
+              focusId.startsWith('battle-command-quick-')
+                ? '#battle-command-quick-title'
+                : '#battle-command-title',
+            )
+          : previous;
+      if (target) {
+        if (!target.matches('button')) target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      }
+    }
     if (succeeded && generation === sessionGeneration && action.type === 'claimFirstWatch') {
       const next = firstWatchProgress(state).current;
       const target =
@@ -1703,6 +1751,7 @@ root.addEventListener('click', async (event) => {
     collect: { type: 'collect' },
     upgrade: { type: 'upgrade', id: target.dataset.id },
     formation: { type: 'formation', unit: target.dataset.unit, value: target.dataset.value },
+    battleCommand: { type: 'battleCommand', id: target.dataset.command },
     startBattle: { type: 'startBattle' },
     newBattle: { type: 'newBattle' },
     healHerd: { type: 'healHerd' },

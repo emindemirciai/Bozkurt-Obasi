@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.5.0 — 2026-10-16
+
+**TR**
+
+- Savaş Komutları: hilali sıklaştırma, odak saldırısı ve toparlanma uluması; sunucu denetimli etkiler, ortak bekleme süresi ve kalıcı komut geçmişi.
+- Kesintisiz savaş geri bildirimi, TR/EN mobil komut paneli ve gerçek motorla çalışan çevrimdışı savaş deneme alanı; mevcut köy kayıtlarını koruyan geçiş.
+
+**EN**
+
+- Battle Commands: brace the crescent, focused assault and rallying howl; server-validated effects, shared cooldown and persistent command history.
+- Continuous battlefield feedback, a bilingual mobile command panel and an offline battle sandbox using the real engine; existing village saves are preserved.
+
 ## v2.4.0 — 2026-10-15
 
 **TR**

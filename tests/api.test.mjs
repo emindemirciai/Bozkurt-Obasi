@@ -690,3 +690,164 @@ test('a full store blocks all first-watch reward mutations until space exists', 
   assert.deepEqual(persisted.state, full);
   assert.equal(persisted.revision, session.data.revision);
 });
+
+test('battle orders persist across API restart, reject replay and remain isolated by account', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const player = await api.session();
+  const other = await api.session();
+  const send = async (action, revision) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const started = await send({ type: 'startBattle' }, player.data.revision);
+  assert.equal(started.status, 200);
+  const early = await send({ type: 'battleCommand', id: 'brace' }, started.data.revision);
+  assert.equal(early.data.error, 'BATTLE_COMMAND_INTRO');
+  now += 6000;
+  const ready = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  const issued = await send({ type: 'battleCommand', id: 'brace' }, ready.revision);
+  assert.equal(issued.status, 200);
+  assert.deepEqual(issued.data.state.battle.commands, [{ id: 'brace', tick: 6 }]);
+  assert.deepEqual(issued.data.state.resources, ready.state.resources);
+  assert.equal(issued.data.revision, ready.revision + 1);
+  const replay = await send({ type: 'battleCommand', id: 'brace' }, ready.revision);
+  assert.equal(replay.status, 409);
+  assert.deepEqual(replay.data, { error: 'stale_revision', ...issued.data });
+  const freshReplay = await send({ type: 'battleCommand', id: 'focus' }, issued.data.revision);
+  assert.equal(freshReplay.status, 400);
+  assert.equal(freshReplay.data.error, 'BATTLE_COMMAND_COOLDOWN');
+  await api.restart();
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: player.cookie })).json(),
+    issued.data,
+  );
+  const otherState = await (await api.request('/api/state', { cookie: other.cookie })).json();
+  assert.equal(otherState.state.battle.status, 'preparing');
+  assert.deepEqual(otherState.state.battle.commands, []);
+  const resumed = await api.session(player.cookie);
+  assert.equal(resumed.data.state.battle.status, 'preparing');
+  assert.deepEqual(resumed.data.state.battle.commands, []);
+  assert.deepEqual(resumed.data.state.wolves, issued.data.state.wolves);
+  assert.deepEqual(resumed.data.state.firstWatch, issued.data.state.firstWatch);
+});
+
+test('simultaneous battle orders accept only one revision and rally cannot be replayed for panic reduction', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const player = await api.session();
+  const send = async (id, revision) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action: { type: 'battleCommand', id }, revision },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const started = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: { action: { type: 'startBattle' }, revision: player.data.revision },
+  });
+  assert.equal(started.status, 200);
+  now += 7000;
+  const ready = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  assert.ok(ready.state.herd.panic > 0);
+  const responses = await Promise.all([
+    send('rally', ready.revision),
+    send('focus', ready.revision),
+  ]);
+  assert.deepEqual(responses.map((response) => response.status).sort(), [200, 409]);
+  const accepted = responses.find((response) => response.status === 200).data;
+  assert.equal(accepted.state.battle.commands.length, 1);
+  assert.equal(accepted.revision, ready.revision + 1);
+  if (accepted.state.battle.commands[0].id === 'rally') assert.equal(accepted.state.herd.panic, 0);
+  else assert.equal(accepted.state.herd.panic, ready.state.herd.panic);
+  const blocked = await send('rally', accepted.revision);
+  assert.equal(blocked.data.error, 'BATTLE_COMMAND_COOLDOWN');
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: player.cookie })).json(),
+    accepted,
+  );
+});
+
+test('battle order API rejects forged sessions, client effect overrides and invalid IDs without mutation', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const player = await api.session();
+  const started = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: { action: { type: 'startBattle' }, revision: player.data.revision },
+  });
+  assert.equal(started.status, 200);
+  now += 6000;
+  const ready = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  for (const cookie of [undefined, 'bozkurt_session=forged']) {
+    const denied = await api.request('/api/action', {
+      method: 'POST',
+      cookie,
+      body: { action: { type: 'battleCommand', id: 'focus' }, revision: ready.revision },
+    });
+    assert.equal(denied.status, 401);
+  }
+  for (const action of [
+    { type: 'battleCommand', id: 'focus', tick: 90 },
+    { type: 'battleCommand', id: 'brace', multiplier: 0 },
+    { type: 'battleCommand', id: '__proto__' },
+    { type: 'battleCommand', id: 1 },
+    { type: 'battleCommand' },
+  ]) {
+    const rejected = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision: ready.revision },
+    });
+    assert.equal(rejected.status, 400);
+    assert.equal((await rejected.json()).error, 'INVALID_BATTLE_COMMAND');
+  }
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: player.cookie })).json(),
+    ready,
+  );
+});
+
+test('v2.4 battle saves gain only command history, once, while malformed history is never silently reset', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const previous = structuredClone(player.data.state);
+  delete previous.battle.commands;
+  const database = new DatabaseSync(api.dbPath);
+  database
+    .prepare('UPDATE google_accounts SET state_json = ?, revision = 7')
+    .run(JSON.stringify(previous));
+  database.close();
+  const migratedResponse = await api.request('/api/state', { cookie: player.cookie });
+  assert.equal(migratedResponse.status, 200);
+  const migrated = await migratedResponse.json();
+  assert.deepEqual(migrated.state, { ...previous, battle: { ...previous.battle, commands: [] } });
+  assert.equal(migrated.revision, 8);
+  await api.restart();
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: player.cookie })).json(),
+    migrated,
+  );
+  const corrupt = structuredClone(previous);
+  corrupt.battle.commands = [{ id: 'brace', tick: 1 }];
+  const brokenDatabase = new DatabaseSync(api.dbPath);
+  brokenDatabase.prepare('UPDATE google_accounts SET state_json = ?').run(JSON.stringify(corrupt));
+  brokenDatabase.close();
+  const rejected = await api.request('/api/state', { cookie: player.cookie });
+  assert.equal(rejected.status, 500);
+  assert.equal((await rejected.json()).error, 'internal_error');
+  const verification = new DatabaseSync(api.dbPath);
+  assert.equal(
+    verification.prepare('SELECT state_json FROM google_accounts').get().state_json,
+    JSON.stringify(corrupt),
+  );
+  verification.close();
+});

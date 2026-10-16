@@ -22,6 +22,12 @@ import {
 } from './adventures.mjs';
 import { replenishHerd } from './herd.mjs';
 import {
+  applyBattleCommand,
+  battleCommandEffects,
+  migrateBattleCommands,
+  validateBattleCommands,
+} from './battle-commands.mjs';
+import {
   initializeFirstWatch,
   migrateFirstWatch,
   validateFirstWatch,
@@ -112,6 +118,7 @@ function makeBattle(wave = 1, tactic = 'direct') {
     tick: 0,
     startedAt: null,
     enemies: makeEnemies(wave),
+    commands: [],
     log: [],
   };
 }
@@ -153,13 +160,17 @@ export function createGame(now = Date.now()) {
 }
 
 export function migrateGame(state) {
-  if (state?.version === 2 && Object.hasOwn(state, 'firstWatch')) {
+  if (
+    state?.version === 2 &&
+    Object.hasOwn(state, 'firstWatch') &&
+    Object.hasOwn(state.battle ?? {}, 'commands')
+  ) {
     if (!validateGame(state)) fail('INVALID_SAVE');
     return state;
   }
   if (
     state?.version === 2
-      ? !validateGame(state, { allowLegacyFirstWatch: true })
+      ? !validateGame(state, { allowLegacyFirstWatch: true, allowLegacyBattleCommands: true })
       : !validateLegacyGame(state)
   )
     fail('INVALID_SAVE');
@@ -170,6 +181,7 @@ export function migrateGame(state) {
     migrated.version = 2;
   }
   migrateFirstWatch(migrated);
+  migrateBattleCommands(migrated);
   if (!validateGame(migrated)) fail('INVALID_SAVE');
   return migrated;
 }
@@ -240,6 +252,7 @@ function battleTick(state, at) {
     return finishBattle(state, false, at);
   if (!livingEnemies.length) return finishBattle(state, true, at);
   const tactic = TACTIC_STATS[battle.tactic];
+  const commandEffects = battleCommandEffects(battle);
   const formationAttack = { tight: 0.9, balanced: 1, wide: 1.15 }[state.formation.wolf];
   const formationDefense = { tight: 0.78, balanced: 1, wide: 1.2 }[state.formation.wolf];
   const teamAttack = livingWolves.reduce(
@@ -255,7 +268,8 @@ function battleTick(state, at) {
   let damage = Math.round(
     (teamAttack + levelOf(state, 'hall') + levelOf(state, 'watchtower') * 2) *
       tactic.attack *
-      formationAttack,
+      formationAttack *
+      commandEffects.attack,
   );
   // Cleave remaining damage into the next enemy so frame rate cannot change outcomes.
   for (const enemy of livingEnemies) {
@@ -280,7 +294,12 @@ function battleTick(state, at) {
       Math.max(
         1,
         Math.round(
-          (14 + battle.wave * 2) * pressure * tactic.damage * formationDefense * reduction,
+          (14 + battle.wave * 2) *
+            pressure *
+            tactic.damage *
+            formationDefense *
+            reduction *
+            commandEffects.wolfDamage,
         ),
       ),
   );
@@ -292,7 +311,7 @@ function battleTick(state, at) {
       Math.max(
         1,
         Math.round(
-          ((3 + battle.wave) * pressure * tactic.herd * herdDefense) /
+          ((3 + battle.wave) * pressure * tactic.herd * herdDefense * commandEffects.herdDamage) /
             (1 + levelOf(state, 'shelter') * 0.1),
         ),
       ),
@@ -507,6 +526,10 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       state.battle.log = ['battleStarted'];
       log(state, 'battleStarted', at);
       break;
+    case 'battleCommand':
+      applyBattleCommand(state, action);
+      log(state, `battleCommand${action.id[0].toUpperCase()}${action.id.slice(1)}`, at);
+      break;
     case 'newBattle':
       requirePeace(state);
       if (!['won', 'lost'].includes(state.battle.status)) fail('BATTLE_NOT_FINISHED');
@@ -607,7 +630,10 @@ const machineKey = (value) =>
   typeof value === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(value);
 
 /** Reject corrupted/imported states, including every nested non-finite numeric value. */
-export function validateGame(state, { allowLegacyFirstWatch = false } = {}) {
+export function validateGame(
+  state,
+  { allowLegacyFirstWatch = false, allowLegacyBattleCommands = false } = {},
+) {
   try {
     if (
       !exactKeys(state, [
@@ -699,7 +725,16 @@ export function validateGame(state, { allowLegacyFirstWatch = false } = {}) {
       return false;
     const battle = state.battle;
     if (
-      !exactKeys(battle, ['status', 'wave', 'tactic', 'tick', 'startedAt', 'enemies', 'log']) ||
+      !exactKeys(battle, [
+        'status',
+        'wave',
+        'tactic',
+        'tick',
+        'startedAt',
+        'enemies',
+        'log',
+        ...(allowLegacyBattleCommands && !Object.hasOwn(battle, 'commands') ? [] : ['commands']),
+      ]) ||
       !['preparing', 'active', 'won', 'lost'].includes(battle.status) ||
       !integer(battle.wave, 1, 100) ||
       !TACTICS.includes(battle.tactic) ||
@@ -712,6 +747,7 @@ export function validateGame(state, { allowLegacyFirstWatch = false } = {}) {
         : !time(battle.startedAt) || battle.startedAt > state.updatedAt
     )
       return false;
+    if (Object.hasOwn(battle, 'commands') && !validateBattleCommands(battle)) return false;
     if (!Array.isArray(battle.enemies) || battle.enemies.length !== (battle.wave >= 4 ? 4 : 3))
       return false;
     const expectedEnemies = makeEnemies(battle.wave);
