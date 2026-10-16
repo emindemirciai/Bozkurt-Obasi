@@ -1,4 +1,4 @@
-import { adventureQuote, DIFFICULTIES, REGIONS } from '../shared/adventures.mjs';
+import { adventureQuote, REGIONS } from '../shared/adventures.mjs';
 
 // Read-only explanation of the existing server rules, never an authorization or a mutation.
 export function adventureReadiness(state, selection) {
@@ -59,6 +59,6 @@ export function adventureReadiness(state, selection) {
     shortages,
     overflow,
     itemFull: state.inventory[quote.item] >= 10000,
-    fatigue: (DIFFICULTIES.indexOf(selection.difficulty) + 1) * 5,
+    fatigue: quote.fatigue,
   };
 }

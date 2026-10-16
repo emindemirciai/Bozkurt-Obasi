@@ -17,6 +17,7 @@ export const REGIONS = Object.freeze(
   ].map(Object.freeze),
 );
 export const DIFFICULTIES = Object.freeze(['easy', 'normal', 'hard']);
+export const ADVENTURE_PLANS = Object.freeze(['standard', 'survey', 'supply']);
 const resources = ['water', 'feed', 'herbs', 'wood', 'stone'];
 const fail = (code) => {
   const error = new Error(code);
@@ -75,10 +76,11 @@ export function grantWolfXp(wolf, amount) {
   }
   if (wolf.level === 20) wolf.xp = Math.min(wolf.xp, 899);
 }
-export function adventureQuote(
-  state,
-  { kind = 'expedition', region = 'spring', difficulty = 'easy', wolfIds = [] },
-) {
+export function adventureQuote(state, selection) {
+  const { kind = 'expedition', region = 'spring', difficulty = 'easy', wolfIds = [] } = selection;
+  // Missing plan is the pre-v2.6 contract; malformed explicit values must never become standard.
+  const plan = Object.hasOwn(selection, 'plan') ? selection.plan : 'standard';
+  if (!ADVENTURE_PLANS.includes(plan)) fail('INVALID_EXPEDITION');
   const route = REGIONS.find((r) => r.id === region),
     tier = DIFFICULTIES.indexOf(difficulty) + 1;
   if (!route || !tier || !['expedition', 'caravan'].includes(kind)) fail('INVALID_EXPEDITION');
@@ -86,16 +88,24 @@ export function adventureQuote(
     .filter((w) => wolfIds.includes(w.id))
     .reduce((n, w) => n + equipmentBonuses(w).scouting, 0);
   const factor = Math.max(0.7, 1 - scouts / 100);
+  const suppliesFactor = plan === 'standard' ? 1 : 1.25;
+  const rewardFactor = plan === 'survey' ? 0.75 : plan === 'supply' ? 1.5 : 1;
+  const xpFactor = plan === 'survey' ? 1.5 : plan === 'supply' ? 0.75 : 1;
   return {
-    cost: { water: 10 + tier * 5 + route.rank * 3, feed: 12 + tier * 7 + route.rank * 4 },
-    seconds: Math.ceil(route.duration * tier * factor),
-    minimumWolves: tier,
-    xp: (20 + route.rank * 10) * tier,
-    reward: {
-      wood: (20 + route.rank * 12) * tier,
-      stone: (12 + route.rank * 9) * tier,
-      herbs: (5 + route.rank * 2) * tier,
+    plan,
+    cost: {
+      water: Math.ceil((10 + tier * 5 + route.rank * 3) * suppliesFactor),
+      feed: Math.ceil((12 + tier * 7 + route.rank * 4) * suppliesFactor),
     },
+    seconds: Math.ceil(route.duration * tier * factor * suppliesFactor),
+    minimumWolves: tier,
+    xp: Math.floor((20 + route.rank * 10) * tier * xpFactor),
+    reward: {
+      wood: Math.floor((20 + route.rank * 12) * tier * rewardFactor),
+      stone: Math.floor((12 + route.rank * 9) * tier * rewardFactor),
+      herbs: Math.floor((5 + route.rank * 2) * tier * rewardFactor),
+    },
+    fatigue: tier * (plan === 'survey' ? 7 : plan === 'supply' ? 8 : 5),
     item: route.item,
   };
 }
@@ -144,6 +154,7 @@ function start(state, action, now, kind) {
     kind,
     region: action.region,
     difficulty: action.difficulty,
+    plan: quote.plan,
     wolfIds: [...ids],
     startedAt: now,
     endsAt: now + quote.seconds * 1000,
@@ -155,8 +166,7 @@ export const startCaravan = (state, action, now) => start(state, action, now, 'c
 export function advanceAdventure(state, now) {
   const active = state.adventure.active;
   if (!active || now < active.endsAt) return state;
-  const quote = adventureQuote(state, active),
-    tier = DIFFICULTIES.indexOf(active.difficulty) + 1;
+  const quote = adventureQuote(state, active);
   const awarded = {};
   for (const key of resources) {
     const amount = Math.min(state.capacity - state.resources[key], quote.reward[key] || 0);
@@ -167,7 +177,7 @@ export function advanceAdventure(state, now) {
   state.inventory[quote.item] += itemCount;
   for (const id of active.wolfIds) {
     const wolf = state.wolves.find((w) => w.id === id);
-    wolf.hp = Math.max(1, wolf.hp - tier * 5);
+    wolf.hp = Math.max(1, wolf.hp - quote.fatigue);
     grantWolfXp(wolf, quote.xp);
   }
   if (!state.adventure.unlocked.includes(active.region))
@@ -227,6 +237,13 @@ export function validateAdventureState(state) {
   if (state.wolves.some((w) => w.equipment !== null && !itemIds.includes(w.equipment)))
     return false;
   const fields = ['id', 'kind', 'region', 'difficulty', 'wolfIds', 'startedAt', 'endsAt'];
+  function outingFields(o, extra = []) {
+    const hasPlan = o && Object.hasOwn(o, 'plan');
+    return (
+      exact(o, [...fields, ...(hasPlan ? ['plan'] : []), ...extra]) &&
+      (!hasPlan || ADVENTURE_PLANS.includes(o.plan))
+    );
+  }
   function outing(o) {
     return (
       ['expedition', 'caravan'].includes(o.kind) &&
@@ -236,7 +253,7 @@ export function validateAdventureState(state) {
       Number(o.id.slice(7)) <= a.sequence &&
       int(o.startedAt, 0, state.updatedAt) &&
       int(o.endsAt, o.startedAt + 1, 8_640_000_000_000_000) &&
-      o.endsAt - o.startedAt <= 450000 &&
+      o.endsAt - o.startedAt <= (o.plan && o.plan !== 'standard' ? 563000 : 450000) &&
       Array.isArray(o.wolfIds) &&
       o.wolfIds.length >= DIFFICULTIES.indexOf(o.difficulty) + 1 &&
       o.wolfIds.length <= 5 &&
@@ -246,7 +263,7 @@ export function validateAdventureState(state) {
   }
   if (a.active !== null) {
     if (
-      !exact(a.active, fields) ||
+      !outingFields(a.active) ||
       !outing(a.active) ||
       a.active.id !== `outing-${a.sequence}` ||
       a.active.endsAt <= state.updatedAt ||
@@ -276,7 +293,7 @@ export function validateAdventureState(state) {
     return false;
   for (const [index, r] of a.history.entries()) {
     if (
-      !exact(r, [...fields, 'completedAt', 'reward', 'item', 'itemCount', 'xp']) ||
+      !outingFields(r, ['completedAt', 'reward', 'item', 'itemCount', 'xp']) ||
       !outing(r) ||
       r.completedAt !== r.endsAt ||
       r.completedAt > state.updatedAt ||

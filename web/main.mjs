@@ -103,6 +103,7 @@ let selectedPlot = '',
   movingId = '';
 let adventureSelection = {
   kind: 'expedition',
+  plan: 'standard',
   region: 'spring',
   difficulty: 'easy',
   wolfIds: ['wolf-alpha'],
@@ -330,6 +331,7 @@ function denyGameAccess() {
   selectedPlot = movingId = '';
   adventureSelection = {
     kind: 'expedition',
+    plan: 'standard',
     region: 'spring',
     difficulty: 'easy',
     wolfIds: ['wolf-alpha'],
@@ -631,8 +633,8 @@ function wolvesView() {
 
 function worldView() {
   if (state.adventure.active) {
-    const { kind, region, difficulty, wolfIds } = state.adventure.active;
-    adventureSelection = { kind, region, difficulty, wolfIds: [...wolfIds] };
+    const { kind, region, difficulty, wolfIds, plan = 'standard' } = state.adventure.active;
+    adventureSelection = { kind, region, difficulty, plan, wolfIds: [...wolfIds] };
   }
   if (!state.adventure.active)
     adventureSelection.wolfIds = adventureSelection.wolfIds.filter((id) =>
@@ -1177,7 +1179,9 @@ root.addEventListener('change', async (event) => {
     return;
   }
   if (event.target.id.startsWith('adventure-') || event.target.name === 'adventure-wolf') {
-    if (event.target.name === 'adventure-wolf')
+    if (busy || state.adventure.active || state.journey || state.battle.status === 'active') return;
+    if (event.target.name === 'adventure-plan') adventureSelection.plan = event.target.value;
+    else if (event.target.name === 'adventure-wolf')
       adventureSelection.wolfIds = [
         ...root.querySelectorAll('[name="adventure-wolf"]:checked'),
       ].map((input) => input.value);

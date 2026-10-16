@@ -1,13 +1,13 @@
 import '../web/style.css';
 import '../web/v2.css';
 import { adventureView } from '../web/v2-view.mjs';
-import { createGame } from '../shared/game.mjs';
-import { adventureQuote, REGIONS } from '../shared/adventures.mjs';
+import { createGame, applyAction, advanceGame } from '../shared/game.mjs';
+import { adventureQuote, REGIONS, ADVENTURE_PLANS } from '../shared/adventures.mjs';
 import { translations } from '../web/i18n.mjs';
 import { brandMark, brandName } from '../web/logo.mjs';
 import { version as releaseVersion } from '../releases.json';
 
-// A fictional, fixed-time planner. No account, storage, network request or game command.
+// Fictional fixed-time fixtures only. No account, storage, network or player-state mutation.
 const now = Date.UTC(2026, 9, 15, 9);
 const root = document.querySelector('#app');
 let language = 'tr',
@@ -24,6 +24,7 @@ const labels = {
     ready: 'Yola hazır oba',
     lowresources: 'Eksik erzak ve yaralı sürü',
     activejourney: 'Yolculuk devam ediyor',
+    completedjourney: 'Tamamlanan ikmal seferi',
     dark: 'Koyu tema',
     light: 'Açık tema',
     language: 'Switch to English',
@@ -38,6 +39,7 @@ const labels = {
     ready: 'Village ready to depart',
     lowresources: 'Low supplies and wounded herd',
     activejourney: 'Journey in progress',
+    completedjourney: 'Completed supply run',
     dark: 'Dark theme',
     light: 'Light theme',
     language: 'Türkçeye geç',
@@ -48,13 +50,14 @@ const labels = {
 const t = (key) => translations[language][key] || key;
 function setScenario(value) {
   scenario = value;
-  state = createGame(now);
+  state = createGame(now - 600000);
   state.adventure.unlocked = ['homeland', 'spring', 'meadow'];
   state.inventory.leather_vest = 2;
   state.inventory.scout_charm = 1;
   state.wolves.find((wolf) => wolf.name === 'scout').equipment = 'scout_charm';
   selection = {
     kind: 'expedition',
+    plan: 'standard',
     region: 'highland',
     difficulty: 'normal',
     wolfIds: ['wolf-alpha', 'wolf-scout'],
@@ -65,20 +68,23 @@ function setScenario(value) {
     state.herd.hp = 48;
     state.wolves.find((wolf) => wolf.name === 'hunter').hp = 12;
   }
-  if (scenario === 'activejourney') {
-    selection = { ...selection, kind: 'caravan', region: 'meadow' };
-    const quote = adventureQuote(state, selection);
-    state.adventure.sequence = 1;
-    state.adventure.active = {
-      id: 'outing-1',
+  if (scenario === 'activejourney' || scenario === 'completedjourney') {
+    selection = {
       ...selection,
-      wolfIds: [...selection.wolfIds],
-      startedAt: now - quote.seconds * 500,
-      endsAt: now + quote.seconds * 500,
+      kind: 'caravan',
+      region: 'meadow',
+      plan: scenario === 'activejourney' ? 'survey' : 'supply',
     };
+    const quote = adventureQuote(state, selection);
+    const startedAt = now - quote.seconds * (scenario === 'activejourney' ? 500 : 1000);
+    applyAction(state, { type: selection.kind, ...selection }, startedAt);
+    advanceGame(state, now);
   }
 }
 function render() {
+  const focus = document.activeElement;
+  const focusId = focus?.id;
+  const focusRegion = focus?.dataset?.region;
   const copy = labels[language];
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
@@ -88,7 +94,7 @@ function render() {
     <header class="adventure-preview-header"><div class="wordmark">${brandMark}${brandName}</div><div>
       <button id="language" class="button outline" aria-label="${copy.language}">${language === 'tr' ? 'EN' : 'TR'}</button>
       <button id="theme" class="button outline">${copy[theme === 'light' ? 'dark' : 'light']}</button></div></header>
-    <main><section class="adventure-preview-toolbar"><h1>${copy.title}</h1><label>${copy.scenario}<select id="preview-scenario">${['ready', 'lowresources', 'activejourney'].map((value) => `<option value="${value}" ${scenario === value ? 'selected' : ''}>${copy[value]}</option>`).join('')}</select></label></section>
+    <main><section class="adventure-preview-toolbar"><h1>${copy.title}</h1><label>${copy.scenario}<select id="preview-scenario">${['ready', 'lowresources', 'activejourney', 'completedjourney'].map((value) => `<option value="${value}" ${scenario === value ? 'selected' : ''}>${copy[value]}</option>`).join('')}</select></label></section>
       <p id="preview-departure-note" class="adventure-preview-lock">${copy.locked}</p>
       ${scenario === 'activejourney' ? `<p class="adventure-preview-clock">${copy.fixed}</p>` : ''}
       ${adventureView(state, { t, busy: false, selection, language, now })}</main></div>`;
@@ -97,6 +103,12 @@ function render() {
     button.disabled = true;
     button.setAttribute('aria-describedby', 'preview-departure-note');
   });
+  const target = focusId
+    ? document.getElementById(focusId)
+    : focusRegion
+      ? root.querySelector('[data-region="' + focusRegion + '"]')
+      : null;
+  if (target && !target.disabled) target.focus({ preventScroll: true });
 }
 root.addEventListener('submit', (event) => event.preventDefault());
 root.addEventListener('click', (event) => {
@@ -117,11 +129,15 @@ root.addEventListener('click', (event) => {
 root.addEventListener('change', (event) => {
   const { target } = event;
   if (target.id === 'preview-scenario') {
-    if (!['ready', 'lowresources', 'activejourney'].includes(target.value)) return;
+    if (!['ready', 'lowresources', 'activejourney', 'completedjourney'].includes(target.value))
+      return;
     setScenario(target.value);
   } else {
     if (state.adventure.active || target.disabled) return;
-    if (target.id === 'adventure-kind') {
+    if (target.name === 'adventure-plan') {
+      if (!ADVENTURE_PLANS.includes(target.value)) return;
+      selection.plan = target.value;
+    } else if (target.id === 'adventure-kind') {
       selection.kind = target.value;
       if (selection.kind === 'expedition' && selection.region === 'homeland')
         selection.region = 'spring';

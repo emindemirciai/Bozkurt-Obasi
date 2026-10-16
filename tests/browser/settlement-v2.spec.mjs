@@ -205,18 +205,22 @@ test('selected expedition and escort parties receive story progress, experience,
     wolfIds: ['wolf-alpha', 'wolf-scout'],
   });
   await expect(page.locator('[data-active-adventure]')).toContainText(
-    translations.tr.springDeparture,
+    translations.tr.story_expedition_spring_departure,
   );
   await page.locator('[data-view="wolves"]').click();
   await expect(page.locator('.training-row button').first()).toBeDisabled();
   await expect(page.locator('.equipment-panel')).toContainText(translations.tr.away);
   await page.locator('[data-view="world"]').click();
   await pollVillage(page, 45_000);
-  await expect(page.locator('[data-active-adventure]')).toContainText(translations.tr.springMiddle);
+  await expect(page.locator('[data-active-adventure]')).toContainText(
+    translations.tr.story_expedition_spring_middle,
+  );
   await pollVillage(page, 80_000);
   await expect(page.locator('[data-active-adventure]')).toHaveCount(0);
   await expect(page.locator('.adventure-reports article')).toHaveCount(1);
-  await expect(page.locator('.adventure-reports')).toContainText(translations.tr.springArrival);
+  await expect(page.locator('.adventure-reports')).toContainText(
+    translations.tr.story_expedition_spring_report,
+  );
   expect(state.adventure.unlocked).toEqual(['homeland', 'spring']);
   expect(state.inventory.leather_vest).toBe(1);
   for (const wolf of state.wolves) {
@@ -244,7 +248,12 @@ test('selected expedition and escort parties receive story progress, experience,
   expect(state.inventory.leather_vest).toBe(1);
   expect(state.adventure.history).toHaveLength(2);
   await page.getByRole('button', { name: 'Switch to English' }).click();
-  await expect(page.locator('.adventure-reports')).toContainText(translations.en.springArrival);
+  await expect(page.locator('.adventure-reports')).toContainText(
+    translations.en.story_expedition_spring_report,
+  );
+  await expect(page.locator('.adventure-reports article').first()).toContainText(
+    translations.en.story_caravan_spring_report,
+  );
   expect(errors).toEqual([]);
 });
 

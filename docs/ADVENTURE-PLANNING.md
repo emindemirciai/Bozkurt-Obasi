@@ -1,37 +1,85 @@
-# Sefer hazırlığı / Adventure preparation
+# Sefer hazırlığı ve bölge hikâyeleri / Adventure planning and regional stories
 
 ## Türkçe
 
-**Keşif ve sevkiyat → Bozkırın yolları** ekranındaki bölge kartları keşif sırasını gösterir. Ana Yurt, Su Gözü, Şifalı Çayır, Yüksek Otlak ve Kadim Kalıntılar için bulunduğun, keşfettiğin, sırada keşfedebileceğin ve kilitli rotaları ayırt edebilirsin. Bir kart veya bölge seçicisi yalnızca planı değiştirir; kaynak harcamaz ve sefer başlatmaz. Görev sürerken rota ve muhafız seçimi kilitlenir.
+**Keşif ve sevkiyat → Bozkırın yolları** ekranındaki bölge kartları keşif sırasını gösterir. Ana Yurt, Su Gözü, Şifalı Çayır, Yüksek Otlak ve Kadim Kalıntılar için bulunduğun, keşfettiğin, sırada keşfedebileceğin ve kilitli rotaları ayırt edebilirsin. Bir kart veya seçici yalnızca planı değiştirir; kaynak harcamaz ve sefer başlatmaz. Görev sürerken rota, plan ve muhafız seçimi kilitlenir.
 
-Hazırlık paneli **Seferi başlat** düğmesinin neden açık veya kapalı olduğunu gösterir:
+### v2.6.0 — Üç görev planı
+
+Görev türünü (keşif/sevkiyat), hedefi, zorluğu, planı ve muhafızları seç. Planlar aynı bölgenin farklı amaçlarla tekrar ziyaret edilmesini sağlar. Kartlardaki kesin değerler seçili zorluk ve kurtların ekipmanına göre hesaplanır:
+
+| Plan | Süre ve su/yem maliyeti | Odun/taş/ot ödülü | Katılan her kurdun XP'si | Kolay/orta/zor yorgunluk |
+| --- | --- | --- | --- | --- |
+| Dengeli nöbet (standart) | Eski değerler | %100 | %100 | 5 / 10 / 15 can |
+| İz sürme | %125 | %75 | %150 | 7 / 14 / 21 can |
+| İkmal | %125 | %150 | %75 | 8 / 16 / 24 can |
+
+Yüzdeler aynı bölge, zorluk ve ekipmandaki standart göreve göre temel katsayılardır. Maliyetler ve nihai süre yukarı; kaynak ve XP ödülleri aşağı yuvarlanır. Süre, zorluk, seçili kurtların toplam izcilik indirimi (en fazla %30) ve plan katsayısı uygulandıktan sonra tek kez yuvarlanır. Her planda bölgenin aynı ekipmanından en fazla bir adet gelir; minimum muhafız ve bölge açma koşulları değişmez.
+
+Örnek: kolay Su Gözü keşfi, izci ekipmanı olmayan bir muhafızla standart planda **18 su + 23 yem, 60 sn, 30 XP, 32 odun + 21 taş + 7 ot** verir. İz sürme **23 su + 29 yem, 75 sn, 45 XP, 24 odun + 15 taş + 5 ot**; ikmal **23 su + 29 yem, 75 sn, 22 XP, 48 odun + 31 taş + 10 ot** olur. Kazançlar depoda yer olduğu varsayımıyladır. Yorgunluk önce uygulanır; seviye atlama ardından can yenileyebilir.
+
+### Hikâye ve dönüş raporu
+
+Beş bölgenin keşif ve sevkiyat metinleri ayrıdır. Keşifte muhafızlar izleri ve geçitleri araştırır; sevkiyatta sürünün yolculuğunu ve hilal/yıldız düzeniyle korunmasını takip edersin. Çıkış, yol ve varış evreleri sunucu zamanına bağlı ilerler; seçili plan görev amacını açıklar. Metinler yeni bir savaş, rastgele ganimet veya ek ödül mekanizması başlatmaz.
+
+Son 20 dönüş raporu görev türünü, bölgeyi, zorluğu, planı, katılan kurtları ve gerçekten teslim edilmiş ödülleri saklar. Bu liste bütün zamanların başarı arşivi değildir; eski raporlar sınır dolunca düşer. Bölge açma ilerlemesi ayrıca kalıcıdır. Tarayıcıyı kapatmak görevi iptal etmez.
+
+### Yola çıkma koşulları
 
 - Devam eden savaş veya başka yolculuk bitmiş olmalı.
 - Keşif sırayla ilerler. Sevkiyat keşfedilmiş ve sürünün bulunduğundan farklı bir bölgeye yapılır.
 - Kolay/orta/zor için en az 1/2/3 muhafız gerekir. Her seçilen kurdun canı en az 20 olmalı.
 - Sevkiyatta sürünün canı en az 60 olmalı.
-- Su ve yem masrafı karşılanmalı. Eksik miktarlar yukarı yuvarlanarak gösterilir; kaynak üretimi geldikçe güncellenir.
+- Seçilen planın su ve yem masrafı karşılanmalı. Eksik miktarlar yukarı yuvarlanır; kaynak üretimi geldikçe güncellenir.
 
-Zorluk mevcut sunucu kurallarına göre maliyet, süre, XP, ödül ve yorgunluğu değiştirir. Seçili kurtların izci ekipmanı süreyi kısaltır; ödülü değiştirmez. Görev sonunda her katılan kurt kolay/orta/zorda 5/10/15 can yorgunluğu alır; seviye atlama can yenileyebilir. Kazanım paneli mevcut depo boşluğuna göre sığmayabilecek malzemeyi ve dolu ekipman envanterini belirtir. Bunlar **tahmindir**: yolculuk boyunca üretim, harcama veya hediye bakiyeleri değiştirebilir. Kesin kazanım varış raporunda görünür. Depo uyarısı yola çıkmayı engellemez.
+Hazırlık paneli başlat düğmesinin neden açık veya kapalı olduğunu gösterir. Kazanım paneli mevcut depo boşluğuna göre taşabilecek malzemeyi ve dolu ekipman envanterini belirtir. Bunlar **tahmindir**: üretim, harcama veya hediye bakiyeleri değiştirebilir. Kesin kazanım varış raporunda görünür. Depo uyarısı yola çıkmayı engellemez; sığmayan kaynak sonradan alınacak bir ödül olarak bekletilmez.
 
-Hazırlık görünümü kayıt değiştirmez. Başlat düğmesine açıkça basıldığında mevcut API bütün koşulları tekrar denetler; kaynakları bir kez düşer ve görevi kaydeder. Üretim güncellemeleri seçimleri ve klavye odağını korur. Aynı kayıt biçimi, maliyetler ve bölge açma kuralları devam eder.
+Başlat düğmesine basıldığında sunucu koşulları tekrar denetler; maliyeti bir kez düşer ve seçili planı kaydeder. Ödül yalnızca bir kez işlenir. Üretim yenilemeleri seçimleri ve klavye odağını korur. Görevdeki kurtlar eğitilemez veya ekipman değiştiremez.
 
-[`preview/adventure.html`](../preview/adventure.html) tek dosyalık, internetsiz görsel önizlemedir. Örnek durumlarda rota, zorluk, kurtlar, TR/EN ve açık/koyu tema denenebilir. Sefer başlatma kapalıdır; hesap, sunucu, gerçek köy veya analiz bağlantısı yoktur. `npm run build:preview` bütün önizlemelerle birlikte bu dosyayı üretir.
+### Eski kayıtlar ve önizleme
+
+Önceki sürümde başlatılmış ve plan alanı olmayan görevler **standart** kabul edilir: bitiş zamanı, maliyet ve ödül değişmez. Aynı kural eski dönüş raporları için geçerlidir. Yeni kayıtlar seçili planı taşır; geçersiz plan reddedilir. SQL tablo değişikliği veya yeni ENV anahtarı gerekmez. Dokploy'da mevcut volume'ları koruyarak dört servisi birlikte dağıtın.
+
+[Çevrimdışı sefer önizlemesi](../preview/adventure.html) örnek durumlarla planları, rotaları, hikâyeyi, TR/EN ve açık/kahverengi koyu temayı gösterir. Gerçek hesaba veya sunucuya bağlanmaz; sefer başlatma kapalıdır. Ana sayfa için [index.html](../preview/index.html). Her ikisi de `npm run build:preview` ile yenilenir.
 
 ## English
 
-The region cards in **Exploration and escorts → Trails of the steppe** show progression through Homeland, Wellspring, Healing Meadow, High Pastures and Ancient Ruins. They distinguish the current location, discovered destinations, the next discoverable region and locked routes. Selecting a card or dropdown only changes the plan; it spends nothing and starts no mission. Route and party selection remain locked during a journey.
+Region cards in **Exploration and escorts → Trails of the steppe** show Homeland, Wellspring, Healing Meadow, High Pastures and Ancient Ruins. They distinguish the current location, discovered destinations, the next discoverable region and locked routes. Selecting a card or control changes the plan without spending resources or starting a mission. Route, plan and party selection lock during a journey.
 
-The readiness panel explains whether **Begin journey** is available:
+### v2.6.0 — Three mission plans
+
+Choose exploration or escort, destination, difficulty, mission plan and guardians. Plans give repeat visits different purposes. Cards show concrete values for the selected difficulty and equipment:
+
+| Plan | Time and water/feed costs | Wood/stone/herb rewards | XP per participating wolf | Easy/normal/hard fatigue |
+| --- | --- | --- | --- | --- |
+| Balanced watch (standard) | Previous values | 100% | 100% | 5 / 10 / 15 health |
+| Trail reading (survey) | 125% | 75% | 150% | 7 / 14 / 21 health |
+| Supply run | 125% | 150% | 75% | 8 / 16 / 24 health |
+
+Percentages are base multipliers relative to the standard mission in the same region, difficulty and equipment. Costs and final duration round up; resources and XP round down. Duration rounds once after difficulty, selected guardians' combined scouting discount (up to 30%) and plan multiplier. All plans award at most one of the region's equipment item; party requirements and region unlock rules stay unchanged.
+
+Example: an easy Wellspring expedition with one guardian and no scouting equipment costs **18 water + 23 feed, takes 60s and yields 30 XP, 32 wood + 21 stone + 7 herbs** on standard. Survey: **23 water + 29 feed, 75s, 45 XP, 24 wood + 15 stone + 5 herbs**. Supply: **23 water + 29 feed, 75s, 22 XP, 48 wood + 31 stone + 10 herbs**. Rewards assume sufficient storage. Fatigue applies before XP; leveling can then restore health.
+
+### Story and arrival reports
+
+Each region has different exploration and escort stories. Exploration follows guardians investigating tracks and passages; escorts follow the herd protected by crescent wolves and a star formation. Departure, trail and arrival stages follow server time, with plan-specific purpose. Narrative does not trigger additional combat, random loot or extra rewards.
+
+The latest 20 reports retain mission type, region, difficulty, plan, party and actual credited rewards. This is a recent journal rather than an all-time achievement archive; older entries fall off at the limit. Unlocked regions persist separately. Closing the browser does not cancel the journey.
+
+### Departure requirements
 
 - Any ongoing battle or journey must finish.
-- Exploration unlocks routes in order. Escorts need a discovered destination different from the herd's current location.
+- Exploration unlocks routes in order. Escorts need a discovered destination different from the herd's location.
 - Easy/normal/hard require at least 1/2/3 guardians, each with at least 20 health.
 - Escorts require at least 60 herd health.
-- Water and feed costs must be covered. Shortages round up and refresh as production arrives.
+- The selected plan's water/feed costs must be covered. Shortages round up and refresh as production arrives.
 
-Difficulty affects costs, duration, XP, rewards and fatigue under existing server rules. Scout equipment worn by selected guardians shortens duration without changing rewards. Each participant loses 5/10/15 health to travel fatigue on easy/normal/hard; leveling may restore health. The reward panel warns when supplies may exceed the current free storage or the equipment inventory is full. These are **estimates**: production, spending and gifts can change balances during travel. The arrival report gives actual credited rewards. Storage warnings do not block departure.
+The readiness panel explains whether departure is available. Reward warnings estimate overflow against current storage and equipment limits. Production, spending or gifts can change balances during travel; the arrival report records actual credits. Storage warnings do not block departure; excess materials are not held as claimable rewards.
 
-Planning never mutates the save. Explicit departure uses the existing API, which checks all conditions again, deducts supplies once and saves the journey. Production refreshes preserve choices and keyboard focus. Save format, costs and region unlock rules are unchanged.
+Explicit departure checks conditions on the server, deducts supplies once and saves the plan. Completion awards once. Production refreshes preserve controls and keyboard focus. Away guardians cannot train or change equipment.
 
-[`preview/adventure.html`](../preview/adventure.html) is a standalone offline visual preview with fictional scenarios. Try routes, difficulty, guardians, TR/EN and light/dark themes. Starting missions is disabled; no account, server, real village or analytics connection is used. `npm run build:preview` generates it with the other previews.
+### Older saves and preview
+
+Existing missions without a plan remain **standard**, retaining their timing, costs and rewards. Old reports follow the same rule. New outings store the chosen plan; invalid plans are rejected. No SQL table changes or new environment keys are required. Redeploy all four Dokploy services together, retaining data volumes.
+
+The [offline journey preview](../preview/adventure.html) shows fictional plans, routes, stories, TR/EN and light/brown-dark themes. It uses no real account or server and cannot start missions. The [homepage index](../preview/index.html) is also available offline. Regenerate both with `npm run build:preview`.

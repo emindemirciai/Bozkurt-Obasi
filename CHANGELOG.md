@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.6.0 — 2026-10-16
+
+**TR**
+
+- Bölge Hikâyeleri: keşif ve sevkiyat için standart, iz sürme ve ikmal planları; süre, erzak, deneyim ve kazanç karşılaştırmaları.
+- Beş bölgenin keşif ve sevkiyat öyküleri, üç yolculuk evresi ve plana göre dönüş raporları; eski görevlerin ödül ve süreleri korunur.
+- TR/EN mobil arayüz, çevrimdışı sefer önizlemesi, sunucu doğrulaması ve kayıt uyumluluğu testleri güncellendi.
+
+**EN**
+
+- Regional Stories: standard, survey and supply plans for expeditions and escorts, with time, supplies, experience and reward comparisons.
+- Distinct exploration and escort stories across five regions, three journey stages and plan-aware reports; legacy mission timing and rewards are preserved.
+- Updated TR/EN mobile interface, offline journey preview, server validation and save compatibility tests.
+
 ## v2.5.0 — 2026-10-16
 
 **TR**

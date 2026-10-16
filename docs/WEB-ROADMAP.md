@@ -16,7 +16,9 @@
 
 **v2.4.0:** İlk Nöbet bölümü sekiz bağlantılı görevi, sıradaki hedef kartını ve tek seferlik sıralı ödülleri ekler. Eski kayıtlar korunur; erken başarımlar sayılır, yenilgi hikâyeyi kilitlemez. Yeni/geri dönen bölüm örnekleri analizde trafik sayılarından ayrı izlenir. Başlangıç bölümü oyuncularla doğrulanmaya hazırdır. [Bölüm rehberi](FIRST-WATCH.md).
 
-**v2.5.0:** Aktif savaşta üç taktik komut, ortak bekleme süresi, komut geçmişi ve kesintisiz görsel geri bildirim eklendi. Gerçek motorlu çevrimdışı savaş deneme alanı ile seçenekler hesap açmadan incelenebilir. Sonraki adım: İlk Nöbet ve savaş komutlarının açıklığını gerçek oyuncularla doğrulamak; ardından bölgesel hikâye ve sefer çeşitliliğini genişletmek. [Komut rehberi](BATTLE-COMMANDS.md).
+**v2.5.0:** Aktif savaşta üç taktik komut, ortak bekleme süresi, komut geçmişi ve kesintisiz görsel geri bildirim eklendi. Gerçek motorlu çevrimdışı savaş deneme alanı ile seçenekler hesap açmadan incelenebilir. [Komut rehberi](BATTLE-COMMANDS.md).
+
+**v2.6.0:** Bölge Hikâyeleri; standart, iz sürme ve ikmal planlarını süre/erzak/XP/malzeme/yorgunluk karşılaştırmasıyla ekler. Beş bölgenin keşif ve sevkiyat öyküleri ayrıdır; üç yolculuk evresi ve planlı dönüş raporları görünür. Eski görevler aynı süre ve ödülle standart olarak tamamlanır. [Sefer rehberi](ADVENTURE-PLANNING.md). Sonraki adım: İlk Nöbet, savaş komutları ve plan tercihlerini gerçek oyuncuların ilk 15 dakikasında gözlemlemek; bu verilere göre maliyet/ödül dengesini düzenlemek. Henüz oyuncu araştırması yapılmış sayılmaz.
 
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
 
@@ -43,7 +45,9 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 
 **v2.4.0:** First Watch adds eight connected objectives, a next-goal card and ordered one-time rewards. Older saves are preserved, early achievements count, and defeat does not block the story. New/returning chapter samples are measured separately from traffic totals. The opening chapter is ready for player validation. [Chapter guide](FIRST-WATCH.md).
 
-**v2.5.0:** Active combat adds three tactical commands, a shared cooldown, order history and continuous visual feedback. An offline sandbox runs the real engine so the choices can be explored without an account. Next: validate First Watch and command clarity with players, then expand regional stories and mission variety. [Command guide](BATTLE-COMMANDS.md).
+**v2.5.0:** Active combat adds three tactical commands, a shared cooldown, order history and continuous visual feedback. An offline sandbox runs the real engine so the choices can be explored without an account. [Command guide](BATTLE-COMMANDS.md).
+
+**v2.6.0:** Regional Stories adds standard, survey and supply plans with time/supply/XP/material/fatigue comparisons. Five regions have distinct exploration and escort narratives, three journey stages and plan-aware arrival reports. Older missions complete as standard with unchanged timing and rewards. [Journey guide](ADVENTURE-PLANNING.md). Next: observe First Watch, combat commands and plan choices during real players' first 15 minutes, then tune costs and rewards from that evidence. Player research has not yet been completed.
 
 **Current web release:** A playable village, production, construction/progression, guardian and formation choices, jackal battles, Turkish/English interface, an offline visual homepage preview, and Google- or email-linked progress in SQLite. The homepage is public; the village and game screens require a valid account session. Delivery uses GitHub → Docker → Dokploy and includes local previews, tests, line counts, and clean source archives. Concurrent players have independent villages; a shared world and PvP are outside this release.
 
