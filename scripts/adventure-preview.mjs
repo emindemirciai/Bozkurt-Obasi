@@ -1,6 +1,7 @@
 import '../web/style.css';
 import '../web/v2.css';
-import { adventureView } from '../web/v2-view.mjs';
+import { adventureView, updateAdventurePlanning } from '../web/v2-view.mjs';
+import { adventurePartySuggestions } from '../web/adventure-party.mjs';
 import { createGame, applyAction, advanceGame } from '../shared/game.mjs';
 import { adventureQuote, REGIONS, ADVENTURE_PLANS } from '../shared/adventures.mjs';
 import { translations } from '../web/i18n.mjs';
@@ -55,6 +56,8 @@ function setScenario(value) {
   state.inventory.leather_vest = 2;
   state.inventory.scout_charm = 1;
   state.wolves.find((wolf) => wolf.name === 'scout').equipment = 'scout_charm';
+  state.wolves.find((wolf) => wolf.name === 'hunter').xp = 44;
+  state.wolves.find((wolf) => wolf.name === 'healer').xp = 43;
   selection = {
     kind: 'expedition',
     plan: 'standard',
@@ -117,6 +120,19 @@ root.addEventListener('click', (event) => {
   } else if (event.target.closest('#theme')) {
     theme = theme === 'light' ? 'dark' : 'light';
   } else {
+    const suggestionButton = event.target.closest('[data-party-suggestion]');
+    if (suggestionButton) {
+      const suggestion = adventurePartySuggestions(state, selection).find(
+        (entry) => entry.id === suggestionButton.dataset.partySuggestion,
+      );
+      if (suggestionButton.disabled || !suggestion?.ready) return;
+      selection.wolfIds = [...suggestion.wolfIds];
+      for (const input of root.querySelectorAll('[name="adventure-wolf"]'))
+        input.checked = selection.wolfIds.includes(input.value);
+      updateAdventurePlanning(root, state, { t, busy: false, selection, language });
+      root.querySelector('[data-action="startAdventure"]').disabled = true;
+      return;
+    }
     const choice = event.target.closest('[data-action="selectRegion"]');
     if (!choice || choice.disabled || state.adventure.active) return;
     const region = choice.dataset.region;

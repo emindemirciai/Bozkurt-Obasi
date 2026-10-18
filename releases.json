@@ -1,6 +1,22 @@
 {
-  "version": "2.6.0",
+  "version": "2.7.0",
   "releases": [
+    {
+      "version": "2.7.0",
+      "date": "2026-10-19",
+      "changes": {
+        "tr": [
+          "Sefer Kadrosu: izcilik, dayanıklılık ve eğitim öncelikli muhafız önerileri; kadro seçimi yolculuk başlatmaz veya kaynak harcamaz.",
+          "Seçili muhafızların görev sonrası can, XP, seviye ve eğitim puanı öngörüsü; gerçek motor hesabı ve sunucu onayıyla uyumlu.",
+          "TR/EN mobil arayüz ve çevrimdışı sefer önizlemesi güncellendi; eski kayıt ve görev planları korunur."
+        ],
+        "en": [
+          "Journey Party: scouting, resilience and training-focused guardian suggestions; selecting a party never starts a journey or spends supplies.",
+          "Arrival health, XP, level and training-point forecasts for selected guardians, using the real progression rules and server confirmation.",
+          "Updated TR/EN mobile interface and offline journey preview while preserving existing saves and mission plans."
+        ]
+      }
+    },
     {
       "version": "2.6.0",
       "date": "2026-10-16",

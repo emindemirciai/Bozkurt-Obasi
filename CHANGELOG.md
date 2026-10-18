@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.7.0 — 2026-10-19
+
+**TR**
+
+- Sefer Kadrosu: izcilik, dayanıklılık ve eğitim öncelikli muhafız önerileri; kadro seçimi yolculuk başlatmaz veya kaynak harcamaz.
+- Seçili muhafızların görev sonrası can, XP, seviye ve eğitim puanı öngörüsü; gerçek motor hesabı ve sunucu onayıyla uyumlu.
+- TR/EN mobil arayüz ve çevrimdışı sefer önizlemesi güncellendi; eski kayıt ve görev planları korunur.
+
+**EN**
+
+- Journey Party: scouting, resilience and training-focused guardian suggestions; selecting a party never starts a journey or spends supplies.
+- Arrival health, XP, level and training-point forecasts for selected guardians, using the real progression rules and server confirmation.
+- Updated TR/EN mobile interface and offline journey preview while preserving existing saves and mission plans.
+
 ## v2.6.0 — 2026-10-16
 
 **TR**

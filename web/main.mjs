@@ -12,6 +12,7 @@ import {
 } from './battle-command-panel.mjs';
 import { PLOTS, getWallUpgradeCost } from '../shared/settlement.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
+import { adventurePartySuggestions } from './adventure-party.mjs';
 import {
   placementDialog,
   settlementControls,
@@ -390,6 +391,10 @@ function render(restoreFocus, preservePlanning = false) {
   const previousHerd = preservePlanning ? root.querySelector('#herd-recovery-panel') : null;
   const previousGuardian =
     preservePlanning && view === 'wolves' ? root.querySelector('#guardian-panel') : null;
+  const previousParty =
+    preservePlanning && view === 'world'
+      ? root.querySelector('#adventure-party-suggestions')
+      : null;
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
   const visibleView = auth.authenticated && mode === 'online' ? view : 'home';
@@ -438,6 +443,10 @@ function render(restoreFocus, preservePlanning = false) {
   if (previousGuardian) {
     root.querySelector('#guardian-panel')?.replaceWith(previousGuardian);
     updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
+  }
+  if (previousParty) {
+    root.querySelector('#adventure-party-suggestions')?.replaceWith(previousParty);
+    updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection, language });
   }
   identifyControls();
   renderedSignature = interfaceSignature();
@@ -1469,6 +1478,18 @@ root.addEventListener('click', async (event) => {
     }
     return;
   }
+  if (target.dataset.partySuggestion) {
+    if (busy || state.battle.status === 'active' || state.adventure.active || state.journey) return;
+    const suggestion = adventurePartySuggestions(state, adventureSelection).find(
+      (entry) => entry.id === target.dataset.partySuggestion,
+    );
+    if (!suggestion?.ready) return;
+    adventureSelection.wolfIds = [...suggestion.wolfIds];
+    for (const input of root.querySelectorAll('[name="adventure-wolf"]'))
+      input.checked = adventureSelection.wolfIds.includes(input.value);
+    updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection, language });
+    return;
+  }
   const a = target.dataset.action;
   if (a === 'placeBuilding') {
     await command({
@@ -1823,7 +1844,7 @@ setInterval(async () => {
   if (view === 'wolves') updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   if (view === 'world')
-    updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection });
+    updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection, language });
   // Keep an open placement chooser current without replacing its focused controls.
   if (modal === 'placement') {
     for (const choice of root.querySelectorAll('[data-action="placeBuilding"]')) {

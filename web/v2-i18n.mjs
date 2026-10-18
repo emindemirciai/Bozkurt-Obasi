@@ -1,5 +1,46 @@
 export const v2Translations = {
   tr: {
+    partyForecastMaxXp: 'Azami seviye · {xp} / 899 kayıtlı deneyim',
+    partySuggestionScoutingTotal: 'Ekipman izciliği (toplam)',
+    partySuggestionScoutingCap: 'Yol süresi indirimi en çok %30 olabilir.',
+    partySuggestionTitle: 'Sefer kadrosu',
+    partySuggestionHint:
+      'Amacına göre bir ekip önerisi seç veya aşağıdaki muhafızları kendin işaretle. Öneriler mevcut seçim sayını ve zorluğun asgari kadrosunu korur.',
+    partySuggestion_scouting: 'İzci kadrosu',
+    partySuggestion_resilience: 'Dayanıklı kadro',
+    partySuggestion_training: 'Gelişim kadrosu',
+    partySuggestion_scoutingHint:
+      'İzci ekipmanı yüksek muhafızlara öncelik verir. Yol süresi ekipmanın gerçek etkisine göre hesaplanır.',
+    partySuggestion_resilienceHint:
+      'Yorgunluk sonrasında en çok canı kalacak muhafızlara öncelik verir.',
+    partySuggestion_trainingHint:
+      'Sonraki seviyeye daha az deneyimi kalan muhafızlara öncelik verir.',
+    partySuggestionNoGuardians: 'Yola çıkabilecek muhafız yok.',
+    partySuggestionCount: 'Kadro / hedef',
+    partySuggestionApply: 'Kadroyu seç',
+    partySuggestionSelected: 'Kadro seçili',
+    partySuggestionLocalOnly:
+      'Yalnızca ekip seçimini değiştirir. Yola çıkış için aşağıdaki düğmeyi kullan.',
+    partySuggestionBlocked_battle: 'Savaş sürerken kadro seçilemez.',
+    partySuggestionBlocked_journey: 'Devam eden yolculuk bitince kadro seçebilirsin.',
+    partySuggestionBlocked_party:
+      'En az 20 canı olan {eligible} muhafız hazır; bu kadro için {required} muhafız gerekiyor.',
+    partySuggestionBlocked_updating: 'Oba bilgileri güncellenirken bekle.',
+    partyForecastTitle: 'Seçilen ekibin varış tahmini',
+    partyForecastHint:
+      'Mevcut can, ekipman ve görev amacıyla hesaplanır. Önce yorgunluk uygulanır, ardından deneyim ve seviye kazanımı işlenir. Kesin sonucu sunucu varışta belirler.',
+    partyForecastHealth: 'Şimdi → varış canı',
+    partyForecastFatigue: 'Yorgunluk sonrası',
+    partyForecastXp: 'Şimdi → varış deneyimi',
+    partyForecastLevelUp: 'Seviye {before} → {after}',
+    partyForecastHealing:
+      '{count} seviye kazanımı, yorgunluktan sonra canı ve azami canı artırır; +{points} eğitim puanı.',
+    partyForecastXpCapped: 'Azami seviye deneyim sınırı nedeniyle kazanım kısıtlanır.',
+    partyForecastLocked:
+      'Devam eden savaş veya yolculuk sırasında bu tahmin yeni bir sefer başlatmaz.',
+    partyForecastEmpty: 'Varış tahminini görmek için en az bir muhafız seç.',
+    partyForecastInvalid: 'Geçersiz veya tekrarlanan muhafız seçimi var. Kadroyu yeniden seç.',
+    partyForecastIneligible: 'Şu anda yola çıkamaz.',
     story_expedition_homeland_report:
       'Oba çevresinin izleri yol defterine işlendi; uzak rotalara hazırlık tamamlandı.',
     story_expedition_spring_report:
@@ -290,6 +331,48 @@ export const v2Translations = {
     regionLocked: 'Bu bölge henüz açılmadı.',
   },
   en: {
+    partyForecastMaxXp: 'Maximum level · {xp} / 899 stored experience',
+    partySuggestionScoutingTotal: 'Total equipment scouting',
+    partySuggestionScoutingCap: 'The travel time reduction is capped at 30%.',
+    partySuggestionTitle: 'Mission party',
+    partySuggestionHint:
+      'Choose a party for your goal or select guardians below. Suggestions keep your selected party size and the difficulty’s minimum.',
+    partySuggestion_scouting: 'Scouting party',
+    partySuggestion_resilience: 'Resilient party',
+    partySuggestion_training: 'Training party',
+    partySuggestion_scoutingHint:
+      'Prioritizes guardians with scouting equipment. Travel time uses the equipment’s actual effect.',
+    partySuggestion_resilienceHint:
+      'Prioritizes guardians with the most health left after fatigue.',
+    partySuggestion_trainingHint:
+      'Prioritizes guardians needing less experience for their next level.',
+    partySuggestionNoGuardians: 'No guardians are ready to depart.',
+    partySuggestionCount: 'Party / target',
+    partySuggestionApply: 'Choose party',
+    partySuggestionSelected: 'Party selected',
+    partySuggestionLocalOnly:
+      'Only changes the selected party. Use the departure button below to begin.',
+    partySuggestionBlocked_battle: 'Party selection is locked during battle.',
+    partySuggestionBlocked_journey: 'Choose a party after the current journey ends.',
+    partySuggestionBlocked_party:
+      '{eligible} guardians have at least 20 health; this party needs {required}.',
+    partySuggestionBlocked_updating: 'Wait while village information updates.',
+    partyForecastTitle: 'Selected party arrival forecast',
+    partyForecastHint:
+      'Uses current health, equipment and mission objective. Fatigue is applied first, followed by experience and level gains. The server determines the final arrival result.',
+    partyForecastHealth: 'Current → arrival health',
+    partyForecastFatigue: 'After fatigue',
+    partyForecastXp: 'Current → arrival experience',
+    partyForecastLevelUp: 'Level {before} → {after}',
+    partyForecastHealing:
+      '{count} level gain(s) increase health and maximum health after fatigue; +{points} training point(s).',
+    partyForecastXpCapped: 'Experience gain is limited by the maximum level experience cap.',
+    partyForecastLocked:
+      'This forecast does not start a new mission during an existing battle or journey.',
+    partyForecastEmpty: 'Select at least one guardian to see their arrival forecast.',
+    partyForecastInvalid:
+      'There are invalid or duplicate guardian selections. Choose the party again.',
+    partyForecastIneligible: 'Cannot depart right now.',
     story_expedition_homeland_report:
       'The village trails have been entered in the journal; preparations for distant routes are complete.',
     story_expedition_spring_report:

@@ -36,6 +36,8 @@ Hazırlık paneli başlat düğmesinin neden açık veya kapalı olduğunu göst
 
 Başlat düğmesine basıldığında sunucu koşulları tekrar denetler; maliyeti bir kez düşer ve seçili planı kaydeder. Ödül yalnızca bir kez işlenir. Üretim yenilemeleri seçimleri ve klavye odağını korur. Görevdeki kurtlar eğitilemez veya ekipman değiştiremez.
 
+Kadro hazırlığı için v2.7.0 ile eklenen [muhafız önerileri ve varış öngörüsü](ADVENTURE-PARTY.md) kullanılabilir.
+
 ### Eski kayıtlar ve önizleme
 
 Önceki sürümde başlatılmış ve plan alanı olmayan görevler **standart** kabul edilir: bitiş zamanı, maliyet ve ödül değişmez. Aynı kural eski dönüş raporları için geçerlidir. Yeni kayıtlar seçili planı taşır; geçersiz plan reddedilir. SQL tablo değişikliği veya yeni ENV anahtarı gerekmez. Dokploy'da mevcut volume'ları koruyarak dört servisi birlikte dağıtın.
@@ -77,6 +79,8 @@ The latest 20 reports retain mission type, region, difficulty, plan, party and a
 The readiness panel explains whether departure is available. Reward warnings estimate overflow against current storage and equipment limits. Production, spending or gifts can change balances during travel; the arrival report records actual credits. Storage warnings do not block departure; excess materials are not held as claimable rewards.
 
 Explicit departure checks conditions on the server, deducts supplies once and saves the plan. Completion awards once. Production refreshes preserve controls and keyboard focus. Away guardians cannot train or change equipment.
+
+For party preparation, v2.7.0 adds [guardian suggestions and arrival forecasts](ADVENTURE-PARTY.md).
 
 ### Older saves and preview
 
