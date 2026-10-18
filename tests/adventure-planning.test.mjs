@@ -121,8 +121,8 @@ test('readiness explains the actual route and multiple shortages without blockin
     { resource: 'feed', amount: 3 },
   ]);
   assert.deepEqual(plan.overflow, [
-    { resource: 'wood', amount: 31 },
-    { resource: 'stone', amount: 21 },
+    { resource: 'wood', amount: 15 },
+    { resource: 'stone', amount: 10 },
   ]);
   assert.equal(plan.itemFull, true);
   assert.equal(plan.fatigue, 5);

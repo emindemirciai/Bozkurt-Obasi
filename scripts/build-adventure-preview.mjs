@@ -1,5 +1,6 @@
 import { build } from 'vite';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 import { resolve } from 'node:path';
 
 const result = await build({
@@ -49,7 +50,7 @@ const html = `<!doctype html>${legal}<html lang="tr"><head><meta charset="UTF-8"
 @media(max-width:620px){.adventure-preview{padding:0 14px 24px}.adventure-preview-header{flex-wrap:wrap}.adventure-preview-header>div:last-child{margin-left:auto}.adventure-preview-toolbar{gap:14px}.adventure-preview-toolbar label{width:100%}}
 </style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
-await writeFile('preview/adventure.html', html, 'utf8');
+await writePreview('preview/adventure.html', html, 'utf8');
 console.log(
   `Offline adventure planning preview: preview/adventure.html (${Buffer.byteLength(html)} bytes)`,
 );

@@ -107,8 +107,8 @@ export function adventurePartySuggestionsPanel(state, selection, ctx) {
     '</div></section>'
   );
 }
-function forecastContent(state, selection, { t, language = 'tr' }) {
-  const forecast = adventurePartyForecast(state, selection);
+function forecastContent(state, selection, { t, language = 'tr', outing = null }) {
+  const forecast = adventurePartyForecast(state, selection, { outing });
   const rows = forecast.wolves
     .map((result) => {
       const wolf = state.wolves.find((entry) => entry.id === result.id);

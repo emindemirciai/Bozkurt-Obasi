@@ -1,6 +1,26 @@
 {
-  "version": "2.7.0",
+  "version": "2.8.0",
   "releases": [
+    {
+      "version": "2.8.0",
+      "date": "2026-10-19",
+      "changes": {
+        "tr": [
+          "Bina Kaldırma: seçilen yapı için açık onay, inşaat/yükseltme maliyetlerinin %50 iadesi, boşalan parsele yeniden inşa ve kapasite/eski onay korumaları.",
+          "Daha yavaş kaynak gelişimi: üretim, toplama, savaş ve yeni keşif/sevkiyat malzemeleri yaklaşık yarıya indi; toplama beklemesi 8 saniyeden 20 saniyeye çıktı.",
+          "Mevcut birikimler, XP ve tek seferlik görev ödülleri korunur; başlamış seferler eski vaat edilen ödüllerle tamamlanır.",
+          "Köy yapılarında seviye ve arsa numarası ayrıldı; kaynak adları, mevcut/gerekli miktarlar ve TR/EN mobil/çevrimdışı önizlemeler güncellendi.",
+          "Ana Yurt kamerasında sabit ve kaydırmasız harita alanı, çalışan yakınlaştırma/uzaklaştırma ve azaltılmış hareket tercihine uyan hava/şelale animasyonları."
+        ],
+        "en": [
+          "Building Demolition: explicit confirmation, a 50% construction/upgrade refund, rebuilding on freed plots and capacity/stale-confirmation safeguards.",
+          "Slower resource progression: production, gathering, battle and new expedition/escort materials are roughly halved; gathering cooldown increased from 8 to 20 seconds.",
+          "Existing balances, XP and one-time objective rewards remain; ongoing journeys retain their previously promised rewards.",
+          "Village structures now distinguish level from plot number, with resource names, available/required quantities and updated TR/EN mobile/offline previews.",
+          "A fixed, scrollbar-free Homeland viewport with working zoom controls and weather/waterfall animations that respect reduced motion."
+        ]
+      }
+    },
     {
       "version": "2.7.0",
       "date": "2026-10-19",

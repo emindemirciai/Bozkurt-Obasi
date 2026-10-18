@@ -82,7 +82,7 @@ test('supplies and capacity estimates update on ticks without remounting the foc
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p2' }, START);
   state.resources.water = 17.5;
   state.resources.feed = 23;
-  state.resources.wood = 467.8;
+  state.resources.wood = 483.8;
   const actions = await mockJourney(page, state);
   await page.goto('/#world');
   await expect(check(page, 'supplies')).toHaveAttribute('data-ok', 'false');

@@ -4,11 +4,11 @@ const PRODUCERS = ['lumber', 'quarry', 'well', 'pasture', 'healer'];
 export const BUILDINGS = Object.freeze(
   [
     { id: 'hall', cost: { wood: 120, stone: 90 }, production: {} },
-    { id: 'lumber', cost: { wood: 60, stone: 25 }, production: { wood: 12 } },
-    { id: 'quarry', cost: { wood: 70, stone: 30 }, production: { stone: 9 } },
-    { id: 'well', cost: { wood: 45, stone: 20 }, production: { water: 14 } },
-    { id: 'pasture', cost: { wood: 60, stone: 30 }, production: { feed: 12 } },
-    { id: 'healer', cost: { wood: 95, stone: 65 }, production: { herbs: 6 } },
+    { id: 'lumber', cost: { wood: 60, stone: 25 }, production: { wood: 6 } },
+    { id: 'quarry', cost: { wood: 70, stone: 30 }, production: { stone: 4.5 } },
+    { id: 'well', cost: { wood: 45, stone: 20 }, production: { water: 7 } },
+    { id: 'pasture', cost: { wood: 60, stone: 30 }, production: { feed: 6 } },
+    { id: 'healer', cost: { wood: 95, stone: 65 }, production: { herbs: 3 } },
     { id: 'storage', cost: { wood: 80, stone: 55 }, production: {} },
     { id: 'watchtower', cost: { wood: 100, stone: 70 }, production: {} },
     { id: 'shelter', cost: { wood: 85, stone: 60 }, production: {} },
@@ -82,6 +82,111 @@ export function migrateSettlement(state) {
 
 export function visualTier(level) {
   return level >= 5 ? 3 : level >= 3 ? 2 : 1;
+}
+
+/** One recipe drives upgrades and demolition refunds, including all previous levels. */
+export function getUpgradeCost(building) {
+  const definition = BUILDINGS.find((entry) => entry.id === building.type);
+  if (!definition) fail('INVALID_BUILDING');
+  return Object.fromEntries(
+    Object.entries(definition.cost).map(([key, cost]) => [
+      key,
+      Math.ceil(cost * 1.55 ** building.level),
+    ]),
+  );
+}
+
+/** A read-only receipt for the exact building the player is about to remove. */
+export function demolitionQuote(state, id) {
+  const building = state.buildings.find((entry) => entry.id === id);
+  if (!building) fail('INVALID_BUILDING');
+  const definition = BUILDINGS.find((entry) => entry.id === building.type);
+  const investment = { ...definition.cost };
+  for (let level = 1; level < building.level; level += 1) {
+    const cost = getUpgradeCost({ type: building.type, level });
+    for (const [key, amount] of Object.entries(cost)) investment[key] += amount;
+  }
+  const refund = Object.fromEntries(
+    Object.entries(investment).map(([key, amount]) => [key, amount / 2]),
+  );
+  const capacityRemoved =
+    building.type === 'storage'
+      ? building.level * 250
+      : building.type === 'hall'
+        ? (building.level - 1) * 100
+        : 0;
+  const capacityAfter = state.capacity - capacityRemoved;
+  const overflow = Object.fromEntries(
+    RESOURCES.map((key) => [
+      key,
+      Math.max(0, state.resources[key] + (refund[key] || 0) - capacityAfter),
+    ]).filter(([, amount]) => amount > 0),
+  );
+  const reason =
+    state.battle?.status === 'active'
+      ? 'BATTLE_ACTIVE'
+      : state.adventure?.active || state.journey
+        ? 'JOURNEY_ACTIVE'
+        : Object.keys(overflow).length
+          ? 'DEMOLITION_STORAGE_FULL'
+          : null;
+  return {
+    building: { ...building },
+    expected: {
+      type: building.type,
+      level: building.level,
+      x: building.x,
+      y: building.y,
+      builds: state.stats.builds,
+    },
+    investment,
+    refund,
+    capacityBefore: state.capacity,
+    capacityAfter,
+    overflow,
+    canDemolish: reason === null,
+    reason,
+  };
+}
+
+/** Credit a confirmed receipt only after every guard succeeds; no resource is discarded. */
+export function demolishBuilding(state, action) {
+  if (
+    !record(action) ||
+    typeof action.id !== 'string' ||
+    !state.buildings.some((building) => building.id === action.id)
+  )
+    fail('INVALID_BUILDING');
+  if (
+    !exactKeys(action, ['type', 'id', 'expected']) ||
+    action.type !== 'demolishBuilding' ||
+    !exactKeys(action.expected, ['type', 'level', 'x', 'y', 'builds']) ||
+    !BUILDINGS.some((building) => building.id === action.expected.type) ||
+    !Number.isSafeInteger(action.expected.level) ||
+    action.expected.level < 1 ||
+    action.expected.level > 5 ||
+    !Number.isSafeInteger(action.expected.x) ||
+    action.expected.x < 0 ||
+    action.expected.x > 5 ||
+    !Number.isSafeInteger(action.expected.y) ||
+    action.expected.y < 0 ||
+    action.expected.y > 5 ||
+    !Number.isSafeInteger(action.expected.builds) ||
+    action.expected.builds < 0 ||
+    action.expected.builds > 1_000_000
+  )
+    fail('INVALID_DEMOLITION');
+  const quote = demolitionQuote(state, action.id);
+  if (Object.keys(quote.expected).some((key) => quote.expected[key] !== action.expected[key]))
+    fail('BUILDING_CHANGED');
+  if (!quote.canDemolish) fail(quote.reason);
+  state.buildings.splice(
+    state.buildings.findIndex((building) => building.id === action.id),
+    1,
+  );
+  state.capacity = quote.capacityAfter;
+  for (const [key, amount] of Object.entries(quote.refund)) state.resources[key] += amount;
+  return quote;
 }
 
 export function getWallUpgradeCost(walls) {

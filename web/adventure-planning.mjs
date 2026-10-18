@@ -1,8 +1,8 @@
-import { adventureQuote, REGIONS } from '../shared/adventures.mjs';
+import { adventureQuote, outingQuote, REGIONS } from '../shared/adventures.mjs';
 
 // Read-only explanation of the existing server rules, never an authorization or a mutation.
-export function adventureReadiness(state, selection) {
-  const quote = adventureQuote(state, selection);
+export function adventureReadiness(state, selection, { outing = null } = {}) {
+  const quote = outing ? outingQuote(state, outing) : adventureQuote(state, selection);
   const index = REGIONS.findIndex((region) => region.id === selection.region);
   const escort = selection.kind === 'caravan';
   const discovered = state.adventure.unlocked.includes(selection.region);

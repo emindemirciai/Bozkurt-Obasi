@@ -76,7 +76,9 @@ export function grantWolfXp(wolf, amount) {
   }
   if (wolf.level === 20) wolf.xp = Math.min(wolf.xp, 899);
 }
-export function adventureQuote(state, selection) {
+/** New departures use the current economy; only persisted legacy outings use version 1. */
+export function adventureQuote(state, selection, { economyVersion = 2 } = {}) {
+  if (![1, 2].includes(economyVersion)) fail('INVALID_EXPEDITION');
   const { kind = 'expedition', region = 'spring', difficulty = 'easy', wolfIds = [] } = selection;
   // Missing plan is the pre-v2.6 contract; malformed explicit values must never become standard.
   const plan = Object.hasOwn(selection, 'plan') ? selection.plan : 'standard';
@@ -89,7 +91,8 @@ export function adventureQuote(state, selection) {
     .reduce((n, w) => n + equipmentBonuses(w).scouting, 0);
   const factor = Math.max(0.7, 1 - scouts / 100);
   const suppliesFactor = plan === 'standard' ? 1 : 1.25;
-  const rewardFactor = plan === 'survey' ? 0.75 : plan === 'supply' ? 1.5 : 1;
+  const rewardFactor =
+    (plan === 'survey' ? 0.75 : plan === 'supply' ? 1.5 : 1) * (economyVersion === 2 ? 0.5 : 1);
   const xpFactor = plan === 'survey' ? 1.5 : plan === 'supply' ? 0.75 : 1;
   return {
     plan,
@@ -109,6 +112,12 @@ export function adventureQuote(state, selection) {
     item: route.item,
   };
 }
+/** Saved outings without a marker retain the rewards promised before the economy update. */
+export function outingQuote(state, outing) {
+  const economyVersion = Object.hasOwn(outing, 'economyVersion') ? outing.economyVersion : 1;
+  return adventureQuote(state, outing, { economyVersion });
+}
+
 function start(state, action, now, kind) {
   if (state.adventure.active || state.journey) fail('JOURNEY_ACTIVE');
   if (state.battle.status === 'active') fail('BATTLE_ACTIVE');
@@ -155,6 +164,7 @@ function start(state, action, now, kind) {
     region: action.region,
     difficulty: action.difficulty,
     plan: quote.plan,
+    economyVersion: 2,
     wolfIds: [...ids],
     startedAt: now,
     endsAt: now + quote.seconds * 1000,
@@ -166,7 +176,7 @@ export const startCaravan = (state, action, now) => start(state, action, now, 'c
 export function advanceAdventure(state, now) {
   const active = state.adventure.active;
   if (!active || now < active.endsAt) return state;
-  const quote = adventureQuote(state, active);
+  const quote = outingQuote(state, active);
   const awarded = {};
   for (const key of resources) {
     const amount = Math.min(state.capacity - state.resources[key], quote.reward[key] || 0);
@@ -239,9 +249,16 @@ export function validateAdventureState(state) {
   const fields = ['id', 'kind', 'region', 'difficulty', 'wolfIds', 'startedAt', 'endsAt'];
   function outingFields(o, extra = []) {
     const hasPlan = o && Object.hasOwn(o, 'plan');
+    const hasEconomyVersion = o && Object.hasOwn(o, 'economyVersion');
     return (
-      exact(o, [...fields, ...(hasPlan ? ['plan'] : []), ...extra]) &&
-      (!hasPlan || ADVENTURE_PLANS.includes(o.plan))
+      exact(o, [
+        ...fields,
+        ...(hasPlan ? ['plan'] : []),
+        ...(hasEconomyVersion ? ['economyVersion'] : []),
+        ...extra,
+      ]) &&
+      (!hasPlan || ADVENTURE_PLANS.includes(o.plan)) &&
+      (!hasEconomyVersion || o.economyVersion === 2)
     );
   }
   function outing(o) {
@@ -282,7 +299,7 @@ export function validateAdventureState(state) {
       (!a.unlocked.includes(a.active.region) || a.active.region === state.location)
     )
       return false;
-    if (a.active.endsAt - a.active.startedAt !== adventureQuote(state, a.active).seconds * 1000)
+    if (a.active.endsAt - a.active.startedAt !== outingQuote(state, a.active).seconds * 1000)
       return false;
   }
   if (
@@ -302,7 +319,7 @@ export function validateAdventureState(state) {
       !int(r.itemCount, 0, 1)
     )
       return false;
-    const quote = adventureQuote(state, r);
+    const quote = outingQuote(state, r);
     if (
       r.item !== quote.item ||
       r.xp !== quote.xp ||

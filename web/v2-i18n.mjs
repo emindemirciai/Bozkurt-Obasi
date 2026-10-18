@@ -1,5 +1,41 @@
 export const v2Translations = {
   tr: {
+    buildingCostRequired: 'Gereken',
+    buildingCostAvailable: 'Mevcut',
+    buildingOwnedCount: 'Kurulu / sınır',
+    buildingConstructionCost: 'Yeni bina maliyeti',
+    buildingPlotHint:
+      'Bina düğmelerindeki seviye gelişim aşamasını, arsa ise köydeki yer numarasını gösterir.',
+    missionLegacyReward: 'Bu seferde yola çıkarken vaat edilen malzeme ödülü korunur.',
+    demolitionEyebrow: 'Oba düzenlemesi',
+    demolitionTitle: 'Bina kaldırılsın mı?',
+    demolitionIntro:
+      'Bu binayı kaldırmak istiyor musun? İnşaat ve yükseltmelerde kullanılan malzemelerin %50’si iade edilir. Kabul ediyor musun?',
+    demolitionRefund: 'İade edilecek malzemeler',
+    demolitionRefundExact:
+      'İnşaat ve tüm yükseltmelerin toplam bedelinin tam yarısıdır. Kesirli malzemeler kaybolmaz.',
+    demolitionPermanent:
+      'Bina ve seviyesi kaldırılır; arsası yeniden kullanılabilir. Üretim ve binanın sağladığı kapasite sona erer.',
+    demolitionCancel: 'Vazgeç',
+    demolitionConfirm: 'Kabul et ve binayı kaldır',
+    demolitionSending: 'Bina kaldırılıyor…',
+    demolitionOverflow: 'Kapasiteyi aşan miktar',
+    demolitionChanged:
+      'Bina veya oba yapıları başka bir oturumda değişti. Bu pencereyi kapatıp binayı yeniden seç.',
+    demolitionReadOnly:
+      'Salt okunur önizleme: örnek iade gösterilir; bina kaldırılamaz ve kaynak değişmez.',
+    demolition_BATTLE_ACTIVE: 'Savaş devam ederken bina kaldırılamaz.',
+    demolition_JOURNEY_ACTIVE: 'Devam eden keşif veya sevkiyat bitmeden bina kaldırılamaz.',
+    demolition_DEMOLITION_STORAGE_FULL:
+      'Mevcut kaynaklar ve iade, kaldırma sonrası kapasiteye sığmıyor. Önce kaynak harca veya başka bir arsada kapasiteyi artır.',
+    demolitionStale:
+      'Oba güncellendi. Aşağıdaki iade ve kapasiteyi yeniden kontrol et; kabul ediyorsan tekrar onayla.',
+    demolitionFailed: 'Bina kaldırılamadı. Bağlantıyı ve oba durumunu kontrol edip tekrar dene.',
+    demolitionInvalid: 'Seçilen bina artık bulunamıyor. Pencereyi kapatıp binayı yeniden seç.',
+    removeBuilding: 'Binayı kaldır',
+    logDemolished: 'Bina kaldırıldı; malzemelerin %50’si iade edildi.',
+    demolitionPreviewTitle: 'Binayı kaldırma önizlemesi',
+    demolitionPreviewOpen: 'İade uyarısını incele',
     partyForecastMaxXp: 'Azami seviye · {xp} / 899 kayıtlı deneyim',
     partySuggestionScoutingTotal: 'Ekipman izciliği (toplam)',
     partySuggestionScoutingCap: 'Yol süresi indirimi en çok %30 olabilir.',
@@ -331,6 +367,45 @@ export const v2Translations = {
     regionLocked: 'Bu bölge henüz açılmadı.',
   },
   en: {
+    buildingCostRequired: 'Required',
+    buildingCostAvailable: 'Available',
+    buildingOwnedCount: 'Built / limit',
+    buildingConstructionCost: 'New building cost',
+    buildingPlotHint:
+      'Building buttons show the upgrade level and the numbered plot where the building stands.',
+    missionLegacyReward: 'This journey keeps the material reward promised when it departed.',
+    demolitionEyebrow: 'Village layout',
+    demolitionTitle: 'Remove this building?',
+    demolitionIntro:
+      'Do you want to remove this building? You will receive 50% of the materials used for construction and upgrades. Do you accept?',
+    demolitionRefund: 'Materials to be returned',
+    demolitionRefundExact:
+      'Exactly half of the total construction and upgrade costs. Fractional materials are retained.',
+    demolitionPermanent:
+      'The building and its level are removed, freeing its plot. Its production and capacity contribution end.',
+    demolitionCancel: 'Cancel',
+    demolitionConfirm: 'Accept and remove building',
+    demolitionSending: 'Removing building…',
+    demolitionOverflow: 'Amount exceeding capacity',
+    demolitionChanged:
+      'This building or the village structures changed in another session. Close this window and select the building again.',
+    demolitionReadOnly:
+      'Read-only preview: shows an example refund. No building or resources can be changed.',
+    demolition_BATTLE_ACTIVE: 'Buildings cannot be removed during an active battle.',
+    demolition_JOURNEY_ACTIVE:
+      'Wait for the current expedition or caravan to finish before removing a building.',
+    demolition_DEMOLITION_STORAGE_FULL:
+      'Your current resources and refund would exceed capacity after removal. Spend resources first or increase capacity on another plot.',
+    demolitionStale:
+      'The village was updated. Check the refund and capacity below, then confirm again if you accept.',
+    demolitionFailed:
+      'The building could not be removed. Check your connection and village state before trying again.',
+    demolitionInvalid:
+      'The selected building no longer exists. Close this window and select the building again.',
+    removeBuilding: 'Remove building',
+    logDemolished: 'Building removed; 50% of its materials returned.',
+    demolitionPreviewTitle: 'Building removal preview',
+    demolitionPreviewOpen: 'Inspect refund warning',
     partyForecastMaxXp: 'Maximum level · {xp} / 899 stored experience',
     partySuggestionScoutingTotal: 'Total equipment scouting',
     partySuggestionScoutingCap: 'The travel time reduction is capped at 30%.',

@@ -24,9 +24,9 @@ const act = (state, selection) =>
 const totalXp = (wolf) => (45 * wolf.level * (wolf.level - 1)) / 2 + wolf.xp;
 const finish = (state) => advanceGame(state, state.adventure.active.endsAt);
 const expected = {
-  standard: { water: 18, feed: 23, seconds: 60, xp: 30, wood: 32, stone: 21, herbs: 7, fatigue: 5 },
-  survey: { water: 23, feed: 29, seconds: 75, xp: 45, wood: 24, stone: 15, herbs: 5, fatigue: 7 },
-  supply: { water: 23, feed: 29, seconds: 75, xp: 22, wood: 48, stone: 31, herbs: 10, fatigue: 8 },
+  standard: { water: 18, feed: 23, seconds: 60, xp: 30, wood: 16, stone: 10, herbs: 3, fatigue: 5 },
+  survey: { water: 23, feed: 29, seconds: 75, xp: 45, wood: 12, stone: 7, herbs: 2, fatigue: 7 },
+  supply: { water: 23, feed: 29, seconds: 75, xp: 22, wood: 24, stone: 15, herbs: 5, fatigue: 8 },
 };
 
 test('mission plans quote explicit costs, duration, fatigue and reward tradeoffs', () => {
@@ -194,6 +194,7 @@ test('legacy active and history records retain their original timing, payouts an
   act(state, choice());
   assert.equal(state.adventure.active.plan, 'standard');
   delete state.adventure.active.plan;
+  delete state.adventure.active.economyVersion;
   const before = structuredClone(state);
   assert.equal(validateGame(state), true);
   assert.deepEqual(migrateGame(state), before);
@@ -335,7 +336,7 @@ test('readiness shows authoritative plan fatigue, costs and extra storage pressu
   const state = createGame(NOW);
   state.resources.water = 18;
   state.resources.feed = 23;
-  state.resources.wood = 470;
+  state.resources.wood = 480;
   const before = structuredClone(state);
   assert.equal(adventureReadiness(state, choice()).ready, true);
   for (const plan of ['survey', 'supply']) {
@@ -348,7 +349,7 @@ test('readiness shows authoritative plan fatigue, costs and extra storage pressu
     ]);
     assert.deepEqual(
       readiness.overflow,
-      plan === 'supply' ? [{ resource: 'wood', amount: 18 }] : [],
+      plan === 'supply' ? [{ resource: 'wood', amount: 4 }] : [],
     );
   }
   assert.deepEqual(state, before);

@@ -1196,3 +1196,32 @@ const battleCommandTranslations = {
 };
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], battleCommandTranslations[language]);
+
+const villageCameraTranslations = {
+  tr: {
+    villageCameraControls: 'Oba görünümü',
+    villageCameraHelp:
+      'Oba kamerası. Artı ve eksi ile yakınlaştır; oklarla gez; Home ile görünümü sıfırla.',
+    villagePanHint: 'Yakınlaşınca sürükle · İki parmakla yakınlaştır',
+    villageWeatherLabel: 'Görsel hava durumu',
+    villageClear: 'Açık',
+    villageRain: 'Yağmur',
+    villagePauseMotion: 'Ortam hareketini durdur',
+    villageResumeMotion: 'Ortam hareketini başlat',
+    villageMotionReduced: 'Azaltılmış hareket tercihi etkin',
+  },
+  en: {
+    villageCameraControls: 'Village view',
+    villageCameraHelp:
+      'Village camera. Use plus and minus to zoom; arrows to pan; Home to reset the view.',
+    villagePanHint: 'Drag when zoomed · Pinch to zoom',
+    villageWeatherLabel: 'Visual weather',
+    villageClear: 'Clear',
+    villageRain: 'Rain',
+    villagePauseMotion: 'Pause ambient motion',
+    villageResumeMotion: 'Resume ambient motion',
+    villageMotionReduced: 'Reduced motion preference is active',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], villageCameraTranslations[language]);

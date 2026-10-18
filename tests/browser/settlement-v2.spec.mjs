@@ -75,7 +75,7 @@ test('chosen plots, duplicate producers and free relocation persist through the 
   expect(moved.state.buildings[0]).toMatchObject({ id: 'building-quarry', x: 0, y: 2 });
   expect(moved.state.resources.wood).toBe(before.resources.wood);
   expect(moved.state.resources.stone).toBeCloseTo(
-    before.resources.stone + ((moved.state.updatedAt - before.updatedAt) * 18) / 60_000,
+    before.resources.stone + ((moved.state.updatedAt - before.updatedAt) * 9) / 60_000,
     5,
   );
   await expect(page.locator('[data-plot="p0"]')).toBeVisible();
@@ -120,7 +120,7 @@ test('wooden walls upgrade to stone through real saved actions and unavailable u
   await expect(upgrade).toBeDisabled();
 });
 
-test('three building tiers and role portraits load, with mobile scrolling confined to the village map', async ({
+test('three building tiers and role portraits load, with the mobile village contained in a fixed viewport', async ({
   page,
 }) => {
   await signIn(page);
@@ -156,14 +156,9 @@ test('three building tiers and role portraits load, with mobile scrolling confin
       scroll: node.scrollWidth,
       right: node.getBoundingClientRect().right,
     }));
-    expect(bounds.scroll).toBeGreaterThan(bounds.content);
+    expect(bounds.scroll).toBeLessThanOrEqual(bounds.content + 1);
     expect(bounds.right).toBeLessThanOrEqual(width);
-    await page.locator('.scene-wrap').evaluate((node) => {
-      node.scrollLeft = node.scrollWidth;
-    });
-    expect(await page.locator('.scene-wrap').evaluate((node) => node.scrollLeft)).toBeGreaterThan(
-      0,
-    );
+    await expect(page.locator('.scene-wrap')).toHaveAttribute('data-camera-zoom', '1');
   }
   await page.locator('[data-view="wolves"]').click();
   await expect(page.locator('.guardian-portrait .real-wolf-portrait')).toHaveCount(5);
@@ -265,7 +260,7 @@ test('wall upgrade becomes available when passive production crosses its own cos
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p0' }, START);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p1' }, START);
   applyAction(state, { type: 'upgradeWall' }, START);
-  state.resources.wood = 139.9;
+  state.resources.wood = 139.95;
   state.resources.stone = 130;
   await mockVillage(page, state);
   await page.goto('/#village');

@@ -1,5 +1,6 @@
 import { build } from 'vite';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 import { resolve } from 'node:path';
 
 const result = await build({
@@ -49,7 +50,7 @@ const html = `<!doctype html>${legal}<html lang="tr"><head><meta charset="UTF-8"
 @media(max-width:620px){.guardian-preview{padding:0 14px 24px}.guardian-preview-header{flex-wrap:wrap}.guardian-preview-header>div:last-child{margin-left:auto}.guardian-preview-toolbar{gap:14px}.guardian-preview-toolbar label{width:100%}}
 </style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
-await writeFile('preview/guardians.html', html, 'utf8');
+await writePreview('preview/guardians.html', html, 'utf8');
 console.log(
   `Offline guardian progression preview: preview/guardians.html (${Buffer.byteLength(html)} bytes)`,
 );

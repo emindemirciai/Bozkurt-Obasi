@@ -101,7 +101,7 @@ test('all main producers support six independent buildings with summed productio
   }
   assert.equal(state.buildings.length, 30);
   assert.equal(new Set(state.buildings.map((b) => b.id)).size, 30);
-  assert.deepEqual(getProduction(state), { water: 84, feed: 72, herbs: 36, wood: 72, stone: 54 });
+  assert.deepEqual(getProduction(state), { water: 42, feed: 36, herbs: 18, wood: 36, stone: 27 });
   refill(state);
   act(state, { type: 'build', building: 'hall', plotId: 'p34' });
   unchangedFailure(state, { type: 'build', building: 'hall', plotId: 'p35' }, 'BUILDING_EXISTS');
@@ -306,7 +306,7 @@ test('caravan arrival changes location and keeps production, XP and rewards inde
   for (let now = start + 137; now < end + 30_000; now += 137) advanceGame(frequent, now);
   advanceGame(frequent, end + 30_000);
   assert.equal(state.location, 'spring');
-  assert.equal(getProduction(state).water, 21);
+  assert.equal(getProduction(state).water, 10.5);
   assert.equal(totalXp(state.wolves[0]), 60);
   assert.equal(totalXp(state.wolves[1]), 60);
   assert.equal(totalXp(state.wolves[3]), 30);

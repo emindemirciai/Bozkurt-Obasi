@@ -51,7 +51,7 @@ function deployment(art, fromX, fromY, toX, toY) {
 }
 
 export function scene(state, { battle = false, zoom = 1, selected = '', t }) {
-  if (!battle) return settlementScene(state, { t, zoom, selected });
+  if (!battle) return settlementScene(state, { t, selected });
   const command = battleCommandStatus(state).activeCommand || '';
   const lastCommand = state.battle.commands.at(-1);
   const rally =

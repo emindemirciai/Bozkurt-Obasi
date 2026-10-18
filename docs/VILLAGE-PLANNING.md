@@ -10,6 +10,20 @@ Hedef seçmek kaynak harcamaz. **Yer seç** haritadaki parsellere götürür. Bi
 
 Süreler mevcut üretimin sabit kalacağını varsayan tahminlerdir. Toplama, harcama, savaş ödülleri, yeni yapılar ve yolculukta bölge değişimi bu süreleri değiştirebilir. Otomatik inşaat kuyruğu veya yapım süresi eklenmez; eski köy kayıtları kayıpsız v2 biçimine taşınır.
 
+### Sabit Ana Yurt haritası
+
+Harita alanının içinde kaydırma çubuğu yoktur; ilk görünüm bütün arsaları sığdırır. **+ / −** gerçek yakınlaştırma yapar (1×–2,5×); hedef düğmesi kamerayı ortalar ve 1× görünümüne döndürür. Yakınken sürükleyerek, iki parmakla veya harita odağındayken ok tuşlarıyla gez. Home başlangıç görünümünü geri getirir. Klavyeyle görünmeyen bir arsaya odaklanmak kamerayı o konuma getirir. Bu hareketler bina yerini, kaynakları veya kaydı değiştirmez.
+
+Açık/yağmurlu hava, bulut, bozkır tozu ve küçük şelale suyu **dekoratiftir**; üretim ve savaş hesabına etkisi yoktur. Hava ve hareket düğmeleriyle görünümü değiştirebilirsin. Sistem hareket azaltmayı istiyorsa animasyonlar durur. Kamera ve hava tercihleri yalnızca açık ekranın yerel görünümüdür; gerçek hava durumu servisine bağlanılmaz. Çevrimdışı köy önizlemesinde de aynı kontroller çalışır.
+
+### Yapı listesi ve kaynak açıklamaları
+
+**Seviye 1 · Arsa 32**, binanın 1. seviyede ve haritadaki 32. arsada olduğunu söyler; 32 üretim veya yükseltme maliyeti değildir. Kaynak maliyetleri adlarıyla görünür. Kaynağın üzerine gelince veya klavyeyle odaklanınca mevcut/gerekli miktar açıklanır; dokunmatik kullanımda kaynak adı ve maliyet zaten okunabilir. Güncel üretim ve toplama değerleri [kaynak dengesi rehberinde](ECONOMY.md).
+
+### Bina kaldırma
+
+Seçili bina, %50 inşaat/yükseltme malzemesi iadesi gösteren açık onay penceresiyle kaldırılır. Depo kapasitesi, savaş/yolculuk ve değişmiş bina korumaları [kaldırma rehberinde](DEMOLITION.md).
+
 ### Yenilgi sonrası sürü takviyesi
 
 **Sürü takviyesi** paneli mevcut hayvan sayısını, 24 hayvan sınırını, eksik sayıyı ve seçtiğin miktarın kaynak maliyetini gösterir. Kurulu en az bir **Otlak** gerekir; seviyesi maliyeti değiştirmez. Bir seferde 1–5 hayvan alınabilir ve miktar eksik hayvan sayısını aşamaz. Her hayvan **6 su + 12 yem** ister. Miktarı değiştirmek kaynak harcamaz; takviye düğmesi açık onaydır.
@@ -35,6 +49,20 @@ Choose one of nine building types to inspect new construction or the next level 
 Choosing a target spends nothing. **Choose plot** leads to the map. Select a **+** plot, then a building to construct at that exact location; **Upgrade** improves the existing building. Active battles, shortages and maximum level disable the button; the server independently checks balances and save revisions. Resource updates preserve the selected target and keyboard focus. Signing out resets the selection.
 
 Estimates assume current production stays fixed. Gathering, spending, battle rewards, new buildings and region changes during travel can alter them. There is no automatic construction queue or new construction duration, and old saves migrate to the v2 schema without resetting progress.
+
+### Fixed Homeland map
+
+The map viewport has no internal scrollbars and initially fits all plots. **+ / −** change the actual camera zoom (1×–2.5×); the target button recenters and restores 1×. When zoomed in, drag, pinch or focus the map and use arrow keys to explore. Home restores the initial view. Keyboard focus on an offscreen plot brings it into view. Camera movement does not move buildings, spend resources or change saved progress.
+
+Clear/rainy weather, clouds, steppe dust and a small flowing waterfall are **decorative** and do not affect production or battles. Weather and motion buttons control the display. System reduced-motion preferences stop animations. Camera/weather choices only affect the open local view; no live weather service is contacted. The offline village preview uses the same controls.
+
+### Structure list and resource explanations
+
+**Level 1 · Plot 32** means the structure is level 1 on map plot 32; 32 is neither output nor upgrade cost. Resource costs include readable names. Hover or keyboard focus explains available/required quantities; touch users can already read the resource and cost. Current production and gathering values are in the [resource balance guide](ECONOMY.md).
+
+### Building demolition
+
+Remove the selected building through explicit confirmation showing a 50% construction/upgrade material refund. Capacity, combat/travel and changed-target safeguards are covered in the [demolition guide](DEMOLITION.md).
 
 ### Herd replenishment after defeat
 

@@ -874,6 +874,7 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
   assert.equal(response.status, 200);
   const started = await response.json();
   assert.equal(started.state.adventure.active.plan, 'survey');
+  assert.equal(started.state.adventure.active.economyVersion, 2);
   assert.equal(started.state.adventure.active.endsAt, now + 75_000);
   assert.equal(started.state.resources.water, player.data.state.resources.water - 23);
   assert.equal(started.state.resources.feed, player.data.state.resources.feed - 29);
@@ -888,7 +889,7 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
   assert.equal(completed.state.adventure.active, null);
   assert.equal(receipt.plan, 'survey');
   assert.equal(receipt.xp, 45);
-  assert.deepEqual(receipt.reward, { water: 0, feed: 0, herbs: 5, wood: 24, stone: 15 });
+  assert.deepEqual(receipt.reward, { water: 0, feed: 0, herbs: 2, wood: 12, stone: 7 });
   assert.equal(receipt.item, 'leather_vest');
   assert.equal(receipt.itemCount, 1);
   assert.equal(completed.state.inventory.leather_vest, 1);
@@ -937,6 +938,8 @@ test('supply caravans persist their destination, capped receipt and fatigue once
   );
   now = exploration.state.adventure.active.endsAt;
   const unlocked = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  unlocked.state.resources.wood = 490;
+  await saveAccountState(api, player, unlocked.state);
   const started = await send(
     {
       type: 'caravan',
@@ -966,9 +969,9 @@ test('supply caravans persist their destination, capped receipt and fatigue once
   assert.deepEqual(state.adventure.history[0].reward, {
     water: 0,
     feed: 0,
-    herbs: 10,
-    wood: 18,
-    stone: 31,
+    herbs: 5,
+    wood: 10,
+    stone: 15,
   });
   assert.equal(state.resources.wood, state.capacity);
   assert.equal(state.inventory.leather_vest, 2);
@@ -1083,7 +1086,14 @@ test('legacy outings without a plan retain their original timing and rewards thr
   const second = await launch(completed.revision);
   const legacy = structuredClone(second.state);
   delete legacy.adventure.active.plan;
+  delete legacy.adventure.active.economyVersion;
   delete legacy.adventure.history[0].plan;
+  delete legacy.adventure.history[0].economyVersion;
+  // Recreate a completed pre-release receipt and its already credited balances.
+  legacy.adventure.history[0].reward = { water: 0, feed: 0, herbs: 7, wood: 32, stone: 21 };
+  legacy.resources.wood += 16;
+  legacy.resources.stone += 11;
+  legacy.resources.herbs += 4;
   assert.equal(validateGame(legacy), true);
   const database = new DatabaseSync(api.dbPath);
   database.prepare('UPDATE google_accounts SET state_json = ?').run(JSON.stringify(legacy));
@@ -1105,6 +1115,8 @@ test('legacy outings without a plan retain their original timing and rewards thr
     wood: 18,
     stone: 21,
   });
+  assert.deepEqual(arrived.state.adventure.history[1], legacy.adventure.history[0]);
+  assert.equal(Object.hasOwn(arrived.state.adventure.history[0], 'economyVersion'), false);
   assert.equal(arrived.state.inventory.leather_vest, 2);
   const scout = arrived.state.wolves.find((wolf) => wolf.id === 'wolf-scout');
   assert.equal(scout.level, 2);
@@ -1112,4 +1124,373 @@ test('legacy outings without a plan retain their original timing and rewards thr
   assert.equal(validateGame(arrived.state), true);
   const repeated = await (await api.request('/api/state', { cookie: player.cookie })).json();
   assert.deepEqual(repeated, arrived);
+});
+
+const demolitionSnapshot = (state, id) => {
+  const { type, level, x, y } = state.buildings.find((building) => building.id === id);
+  return { type, level, x, y, builds: state.stats.builds };
+};
+
+async function saveAccountState(api, session, state) {
+  assert.equal(validateGame(state), true);
+  const token = session.cookie.slice('bozkurt_session='.length);
+  const database = new DatabaseSync(api.dbPath);
+  try {
+    assert.equal(
+      database
+        .prepare(
+          'UPDATE google_accounts SET state_json = ? WHERE sub = (SELECT account_sub FROM sessions WHERE token_hash = ?)',
+        )
+        .run(JSON.stringify(state), createHash('sha256').update(token).digest('hex')).changes,
+      1,
+    );
+  } finally {
+    database.close();
+  }
+}
+
+test('demolition refunds half of construction and upgrades for the selected copy and persists the freed plot', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  let current = player.data;
+  const send = async (action) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision: current.revision },
+    });
+    assert.equal(response.status, 200);
+    current = await response.json();
+    assert.equal(validateGame(current.state), true);
+    return current;
+  };
+  await send({ type: 'build', building: 'quarry', plotId: 'p0' });
+  await send({ type: 'build', building: 'quarry', plotId: 'p35' });
+  await send({ type: 'upgrade', id: 'building-quarry' });
+  const before = structuredClone(current.state);
+  const expected = demolitionSnapshot(before, 'building-quarry');
+  await send({ type: 'demolishBuilding', id: 'building-quarry', expected });
+  assert.deepEqual(current.state.buildings, [before.buildings[1]]);
+  // Quarry investment: 70 + ceil(70*1.55) wood; 30 + ceil(30*1.55) stone.
+  assert.deepEqual(current.state.resources, {
+    ...before.resources,
+    wood: before.resources.wood + 89.5,
+    stone: before.resources.stone + 38.5,
+  });
+  assert.equal(current.state.stats.builds, before.stats.builds);
+  assert.equal(current.state.capacity, before.capacity);
+  assert.deepEqual(current.state.firstWatch, before.firstWatch);
+  assert.deepEqual(current.state.wolves, before.wolves);
+  await api.restart();
+  const restored = await api.session(player.cookie);
+  assert.deepEqual(restored.data.state, current.state);
+  assert.equal(restored.data.revision, current.revision);
+  await send({ type: 'build', building: 'well', plotId: 'p0' });
+  assert.deepEqual(current.state.buildings.at(-1), {
+    id: 'building-well',
+    type: 'well',
+    level: 1,
+    x: 0,
+    y: 0,
+  });
+  assert.equal(current.state.stats.builds, before.stats.builds + 1);
+  const persisted = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  assert.deepEqual(persisted, current);
+});
+
+test('concurrent demolition pays once, stays isolated, and old confirmation cannot remove a rebuilt identical id', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const other = await api.session();
+  const builtResponse = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: {
+      action: { type: 'build', building: 'quarry', plotId: 'p0' },
+      revision: player.data.revision,
+    },
+  });
+  const built = await builtResponse.json();
+  const oldExpected = demolitionSnapshot(built.state, 'building-quarry');
+  const action = { type: 'demolishBuilding', id: 'building-quarry', expected: oldExpected };
+  const send = async (revision, requestAction = action) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action: requestAction, revision },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const raced = await Promise.all([send(built.revision), send(built.revision)]);
+  assert.deepEqual(raced.map((result) => result.status).sort(), [200, 409]);
+  const removed = raced.find((result) => result.status === 200).data;
+  assert.deepEqual(raced.find((result) => result.status === 409).data, {
+    error: 'stale_revision',
+    ...removed,
+  });
+  assert.equal(removed.state.resources.wood, built.state.resources.wood + 35);
+  assert.equal(removed.state.resources.stone, built.state.resources.stone + 15);
+  assert.equal(removed.state.buildings.length, 0);
+  const rebuilt = await send(removed.revision, { type: 'build', building: 'quarry', plotId: 'p0' });
+  assert.equal(rebuilt.status, 200);
+  assert.deepEqual(rebuilt.data.state.buildings, built.state.buildings);
+  const staleSnapshot = await send(rebuilt.data.revision);
+  assert.equal(staleSnapshot.status, 400);
+  assert.equal(staleSnapshot.data.error, 'BUILDING_CHANGED');
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: player.cookie })).json(),
+    rebuilt.data,
+  );
+  const isolated = await (await api.request('/api/state', { cookie: other.cookie })).json();
+  assert.deepEqual(isolated.state, other.data.state);
+  assert.equal(isolated.revision, other.data.revision);
+});
+
+test('demolition rejects forged refunds and incomplete or changed confirmations without mutating the account', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: {
+      action: { type: 'build', building: 'well', plotId: 'p0' },
+      revision: player.data.revision,
+    },
+  });
+  const built = await response.json();
+  const expected = demolitionSnapshot(built.state, 'building-well');
+  const valid = { type: 'demolishBuilding', id: 'building-well', expected };
+  const invalid = [
+    { type: 'demolishBuilding', id: 'building-well' },
+    { ...valid, refund: { wood: 999999, stone: 999999 } },
+    { ...valid, expected: { ...expected, refund: { wood: 22.5, stone: 10 } } },
+    { ...valid, expected: { ...expected, builds: String(expected.builds) } },
+    { ...valid, expected: { ...expected, level: 2 } },
+    { ...valid, expected: { ...expected, x: 1 } },
+    { ...valid, expected: null },
+  ];
+  for (const action of invalid) {
+    const denied = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision: built.revision },
+    });
+    assert.equal(denied.status, 400);
+    assert.match((await denied.json()).error, /^(INVALID_DEMOLITION|BUILDING_CHANGED)$/);
+    assert.deepEqual(
+      await (await api.request('/api/state', { cookie: player.cookie })).json(),
+      built,
+    );
+  }
+});
+
+test('storage demolition checks every resource against the reduced capacity and credits the complete refund once space exists', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: {
+      action: { type: 'build', building: 'storage', plotId: 'p0' },
+      revision: player.data.revision,
+    },
+  });
+  const built = await response.json();
+  const crowded = structuredClone(built.state);
+  crowded.resources.water = 501;
+  await saveAccountState(api, player, crowded);
+  const action = {
+    type: 'demolishBuilding',
+    id: 'building-storage',
+    expected: demolitionSnapshot(crowded, 'building-storage'),
+  };
+  const denied = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: { action, revision: built.revision },
+  });
+  assert.equal(denied.status, 400);
+  assert.equal((await denied.json()).error, 'DEMOLITION_STORAGE_FULL');
+  const saved = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  assert.deepEqual(saved.state, crowded);
+  assert.equal(saved.revision, built.revision);
+  crowded.resources.water = 500;
+  await saveAccountState(api, player, crowded);
+  const accepted = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: { action, revision: built.revision },
+  });
+  assert.equal(accepted.status, 200);
+  const removed = await accepted.json();
+  assert.equal(removed.state.capacity, 500);
+  assert.equal(removed.state.resources.water, 500);
+  assert.equal(removed.state.resources.wood, crowded.resources.wood + 40);
+  assert.equal(removed.state.resources.stone, crowded.resources.stone + 27.5);
+  assert.equal(validateGame(removed.state), true);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data.state, removed.state);
+});
+
+test('battle and expedition activity reject demolition while preserving structures and balances', async (t) => {
+  for (const kind of ['battle', 'expedition']) {
+    const api = await fixture(t);
+    const player = await api.session();
+    const builtResponse = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        action: { type: 'build', building: 'well', plotId: 'p0' },
+        revision: player.data.revision,
+      },
+    });
+    const built = await builtResponse.json();
+    const activeResponse = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        action:
+          kind === 'battle'
+            ? { type: 'startBattle' }
+            : {
+                type: 'expedition',
+                region: 'spring',
+                difficulty: 'easy',
+                wolfIds: ['wolf-scout'],
+              },
+        revision: built.revision,
+      },
+    });
+    assert.equal(activeResponse.status, 200);
+    const active = await activeResponse.json();
+    const denied = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        action: {
+          type: 'demolishBuilding',
+          id: 'building-well',
+          expected: demolitionSnapshot(active.state, 'building-well'),
+        },
+        revision: active.revision,
+      },
+    });
+    assert.equal(denied.status, 400);
+    assert.equal(
+      (await denied.json()).error,
+      kind === 'battle' ? 'BATTLE_ACTIVE' : 'JOURNEY_ACTIVE',
+    );
+    assert.deepEqual(
+      await (await api.request('/api/state', { cookie: player.cookie })).json(),
+      active,
+    );
+  }
+});
+
+test('manual collection awards the slower fixed bundle, persists its 20-second cooldown, and cannot replay after restart', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const player = await api.session();
+  const send = async (revision) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        action: { type: 'collect', reward: { wood: 999999, stone: 999999 } },
+        revision,
+      },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const first = await send(player.data.revision);
+  assert.equal(first.status, 200);
+  assert.deepEqual(first.data.state.resources, {
+    water: 184,
+    feed: 184,
+    herbs: 80,
+    wood: 457,
+    stone: 354,
+  });
+  assert.equal(first.data.state.collectReadyAt, 120_000);
+  await api.restart();
+  const restored = await api.session(player.cookie);
+  assert.deepEqual(restored.data.state, first.data.state);
+  now = 119_999;
+  const tooEarly = await send(restored.data.revision);
+  assert.equal(tooEarly.status, 400);
+  assert.equal(tooEarly.data.error, 'COLLECT_COOLDOWN');
+  const observed = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  assert.deepEqual(observed.state.resources, first.data.state.resources);
+  assert.equal(observed.state.stats.gathers, 1);
+  now = 120_000;
+  const second = await send(observed.revision);
+  assert.equal(second.status, 200);
+  assert.deepEqual(second.data.state.resources, {
+    water: 188,
+    feed: 188,
+    herbs: 80,
+    wood: 464,
+    stone: 358,
+  });
+  assert.equal(second.data.state.collectReadyAt, 140_000);
+  assert.equal(second.data.state.stats.gathers, 2);
+  assert.equal(second.data.state.firstWatch.milestones.gather, 100_000);
+  const replay = await send(observed.revision);
+  assert.equal(replay.status, 409);
+  assert.deepEqual(replay.data, { error: 'stale_revision', ...second.data });
+});
+
+test('slower passive production remains authoritative and client economy overrides cannot inflate a new expedition reward', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const player = await api.session();
+  let current = player.data;
+  const send = async (action) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision: current.revision },
+    });
+    assert.equal(response.status, 200);
+    current = await response.json();
+    return current;
+  };
+  for (const [index, building] of ['lumber', 'quarry', 'well', 'pasture'].entries())
+    await send({ type: 'build', building, plotId: 'p' + index });
+  const before = structuredClone(current.state.resources);
+  now += 60_000;
+  current = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  assert.deepEqual(current.state.resources, {
+    wood: before.wood + 6,
+    stone: before.stone + 4.5,
+    water: before.water + 7,
+    feed: before.feed + 6,
+    herbs: before.herbs,
+  });
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data.state, current.state);
+  const started = await send({
+    type: 'expedition',
+    region: 'spring',
+    difficulty: 'easy',
+    wolfIds: ['wolf-scout'],
+    economyVersion: 1,
+    reward: { wood: 999999, stone: 999999, herbs: 999999 },
+  });
+  assert.equal(started.state.adventure.active.economyVersion, 2);
+  assert.equal(started.state.adventure.active.endsAt, now + 60_000);
+  now = started.state.adventure.active.endsAt;
+  const arrived = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  assert.deepEqual(arrived.state.adventure.history[0].reward, {
+    water: 0,
+    feed: 0,
+    wood: 16,
+    stone: 10,
+    herbs: 3,
+  });
+  assert.equal(arrived.state.adventure.history[0].economyVersion, 2);
+  assert.equal(arrived.state.adventure.history[0].xp, 30);
+  assert.equal(arrived.state.inventory.leather_vest, 1);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data.state, arrived.state);
 });

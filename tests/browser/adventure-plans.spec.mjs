@@ -167,6 +167,7 @@ test('legacy missions keep the standard label and a full store gives an explicit
     START,
   );
   delete state.adventure.active.plan;
+  delete state.adventure.active.economyVersion;
   await mockJourney(page, state);
   await page.goto('/#world');
   await expect(plan(page, 'standard')).toBeChecked();

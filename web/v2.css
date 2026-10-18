@@ -1422,3 +1422,251 @@
     gap: 8px;
   }
 }
+
+/* Building removal keeps the warning, exact refund and reversible cancel together. */
+.building-layout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.building-layout-actions .move-building {
+  margin: 0;
+}
+.building-layout-actions .remove-building {
+  color: var(--danger, #a73e2f);
+  border-color: color-mix(in srgb, var(--danger, #a73e2f) 40%, var(--line));
+}
+.demolition-dialog {
+  width: min(540px, calc(100vw - 28px));
+  padding: 30px;
+  overflow-wrap: anywhere;
+}
+.demolition-dialog h2 {
+  padding-right: 22px;
+}
+.demolition-dialog #demolition-intro {
+  line-height: 1.8;
+}
+.demolition-building {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.demolition-building span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.demolition-refund {
+  padding: 16px 0;
+}
+.demolition-refund h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.demolition-refund dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 10px;
+}
+.demolition-refund dl div {
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+.demolition-refund dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+.demolition-refund dd {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+}
+.demolition-refund small,
+.demolition-rule,
+.demolition-readonly {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.demolition-capacity {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.demolition-blocked {
+  color: var(--danger, #a73e2f);
+  background: color-mix(in srgb, var(--danger, #a73e2f) 7%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--danger, #a73e2f) 30%, var(--line));
+  padding: 12px;
+  border-radius: 10px;
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.demolition-blocked[hidden] {
+  display: none;
+}
+.demolition-blocked span {
+  display: block;
+  margin-top: 6px;
+}
+.demolition-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.demolition-actions .button {
+  flex: 1 1 150px;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.6;
+}
+.demolition-danger {
+  background: #a84131;
+  border: 1px solid #a84131;
+  color: #fff8ed;
+}
+.demolition-danger:not(:disabled):hover {
+  background: #893326;
+  border-color: #893326;
+}
+.demolition-dialog .button:focus-visible,
+.demolition-dialog .icon-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.demolition-preview {
+  margin: 24px 0;
+}
+.demolition-preview p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+@media (max-width: 540px) {
+  .demolition-dialog {
+    padding: 24px 18px;
+  }
+  .demolition-actions {
+    flex-direction: column;
+  }
+  .demolition-actions .button {
+    flex-basis: auto;
+    width: 100%;
+  }
+}
+
+/* Resource names stay visible on touch screens; details also open on hover and focus. */
+.cost {
+  flex-wrap: wrap;
+}
+.cost .resource-cost {
+  gap: 4px;
+  border-radius: 4px;
+  outline-offset: 3px;
+}
+.cost .resource-cost > b {
+  font-weight: 600;
+}
+.cost .resource-cost:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.cost-resource-name {
+  color: var(--text);
+}
+.building-cost-group,
+.upgrade-row,
+.recovery-actions > .button {
+  position: relative;
+  min-width: 0;
+}
+.cost-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 35;
+  left: 0;
+  bottom: calc(100% + 8px);
+  min-width: 120px;
+  max-width: 220px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 8px 24px #16190f33;
+  white-space: normal;
+  font-size: 11px;
+  line-height: 1.7;
+  text-align: left;
+  pointer-events: none;
+}
+.cost-tooltip > span,
+.cost-tooltip > strong {
+  display: block;
+}
+.resource-cost:hover .cost-tooltip,
+.resource-cost:focus .cost-tooltip,
+.button:focus-visible .cost-tooltip {
+  display: block;
+}
+.building-cost-caption {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.6;
+  margin-bottom: 5px;
+}
+.build-card .building-owned-count {
+  min-height: 0;
+  font-size: 10px;
+  margin: 6px 0;
+  max-width: none;
+}
+.building-plot-hint {
+  max-width: 620px;
+  line-height: 1.8;
+}
+.build-card-bottom {
+  gap: 8px;
+  align-items: end;
+}
+.build-card-bottom .small-button {
+  flex-shrink: 0;
+}
+.placed-building-list .button {
+  white-space: normal;
+  line-height: 1.7;
+}
+@media (max-width: 540px) {
+  .build-card-bottom .cost {
+    gap: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cost-resource-name {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 540px) {
+  .recovery-actions > .button {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+    min-width: 0;
+  }
+  .recovery-actions > .button > .cost {
+    max-width: 100%;
+    justify-content: flex-end;
+  }
+}

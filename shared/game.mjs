@@ -6,6 +6,8 @@ import {
   placeBuilding,
   relocateBuilding,
   upgradeWall,
+  getUpgradeCost,
+  demolishBuilding,
 } from './settlement.mjs';
 import {
   initializeAdventureState,
@@ -36,7 +38,7 @@ import {
   claimFirstWatch,
 } from './first-watch.mjs';
 import { validateGame as validateLegacyGame } from './legacy-v1.mjs';
-export { BUILDINGS };
+export { BUILDINGS, getUpgradeCost };
 /** Shared, deterministic simulation. All rates are per minute; all clocks are UTC ms. */
 export const RESOURCE_KEYS = Object.freeze(['water', 'feed', 'herbs', 'wood', 'stone']);
 export const TACTICS = Object.freeze(['direct', 'left', 'right', 'double', 'rush']);
@@ -186,17 +188,6 @@ export function migrateGame(state) {
   return migrated;
 }
 
-export function getUpgradeCost(building) {
-  const definition = BUILDINGS.find((entry) => entry.id === building.type);
-  if (!definition) fail('INVALID_BUILDING');
-  return Object.fromEntries(
-    Object.entries(definition.cost).map(([key, cost]) => [
-      key,
-      Math.ceil(cost * 1.55 ** building.level),
-    ]),
-  );
-}
-
 export function getProduction(state) {
   const rates = Object.fromEntries(RESOURCE_KEYS.map((key) => [key, 0]));
   for (const building of state.buildings) {
@@ -223,10 +214,10 @@ function finishBattle(state, won, at) {
   if (won) {
     state.stats.wins += 1;
     addResources(state, {
-      wood: 45 + state.battle.wave * 10,
-      stone: 25 + state.battle.wave * 8,
-      herbs: 12,
-      feed: 20,
+      wood: Math.floor((45 + state.battle.wave * 10) / 2),
+      stone: Math.floor((25 + state.battle.wave * 8) / 2),
+      herbs: 6,
+      feed: 10,
     });
     state.herd.panic = Math.max(0, state.herd.panic - 15);
   } else {
@@ -455,6 +446,10 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       recordFirstWatch(state, 'build', at);
       break;
     }
+    case 'demolishBuilding':
+      demolishBuilding(state, action);
+      log(state, 'buildingDemolished', at);
+      break;
     case 'moveBuilding':
       relocateBuilding(state, action.id, action.plotId);
       log(state, 'buildingMoved', at);
@@ -494,8 +489,8 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
     }
     case 'collect':
       if (at < state.collectReadyAt) fail('COLLECT_COOLDOWN');
-      addResources(state, { wood: 14, stone: 9, water: 8, feed: 8 });
-      state.collectReadyAt = at + 8000;
+      addResources(state, { wood: 7, stone: 4, water: 4, feed: 4 });
+      state.collectReadyAt = at + 20000;
       state.stats.gathers += 1;
       log(state, 'resourcesCollected', at);
       recordFirstWatch(state, 'gather', at);

@@ -41,7 +41,7 @@ test('migrated established game is complete, serializable, isolated, and valid',
 test('offline production uses elapsed time, caps resources, and never rewinds the clock', () => {
   const state = fresh();
   advanceGame(state, START + 60_000);
-  assert.deepEqual(state.resources, { water: 194, feed: 192, herbs: 80, wood: 222, stone: 150 });
+  assert.deepEqual(state.resources, { water: 187, feed: 186, herbs: 80, wood: 216, stone: 150 });
   const saved = clone(state);
   advanceGame(state, START);
   assert.deepEqual(state, saved);
@@ -62,7 +62,7 @@ test('long offline periods credit only the most recent eight hours', () => {
   advanceGame(eight, START + 8 * 60 * 60_000);
   advanceGame(forty, START + 40 * 60 * 60_000);
   assert.deepEqual(forty.resources, eight.resources);
-  assert.equal(forty.resources.wood, 210 + 12 * 8 * 60);
+  assert.equal(forty.resources.wood, 210 + 6 * 8 * 60);
   assert.equal(forty.updatedAt, START + 40 * 60 * 60_000);
   const previous = clone(forty.resources);
   advanceGame(forty, forty.updatedAt);
@@ -75,7 +75,7 @@ test('building and upgrading spend once, expose scaling costs, and increase prod
   assert.equal(state.resources.wood, 140);
   assert.equal(state.resources.stone, 120);
   assert.equal(state.stats.builds, 1);
-  assert.equal(getProduction(state).stone, 9);
+  assert.equal(getProduction(state).stone, 4.5);
   assert.equal(state.quests.find((quest) => quest.id === 'first_build').progress, 1);
   assert.throws(
     () => command(state, { type: 'build', building: 'quarry', plotId: 'p7' }),
@@ -86,7 +86,7 @@ test('building and upgrading spend once, expose scaling costs, and increase prod
   assert.deepEqual(getUpgradeCost(quarry), { wood: 109, stone: 47 });
   command(state, { type: 'upgrade', id: quarry.id });
   assert.equal(quarry.level, 2);
-  assert.equal(getProduction(state).stone, 18);
+  assert.equal(getProduction(state).stone, 9);
   assert.equal(state.resources.wood, 31);
   assert.equal(validateGame(state), true);
   const before = clone(state);
@@ -116,15 +116,15 @@ test('gather cooldown uses authoritative monotonic time and rewards cannot repea
   const state = fresh();
   command(state, { type: 'collect' });
   assert.equal(state.stats.gathers, 1);
-  assert.equal(state.collectReadyAt, START + 8000);
+  assert.equal(state.collectReadyAt, START + 20000);
   assert.throws(() => command(state, { type: 'collect' }, START - 100), code('COLLECT_COOLDOWN'));
-  assert.throws(() => command(state, { type: 'collect' }, START + 7999), code('COLLECT_COOLDOWN'));
+  assert.throws(() => command(state, { type: 'collect' }, START + 19999), code('COLLECT_COOLDOWN'));
   assert.throws(
     () => command(state, { type: 'claimQuest', id: 'gatherer' }),
     code('QUEST_INCOMPLETE'),
   );
-  command(state, { type: 'collect' }, START + 8000);
-  command(state, { type: 'collect' }, START + 16_000);
+  command(state, { type: 'collect' }, START + 20000);
+  command(state, { type: 'collect' }, START + 40_000);
   command(state, { type: 'claimQuest', id: 'gatherer' });
   assert.equal(state.quests.find((quest) => quest.id === 'gatherer').claimed, true);
   const before = clone(state.resources);
@@ -258,9 +258,9 @@ test('migrated travel credits destination production only after arrival', () => 
   advanceGame(frequent, START + 30_000);
   assert.equal(state.location, 'spring');
   assert.equal(state.journey, null);
-  assert.equal(state.resources.water, 168.75);
+  assert.equal(state.resources.water, 164.375);
   assert.ok(Math.abs(state.resources.water - frequent.resources.water) < 1e-8);
-  assert.equal(getProduction(state).water, 21);
+  assert.equal(getProduction(state).water, 10.5);
   assert.throws(
     () => command(state, { type: 'travel', destination: 'spring' }),
     code('USE_CARAVAN'),

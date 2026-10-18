@@ -1,5 +1,6 @@
 import { build } from 'vite';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 import { resolve } from 'node:path';
 
 const result = await build({
@@ -48,7 +49,7 @@ const html = `<!doctype html>${legal}<html lang="tr" data-theme="light"><head><m
 @media(max-width:600px){.battle-preview{padding:14px}.preview-heading{margin-bottom:14px}.preview-controls{width:100%}.preview-controls .button{flex:1;padding-inline:10px}.preview-simulation-controls label{width:100%}.preview-simulation-controls select{width:100%}.preview-simulation-buttons{width:100%}.preview-simulation-buttons .button{flex:1}.battle-preview .map-top{padding:0 12px}.battle-preview .map-coordinates{display:none}.battle-preview .map-toolbar{padding:12px;height:auto;min-height:58px;gap:12px;flex-wrap:wrap}.battle-preview .map-toolbar>span{font-size:10px;max-width:100%}.preview-stats{gap:12px}}
 </style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
-await writeFile('preview/battle.html', html, 'utf8');
+await writePreview('preview/battle.html', html, 'utf8');
 console.log(
   `Offline battle-command sandbox: preview/battle.html (${Buffer.byteLength(html)} bytes)`,
 );

@@ -1,5 +1,6 @@
 import { build } from 'vite';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 import { resolve } from 'node:path';
 
 // Inlined visual landing preview for file://; village entry still requires a server-side account session.
@@ -33,7 +34,7 @@ const favicon =
   'data:image/svg+xml;base64,' + (await readFile('public/brand/logo-mark.svg')).toString('base64');
 const html = `<!doctype html>${legalNotice}<html lang="tr"><head><meta charset="UTF-8"><meta name="author" content="Emin DEMİRCİ"><meta name="copyright" content="Copyright © 2026 Emin DEMİRCİ; MIT License"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#203e35"><meta name="description" content="Bozkurt Obası: Ay-Yıldız Nöbeti — obanı kur, sürünü koru."><link rel="icon" type="image/svg+xml" href="${favicon}"><title>Bozkurt Obası: Ay-Yıldız Nöbeti · Önizleme</title><style>${css}</style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
-await writeFile('preview/index.html', html, 'utf8');
+await writePreview('preview/index.html', html, 'utf8');
 console.log(`Offline visual preview: preview/index.html (${Buffer.byteLength(html)} bytes)`);
 await import('./build-battle-preview.mjs');
 await import('./build-admin-preview.mjs');

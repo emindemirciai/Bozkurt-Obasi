@@ -1,5 +1,6 @@
 import { build } from 'vite';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 import { resolve } from 'node:path';
 
 const result = await build({
@@ -43,7 +44,7 @@ const html = `<!doctype html>${legal}<html lang="tr"><head><meta charset="UTF-8"
 @media(max-width:620px){.village-preview{padding:0 14px 24px}.village-preview-header{flex-wrap:wrap}.village-preview-header>div:last-child{margin-left:auto}.village-preview .scene-wrap{height:260px}}
 </style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
-await writeFile('preview/village.html', html, 'utf8');
+await writePreview('preview/village.html', html, 'utf8');
 console.log(
   `Offline village planning preview: preview/village.html (${Buffer.byteLength(html)} bytes)`,
 );

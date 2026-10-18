@@ -1,6 +1,8 @@
 import './style.css';
 import './v2.css';
 import './battle-feedback.css';
+import './village-camera.css';
+import { mountVillageCamera, villageCameraControls } from './village-camera.mjs';
 import { battleCommandStatus } from '../shared/battle-commands.mjs';
 import {
   battleCommandPanel,
@@ -10,7 +12,8 @@ import {
   battleCommandBadge,
   updateBattleCommandBadge,
 } from './battle-command-panel.mjs';
-import { PLOTS, getWallUpgradeCost } from '../shared/settlement.mjs';
+import { PLOTS, getWallUpgradeCost, demolitionQuote } from '../shared/settlement.mjs';
+import { demolitionDialog, demolitionStatus, updateDemolitionDialog } from './demolition-panel.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
 import { adventurePartySuggestions } from './adventure-party.mjs';
 import {
@@ -98,10 +101,15 @@ let mode = 'local',
 let polling = null,
   sessionGeneration = 0,
   renderedSignature = '';
+let villageCamera = null,
+  villageCameraState = {};
 let plannedBuilding = 'quarry';
 let herdAmount = 1;
 let selectedPlot = '',
   movingId = '';
+let demolitionSelection = null,
+  demolitionError = '';
+const demolitionContext = () => ({ t, language, busy, error: demolitionError });
 let adventureSelection = {
   kind: 'expedition',
   plan: 'standard',
@@ -135,11 +143,14 @@ const escape = (value) =>
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
 const number = (value) => Math.floor(value).toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US');
+const resourceNumber = (value) =>
+  value.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', { maximumFractionDigits: 3 });
 const roleName = (role) => t(role === 'healer' ? 'healerPath' : role);
 const logLabels = {
   villageFounded: 'noActivity',
   buildingBuilt: 'logBuilt',
   buildingUpgraded: 'logUpgraded',
+  buildingDemolished: 'logDemolished',
   resourcesCollected: 'logGathered',
   battleStarted: 'logBattle',
   battleWon: 'logWon',
@@ -172,14 +183,46 @@ function renderNotice() {
     item.classList.toggle('show', Boolean(notice) && Date.now() < noticeUntil);
   }
 }
-function costView(cost) {
+let costSequence = 0;
+function costHint(key, required) {
+  const format = (value) =>
+    value.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', { maximumFractionDigits: 3 });
+  return (
+    t(key) +
+    ' · ' +
+    t('buildingCostRequired') +
+    ': ' +
+    format(required) +
+    ' · ' +
+    t('buildingCostAvailable') +
+    ': ' +
+    format(state.resources[key])
+  );
+}
+function costView(cost, { focusable = true } = {}) {
   return `<span class="cost">${Object.entries(cost)
-    .filter(([, v]) => v > 0)
-    .map(
-      ([key, value]) =>
-        `<span class="${state.resources[key] < value ? 'short' : ''}">${icon(key, 14)} ${number(value)}</span>`,
-    )
+    .filter(([, value]) => value > 0)
+    .map(([key, value]) => {
+      const id = 'resource-cost-' + costSequence++;
+      const hint = escape(costHint(key, value));
+      return `<span id="${id}" role="group" class="resource-cost ${state.resources[key] < value ? 'short' : ''}" data-cost-resource="${key}" data-cost-required="${value}" ${focusable ? 'tabindex="0"' : ''} aria-label="${hint}" aria-describedby="${id}-tooltip" title="${hint}">${icon(key, 14)}<span class="cost-resource-name">${t(key)}</span><b>${number(value)}</b><span id="${id}-tooltip" class="cost-tooltip" role="tooltip"><strong>${t(key)}</strong><span>${t('buildingCostRequired')}: ${number(value)}</span><span data-cost-available>${t('buildingCostAvailable')}: ${state.resources[key].toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', { maximumFractionDigits: 3 })}</span></span></span>`;
+    })
     .join('')}</span>`;
+}
+function updateCostHints() {
+  for (const node of root.querySelectorAll('[data-cost-resource]')) {
+    const key = node.dataset.costResource,
+      required = Number(node.dataset.costRequired);
+    node.setAttribute('aria-label', costHint(key, required));
+    node.title = costHint(key, required);
+    node.classList.toggle('short', state.resources[key] < required);
+    node.querySelector('[data-cost-available]').textContent =
+      t('buildingCostAvailable') +
+      ': ' +
+      state.resources[key].toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', {
+        maximumFractionDigits: 3,
+      });
+  }
 }
 function affordable(cost) {
   return Object.entries(cost).every(([key, value]) => state.resources[key] >= value);
@@ -228,7 +271,7 @@ function identifyControls() {
 }
 
 function navigate(next) {
-  if (busy && modal === 'recovery') return;
+  if (busy && ['recovery', 'demolition'].includes(modal)) return;
   if (next !== 'home' && !GAME_VIEWS.has(next)) return;
   if (next !== 'home' && (!auth.authenticated || mode !== 'online')) {
     toast('signInRequired');
@@ -236,7 +279,11 @@ function navigate(next) {
   }
   if (next === 'friends') void loadFriends();
   view = next;
+  demolitionSelection = null;
+  demolitionError = '';
   zoom = 1;
+  villageCamera?.reset();
+  villageCameraState = { ...villageCameraState, zoom: 1, centerX: 720, centerY: 490 };
   modal = '';
   const target = next === 'home' ? `${location.pathname}${location.search}` : `#${next}`;
   history.pushState(null, '', target);
@@ -322,6 +369,9 @@ async function refreshGoogleAuth() {
 }
 
 function denyGameAccess() {
+  villageCamera?.destroy();
+  villageCamera = null;
+  villageCameraState = {};
   analytics.reset();
   sessionGeneration++;
   polling = null;
@@ -330,6 +380,8 @@ function denyGameAccess() {
   modal = '';
   plannedBuilding = 'quarry';
   selectedPlot = movingId = '';
+  demolitionSelection = null;
+  demolitionError = '';
   adventureSelection = {
     kind: 'expedition',
     plan: 'standard',
@@ -379,9 +431,13 @@ async function initGoogleAuth() {
 }
 
 function render(restoreFocus, preservePlanning = false) {
+  costSequence = 0;
   const active = document.activeElement;
-  const oldScene = root.querySelector('.scene-wrap:has(.settlement-scene)');
-  const sceneScroll = oldScene ? [oldScene.scrollLeft, oldScene.scrollTop] : null;
+  if (villageCamera) {
+    villageCameraState = villageCamera.getState();
+    villageCamera.destroy();
+    villageCamera = null;
+  }
   const focusId = restoreFocus || active?.id;
   const textSelection = active?.matches('textarea, input[type=text]')
     ? [active.selectionStart, active.selectionEnd]
@@ -421,17 +477,30 @@ function render(restoreFocus, preservePlanning = false) {
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
     <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
-    <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${number(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
+    <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${resourceNumber(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
     ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : view === 'friends' ? friendsView({ t, escape, number, button, data: friendsData, user: auth.user, loaded: friendsLoaded, busy, draft: friendsDraft }) + socialPanel({ t, escape, data: friendsData, conversation, draft: friendsDraft, busy, language }) : updatesView()}
     <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="${privacyHref}">${t('privacyPolicy')}</a> · <a href="${termsHref}">${t('termsOfUse')}</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
-  if (sceneScroll) {
-    const scroller = root.querySelector('.scene-wrap:has(.settlement-scene)');
-    if (scroller) {
-      scroller.scrollLeft = sceneScroll[0];
-      scroller.scrollTop = sceneScroll[1];
-    }
-  }
+  villageCamera = mountVillageCamera(root.querySelector('.scene-wrap:has(.settlement-scene)'), {
+    saved: villageCameraState,
+    t,
+    onChange: (next) => {
+      villageCameraState = next;
+      const badge = root.querySelector('.page-heading .weather');
+      if (badge && view === 'village') {
+        badge.title = t('villageWeatherLabel');
+        const html =
+          icon(next.weather === 'rain' ? 'water' : 'sun', 29) +
+          '<span>' +
+          t(next.weather === 'rain' ? 'villageRain' : 'villageClear') +
+          '<small>' +
+          t(state.location) +
+          '</small></span>';
+        if (badge.innerHTML !== html) badge.innerHTML = html;
+      }
+    },
+    canInteract: () => !modal && !busy,
+  });
   if (previousPlanning) {
     root.querySelector('#economy-panel')?.replaceWith(previousPlanning);
     updateEconomyPanel(root, state, plannedBuilding, economyContext());
@@ -461,6 +530,7 @@ function focusDialog() {
   const dialog = document.querySelector('[role="dialog"]');
   if (dialog && !dialog.contains(document.activeElement))
     (
+      dialog.querySelector('#demolition-cancel:not(:disabled)') ||
       dialog.querySelector('[data-account-field="email"]:not([readonly])') ||
       dialog.querySelector('[data-recovery-field="email"]:not([readonly])') ||
       dialog.querySelector('#recovery-code') ||
@@ -483,6 +553,9 @@ function clearRecoveryDraft() {
 }
 
 function closeDialog() {
+  if (busy && modal === 'demolition') return;
+  demolitionSelection = null;
+  demolitionError = '';
   const opener = accountOpener;
   accountOpener = '';
   accountRequest++;
@@ -495,7 +568,7 @@ function closeDialog() {
 
 function playView() {
   const isBattle = view === 'battle';
-  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}${isBattle ? battleCommandBadge(state, { t }) : ''}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div><div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div><div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div>${isBattle ? battleCommandQuickbar(state, { t, busy }) : ''}</section>
+  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}${isBattle ? battleCommandBadge(state, { t }) : ''}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div>${isBattle ? `<div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div>` : villageCameraControls({ t })}<div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : button(icon('plus', 17) + `<span data-collect-label>${t('collect')}</span>`, 'collect', 'button primary', Date.now() < state.collectReadyAt || busy, 'id="collect-button"')}</div>${isBattle ? battleCommandQuickbar(state, { t, busy }) : ''}</section>
     <aside class="overview">${isBattle ? battlePanel() : villagePanel()}</aside></div>
     ${isBattle ? battleCommandPanel(state, { t, busy }) + battleRecovery() : buildingList() + battleRecovery() + economyPanel(state, plannedBuilding, economyContext())}`;
 }
@@ -538,7 +611,7 @@ function followFirstWatch(id) {
 function villagePanel() {
   const b = state.buildings.find((b) => b.id === selected) || state.buildings[0];
   if (!b)
-    return `<section class="detail-card"><h2>${t('emptyVillage')}</h2><p class="empty-village-hint">${t('emptyVillageText')}</p></section>${firstStepsView()}`;
+    return `<section class="detail-card"><h2 id="empty-village-title" tabindex="-1">${t('emptyVillage')}</h2><p class="empty-village-hint">${t('emptyVillageText')}</p></section>${firstStepsView()}`;
   const def = BUILDINGS.find((d) => d.id === b.type),
     cost = getUpgradeCost(b);
   return `<section class="detail-card"><div class="section-label">${t('villageOverview')}${icon('sun', 16)}</div><div class="selected-building-art">${miniBuilding(b.type, b.level)}</div><div class="building-detail-title"><h2>${t(b.type)}</h2><span>${t('level')} ${b.level}</span></div><p class="muted">${t(`${b.type}Desc`)}</p><div class="detail-stats">${
@@ -546,12 +619,12 @@ function villagePanel() {
       .filter(([, v]) => v > 0)
       .map(
         ([key, rate]) =>
-          `<div><span>${icon(key, 15)} ${t('production')}</span><strong>+${rate * b.level} ${t('perMinute')}</strong></div>`,
+          `<div><span>${icon(key, 15)} ${t('production')}</span><strong>+${resourceNumber(getProduction({ ...state, buildings: [b] })[key])} ${t('perMinute')}</strong></div>`,
       )
       .join('') ||
     `<div><span>${t('capacity')}</span><strong>${number(state.capacity)}</strong></div>`
   }</div>${b.level < 5 ? `<div class="upgrade-row">${costView(cost)}${button(t('upgrade') + icon('arrow', 15), 'upgrade', 'button outline', !affordable(cost) || busy, `data-id="${b.id}"`)}</div>` : `<div class="completed">${icon('check', 16)}${t('maxLevel')}</div>`}</section>
-    ${button(t('moveBuilding'), 'moveBuilding', 'button outline move-building', busy || state.battle.status === 'active', `data-id="${b.id}"`)}${firstStepsView()}
+    <div class="building-layout-actions">${button(t('moveBuilding'), 'moveBuilding', 'button outline move-building', busy || state.battle.status === 'active', `data-id="${b.id}"`)}${button(t('removeBuilding'), 'openDemolition', 'button outline remove-building', busy, `id="demolish-building-button" data-id="${b.id}"`)}</div>${firstStepsView()}
     <section class="activity-card"><h3>${t('activity')}<span class="pulse"></span></h3>${state.log
       .slice(-3)
       .reverse()
@@ -563,10 +636,10 @@ function villagePanel() {
 }
 
 function buildingList() {
-  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p></div><span class="subtle-count">${state.buildings.length} / ${PLOTS.length}</span></div><div class="buildings-grid">${BUILDINGS.map(
+  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p><p class="building-plot-hint">${t('buildingPlotHint')}</p></div><span class="subtle-count">${state.buildings.length} / ${PLOTS.length}</span></div><div class="buildings-grid">${BUILDINGS.map(
     (def) => {
       const owned = state.buildings.filter((b) => b.type === def.id);
-      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)} · ${owned.length}/${def.maxCount}</h3><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + (PLOTS.findIndex((p) => p.x === b.x && p.y === b.y) + 1), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom">${costView(def.cost)}${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active', `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
+      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)}</h3><p class="building-owned-count">${t('buildingOwnedCount')}: ${owned.length} / ${def.maxCount}</p><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + t('plot') + ' ' + (PLOTS.findIndex((p) => p.x === b.x && p.y === b.y) + 1), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom"><div class="building-cost-group"><span class="building-cost-caption">${t('buildingConstructionCost')}</span>${costView(def.cost)}</div>${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active', `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
     },
   ).join('')}</div></section>`;
 }
@@ -633,7 +706,7 @@ function refreshBattleView() {
 }
 
 function battleRecovery() {
-  return `<div class="recovery-bar"><div><h3>${t('herd')}</h3><p>${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}</p></div><div class="recovery-actions">${button(icon('herbs', 18) + t('healHerd') + costView({ herbs: 1 }), 'healHerd', 'button outline', state.battle.status === 'active' || busy)}${button(icon('heart', 18) + t('rest') + costView({ water: 25, feed: 30 }), 'rest', 'button outline', state.battle.status === 'active' || busy)}</div></div>${herdPanel(state, herdAmount, economyContext())}`;
+  return `<div class="recovery-bar"><div><h3>${t('herd')}</h3><p>${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}</p></div><div class="recovery-actions">${button(icon('herbs', 18) + t('healHerd') + costView({ herbs: 1 }, { focusable: false }), 'healHerd', 'button outline', state.battle.status === 'active' || busy)}${button(icon('heart', 18) + t('rest') + costView({ water: 25, feed: 30 }, { focusable: false }), 'rest', 'button outline', state.battle.status === 'active' || busy)}</div></div>${herdPanel(state, herdAmount, economyContext())}`;
 }
 
 function wolvesView() {
@@ -728,6 +801,8 @@ function accountFormView() {
 
 function modalView() {
   if (!modal) return '';
+  if (modal === 'demolition' && demolitionSelection)
+    return demolitionDialog(state, demolitionSelection, demolitionContext());
   if (modal === 'placement') return placementDialog(state, { plotId: selectedPlot, t, busy });
   if (['login', 'register', 'password'].includes(modal)) return accountFormView();
   if (modal === 'recovery')
@@ -1343,6 +1418,10 @@ function reportError(error) {
     INVALID_PLOT: 'choosePlot',
     PLOT_OCCUPIED: 'plotOccupied',
     BUILDING_LIMIT: 'buildingLimit',
+    BUILDING_CHANGED: 'demolitionChanged',
+    INVALID_BUILDING: 'demolitionInvalid',
+    INVALID_DEMOLITION_TARGET: 'demolitionChanged',
+    DEMOLITION_STORAGE_FULL: 'demolition_DEMOLITION_STORAGE_FULL',
     WOLF_BUSY: 'wolfBusy',
     INVALID_PARTY: 'invalidParty',
     PARTY_TOO_SMALL: 'partyTooSmall',
@@ -1382,8 +1461,12 @@ async function command(action) {
   // Keep the active battlefield and its animation nodes while an order awaits the server.
   const updateCombat = () =>
     action.type === 'battleCommand' && view === 'battle' && !modal && refreshBattleView();
+  const demolishing = action.type === 'demolishBuilding';
   busy = true;
-  if (!updateCombat()) render();
+  if (demolishing) {
+    updateDemolitionDialog(root, state, demolitionSelection, demolitionContext());
+    root.querySelector('#demolition-dialog')?.focus({ preventScroll: true });
+  } else if (!updateCombat()) render();
   try {
     // A click during polling waits for its revision instead of being dropped or sent stale.
     if (polling) await polling;
@@ -1396,12 +1479,41 @@ async function command(action) {
       modal = '';
     }
     if (action.type === 'moveBuilding') movingId = '';
+    if (demolishing) {
+      selected = state.buildings[0]?.id || '';
+      selectedPlot = movingId = '';
+      modal = '';
+      demolitionSelection = null;
+      demolitionError = '';
+      accountOpener = '';
+    }
     toast(logLabels[state.log.at(-1)?.key] || 'actionDone');
   } catch (error) {
+    if (demolishing) {
+      const code = String(error.code || error.message).toUpperCase();
+      demolitionError =
+        {
+          STALE_REVISION: 'demolitionStale',
+          BUILDING_CHANGED: 'demolitionChanged',
+          INVALID_BUILDING: 'demolitionInvalid',
+          INVALID_DEMOLITION_TARGET: 'demolitionChanged',
+          DEMOLITION_STORAGE_FULL: 'demolition_DEMOLITION_STORAGE_FULL',
+          BATTLE_ACTIVE: 'demolition_BATTLE_ACTIVE',
+          JOURNEY_ACTIVE: 'demolition_JOURNEY_ACTIVE',
+        }[code] || 'demolitionFailed';
+    }
     reportError(error);
   } finally {
     busy = false;
-    if (!updateCombat()) render(focusId);
+    if (demolishing && !succeeded && modal === 'demolition' && demolitionSelection) {
+      updateDemolitionDialog(root, state, demolitionSelection, demolitionContext());
+      if (
+        document.activeElement === root.querySelector('#demolition-dialog') ||
+        document.activeElement === document.body
+      )
+        root.querySelector('#demolition-cancel')?.focus({ preventScroll: true });
+      else focusDialog();
+    } else if (!updateCombat()) render(focusId);
     else if (
       generation === sessionGeneration &&
       focusId?.startsWith('battle-command-') &&
@@ -1422,6 +1534,11 @@ async function command(action) {
         target.focus({ preventScroll: true });
       }
     }
+    if (succeeded && generation === sessionGeneration && demolishing) {
+      (root.querySelector('[data-building]') || root.querySelector('#empty-village-title'))?.focus({
+        preventScroll: true,
+      });
+    }
     if (succeeded && generation === sessionGeneration && action.type === 'claimFirstWatch') {
       const next = firstWatchProgress(state).current;
       const target =
@@ -1439,10 +1556,18 @@ async function command(action) {
 }
 
 root.addEventListener('click', async (event) => {
+  if (event.target.matches('.modal-backdrop') && modal === 'demolition') {
+    closeDialog();
+    return;
+  }
   const target = event.target.closest(
     'button,[data-building],[data-plot],[data-wolf],a.brand-mark',
   );
   if (!target || target.disabled) return;
+  if (modal === 'demolition' && (busy || !target.closest('#demolition-dialog'))) {
+    event.preventDefault();
+    return;
+  }
   if (busy && modal === 'recovery' && !['language', 'theme'].includes(target.dataset.action)) {
     event.preventDefault();
     return;
@@ -1491,6 +1616,33 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const a = target.dataset.action;
+  if (a === 'openDemolition') {
+    if (busy) return;
+    try {
+      const quote = demolitionQuote(state, target.dataset.id);
+      demolitionSelection = { id: target.dataset.id, expected: { ...quote.expected }, quote };
+      demolitionError = '';
+      accountOpener = target.id;
+      modal = 'demolition';
+      render();
+    } catch (error) {
+      reportError(error);
+    }
+    return;
+  }
+  if (a === 'confirmDemolition') {
+    if (busy || modal !== 'demolition' || !demolitionSelection) return;
+    if (!demolitionStatus(state, demolitionSelection).ready) {
+      updateDemolitionDialog(root, state, demolitionSelection, demolitionContext());
+      return;
+    }
+    await command({
+      type: 'demolishBuilding',
+      id: demolitionSelection.id,
+      expected: { ...demolitionSelection.expected },
+    });
+    return;
+  }
   if (a === 'placeBuilding') {
     await command({
       type: 'build',
@@ -1792,12 +1944,22 @@ root.addEventListener('click', async (event) => {
 
 root.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && modal) {
-    if (busy && ['login', 'register', 'password', 'account', 'verify', 'recovery'].includes(modal))
+    if (
+      busy &&
+      ['login', 'register', 'password', 'account', 'verify', 'recovery', 'demolition'].includes(
+        modal,
+      )
+    )
       return;
     closeDialog();
     return;
   }
   if (event.key === 'Tab' && modal) {
+    if (busy && modal === 'demolition') {
+      event.preventDefault();
+      root.querySelector('#demolition-dialog')?.focus({ preventScroll: true });
+      return;
+    }
     const focusable = [
       ...document.querySelectorAll(
         '.modal button:not(:disabled), .modal input:not(:disabled), .modal a[href], .modal [tabindex="0"]',
@@ -1839,12 +2001,15 @@ setInterval(async () => {
     if (el)
       el.innerHTML = `${number(state.resources[key])}<small> / ${number(state.capacity)}</small>`;
   }
+  updateCostHints();
   updateHerdPanel(root, state, herdAmount, economyContext());
   updateFirstWatchPanel(root, state, { t, language, busy });
   if (view === 'wolves') updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   if (view === 'world')
     updateAdventurePlanning(root, state, { t, busy, selection: adventureSelection, language });
+  if (modal === 'demolition' && demolitionSelection)
+    updateDemolitionDialog(root, state, demolitionSelection, demolitionContext());
   // Keep an open placement chooser current without replacing its focused controls.
   if (modal === 'placement') {
     for (const choice of root.querySelectorAll('[data-action="placeBuilding"]')) {
@@ -1891,7 +2056,9 @@ setInterval(async () => {
   renderNotice();
 }, 1000);
 window.addEventListener('popstate', () => {
-  if (busy && modal === 'recovery') return;
+  if (busy && ['recovery', 'demolition'].includes(modal)) return;
+  demolitionSelection = null;
+  demolitionError = '';
   clearRecoveryDraft();
   view = GAME_VIEWS.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
   modal = '';

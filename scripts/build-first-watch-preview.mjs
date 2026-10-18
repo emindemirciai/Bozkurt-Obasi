@@ -1,5 +1,6 @@
 import { build } from 'vite';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 import { resolve } from 'node:path';
 
 const result = await build({
@@ -50,7 +51,7 @@ const html = `<!doctype html>${legal}<html lang="tr"><head><meta charset="UTF-8"
 @media(max-width:620px){.first-watch-preview{padding:0 14px 24px}.first-watch-preview-header{flex-wrap:wrap}.first-watch-preview-header>div:last-child{margin-left:auto}.first-watch-preview-toolbar{gap:14px}.first-watch-preview-toolbar label{width:100%}}
 </style></head><body><div id="app"></div><script>${script}</script></body></html>`;
 await mkdir('preview', { recursive: true });
-await writeFile('preview/first-watch.html', html, 'utf8');
+await writePreview('preview/first-watch.html', html, 'utf8');
 console.log(
   `Offline First Watch story preview: preview/first-watch.html (${Buffer.byteLength(html)} bytes)`,
 );

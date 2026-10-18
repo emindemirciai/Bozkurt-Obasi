@@ -23,10 +23,10 @@ test('resource outlook uses the saved amounts, rates and order without assuming 
     RESOURCE_KEYS,
   );
   assert.deepEqual(outlook, [
-    { key: 'water', amount: 180, capacity: 500, rate: 14, isFull: false, fullInSeconds: 1372 },
-    { key: 'feed', amount: 180, capacity: 500, rate: 12, isFull: false, fullInSeconds: 1600 },
+    { key: 'water', amount: 180, capacity: 500, rate: 7, isFull: false, fullInSeconds: 2743 },
+    { key: 'feed', amount: 180, capacity: 500, rate: 6, isFull: false, fullInSeconds: 3200 },
     { key: 'herbs', amount: 80, capacity: 500, rate: 0, isFull: false, fullInSeconds: null },
-    { key: 'wood', amount: 210, capacity: 500, rate: 12, isFull: false, fullInSeconds: 1450 },
+    { key: 'wood', amount: 210, capacity: 500, rate: 6, isFull: false, fullInSeconds: 2900 },
     { key: 'stone', amount: 150, capacity: 500, rate: 0, isFull: false, fullInSeconds: null },
   ]);
 });
@@ -45,16 +45,16 @@ test('full stores have a zero ETA even without passive production and fractional
   }
   const wood = outlook.find((entry) => entry.key === 'wood');
   assert.equal(wood.isFull, false);
-  assert.equal(wood.fullInSeconds, 1);
+  assert.equal(wood.fullInSeconds, 2);
 });
 
 test('resource outlook includes the existing regional production bonuses', () => {
   const state = fresh();
   act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   for (const [location, key, rate] of [
-    ['spring', 'water', 21],
-    ['meadow', 'feed', 18],
-    ['highland', 'stone', 13.5],
+    ['spring', 'water', 10.5],
+    ['meadow', 'feed', 9],
+    ['highland', 'stone', 6.75],
   ]) {
     state.location = location;
     const resource = resourceOutlook(state).find((entry) => entry.key === key);
@@ -122,20 +122,20 @@ test('upgrade estimates use the target level, scaling cost, region bonus and slo
     required: 109,
     available: 108,
     missing: 1,
-    seconds: 5,
+    seconds: 10,
   });
   assert.deepEqual(row(plan, 'stone'), {
     key: 'stone',
     required: 47,
     available: 40,
     missing: 7,
-    seconds: 32,
+    seconds: 63,
   });
-  assert.equal(plan.waitSeconds, 32);
+  assert.equal(plan.waitSeconds, 63);
   assert.equal(plan.blocked, null);
   assert.equal(plan.affordable, false);
   state.location = 'homeland';
-  assert.equal(row(constructionPlan(state, 'quarry'), 'stone').seconds, 47);
+  assert.equal(row(constructionPlan(state, 'quarry'), 'stone').seconds, 94);
 });
 
 test('a cost above storage capacity is unobtainable despite production and takes blocker priority', () => {
@@ -165,8 +165,8 @@ test('a cost exactly at capacity remains reachable through passive production', 
   state.resources.wood = 58;
   state.resources.stone = 30;
   const plan = constructionPlan(state);
-  assert.equal(row(plan, 'wood').seconds, 60);
-  assert.equal(plan.waitSeconds, 60);
+  assert.equal(row(plan, 'wood').seconds, 120);
+  assert.equal(plan.waitSeconds, 120);
   assert.equal(plan.blocked, null);
 });
 
@@ -209,8 +209,8 @@ test('journeys allow construction and keep estimates at the current location pro
   state.resources.stone = 40;
   const plan = constructionPlan(state);
   assert.equal(plan.blocked, null);
-  assert.equal(row(plan, 'stone').seconds, 47);
-  assert.equal(resourceOutlook(state).find((entry) => entry.key === 'stone').rate, 9);
+  assert.equal(row(plan, 'stone').seconds, 94);
+  assert.equal(resourceOutlook(state).find((entry) => entry.key === 'stone').rate, 4.5);
 });
 
 test('level-five structures return a terminal plan without a fictitious next cost', () => {

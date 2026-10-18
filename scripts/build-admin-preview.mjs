@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { writePreview } from './write-preview.mjs';
 
 // Only the generated offline artifact uses these fictional, read-only responses.
 // Production admin assets and authentication never import this module.
@@ -167,5 +168,5 @@ const html = template
     '<title>Bozkurt Obası · Admin Önizleme / Preview</title>',
   );
 await mkdir('preview', { recursive: true });
-await writeFile('preview/admin.html', html, 'utf8');
+await writePreview('preview/admin.html', html, 'utf8');
 console.log(`Offline admin visual preview: preview/admin.html (${Buffer.byteLength(html)} bytes)`);

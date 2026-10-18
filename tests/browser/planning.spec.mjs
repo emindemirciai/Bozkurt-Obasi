@@ -125,7 +125,7 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   );
   expect(upgraded.state.resources.stone).toBeCloseTo(
     built.state.resources.stone +
-      ((upgraded.state.updatedAt - built.state.updatedAt) * 9) / 60_000 -
+      ((upgraded.state.updatedAt - built.state.updatedAt) * 4.5) / 60_000 -
       47,
     6,
   );
@@ -168,7 +168,7 @@ test('server production counts down and unlocks a focused plan without replacing
   const execute = page.locator('#execute-construction-plan');
   const status = page.locator('[data-economy-plan-status]');
   await expect(resource(page, 'wood').locator('[data-economy-stock]')).toHaveText('69 / 500');
-  await expect(resource(page, 'wood').locator('[data-economy-rate]')).toContainText('+12');
+  await expect(resource(page, 'wood').locator('[data-economy-rate]')).toContainText('+6');
   await expect(resource(page, 'stone').locator('[data-economy-fill-status]')).toContainText(
     'Üretim yok',
   );
@@ -177,7 +177,7 @@ test('server production counts down and unlocks a focused plan without replacing
   );
   await expect(deficit(page, 'wood').locator('.economy-deficit-missing')).toHaveText('1');
   await expect(deficit(page, 'stone').locator('.economy-deficit-missing')).toHaveText('0');
-  await expect(status).toContainText('5 sn');
+  await expect(status).toContainText('10 sn');
   await expect(execute).toBeDisabled();
   await choice.selectOption('lumber');
   await choice.selectOption('quarry');
@@ -185,10 +185,10 @@ test('server production counts down and unlocks a focused plan without replacing
   const originalExecute = await execute.elementHandle();
   await choice.focus();
   await pollVillage(page, 2100);
-  await expect(status).toContainText('3 sn');
+  await expect(status).toContainText('8 sn');
   await expect(choice).toBeFocused();
   await expect(execute).toBeDisabled();
-  await pollVillage(page, 4000);
+  await pollVillage(page, 8000);
   await expect(execute).toBeEnabled();
   await expect(status).toContainText('Kaynakların hazır');
   await expect(deficit(page, 'wood').locator('.economy-deficit-missing')).toHaveText('0');

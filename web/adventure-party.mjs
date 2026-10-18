@@ -1,5 +1,6 @@
 import {
   adventureQuote,
+  outingQuote,
   equipmentBonuses,
   grantWolfXp,
   isWolfBusy,
@@ -69,8 +70,8 @@ export function adventurePartySuggestions(state, selection) {
 }
 
 /** Predict the existing arrival transition, including fatigue before level-up healing. */
-export function adventurePartyForecast(state, selection) {
-  const quote = adventureQuote(state, selection);
+export function adventurePartyForecast(state, selection, { outing = null } = {}) {
+  const quote = outing ? outingQuote(state, outing) : adventureQuote(state, selection);
   const seen = new Set();
   const invalidIds = [];
   const duplicateIds = [];

@@ -1,7 +1,10 @@
 import '../web/style.css';
 import '../web/v2.css';
+import '../web/village-camera.css';
+import { mountVillageCamera, villageCameraControls } from '../web/village-camera.mjs';
 import { wolfPortrait, settlementControls } from '../web/v2-view.mjs';
-import { BUILDINGS } from '../shared/settlement.mjs';
+import { BUILDINGS, demolitionQuote } from '../shared/settlement.mjs';
+import { demolitionDialog } from '../web/demolition-panel.mjs';
 import { createGame } from '../shared/game.mjs';
 import { translations } from '../web/i18n.mjs';
 import { economyPanel, updateEconomyPanel } from '../web/economy-panel.mjs';
@@ -19,6 +22,22 @@ state.buildings = BUILDINGS.map((b, i) => ({
   x: 1 + (i % 3) * 2,
   y: 1 + Math.floor(i / 3) * 2,
 }));
+state.stats.builds = state.buildings.length;
+function updateCapacity() {
+  state.capacity =
+    500 +
+    state.buildings.reduce(
+      (total, building) =>
+        total +
+        (building.type === 'storage'
+          ? 250 * building.level
+          : building.type === 'hall'
+            ? 100 * (building.level - 1)
+            : 0),
+      0,
+    );
+}
+updateCapacity();
 state.walls.level = 3;
 state.herd = { count: 20, maxHp: 200, hp: 150, panic: 30 };
 state.resources.wood = 42;
@@ -26,8 +45,11 @@ state.resources.stone = 12;
 let language = 'tr',
   theme = 'light',
   plannedBuilding = 'quarry',
-  replenishAmount = 1;
+  replenishAmount = 1,
+  demolitionOpen = false;
 const root = document.querySelector('#app');
+let camera = null,
+  cameraState = {};
 const labels = {
   tr: {
     title: 'Oba planlaması',
@@ -70,7 +92,25 @@ function lock() {
     e.removeAttribute('tabindex');
   });
 }
+function exampleRemoval() {
+  const quote = demolitionQuote(state, 'building-well');
+  return demolitionDialog(
+    state,
+    { id: quote.building.id, expected: quote.expected, quote },
+    { t, language, busy: false, readOnly: true },
+  );
+}
+function closeExample() {
+  demolitionOpen = false;
+  render();
+  root.querySelector('#preview-demolition-open')?.focus({ preventScroll: true });
+}
 function render() {
+  if (camera) {
+    cameraState = camera.getState();
+    camera.destroy();
+    camera = null;
+  }
   document.documentElement.lang = language;
   document.documentElement.dataset.theme = theme;
   document.title = 'Bozkurt Obası · ' + labels[language].title;
@@ -81,11 +121,37 @@ function render() {
       <button id="theme" class="button outline">${labels[language][theme === 'light' ? 'theme' : 'light']}</button></div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${labels[language].title}</h1></div></section>
       <section class="map-card"><div class="map-top"><span class="map-title">${t('homeland')}</span><span class="map-chip">${state.buildings.length} ${t('buildingCount')}</span></div>
-        <div class="scene-wrap">${scene(state, { battle: false, zoom: 1, selected: 'building-hall', t })}</div></section>
-      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option></select></label><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}</main></div>`;
+        <div class="scene-wrap">${scene(state, { battle: false, selected: 'building-hall', t })}${villageCameraControls({ t })}</div></section>
+      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option></select></label><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
+  camera = mountVillageCamera(root.querySelector('.scene-wrap'), {
+    saved: cameraState,
+    t,
+    onChange: (next) => {
+      cameraState = next;
+    },
+    canInteract: () => !demolitionOpen,
+  });
   lock();
+  if (demolitionOpen) root.querySelector('#demolition-cancel')?.focus({ preventScroll: true });
 }
-root.addEventListener('click', (event) => {
+root.addEventListener('click', async (event) => {
+  if (event.target.closest('[data-action=fullscreen]')) {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await root.querySelector('.map-card').requestFullscreen();
+    return;
+  }
+  if (event.target.closest('#preview-demolition-open')) {
+    demolitionOpen = true;
+    render();
+    return;
+  }
+  if (
+    demolitionOpen &&
+    (event.target.closest('[data-action="close"]') || event.target.matches('.modal-backdrop'))
+  ) {
+    closeExample();
+    return;
+  }
   if (event.target.closest('#language')) {
     language = language === 'tr' ? 'en' : 'tr';
     render();
@@ -99,6 +165,7 @@ root.addEventListener('change', (event) => {
     const level = Number(event.target.value);
     state.buildings.forEach((b) => (b.level = level));
     state.walls.level = level;
+    updateCapacity();
     render();
     root.querySelector('#preview-tier').value = String(level);
     return;
@@ -113,5 +180,23 @@ root.addEventListener('change', (event) => {
   plannedBuilding = event.target.value;
   updateEconomyPanel(root, state, plannedBuilding, context());
   lock();
+});
+root.addEventListener('keydown', (event) => {
+  if (!demolitionOpen) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeExample();
+  } else if (event.key === 'Tab') {
+    const controls = [...root.querySelectorAll('#demolition-dialog button:not(:disabled)')];
+    const first = controls[0],
+      last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
 });
 render();
