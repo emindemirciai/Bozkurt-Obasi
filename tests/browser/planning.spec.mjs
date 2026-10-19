@@ -225,7 +225,7 @@ test('offline village preview keeps every plan read-only with bilingual themes a
   await page.goto(pathToFileURL(resolve('preview/village.html')).href);
   await expect(page.getByRole('heading', { name: 'Oba planlaması', level: 1 })).toBeVisible();
   await expect(page.locator('#offline-banner')).toContainText('Salt okunur');
-  await expect(page.locator('.map-chip')).toHaveText('12 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('8 yapı');
   await expect(page.locator('[data-economy-resource]')).toHaveCount(RESOURCE_KEYS.length);
   const stock = await page.locator('[data-economy-stock]').allTextContents();
   const choice = page.locator('#construction-plan');

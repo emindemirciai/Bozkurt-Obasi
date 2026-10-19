@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+**v2.13.0:** Gerçekçi ahşap/taş/kale surları, sabit dört köşe kulesi, kapı ve nöbetçiler; sola uzanan dağ eteğinden doğan doğal ırmak. Fare tekerleği ve +/− kontrolleriyle sabit alanda yakınlaştırma. Eski yapılar, 36 parsel ve ekonomi korunur. [Güncel köy rehberi](VILLAGE-DEFENSE.md).
+
 **Yön:** Bozkurt Obası: Ay-Yıldız Nöbeti'ni 3B model üretimine bağımlı olmayan, tarayıcıda çalışan bir köy kurma ve sürü savunma oyunu olarak geliştirmek. Köy üretimi ve gelişimi kalıcı ilerlemeyi taşır; savaşlarda bozkurtların hilali ve sürünün yıldızı oyunun görsel kimliğini korur. Eski Unity dosyaları tarihsel kaynak olarak saklanır; web oyunu ayrı bir uygulamadır.
 
 **v1.7.0:** İlk adımlar ve SVG kimliğine ek olarak doğrulanmış profiller, arkadaşlık ve maden aktarımı kullanılabilir. Görselli e-posta koduyla şifre kurtarma, bütün cihaz oturumlarını kapatıp aynı köyü korur. Tam Drive yedeği teslim standardıdır.
@@ -44,6 +46,8 @@ Sıradaki doğrulama: gerçek oyuncularda İlk Nöbet, kaynak dengesi ve sefer k
 Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek test sonuçları, kaynak satır sayısı, tek dosyalık görsel önizleme ve temiz kaynak ZIP'i ile bütün yerel dosyaları içeren doğrulanmış Drive ZIP'i. Canlı sunucu yedekleri ayrı tutulur. İlk hedef küçük, geri bildirim alınabilen bir web oyunu; eski Unity WP-00–WP-11 kapsamının tamamını tek sürümde taşımak değildir.
 
 ## English
+
+**v2.13.0:** Realistic timber/stone/castle walls, four fixed corner towers, a gate and sentries; a natural river rising from foothills extending left. Mouse-wheel and +/− zoom inside the fixed viewport. Existing buildings, 36 plots and economy remain. [Current village guide](VILLAGE-DEFENSE.md).
 
 **v2.12.0:** Wall Watch adds four watchtowers, corner-plot guidance, an evolving gate, two sentries and visible river/weather layers while retaining saves and free placement. [Village defenses](VILLAGE-DEFENSE.md).
 

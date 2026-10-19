@@ -1,33 +1,37 @@
-# Sur Nöbeti / Wall Watch — v2.12.0
+# Sur Nöbeti / Wall Watch — v2.13.0
 
 ## Türkçe
 
-Bey Otağı diğer bina görsellerinden yaklaşık %30 büyük bir ana yapı olarak, belirgin zemin ve ad etiketiyle gösterilir. Bu görsel vurgu arsasını, maliyetini veya savaş hesabını değiştirmez.
+Surun dört köşesindeki **dört sabit kule** yeni ve mevcut obalarda hazırdır. Yapı parsellerinin dışında, sur hattının parçasıdır; taşınmaz veya ayrı kaldırılmaz. Sur yükseltmesi kuleleri ve kapıyı birlikte geliştirir. Seviyeler 1–2 ahşap, 3–4 taş, 5 kale görünümünü kullanır. Sur, kule, açık kapı ve kapının iki yanındaki nöbetçiler gerçekçi dokulu görsellerle çizilir.
 
-Ana Yurt'ta en fazla **dört gözetleme kulesi** kurulabilir. Surun iç köşeleri arsa 1, 6, 31 ve 36'dır (`p0`, `p5`, `p30`, `p35`). Boş köşenin **+** düğmesi normal inşaat menüsünü açar ve kuleyi önerir. Bir köşede mevcut bina varsa korunur; kuleyi başka boş arsaya da kurabilirsin. Oyun yeni kuleyi otomatik yerleştirmez, taşımaz veya ücretsiz oluşturmaz.
+**36 parselin tamamı korunur.** Bu güncelleme mevcut binaları taşımaz, kaldırmaz veya ücretsiz yeni bina kaydına dönüştürmez. Köyün içine ayrıca en fazla dört gözetleme kulesi kurulabilir; bunlar malzeme isteyen normal yapılardır. Köşe arsaları 1, 6, 31 ve 36 (`p0`, `p5`, `p30`, `p35`) başka binalar için de kullanılabilir. Sabit sur kulesi bu arsaların üzerinde değildir.
 
-Her kule **100 odun + 70 taş** başlangıç maliyetine sahiptir. Dört kule sınırı sunucuda denetlenir; başarısız beşinci deneme kaynak harcamaz. Kurulu kuleyi seçerek mevcut **Yükselt**, **Binayı taşı**, **Binayı kaldır** işlemlerini kullan. Beş seviye ve üç mimari aşama vardır: seviyeler 1–2, 3–4 ve 5. Kaldırma açık onay ister, mevcut tarifelerin toplamının yarısını iade eder ve depo/kapasite kontrollerine tabidir.
+Ek gözetleme kulesi **100 odun + 70 taş** ister. Mevcut taşıma, 1–5 seviye yükseltme ve açık onayla toplam malzemenin yarısını iade ederek kaldırma kuralları geçerlidir. Savaş desteğini en yüksek ek gözetleme kulesi seviyesi belirler; kule seviyeleri toplanmaz. Sabit kuleler sur görselinin parçasıdır ve mevcut sur savunmasına ayrı bir bonus eklemez. İki insan nöbetçi de bağımsız birlik değildir.
 
-Savaş desteğini **en yüksek seviyeli kule** belirler. Dört kulenin seviyeleri toplanmaz; tek kuledeki önceki azami savunma desteği korunur. Bir kule kaldırılırsa kalanların en yükseği kullanılır. Kapının önündeki iki insan nöbetçi ve kapı görsel çevre unsurlarıdır; bağımsız eğitilebilir birlik veya ek savaş bonusu değillerdir.
+Bey Otağı diğer binalardan %28 büyük gösterilir; kaidesi, flaması ve ad etiketi ana yapıyı belirginleştirir. Tıklama alanı komşu parselleri kapatmaz.
 
-Surun ön sol bölümünde gerçek geçiş açıklığı, yaklaşma yolu, seviyeye göre ahşap/taş kapı ve sağlı sollu nöbetçiler vardır. Kapı görünümü surun 1–2 / 3–4 / 5. seviye aşamalarını izler. Köyün sağ dışında kıvrılan ırmak, şelale, köpük ve kıyı ayrıntıları bulunur. Suyun ve nöbetçilerin dekoratif katmanları bina/arsa tıklamalarını engellemez.
+Dağ eteği, üst kenarda ırmağın kaynağından sola doğru orantılı uzanır. Sağ üstteki kayalık şelale, surların sağ dışından akan doğal kıyılı ırmağı besler. Gerçekçi zemin sabit dünya koordinatlarına bağlıdır; yakınlaştırırken yapı/sur/su ilişkisi kaymaz. Dekoratif katmanlar yapı tıklamalarını engellemez.
 
-Haritanın sağ üstündeki **Açık / Yağmur** düğmesi yerel görsel hava durumunu değiştirir; bu gerçek konum hava tahmini değildir. Yağmur, bulut ve su üretimi veya savaş sonucunu etkilemez. Duraklatma su ve atmosfer hareketlerini durdurur; cihazın azaltılmış hareket tercihi de uygulanır. Yakınlaştırma aynı sabit alanda çalışır, haritanın içinde kaydırma çubuğu oluşmaz. Bu ayarlar oyun kaydını değiştirmez.
+Harita üzerindeyken **fare tekerleği** ile yakınlaş/uzaklaş; Ctrl gerekmez. Ekrandaki **+/−**, klavyedeki **+/−**, iki parmakla yakınlaştırma, yakınlaşınca sürükleme ve **Home** ile sıfırlama kullanılabilir. Klavye kontrolleri harita veya haritadaki bir denetim odaktayken çalışır. Tekerlek haritanın dışındayken sayfa normal kayar; haritanın içinde kaydırma çubuğu oluşmaz.
 
-Eski köyler, kuleler ve 36 arsalık düzen korunur. Yeni kayıt alanı, SQL geçişi, servis veya ENV gerekmez. [Çevrimdışı köy önizlemesi](../preview/village.html), gerçek çizim ve kamera bileşenlerini kullanır; hesapsız denenebilir ve kaynak harcamaz.
+**Açık / Yağmur** yerel görsel hava durumudur. Su, bulut, yağmur ve ışık üretim veya savaşı etkilemez. Duraklatma ve azaltılmış hareket tercihi animasyonları durdurur. Mevcut köy kayıtları, ekonomi, SQL ve ENV aynı kalır.
+
+[Çevrimdışı köy](../preview/village.html) · [Sur görselleri ve istemler](FORTIFICATION-ART.md) · [Dağ/ırmak görseli ve istem](VILLAGE-TERRAIN-ART.md)
 
 ## English
 
-The Chief’s Hall is an approximately 30% larger landmark with distinctive ground and name markers. This visual emphasis changes neither its plot, cost nor combat calculation.
+**Four permanent corner towers** are present in new and existing villages as part of the walls, outside the building plots. They cannot be moved or removed separately. Wall upgrades develop the towers and gate together: timber at levels 1–2, stone at 3–4 and castle at 5. The walls, towers, open gate and two flanking sentries use realistically textured artwork.
 
-The Homeland supports **up to four watchtowers**. Inner corner plots are 1, 6, 31 and 36 (`p0`, `p5`, `p30`, `p35`). An empty corner's **+** opens the regular construction menu with a tower recommendation. Existing corner buildings remain and towers may also use other free plots. Nothing is automatically placed, moved or granted for free.
+**All 36 plots remain.** This update never relocates or removes existing buildings or converts them into free building records. Up to four additional watchtowers can still be built inside the village using the normal construction rules. Inner corner plots 1, 6, 31 and 36 (`p0`, `p5`, `p30`, `p35`) also accept other buildings; permanent wall towers stand outside them.
 
-Each tower starts at **100 wood + 70 stone**. The server enforces four towers; a rejected fifth costs nothing. Select a tower to use existing upgrade, move and remove actions. Five levels use three visual tiers: 1–2, 3–4 and 5. Removal requires confirmation and refunds half the cumulative recipes, subject to existing capacity/storage guards.
+An additional watchtower costs **100 wood + 70 stone**. Existing movement, level 1–5 upgrades and confirmed demolition with a half-investment refund remain. Defense support uses the highest additional watchtower level rather than adding levels together. Permanent towers belong to the wall artwork and grant no separate combat bonus. Human sentries are not independent units.
 
-Defense support uses the **highest tower level**, rather than summing all towers. The former single-tower maximum remains. Removing a tower uses the strongest remaining one. The two human sentries and gate are visual surroundings rather than trainable units or extra combat bonuses.
+The Chief's Hall is drawn 28% larger with a distinctive foundation, standard and label. Its click target does not cover neighboring plots.
 
-A real opening, approach path, evolving wooden/stone gate and two flanking sentries occupy the front-left wall. Gate visuals follow wall tiers 1–2 / 3–4 / 5. A river curves outside the right wall, with a waterfall, foam and bank details. Decorative water/guard layers do not intercept construction targets.
+Rocky foothills extend proportionately left across the upper edge from the river source. A northeastern waterfall feeds the river along the outside of the right wall, with natural banks. Terrain stays in world coordinates so zoom preserves building, wall and river alignment. Decorative layers never intercept building clicks.
 
-Use **Clear / Rain** at the map's top right to change local visual weather; this is not a location-based forecast. Weather does not affect production or combat. Pause stops water and atmosphere animations; reduced-motion preferences also apply. Zoom remains inside the fixed viewport without internal scrollbars. Camera/weather settings do not mutate game saves.
+Use the **mouse wheel** over the map to zoom without Ctrl. On-screen **+/−**, keyboard **+/−**, touch pinch, dragging while zoomed and **Home** to reset remain available. Keyboard controls require map/control focus. Outside the map, the wheel scrolls the page normally; the map has no internal scrollbars.
 
-Existing villages, towers and all 36 plots remain. No new save fields, SQL migrations, services or environment keys. The [offline village preview](../preview/village.html) reuses the real rendering/camera components without accounts or resource spending.
+**Clear / Rain** controls local visual weather. Water, clouds, rain and sunlight do not change production or battle. Pause and reduced-motion preferences stop animation. Existing village saves, economy, SQL and environment configuration remain.
+
+[Offline village](../preview/village.html) · [Fortification artwork and prompts](FORTIFICATION-ART.md) · [Foothills/river artwork and prompt](VILLAGE-TERRAIN-ART.md)

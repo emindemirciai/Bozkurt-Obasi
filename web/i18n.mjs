@@ -1235,8 +1235,8 @@ const villageCameraTranslations = {
   tr: {
     villageCameraControls: 'Oba görünümü',
     villageCameraHelp:
-      'Oba kamerası. Artı ve eksi ile yakınlaştır; oklarla gez; Home ile görünümü sıfırla.',
-    villagePanHint: 'Yakınlaşınca sürükle · İki parmakla yakınlaştır',
+      'Oba kamerası. Fare tekerleği, artı ve eksi ile yakınlaştır; oklarla gez; Home ile görünümü sıfırla.',
+    villagePanHint: 'Tekerlek veya +/− · Sürükle · İki parmakla yakınlaştır',
     villageWeatherLabel: 'Görsel hava durumu',
     villageClear: 'Açık',
     villageRain: 'Yağmur',
@@ -1247,8 +1247,8 @@ const villageCameraTranslations = {
   en: {
     villageCameraControls: 'Village view',
     villageCameraHelp:
-      'Village camera. Use plus and minus to zoom; arrows to pan; Home to reset the view.',
-    villagePanHint: 'Drag when zoomed · Pinch to zoom',
+      'Village camera. Use the mouse wheel, plus and minus to zoom; arrows to pan; Home to reset the view.',
+    villagePanHint: 'Wheel or +/− · Drag · Pinch to zoom',
     villageWeatherLabel: 'Visual weather',
     villageClear: 'Clear',
     villageRain: 'Rain',

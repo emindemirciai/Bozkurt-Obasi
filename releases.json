@@ -1,6 +1,24 @@
 {
-  "version": "2.12.0",
+  "version": "2.13.0",
   "releases": [
+    {
+      "version": "2.13.0",
+      "date": "2026-10-19",
+      "changes": {
+        "tr": [
+          "Sur, kapı ve iki nöbetçi gerçekçi malzeme dokularıyla yenilendi; ahşap, taş ve kale aşamalarında görünümleri gelişir.",
+          "Surun dört köşesinde kalıcı kuleler hazır bulunur ve surla birlikte gelişir; 36 yapı arsası ile mevcut binalar, ek gözetleme kuleleri ve kayıtlar korunur.",
+          "Irmak kayalıklı dağ eteğinden doğar; dağ eteği üst kenarda sola uzanır, doğal kıyılar ve şelale yerleşimin ölçeğiyle uyumludur.",
+          "Köy kamerası fare tekerleği, ekrandaki artı/eksi ve klavyedeki artı/eksiyle yakınlaşır; sabit görünüm, dokunmatik kontroller ve azaltılmış hareket desteği korunur."
+        ],
+        "en": [
+          "Walls, the gate and two sentries now use realistic material textures, evolving through timber, stone and castle stages.",
+          "Four permanent corner towers are present with the walls and develop alongside them; all 36 building plots, existing buildings, additional watchtowers and saves remain.",
+          "The river rises at rocky mountain foothills extending left across the upper edge; natural banks and a waterfall match the settlement scale.",
+          "The village camera zooms with the mouse wheel, on-screen plus/minus and keyboard plus/minus while retaining the fixed viewport, touch controls and reduced-motion support."
+        ]
+      }
+    },
     {
       "version": "2.12.0",
       "date": "2026-10-19",

@@ -4,6 +4,22 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.13.0 — 2026-10-19
+
+**TR**
+
+- Sur, kapı ve iki nöbetçi gerçekçi malzeme dokularıyla yenilendi; ahşap, taş ve kale aşamalarında görünümleri gelişir.
+- Surun dört köşesinde kalıcı kuleler hazır bulunur ve surla birlikte gelişir; 36 yapı arsası ile mevcut binalar, ek gözetleme kuleleri ve kayıtlar korunur.
+- Irmak kayalıklı dağ eteğinden doğar; dağ eteği üst kenarda sola uzanır, doğal kıyılar ve şelale yerleşimin ölçeğiyle uyumludur.
+- Köy kamerası fare tekerleği, ekrandaki artı/eksi ve klavyedeki artı/eksiyle yakınlaşır; sabit görünüm, dokunmatik kontroller ve azaltılmış hareket desteği korunur.
+
+**EN**
+
+- Walls, the gate and two sentries now use realistic material textures, evolving through timber, stone and castle stages.
+- Four permanent corner towers are present with the walls and develop alongside them; all 36 building plots, existing buildings, additional watchtowers and saves remain.
+- The river rises at rocky mountain foothills extending left across the upper edge; natural banks and a waterfall match the settlement scale.
+- The village camera zooms with the mouse wheel, on-screen plus/minus and keyboard plus/minus while retaining the fixed viewport, touch controls and reduced-motion support.
+
 ## v2.12.0 — 2026-10-19
 
 **TR**

@@ -2,7 +2,7 @@
 
 ## Türkçe
 
-**v2.12.0:** Dört kule, gelişen kapı, iki nöbetçi ve belirgin ırmak/hava için [Sur Nöbeti](VILLAGE-DEFENSE.md).
+**v2.13.0:** Dört sabit sur kulesi, gerçekçi kapı/nöbetçiler ve dağ eteğinden doğan ırmak için [Sur Nöbeti](VILLAGE-DEFENSE.md).
 
 **v2.11.0 güncellemesi:** Yeni keşif ve sevkiyatlar bölgeye göre 6/8/10/12 saat sürer. XP/hammadde ve izcilik etkisi için [uzun sefer rehberi](LONG-JOURNEYS.md). Eski seferler aynı süre ve ödülle biter.
 
@@ -10,7 +10,7 @@
 
 Yeni hesapların obası 36 boş parsel ve seviye 1 tahta çitle başlar. Başlangıç stoğu 450 odun, 350 taş, 180 su, 180 yem ve 80 ottur. **+** alanını seç, açılan menüden binayı seç: kaynak yalnızca bu son seçimde harcanır ve yapı seçtiğin parselde oluşur. Harita sabit alana sığar; kendi içinde kaydırma çubuğu yoktur. Yakınlaştırma düğmeleri ve yakın görünümde sürükleme kullanılabilir.
 
-Oduncu, taş ocağı, kuyu, otlak ve şifa otağının her birinden en fazla altı tane yapılabilir. Bey otağı, depo ve sürü sığınağı birer tanedir; gözetleme kulesi en fazla dört tanedir. Boş köşe arsaları kule önerir; serbest yerleşim korunur. En yüksek kule seviyesi savunma desteğini belirler. [Sur Nöbeti](VILLAGE-DEFENSE.md). Kurulu binayı seçip **Binayı taşı** ile boş parsele ücretsiz taşı. **Yükselt** aynı binanın seviyesini artırır. Binalar 1–2, 3–4 ve 5. seviyelerde üç ayrı görsel kullanır. Sur beş seviyede tahta çitten güçlendirilmiş çite, taş sura ve kale suruna gelişir. Aktif çatışmada inşaat ve taşıma kapalıdır.
+Oduncu, taş ocağı, kuyu, otlak ve şifa otağının her birinden en fazla altı tane yapılabilir. Bey otağı, depo ve sürü sığınağı birer tanedir; ek gözetleme kulesi en fazla dört tanedir. Surun dört köşesinde ayrıca surla gelişen, parsel kullanmayan sabit kuleler vardır. Boş köşe arsaları ek kule önerir; serbest yerleşim korunur. En yüksek ek gözetleme kulesi seviyesi savunma desteğini belirler. [Sur Nöbeti](VILLAGE-DEFENSE.md). Kurulu binayı seçip **Binayı taşı** ile boş parsele ücretsiz taşı. **Yükselt** aynı binanın seviyesini artırır. Binalar 1–2, 3–4 ve 5. seviyelerde üç ayrı görsel kullanır. Sur beş seviyede tahta çitten güçlendirilmiş çite, taş sura ve kale suruna gelişir. Aktif çatışmada inşaat ve taşıma kapalıdır.
 
 ### Geçitte pusu
 
@@ -48,7 +48,7 @@ Yeni ortam değişkeni veya servis gerekmez. Dokploy'da mevcut veri volume'ları
 
 ## English
 
-**v2.12.0:** See [Wall Watch](VILLAGE-DEFENSE.md) for four towers, evolving gate, two sentries and visible river/weather.
+**v2.13.0:** See [Wall Watch](VILLAGE-DEFENSE.md) for four fixed wall towers, realistic gate/sentries and a river rising at mountain foothills.
 
 **v2.11.0 update:** New exploration and escorts take 6/8/10/12 hours by destination. See [long journeys](LONG-JOURNEYS.md) for XP/materials and scouting. Existing departures retain deadlines/rewards.
 
@@ -56,7 +56,7 @@ Yeni ortam değişkeni veya servis gerekmez. Dokploy'da mevcut veri volume'ları
 
 New accounts start with 36 empty plots, level-one timber fencing and 450 wood, 350 stone, 180 water, 180 feed and 80 herbs. Choose a map **+**, then a building. Only the final choice spends resources and it uses that exact plot. The map fits a fixed viewport without inner scrollbars; use zoom controls and drag while zoomed.
 
-Each producer type (lumber, quarry, well, pasture, healer) supports six copies. Hall, warehouse and shelter are unique; up to four watchtowers can be built. Empty inner corner plots recommend towers while free placement remains. The highest tower level determines defense support. [Wall Watch](VILLAGE-DEFENSE.md). Select a placed building and **Move building** to relocate it freely; upgrades improve that instance. Buildings have five levels and three visual tiers (1–2, 3–4, 5). Walls progress from timber fencing through reinforced palisades and stone to castle ramparts. Active combat blocks construction and relocation.
+Each producer type (lumber, quarry, well, pasture, healer) supports six copies. Hall, warehouse and shelter are unique; up to four additional watchtowers can be built. Four permanent wall-corner towers evolve with the walls and occupy no plots. Empty inner corner plots recommend additional towers while free placement remains. The highest additional watchtower level determines defense support. [Wall Watch](VILLAGE-DEFENSE.md). Select a placed building and **Move building** to relocate it freely; upgrades improve that instance. Buildings have five levels and three visual tiers (1–2, 3–4, 5). Walls progress from timber fencing through reinforced palisades and stone to castle ramparts. Active combat blocks construction and relocation.
 
 ### Trail, ambush and formations
 

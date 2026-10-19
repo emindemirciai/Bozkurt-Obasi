@@ -31,6 +31,7 @@ import {
 const atlas = new URL('./assets/v2/building-tiers.webp', import.meta.url).href;
 const portraits = new URL('./assets/v2/wolf-roles.webp', import.meta.url).href;
 export const terrainUrl = new URL('./assets/v2/village-terrain.webp', import.meta.url).href;
+const riverTerrainUrl = new URL('./assets/v2/village-terrain-river.webp', import.meta.url).href;
 export const battlefieldUrl = new URL('./assets/v2/battlefield.webp', import.meta.url).href;
 const escape = (value) =>
   String(value).replace(
@@ -87,14 +88,14 @@ export function settlementScene(state, { t, zoom = 1, selected = '' }) {
     })
     .join('');
 
-  return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/>${villageAtmosphere()}${villageFortifications(state)}${plots}${buildings}</svg>`;
+  return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/><defs><linearGradient id="village-terrain-edge-x"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="village-terrain-edge-y" x2="0" y2="1"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><mask id="village-terrain-feather-x" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-x)"/></mask><mask id="village-terrain-feather-y" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-y)"/></mask></defs><g mask="url(#village-terrain-feather-x)"><image mask="url(#village-terrain-feather-y)" class="village-terrain-detail" data-river-source="mountain-foothills" href="${riverTerrainUrl}" width="1440" height="980" preserveAspectRatio="none" pointer-events="none"/></g>${villageAtmosphere()}${villageFortifications(state)}${plots}${buildings}</svg>`;
 }
 export function settlementControls(state, { t, busy, movingId }) {
   const cost = getWallUpgradeCost(state.walls);
   const towers = state.buildings.filter((building) => building.type === 'watchtower').length;
   const towerLimit = BUILDINGS.find((building) => building.id === 'watchtower').maxCount;
   const count = t('cornerTowerCount').replace('{count}', towers).replace('{max}', towerLimit);
-  return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}<div class="fortification-overview"><h4>${t('cornerFortificationsTitle')} · ${escape(count)}</h4><p>${t('cornerFortificationsHint')}</p><p>${t('cornerTowerBonusHint')}</p><p>${t('villageGateHint')}</p></div></section>`;
+  return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}<div class="fortification-overview"><h4>${t('cornerFortificationsTitle')}</h4><p>${t('cornerFortificationsHint')}</p><p>${escape(count)}</p><p>${t('cornerTowerBonusHint')}</p><p>${t('villageGateHint')}</p></div></section>`;
 }
 export function placementDialog(state, { plotId, t, busy }) {
   const plot = PLOTS.find((p) => p.id === plotId);

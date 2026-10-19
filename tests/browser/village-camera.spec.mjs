@@ -89,6 +89,42 @@ test('village zoom changes actual parcel geometry inside the same fixed viewport
   expect(actions).toEqual([]);
 });
 
+test('plain mouse wheel and keyboard plus minus zoom the village without scrolling the page or submitting actions', async ({
+  page,
+}) => {
+  const actions = await village(page);
+  const frame = viewport(page);
+  await frame.scrollIntoViewIfNeeded();
+  const box = await frame.boundingBox();
+  const scrollY = await page.evaluate(() => scrollY);
+  const original = await terrain(page).getAttribute('viewBox');
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await page.mouse.wheel(0, -160);
+  await expect
+    .poll(async () => Number(await frame.getAttribute('data-camera-zoom')))
+    .toBeGreaterThan(1);
+  expect(await terrain(page).getAttribute('viewBox')).not.toBe(original);
+  expect(await page.evaluate(() => scrollY)).toBe(scrollY);
+  await page.mouse.wheel(0, 10000);
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1');
+  expect(await page.evaluate(() => scrollY)).toBe(scrollY);
+  await page.mouse.wheel(0, 160);
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1');
+  expect(await page.evaluate(() => scrollY)).toBe(scrollY);
+  await page.locator('[data-action="zoomIn"]').focus();
+  await page.keyboard.press('+');
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1.25');
+  await page.keyboard.press('-');
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1');
+  await plot(page, 'p14').focus();
+  await page.keyboard.press('=');
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1.25');
+  await page.keyboard.press('-');
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(actions).toEqual([]);
+});
+
 test('pointer dragging pans the zoomed village without opening a plot and keyboard focus brings distant plots into reach', async ({
   page,
 }) => {
@@ -235,10 +271,24 @@ test('clear weather visibly includes a river, waterfall and clouds without inter
   await expect(frame).toHaveAttribute('data-weather', 'clear');
   await expect(page.locator('[data-camera-action="weather"] svg')).toBeVisible();
   await expect(page.locator('[data-camera-weather-label]')).toHaveText('Açık');
-  await expect(terrain(page).locator('.village-river-channel')).toBeVisible();
+  const backdrop = terrain(page).locator('.village-terrain-detail');
+  await expect(backdrop).toHaveAttribute('data-river-source', 'mountain-foothills');
+  await expect(backdrop).toHaveAttribute('width', '1440');
+  await expect(backdrop).toHaveAttribute('height', '980');
+  expect(
+    await backdrop.evaluate(async (node) => {
+      const image = new Image();
+      image.src = node.getAttribute('href');
+      await image.decode();
+      return image.naturalWidth > 1000 && image.naturalHeight > 600;
+    }),
+  ).toBe(true);
+  await expect(backdrop).toBeVisible();
+  await expect(terrain(page).locator('.village-river-channel')).toHaveCount(0);
+  await expect(terrain(page).locator('.village-river')).toBeVisible();
   await expect(terrain(page).locator('.village-waterfall-flow')).toHaveCount(2);
   await expect(terrain(page).locator('.village-cloud')).toBeVisible();
-  const river = await terrain(page).locator('.village-river-channel').boundingBox();
+  const river = await terrain(page).locator('.village-river').boundingBox();
   const scene = await frame.boundingBox();
   expect(river.height).toBeGreaterThan(scene.height * 0.6);
   expect(river.width).toBeGreaterThan(scene.width * 0.1);

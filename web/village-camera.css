@@ -87,7 +87,8 @@
 }
 .village-weather,
 .village-weather *,
-.village-world-backdrop {
+.village-world-backdrop,
+.village-terrain-detail {
   pointer-events: none;
 }
 .village-cloud {
@@ -99,29 +100,24 @@
   transition: opacity 700ms ease;
 }
 .village-river-current {
-  animation: village-river-flow 3.8s linear infinite;
+  animation: village-river-flow 7.6s linear infinite;
 }
 .village-river-current-secondary {
-  animation-duration: 5.3s;
+  animation-duration: 9.3s;
   animation-delay: -1.7s;
 }
 .village-river-ripples {
   animation: village-river-ripple 3.2s ease-in-out infinite alternate;
 }
-.village-reeds path {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: village-reed-sway 4.6s ease-in-out infinite alternate;
-}
 .village-waterfall-flow {
-  animation: village-water-flow 900ms linear infinite;
+  animation: village-water-flow 1.6s linear infinite;
 }
 .village-waterfall-fine {
-  animation-duration: 650ms;
+  animation-duration: 1.3s;
 }
 .village-waterfall-foam {
   animation: village-water-foam 2.7s ease-out infinite;
-  transform-origin: 1294px 138px;
+  transform-origin: 1300px 150px;
 }
 .village-waterfall-foam-delayed {
   animation-delay: -1.3s;
@@ -152,9 +148,6 @@
 }
 [data-weather='rain'] .village-cloud {
   opacity: 0.85;
-}
-[data-weather='rain'] .village-river-channel {
-  filter: brightness(0.88);
 }
 [data-motion='off'] .village-weather * {
   animation-play-state: paused !important;
@@ -187,14 +180,6 @@
   }
   to {
     opacity: 0.95;
-  }
-}
-@keyframes village-reed-sway {
-  from {
-    transform: rotate(-4deg);
-  }
-  to {
-    transform: rotate(5deg);
   }
 }
 @keyframes village-water-flow {

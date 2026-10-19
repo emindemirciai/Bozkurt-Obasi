@@ -35,7 +35,7 @@ const cornerTowers = (uniformLevel = null) =>
       y: plot.y,
     };
   });
-state.buildings = [...villageBuildings, ...cornerTowers()];
+state.buildings = [...villageBuildings];
 state.stats.builds = state.buildings.length;
 function updateCapacity() {
   state.capacity =
@@ -68,9 +68,9 @@ const labels = {
   tr: {
     title: 'Oba planlaması',
     tier: 'Mimari aşama',
-    corners: 'Köşe düzeni',
-    towersBuilt: 'Dört köşede kule',
-    towersEmpty: 'Boş köşeler · Kule ipuçları',
+    corners: 'Ek iç kuleler',
+    towersBuilt: 'Dört ek gözetleme kulesi',
+    towersEmpty: 'Ek kule yok · Dört sur kulesi sabit',
     guardians: 'Gerçekçi muhafızlar',
     notice:
       'Çevrimdışı görsel önizleme · Örnek köy · Salt okunur. Kaynak harcanmaz. Oyuna giriş için doğrulanmış hesabın gerekir.',
@@ -81,9 +81,9 @@ const labels = {
   en: {
     title: 'Village planning',
     tier: 'Architecture tier',
-    corners: 'Corner layout',
-    towersBuilt: 'Towers in all four corners',
-    towersEmpty: 'Empty corners · Tower hints',
+    corners: 'Additional inner towers',
+    towersBuilt: 'Four additional watchtowers',
+    towersEmpty: 'No extras · Four permanent wall towers',
     guardians: 'Realistic guardians',
     notice:
       'Offline visual preview · Fictional village · Read-only. No resources are spent. A verified account is required to play.',
