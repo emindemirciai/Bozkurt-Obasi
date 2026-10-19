@@ -41,7 +41,7 @@ export const translations = {
     guardianXpHint:
       'Savaş, keşif ve sevkiyattan deneyim kazanır. Her yeni seviye 1 eğitim puanı ve 6 azami can verir.',
     guardianStatsHint:
-      'Bireysel değerlerdir; yapılar, formasyonlar ve takım etkileri dahil değildir. Şifa katkıları her dört çatışma adımında birleşir. Göreve seçilen kurtların izcilik bonusları toplamda en fazla %30 süre kazandırır.',
+      'Bireysel değerlerdir; yapılar, formasyonlar ve takım etkileri dahil değildir. Şifa katkıları her dört çatışma adımında birleşir. Göreve seçilen kurtların izciliği, yeni seferlerde yola çıkış erzağını en fazla %30 azaltır; süreyi değiştirmez.',
     guardianEffect_guardian: 'Gelen hasarı azaltır; mevcut ve azami canı 4 artırır.',
     guardianEffect_hunter: 'Saldırı katkısını 1,2 ve mevcut/azami canı 2 artırır.',
     guardianEffect_leader:
@@ -541,7 +541,7 @@ export const translations = {
     guardianXpHint:
       'Gain experience from battles, expeditions and escorts. Each new level grants 1 training point and 6 maximum health.',
     guardianStatsHint:
-      'Individual values exclude buildings, formations and team effects. Healing contributions combine every fourth combat step. Scouting bonuses of selected guardians shorten missions by at most 30% in total.',
+      'Individual values exclude buildings, formations and team effects. Healing contributions combine every fourth combat step. Scouting from selected guardians reduces departure supplies by up to 30% on new journeys; it does not shorten travel time.',
     guardianEffect_guardian: 'Reduces incoming damage and adds 4 current and maximum health.',
     guardianEffect_hunter: 'Adds 1.2 attack contribution and 2 current and maximum health.',
     guardianEffect_leader:
@@ -1335,3 +1335,92 @@ const careTranslations = {
 };
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], careTranslations[language]);
+
+const journalTranslations = {
+  tr: {
+    fwJournalOpen: 'Nöbet günlüğünü incele',
+    fwJournalEyebrow: 'Obanın ilk adımları',
+    fwJournalTitle: 'İlk Nöbet günlüğü',
+    fwJournalIntro:
+      'Sekiz hikâye hedefinin ne zaman tamamlandığını ve ödüllerinin ne zaman alındığını incele. Günlük yalnızca kayıtları gösterir; ödül vermez ve kaynak harcamaz.',
+    fwJournalClockNote:
+      'Süreler İlk Nöbet’in başlangıcından itibaren geçen duvar saati süresidir; çevrimdışı geçen zaman dahildir. Aktif oynama süresi değildir. Değerler son oyun kaydıyla güncellenir.',
+    fwJournalMeasured:
+      'Bu oba için hedef ve ödül zamanları kayıtlıdır. Başlangıçtan itibaren saat, dakika ve saniye olarak gösterilir.',
+    fwJournalInferred:
+      'Önceki obadan tanınan ilerleme: bazı hedefler eski başarılarına göre tamamlanmış sayılır. Gerçek geçmiş zamanları bilinmediğinden süreler ve ilk 15 dakika karşılaştırması gösterilmez.',
+    fwJournalUnavailable:
+      'Bu kayıtta güvenilir süre karşılaştırması bulunmuyor. Mevcut hedef durumları gösterilir.',
+    fwJournalElapsed: 'Başlangıçtan geçen süre',
+    fwJournalFirstWin: 'İlk zaferin zamanı',
+    fwJournalBattleRecovery: 'İlk savaş → ilk bakım',
+    fwJournalWindowTitle: 'İlk 15 dakika sınırı',
+    fwJournalWindowOpen: 'İlk 15 dakika sürüyor',
+    fwJournalWindowClosed: 'İlk 15 dakika tamamlandı',
+    fwJournalWindowUnknown: 'Süre karşılaştırması yok',
+    fwJournalWindowHint:
+      'Tam 15:00’da tamamlanan hedefler de bu aralığa dahildir. Bu işaret yalnızca hedefin tamamlanma zamanını karşılaştırır; ödül alma zamanını değil. Bu bir görev son tarihi değildir; hedefleri daha sonra da tamamlayabilirsin.',
+    fwJournalCompletedAt: 'Hedef tamamlandı',
+    fwJournalClaimedAt: 'Ödül alındı',
+    fwJournalClaimDelay: 'Hedef → ödül aralığı',
+    fwJournalFirst15: 'İlk 15 dakika',
+    fwJournalWithinWindow: 'İlk 15 dakika içinde',
+    fwJournalAfterWindow: '15 dakikadan sonra',
+    fwJournalClaimed: 'Ödül alındı',
+    fwJournalPendingClaim: 'Tamamlandı · Ödül bekliyor',
+    fwJournalCurrent: 'Sıradaki hedef',
+    fwJournalCompletedLocked: 'Tamamlandı · Ödül sırası bekliyor',
+    fwJournalLocked: 'Sonraki hedef',
+    fwJournalCompletedCount: 'hedef tamamlandı',
+    fwJournalClaimedCount: 'ödül alındı',
+    fwJournalSteps: 'Hikâye hedeflerinin zaman çizelgesi',
+    fwJournalMissingNote:
+      '—: Henüz kayıt yok veya güvenilir süre bilinmiyor. İlk bakım aralığı, ilk savaşın bitişinden bakım hedefinin tamamlanmasına kadardır. Savaş sağlıklı biterse bu süre sıfır olabilir; zafer şart değildir.',
+    fwJournalMinutes: 'dk',
+    fwJournalSeconds: 'sn',
+  },
+  en: {
+    fwJournalOpen: 'Read the watch journal',
+    fwJournalEyebrow: 'Your homeland’s first steps',
+    fwJournalTitle: 'First Watch journal',
+    fwJournalIntro:
+      'Review when each of the eight story objectives was completed and its reward claimed. This journal only displays records; it grants no rewards and spends no supplies.',
+    fwJournalClockNote:
+      'Durations are wall-clock time since First Watch began, including time spent offline. They are not active playing time. Values update with the latest game record.',
+    fwJournalMeasured:
+      'Objective and reward times are recorded for this homeland. They are shown as hours, minutes and seconds since the chapter began.',
+    fwJournalInferred:
+      'Progress recognized from your earlier homeland: some objectives reflect earlier achievements. Durations and first-15-minute comparisons are hidden because their original times are unknown.',
+    fwJournalUnavailable:
+      'Reliable timing comparisons are unavailable for this record. Current objective statuses are shown.',
+    fwJournalElapsed: 'Time since chapter began',
+    fwJournalFirstWin: 'Time of first victory',
+    fwJournalBattleRecovery: 'First battle → first care',
+    fwJournalWindowTitle: 'First 15 minutes boundary',
+    fwJournalWindowOpen: 'First 15 minutes in progress',
+    fwJournalWindowClosed: 'First 15 minutes complete',
+    fwJournalWindowUnknown: 'No timing comparison',
+    fwJournalWindowHint:
+      'Objectives completed at exactly 15:00 are included. This marker compares objective completion times, rather than reward claim times. This is not a quest deadline; objectives can be completed later.',
+    fwJournalCompletedAt: 'Objective completed',
+    fwJournalClaimedAt: 'Reward claimed',
+    fwJournalClaimDelay: 'Completion → reward interval',
+    fwJournalFirst15: 'First 15 minutes',
+    fwJournalWithinWindow: 'Within first 15 minutes',
+    fwJournalAfterWindow: 'After 15 minutes',
+    fwJournalClaimed: 'Reward claimed',
+    fwJournalPendingClaim: 'Completed · Reward pending',
+    fwJournalCurrent: 'Next objective',
+    fwJournalCompletedLocked: 'Completed · Reward order pending',
+    fwJournalLocked: 'Later objective',
+    fwJournalCompletedCount: 'objectives completed',
+    fwJournalClaimedCount: 'rewards claimed',
+    fwJournalSteps: 'Story objective timeline',
+    fwJournalMissingNote:
+      '—: No record yet, or reliable timing is unknown. First care measures the interval from the end of the first battle until the care objective is completed. This can be zero if the battle ends with everyone healthy; victory is not required.',
+    fwJournalMinutes: 'min',
+    fwJournalSeconds: 'sec',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], journalTranslations[language]);

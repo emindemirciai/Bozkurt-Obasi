@@ -1,6 +1,13 @@
+import { formatJourneyDuration } from './journey-time.mjs';
 import { villageAtmosphere } from './village-camera.mjs';
 import { BUILDINGS, PLOTS, visualTier, getWallUpgradeCost } from '../shared/settlement.mjs';
-import { REGIONS, DIFFICULTIES, ITEM_DEFINITIONS, adventureQuote } from '../shared/adventures.mjs';
+import {
+  REGIONS,
+  DIFFICULTIES,
+  ITEM_DEFINITIONS,
+  adventureQuote,
+  outingQuote,
+} from '../shared/adventures.mjs';
 import { adventureReadiness } from './adventure-planning.mjs';
 import {
   adventurePartySuggestionsPanel,
@@ -131,7 +138,7 @@ function preparationWarnings(readiness, t) {
   return `<p class="fatigue-note">${phrase(t, 'journeyFatigue', { amount: readiness.fatigue })}</p>${readiness.overflow.length || readiness.itemFull ? `<div class="reward-warning"><strong>${t('storagePlanningTitle')}</strong>${readiness.overflow.length ? `<p>${t('storagePlanningOverflow')}: <b>${costs(Object.fromEntries(readiness.overflow.map(({ resource, amount }) => [resource, amount])), t)}</b></p>` : ''}${readiness.itemFull ? `<p>${t('inventoryPlanningFull')}</p>` : ''}<small>${t('storagePlanningNote')}</small></div>` : `<p class="storage-planning-note">${t('storagePlanningFits')}</p>`}`;
 }
 
-function routeCards(state, selection, { t, busy, lock }) {
+function routeCards(state, selection, { t, busy, lock, language = 'tr' }) {
   return `<section class="adventure-routes" aria-labelledby="route-map-title"><div class="route-map-heading"><div><span class="eyebrow">${t('routeMapEyebrow')}</span><h3 id="route-map-title">${t('routeMapTitle')}</h3></div><p>${t('routeMapHint')}</p></div><div class="route-card-grid">${REGIONS.map(
     (region, index) => {
       const discovered = state.adventure.unlocked.includes(region.id);
@@ -149,7 +156,7 @@ function routeCards(state, selection, { t, busy, lock }) {
             : 'routeLocked';
       const routeQuote = adventureQuote(state, { ...selection, region: region.id });
       const unavailableHome = selection.kind === 'expedition' && region.id === 'homeland';
-      return `<button class="route-card route-${region.id} ${selection.region === region.id ? 'selected' : ''}" data-action="selectRegion" data-region="${region.id}" aria-pressed="${selection.region === region.id}" ${busy || lock || unavailableHome ? 'disabled' : ''}><span class="route-number" aria-hidden="true">0${index + 1}</span><span class="route-status" data-region-status="${region.id}">${t(label)}</span><strong>${t(region.id)}</strong><span class="route-detail">${routeQuote.seconds} ${t('seconds')} · ${t(routeQuote.item)}</span><span class="route-affordance">${t(unavailableHome ? 'routeHomeBase' : selection.region === region.id ? 'routeSelected' : 'routeInspect')}<span aria-hidden="true">${selection.region === region.id ? '✓' : '→'}</span></span></button>`;
+      return `<button class="route-card route-${region.id} ${selection.region === region.id ? 'selected' : ''}" data-action="selectRegion" data-region="${region.id}" aria-pressed="${selection.region === region.id}" ${busy || lock || unavailableHome ? 'disabled' : ''}><span class="route-number" aria-hidden="true">0${index + 1}</span><span class="route-status" data-region-status="${region.id}">${t(label)}</span><strong>${t(region.id)}</strong><span class="route-detail">${formatJourneyDuration(routeQuote.seconds, { t, language })} · ${t(routeQuote.item)}</span><span class="route-affordance">${t(unavailableHome ? 'routeHomeBase' : selection.region === region.id ? 'routeSelected' : 'routeInspect')}<span aria-hidden="true">${selection.region === region.id ? '✓' : '→'}</span></span></button>`;
     },
   ).join('')}</div></section>`;
 }
@@ -169,21 +176,26 @@ export function updateAdventurePlanning(root, state, { t, busy, selection, langu
   set('[data-adventure-warnings]', preparationWarnings(readiness, t));
   set(
     '[data-adventure-cost]',
-    `${costs(readiness.quote.cost, t)} · ${readiness.quote.seconds} ${t('seconds')}`,
+    `${costs(readiness.quote.cost, t)} · ${formatJourneyDuration(readiness.quote.seconds, { t, language })}`,
   );
   updateAdventurePartyPanel(root, state, selection, { t, busy, language, outing });
   for (const card of root.querySelectorAll('[data-mission-plan]')) {
     const seconds = card.querySelector('[data-plan-seconds]');
     if (seconds)
-      seconds.textContent =
-        adventureQuote(state, { ...selection, plan: card.dataset.missionPlan }).seconds +
-        ' ' +
-        t('seconds');
+      seconds.textContent = formatJourneyDuration(
+        (outing
+          ? outingQuote(state, { ...outing, plan: card.dataset.missionPlan })
+          : adventureQuote(state, { ...selection, plan: card.dataset.missionPlan })
+        ).seconds,
+        { t, language },
+      );
   }
   for (const card of root.querySelectorAll('[data-action="selectRegion"]')) {
     const quote = adventureQuote(state, { ...selection, region: card.dataset.region });
     const detail = card.querySelector('.route-detail');
-    if (detail) detail.textContent = quote.seconds + ' ' + t('seconds') + ' · ' + t(quote.item);
+    if (detail)
+      detail.textContent =
+        formatJourneyDuration(quote.seconds, { t, language }) + ' · ' + t(quote.item);
   }
   const depart = root.querySelector('[data-action="startAdventure"]');
   if (depart) depart.disabled = Boolean(busy) || !readiness.ready;
@@ -195,7 +207,7 @@ export function adventureView(state, { t, busy, selection, language = 'tr', now 
     readiness = adventureReadiness(state, s, { outing: a }),
     quote = readiness.quote,
     lock = state.battle.status === 'active' || Boolean(a) || Boolean(state.journey);
-  return `<section class="adventure-intro"><div class="eyebrow">${t('world')}</div><h2>${t('adventureTitle')}</h2><p>${t('adventureIntro')}</p></section>${a ? journeyStory(a, { t, now }) : ''}${routeCards(state, s, { t, busy, lock })}<div class="adventure-layout"><section class="detail-card adventure-preparation"><div class="adventure-fields"><label>${t('world')}<select id="adventure-kind" ${lock || busy ? 'disabled' : ''}>${['expedition', 'caravan'].map((k) => `<option value="${k}" ${s.kind === k ? 'selected' : ''}>${t(k)}</option>`).join('')}</select></label><label>${t('route')}<select id="adventure-region" ${lock || busy ? 'disabled' : ''}>${REGIONS.filter(
+  return `<section class="adventure-intro"><div class="eyebrow">${t('world')}</div><h2>${t('adventureTitle')}</h2><p>${t('adventureIntro')}</p><p class="muted" data-journey-schedule>${t('journeyScheduleHint')}</p></section>${a ? journeyStory(a, { t, language, now }) : ''}${routeCards(state, s, { t, busy, lock, language })}<div class="adventure-layout"><section class="detail-card adventure-preparation"><div class="adventure-fields"><label>${t('world')}<select id="adventure-kind" ${lock || busy ? 'disabled' : ''}>${['expedition', 'caravan'].map((k) => `<option value="${k}" ${s.kind === k ? 'selected' : ''}>${t(k)}</option>`).join('')}</select></label><label>${t('route')}<select id="adventure-region" ${lock || busy ? 'disabled' : ''}>${REGIONS.filter(
     (r) => s.kind === 'caravan' || r.id !== 'homeland',
   )
     .map(
@@ -204,5 +216,5 @@ export function adventureView(state, { t, busy, selection, language = 'tr', now 
     )
     .join(
       '',
-    )}</select></label><label>${t('difficulty')}<select id="adventure-difficulty" ${lock || busy ? 'disabled' : ''}>${DIFFICULTIES.map((d) => `<option value="${d}" ${s.difficulty === d ? 'selected' : ''}>${t(d)}</option>`).join('')}</select></label></div>${missionPlanPicker(state, s, { t, disabled: lock || busy, active: Boolean(a), outing: a })}${adventurePartySuggestionsPanel(state, s, { t, busy, language })}<fieldset class="adventure-party"><legend>${t('party')} · ${t('minimumParty')}: ${quote.minimumWolves}</legend>${state.wolves.map((w) => `<label class="${w.hp < 20 ? 'guardian-needs-rest' : ''}"><input type="checkbox" id="adventure-${w.id}" name="adventure-wolf" value="${w.id}" ${s.wolfIds.includes(w.id) ? 'checked' : ''} ${lock || busy || w.hp < 20 ? 'disabled' : ''}>${wolfPortrait(w, t(w.name === 'healer' ? 'healerPath' : w.name))}<span>${t(w.name === 'healer' ? 'healerPath' : w.name)}<small>${Math.ceil(w.hp)}/${w.maxHp} · ${t('level')} ${w.level}${w.hp < 20 ? ` · ${t('guardianNeedsRest')}` : ''}</small></span></label>`).join('')}</fieldset>${adventurePartyForecastPanel(state, s, { t, language, outing: a })}<p class="adventure-cost" data-adventure-cost>${costs(quote.cost, t)} · ${quote.seconds} ${t('seconds')}</p><section class="preparation-summary" id="adventure-readiness" data-adventure-readiness data-ready="${readiness.ready}" aria-live="polite" aria-atomic="true">${readinessContent(readiness, t)}</section><button class="button primary adventure-depart" data-action="startAdventure" aria-describedby="adventure-readiness" ${busy || !readiness.ready ? 'disabled' : ''}>${t('depart')}<span aria-hidden="true">→</span></button></section><aside class="detail-card adventure-brief">${missionBrief(s, { t })}<h3>${t('expectedReward')}</h3><p data-adventure-reward>${costs(quote.reward, t)}</p>${a && (a.economyVersion ?? 1) === 1 ? `<p class="muted" data-active-economy="legacy">${t('missionLegacyReward')}</p>` : ''}<p>+${quote.xp} ${t('xp')} / ${t('wolfCount')} · ${t(quote.item)}</p><div data-adventure-warnings>${preparationWarnings(readiness, t)}</div><p class="muted">${t('expeditionNote')}</p><h3>${t('inventory')}</h3>${ITEM_DEFINITIONS.map((i) => `<div class="inventory-row"><span>${t(i.id)}</span><b>${state.inventory[i.id]}</b></div>`).join('')}</aside></div><section class="adventure-reports"><h2>${t('report')}</h2>${state.adventure.history.length ? state.adventure.history.map((r) => missionReport(r, { t, language })).join('') : `<p>${t('noReports')}</p>`}</section>`;
+    )}</select></label><label>${t('difficulty')}<select id="adventure-difficulty" ${lock || busy ? 'disabled' : ''}>${DIFFICULTIES.map((d) => `<option value="${d}" ${s.difficulty === d ? 'selected' : ''}>${t(d)}</option>`).join('')}</select></label></div>${missionPlanPicker(state, s, { t, language, disabled: lock || busy, active: Boolean(a), outing: a })}${adventurePartySuggestionsPanel(state, s, { t, busy, language })}<fieldset class="adventure-party"><legend>${t('party')} · ${t('minimumParty')}: ${quote.minimumWolves}</legend>${state.wolves.map((w) => `<label class="${w.hp < 20 ? 'guardian-needs-rest' : ''}"><input type="checkbox" id="adventure-${w.id}" name="adventure-wolf" value="${w.id}" ${s.wolfIds.includes(w.id) ? 'checked' : ''} ${lock || busy || w.hp < 20 ? 'disabled' : ''}>${wolfPortrait(w, t(w.name === 'healer' ? 'healerPath' : w.name))}<span>${t(w.name === 'healer' ? 'healerPath' : w.name)}<small>${Math.ceil(w.hp)}/${w.maxHp} · ${t('level')} ${w.level}${w.hp < 20 ? ` · ${t('guardianNeedsRest')}` : ''}</small></span></label>`).join('')}</fieldset>${adventurePartyForecastPanel(state, s, { t, language, outing: a })}<p class="adventure-cost" data-adventure-cost>${costs(quote.cost, t)} · ${formatJourneyDuration(quote.seconds, { t, language })}</p><section class="preparation-summary" id="adventure-readiness" data-adventure-readiness data-ready="${readiness.ready}" aria-live="polite" aria-atomic="true">${readinessContent(readiness, t)}</section><button class="button primary adventure-depart" data-action="startAdventure" aria-describedby="adventure-readiness" ${busy || !readiness.ready ? 'disabled' : ''}>${t('depart')}<span aria-hidden="true">→</span></button></section><aside class="detail-card adventure-brief">${missionBrief(s, { t })}<h3>${t('expectedReward')}</h3><p data-adventure-reward>${costs(quote.reward, t)}</p>${a && (a.economyVersion ?? 1) < 3 ? `<p class="muted" data-active-economy="legacy">${t('missionLegacyReward')}</p>` : ''}<p>+${quote.xp} ${t('xp')} / ${t('wolfCount')} · ${t(quote.item)}</p><div data-adventure-warnings>${preparationWarnings(readiness, t)}</div><p class="muted">${t('expeditionNote')}</p><h3>${t('inventory')}</h3>${ITEM_DEFINITIONS.map((i) => `<div class="inventory-row"><span>${t(i.id)}</span><b>${state.inventory[i.id]}</b></div>`).join('')}</aside></div><section class="adventure-reports"><h2>${t('report')}</h2>${state.adventure.history.length ? state.adventure.history.map((r) => missionReport(r, { t, language })).join('') : `<p>${t('noReports')}</p>`}</section>`;
 }

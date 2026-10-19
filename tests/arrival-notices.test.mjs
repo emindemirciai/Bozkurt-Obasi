@@ -82,7 +82,7 @@ test('arrival projection retains credited fractions, zero items and participant 
   assert.equal(notice.source, 'returned');
   assert.deepEqual(notice.reward, { water: 0, feed: 0, wood: 0.5, stone: 0, herbs: 2 });
   assert.equal(notice.itemCount, 0);
-  assert.equal(notice.xp, 22);
+  assert.equal(notice.xp, 135);
   assert.deepEqual(notice.wolfIds, ['wolf-scout']);
   assert.deepEqual(game, before);
   notice.reward.wood = 999;

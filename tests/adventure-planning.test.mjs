@@ -121,8 +121,8 @@ test('readiness explains the actual route and multiple shortages without blockin
     { resource: 'feed', amount: 3 },
   ]);
   assert.deepEqual(plan.overflow, [
-    { resource: 'wood', amount: 15 },
-    { resource: 'stone', amount: 10 },
+    { resource: 'wood', amount: 95 },
+    { resource: 'stone', amount: 60 },
   ]);
   assert.equal(plan.itemFull, true);
   assert.equal(plan.fatigue, 5);
@@ -153,7 +153,8 @@ test('scout equipment and difficulty use the server quote, even with a legacy jo
     state,
     selection({ difficulty: 'hard', wolfIds: ['wolf-alpha', 'wolf-scout', 'wolf-healer'] }),
   );
-  assert.equal(plan.quote.seconds, 153);
+  assert.equal(plan.quote.seconds, 21600);
+  assert.deepEqual(plan.quote.cost, { water: 24, feed: 32 });
   assert.equal(plan.fatigue, 15);
   assert.equal(plan.ready, true);
   state.journey = { destination: 'spring', startedAt: NOW, endsAt: NOW + 60000 };

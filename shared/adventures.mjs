@@ -16,6 +16,14 @@ export const REGIONS = Object.freeze(
     { id: 'ruins', rank: 4, duration: 150, item: 'healer_satchel' },
   ].map(Object.freeze),
 );
+/** Fixed route time for new departures; REGIONS.duration preserves legacy promises. */
+export const ADVENTURE_HOURS = Object.freeze({
+  homeland: 6,
+  spring: 6,
+  meadow: 8,
+  highland: 10,
+  ruins: 12,
+});
 export const DIFFICULTIES = Object.freeze(['easy', 'normal', 'hard']);
 export const ADVENTURE_PLANS = Object.freeze(['standard', 'survey', 'supply']);
 const resources = ['water', 'feed', 'herbs', 'wood', 'stone'];
@@ -76,9 +84,9 @@ export function grantWolfXp(wolf, amount) {
   }
   if (wolf.level === 20) wolf.xp = Math.min(wolf.xp, 899);
 }
-/** New departures use the current economy; only persisted legacy outings use version 1. */
-export function adventureQuote(state, selection, { economyVersion = 2 } = {}) {
-  if (![1, 2].includes(economyVersion)) fail('INVALID_EXPEDITION');
+/** New departures use fixed-hour version 3; persisted versions retain their promises. */
+export function adventureQuote(state, selection, { economyVersion = 3 } = {}) {
+  if (![1, 2, 3].includes(economyVersion)) fail('INVALID_EXPEDITION');
   const { kind = 'expedition', region = 'spring', difficulty = 'easy', wolfIds = [] } = selection;
   // Missing plan is the pre-v2.6 contract; malformed explicit values must never become standard.
   const plan = Object.hasOwn(selection, 'plan') ? selection.plan : 'standard';
@@ -94,19 +102,36 @@ export function adventureQuote(state, selection, { economyVersion = 2 } = {}) {
   const rewardFactor =
     (plan === 'survey' ? 0.75 : plan === 'supply' ? 1.5 : 1) * (economyVersion === 2 ? 0.5 : 1);
   const xpFactor = plan === 'survey' ? 1.5 : plan === 'supply' ? 0.75 : 1;
+  const longJourney = economyVersion === 3;
+  const hours = ADVENTURE_HOURS[region];
+  const difficultyFactor = [1, 1.5, 2][tier - 1];
+  // Scouting reduces departure supplies only. Rewards remain independent of mutable
+  // equipment, so changing gear after arrival cannot invalidate historical receipts.
+  const costFactor = suppliesFactor * (longJourney ? factor : 1);
   return {
     plan,
     cost: {
-      water: Math.ceil((10 + tier * 5 + route.rank * 3) * suppliesFactor),
-      feed: Math.ceil((12 + tier * 7 + route.rank * 4) * suppliesFactor),
+      water: Math.ceil((10 + tier * 5 + route.rank * 3) * costFactor),
+      feed: Math.ceil((12 + tier * 7 + route.rank * 4) * costFactor),
     },
-    seconds: Math.ceil(route.duration * tier * factor * suppliesFactor),
+    seconds: longJourney
+      ? hours * 3600
+      : Math.ceil(route.duration * tier * factor * suppliesFactor),
     minimumWolves: tier,
-    xp: Math.floor((20 + route.rank * 10) * tier * xpFactor),
+    xp: Math.floor(
+      (longJourney ? hours * 30 * difficultyFactor : (20 + route.rank * 10) * tier) * xpFactor,
+    ),
     reward: {
-      wood: Math.floor((20 + route.rank * 12) * tier * rewardFactor),
-      stone: Math.floor((12 + route.rank * 9) * tier * rewardFactor),
-      herbs: Math.floor((5 + route.rank * 2) * tier * rewardFactor),
+      wood: Math.floor(
+        (longJourney ? hours * 16 * difficultyFactor : (20 + route.rank * 12) * tier) *
+          rewardFactor,
+      ),
+      stone: Math.floor(
+        (longJourney ? hours * 10 * difficultyFactor : (12 + route.rank * 9) * tier) * rewardFactor,
+      ),
+      herbs: Math.floor(
+        (longJourney ? hours * 3 * difficultyFactor : (5 + route.rank * 2) * tier) * rewardFactor,
+      ),
     },
     fatigue: tier * (plan === 'survey' ? 7 : plan === 'supply' ? 8 : 5),
     item: route.item,
@@ -164,7 +189,7 @@ function start(state, action, now, kind) {
     region: action.region,
     difficulty: action.difficulty,
     plan: quote.plan,
-    economyVersion: 2,
+    economyVersion: 3,
     wolfIds: [...ids],
     startedAt: now,
     endsAt: now + quote.seconds * 1000,
@@ -258,7 +283,7 @@ export function validateAdventureState(state) {
         ...extra,
       ]) &&
       (!hasPlan || ADVENTURE_PLANS.includes(o.plan)) &&
-      (!hasEconomyVersion || o.economyVersion === 2)
+      (!hasEconomyVersion || [1, 2, 3].includes(o.economyVersion))
     );
   }
   function outing(o) {
@@ -270,7 +295,9 @@ export function validateAdventureState(state) {
       Number(o.id.slice(7)) <= a.sequence &&
       int(o.startedAt, 0, state.updatedAt) &&
       int(o.endsAt, o.startedAt + 1, 8_640_000_000_000_000) &&
-      o.endsAt - o.startedAt <= (o.plan && o.plan !== 'standard' ? 563000 : 450000) &&
+      (o.economyVersion === 3
+        ? o.endsAt - o.startedAt === ADVENTURE_HOURS[o.region] * 3_600_000
+        : o.endsAt - o.startedAt <= (o.plan && o.plan !== 'standard' ? 563000 : 450000)) &&
       Array.isArray(o.wolfIds) &&
       o.wolfIds.length >= DIFFICULTIES.indexOf(o.difficulty) + 1 &&
       o.wolfIds.length <= 5 &&

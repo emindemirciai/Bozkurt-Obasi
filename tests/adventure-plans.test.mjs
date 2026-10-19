@@ -24,9 +24,36 @@ const act = (state, selection) =>
 const totalXp = (wolf) => (45 * wolf.level * (wolf.level - 1)) / 2 + wolf.xp;
 const finish = (state) => advanceGame(state, state.adventure.active.endsAt);
 const expected = {
-  standard: { water: 18, feed: 23, seconds: 60, xp: 30, wood: 16, stone: 10, herbs: 3, fatigue: 5 },
-  survey: { water: 23, feed: 29, seconds: 75, xp: 45, wood: 12, stone: 7, herbs: 2, fatigue: 7 },
-  supply: { water: 23, feed: 29, seconds: 75, xp: 22, wood: 24, stone: 15, herbs: 5, fatigue: 8 },
+  standard: {
+    water: 18,
+    feed: 23,
+    seconds: 21600,
+    xp: 180,
+    wood: 96,
+    stone: 60,
+    herbs: 18,
+    fatigue: 5,
+  },
+  survey: {
+    water: 23,
+    feed: 29,
+    seconds: 21600,
+    xp: 270,
+    wood: 72,
+    stone: 45,
+    herbs: 13,
+    fatigue: 7,
+  },
+  supply: {
+    water: 23,
+    feed: 29,
+    seconds: 21600,
+    xp: 135,
+    wood: 144,
+    stone: 90,
+    herbs: 27,
+    fatigue: 8,
+  },
 };
 
 test('mission plans quote explicit costs, duration, fatigue and reward tradeoffs', () => {
@@ -64,8 +91,9 @@ test('malformed explicit plans fail before supplies, sequence or departure mutat
 for (const plan of ADVENTURE_PLANS) {
   test(`${plan} departure and receipt charge once and reward only its selected guardian`, () => {
     const state = createGame(NOW);
-    // Already-trained guardian keeps this payout below the next level threshold.
-    state.wolves[3].level = 2;
+    // A level-ten guardian isolates fatigue from level-up healing at every plan payout.
+    state.wolves[3].level = 10;
+    for (const key of ['wood', 'stone', 'herbs']) state.resources[key] = 0;
     state.wolves[3].hp = 70;
     const before = structuredClone(state);
     const e = expected[plan];
@@ -132,21 +160,24 @@ test('every plan retains party, route, health and concurrent mission restriction
   }
 });
 
-test('scout equipment reduces planned duration with one final rounding and cannot change underway', () => {
+test('scout equipment discounts departure supplies with one final rounding and cannot change underway', () => {
   const state = createGame(NOW);
   state.inventory.scout_charm = 3;
   for (const id of ['wolf-scout', 'wolf-alpha', 'wolf-guardian'])
     applyAction(state, { type: 'equip', id, item: 'scout_charm' }, NOW);
-  assert.equal(adventureQuote(state, choice()).seconds, 51);
-  assert.equal(adventureQuote(state, choice({ plan: 'survey' })).seconds, 64);
-  assert.equal(adventureQuote(state, choice({ plan: 'supply' })).seconds, 64);
-  // 45% scouting remains capped at 30%; both multipliers apply before rounding.
+  assert.equal(adventureQuote(state, choice()).seconds, 21600);
+  assert.deepEqual(adventureQuote(state, choice()).cost, { water: 16, feed: 20 });
+  assert.equal(adventureQuote(state, choice({ plan: 'survey' })).seconds, 21600);
+  assert.deepEqual(adventureQuote(state, choice({ plan: 'survey' })).cost, { water: 20, feed: 25 });
+  assert.equal(adventureQuote(state, choice({ plan: 'supply' })).seconds, 21600);
+  // The combined 45% scouting discount remains capped at 30%, with one final rounding.
   const squad = choice({
     plan: 'survey',
     difficulty: 'hard',
     wolfIds: ['wolf-scout', 'wolf-alpha', 'wolf-guardian'],
   });
-  assert.equal(adventureQuote(state, squad).seconds, 158);
+  assert.equal(adventureQuote(state, squad).seconds, 21600);
+  assert.deepEqual(adventureQuote(state, squad).cost, { water: 25, feed: 33 });
   act(state, squad);
   const before = structuredClone(state);
   assert.throws(() => applyAction(state, { type: 'unequip', id: 'wolf-scout' }, NOW), {
@@ -195,6 +226,7 @@ test('legacy active and history records retain their original timing, payouts an
   assert.equal(state.adventure.active.plan, 'standard');
   delete state.adventure.active.plan;
   delete state.adventure.active.economyVersion;
+  state.adventure.active.endsAt = NOW + 60_000;
   const before = structuredClone(state);
   assert.equal(validateGame(state), true);
   assert.deepEqual(migrateGame(state), before);
@@ -219,9 +251,11 @@ test('legacy active and history records retain their original timing, payouts an
   assert.equal(validateGame(legacy), true);
 });
 
-test('save validation rejects invalid plan fields, changed active timing and forged receipt amounts', () => {
+test('legacy save validation rejects invalid plan fields, changed active timing and forged receipt amounts', () => {
   const state = createGame(NOW);
   act(state, choice({ plan: 'survey' }));
+  state.adventure.active.economyVersion = 2;
+  state.adventure.active.endsAt = NOW + 75_000;
   for (const plan of [null, undefined, '', 'anything', false, [], {}, 1]) {
     const changed = structuredClone(state);
     changed.adventure.active.plan = plan;
@@ -285,7 +319,7 @@ test('save validation rejects invalid plan fields, changed active timing and for
   }
 });
 
-test('long planned missions validate up to 563 seconds without widening the legacy duration cap', () => {
+test('legacy planned missions validate up to 563 seconds without widening their original duration cap', () => {
   for (const plan of ADVENTURE_PLANS) {
     const state = createGame(NOW);
     state.adventure.unlocked = REGIONS.slice(0, -1).map((r) => r.id);
@@ -296,6 +330,9 @@ test('long planned missions validate up to 563 seconds without widening the lega
       wolfIds: ['wolf-alpha', 'wolf-guardian', 'wolf-hunter'],
     });
     act(state, squad);
+    state.adventure.active.economyVersion = 2;
+    state.adventure.active.endsAt =
+      NOW + adventureQuote(state, squad, { economyVersion: 2 }).seconds * 1000;
     assert.equal(state.adventure.active.endsAt - NOW, plan === 'standard' ? 450000 : 563000);
     assert.equal(validateGame(state), true);
     finish(state);
@@ -327,8 +364,10 @@ test('resource and item storage caps apply to enhanced supply receipts without d
   });
   assert.equal(state.adventure.history[0].itemCount, 0);
   assert.equal(state.inventory.leather_vest, 10000);
-  assert.equal(state.wolves[3].xp, 22);
-  assert.equal(state.wolves[3].hp, 102);
+  assert.equal(totalXp(state.wolves[3]), 135);
+  assert.equal(state.wolves[3].level, 3);
+  assert.equal(state.wolves[3].xp, 0);
+  assert.equal(state.wolves[3].hp, state.wolves[3].maxHp);
   assert.equal(validateGame(state), true);
 });
 
@@ -347,10 +386,9 @@ test('readiness shows authoritative plan fatigue, costs and extra storage pressu
       { resource: 'water', amount: 5 },
       { resource: 'feed', amount: 6 },
     ]);
-    assert.deepEqual(
-      readiness.overflow,
-      plan === 'supply' ? [{ resource: 'wood', amount: 4 }] : [],
-    );
+    assert.deepEqual(readiness.overflow, [
+      { resource: 'wood', amount: plan === 'supply' ? 124 : 52 },
+    ]);
   }
   assert.deepEqual(state, before);
 });
@@ -364,7 +402,7 @@ test('planned escort arrivals and production are independent of browser polling 
     const end = state.adventure.active.endsAt;
     const frequent = structuredClone(state);
     advanceGame(state, end + 30_000);
-    for (let at = NOW + 137; at < end + 30_000; at += 137) advanceGame(frequent, at);
+    for (let at = NOW + 60_137; at < end + 30_000; at += 60_137) advanceGame(frequent, at);
     advanceGame(frequent, end + 30_000);
     for (const key of Object.keys(state.resources))
       assert.ok(Math.abs(state.resources[key] - frequent.resources[key]) < 1e-8, key);

@@ -216,7 +216,7 @@ test('expeditions charge once, discover regions and reward only the selected wol
   assert.equal(state.adventure.active, null);
   assert.deepEqual(state.adventure.unlocked, ['homeland', 'spring']);
   assert.equal(state.location, 'homeland');
-  assert.equal(state.wolves[3].xp, quote.xp);
+  assert.equal(totalXp(state.wolves[3]), quote.xp);
   assert.ok(state.wolves.filter((w) => w.id !== 'wolf-scout').every((w) => w.xp === 0));
   assert.equal(state.inventory.leather_vest, 1);
   assert.equal(state.adventure.history[0].completedAt, endsAt);
@@ -269,8 +269,8 @@ test('difficulty increases party requirements and XP; progression discovers all 
     const easy = adventureQuote(state, { region: region.id, difficulty: 'easy', wolfIds: ids });
     const hard = adventureQuote(state, { region: region.id, difficulty: 'hard', wolfIds: ids });
     assert.equal(hard.minimumWolves, 3);
-    assert.equal(hard.xp, easy.xp * 3);
-    assert.equal(hard.seconds, easy.seconds * 3);
+    assert.equal(hard.xp, easy.xp * 2);
+    assert.equal(hard.seconds, easy.seconds);
     expedition(state, { region: region.id, difficulty: 'hard', wolfIds: ids });
     const saved = JSON.parse(JSON.stringify(state));
     resumeGame(saved, saved.adventure.active.endsAt + 1000);
@@ -303,13 +303,13 @@ test('caravan arrival changes location and keeps production, XP and rewards inde
   const end = state.adventure.active.endsAt;
   const frequent = structuredClone(state);
   advanceGame(state, end + 30_000);
-  for (let now = start + 137; now < end + 30_000; now += 137) advanceGame(frequent, now);
+  for (let now = start + 60_137; now < end + 30_000; now += 60_137) advanceGame(frequent, now);
   advanceGame(frequent, end + 30_000);
   assert.equal(state.location, 'spring');
   assert.equal(getProduction(state).water, 10.5);
-  assert.equal(totalXp(state.wolves[0]), 60);
-  assert.equal(totalXp(state.wolves[1]), 60);
-  assert.equal(totalXp(state.wolves[3]), 30);
+  assert.equal(totalXp(state.wolves[0]), 270);
+  assert.equal(totalXp(state.wolves[1]), 270);
+  assert.equal(totalXp(state.wolves[3]), 180);
   assert.deepEqual(state.wolves, frequent.wolves);
   assert.deepEqual(state.inventory, frequent.inventory);
   for (const key of Object.keys(state.resources))
@@ -318,14 +318,18 @@ test('caravan arrival changes location and keeps production, XP and rewards inde
   assert.equal(validateGame(frequent), true);
 });
 
-test('equipment swaps conserve inventory, alter expedition time and cannot change while the wearer is away', () => {
+test('equipment swaps conserve inventory, discount supplies and cannot change while the wearer is away', () => {
   const state = fresh();
   state.inventory.scout_charm = 1;
   state.inventory.iron_guard = 1;
   const action = { type: 'equip', id: 'wolf-scout', item: 'scout_charm' };
   act(state, action);
   assert.equal(state.inventory.scout_charm, 0);
-  assert.equal(adventureQuote(state, { wolfIds: ['wolf-scout'] }).seconds, 51);
+  assert.equal(adventureQuote(state, { wolfIds: ['wolf-scout'] }).seconds, 21600);
+  assert.deepEqual(adventureQuote(state, { wolfIds: ['wolf-scout'] }).cost, {
+    water: 16,
+    feed: 20,
+  });
   act(state, action);
   assert.equal(state.inventory.scout_charm, 0);
   expedition(state);
@@ -482,7 +486,7 @@ test('v2 validators reject forged plots, inventory, mission parties, route unloc
   }
   finish(state);
   for (const [field, value] of [
-    ['xp', 180],
+    ['xp', 181],
     ['item', 'iron_guard'],
     ['itemCount', 2],
     ['completedAt', 0],

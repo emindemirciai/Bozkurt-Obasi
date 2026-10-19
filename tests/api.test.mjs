@@ -7,8 +7,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomBytes } from 'node:crypto';
 import { createApp } from '../server/web/app.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
-import { createGame, applyAction, validateGame } from '../shared/game.mjs';
+import { createGame, applyAction, advanceGame, validateGame } from '../shared/game.mjs';
 import { recoveryPlan } from '../shared/recovery.mjs';
+import { adventureQuote } from '../shared/adventures.mjs';
 import {
   createGame as createLegacyGame,
   applyAction as applyLegacyAction,
@@ -312,7 +313,11 @@ test('an expedition persists through restart and completes once for only its sel
   assert.equal(restored.data.state.inventory.leather_vest, 1);
   assert.deepEqual(
     restored.data.state.wolves.map((w) => w.xp),
-    [0, 0, 0, 30, 0],
+    [0, 0, 0, 45, 0],
+  );
+  assert.deepEqual(
+    restored.data.state.wolves.map((w) => w.level),
+    [1, 1, 1, 3, 1],
   );
   assert.equal(validateGame(restored.data.state), true);
   const repeated = await (await api.request('/api/state', { cookie: session.cookie })).json();
@@ -875,8 +880,8 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
   assert.equal(response.status, 200);
   const started = await response.json();
   assert.equal(started.state.adventure.active.plan, 'survey');
-  assert.equal(started.state.adventure.active.economyVersion, 2);
-  assert.equal(started.state.adventure.active.endsAt, now + 75_000);
+  assert.equal(started.state.adventure.active.economyVersion, 3);
+  assert.equal(started.state.adventure.active.endsAt, now + 6 * 60 * 60_000);
   assert.equal(started.state.resources.water, player.data.state.resources.water - 23);
   assert.equal(started.state.resources.feed, player.data.state.resources.feed - 29);
 
@@ -889,15 +894,15 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
   const receipt = completed.state.adventure.history[0];
   assert.equal(completed.state.adventure.active, null);
   assert.equal(receipt.plan, 'survey');
-  assert.equal(receipt.xp, 45);
-  assert.deepEqual(receipt.reward, { water: 0, feed: 0, herbs: 2, wood: 12, stone: 7 });
+  assert.equal(receipt.xp, 270);
+  assert.deepEqual(receipt.reward, { water: 0, feed: 0, herbs: 13, wood: 50, stone: 45 });
   assert.equal(receipt.item, 'leather_vest');
   assert.equal(receipt.itemCount, 1);
   assert.equal(completed.state.inventory.leather_vest, 1);
   assert.deepEqual(completed.state.adventure.unlocked, ['homeland', 'spring']);
   assert.equal(completed.state.firstWatch.milestones.explore, now);
   const scout = completed.state.wolves.find((wolf) => wolf.id === 'wolf-scout');
-  assert.equal(scout.level, 2);
+  assert.equal(scout.level, 4);
   assert.equal(scout.xp, 0);
   for (const wolf of completed.state.wolves.filter((wolf) => wolf.id !== 'wolf-scout'))
     assert.deepEqual(
@@ -952,7 +957,7 @@ test('supply caravans persist their destination, capped receipt and fatigue once
     unlocked.revision,
   );
   assert.equal(started.state.adventure.active.plan, 'supply');
-  assert.equal(started.state.adventure.active.endsAt, now + 75_000);
+  assert.equal(started.state.adventure.active.endsAt, now + 6 * 60 * 60_000);
   assert.equal(started.state.resources.water, unlocked.state.resources.water - 23);
   assert.equal(started.state.resources.feed, unlocked.state.resources.feed - 29);
   assert.equal(started.state.location, 'homeland');
@@ -966,19 +971,20 @@ test('supply caravans persist their destination, capped receipt and fatigue once
   assert.equal(state.adventure.history.length, 2);
   assert.equal(state.adventure.history[0].plan, 'supply');
   assert.equal(state.adventure.history[0].kind, 'caravan');
-  assert.equal(state.adventure.history[0].xp, 22);
+  assert.equal(state.adventure.history[0].xp, 135);
   assert.deepEqual(state.adventure.history[0].reward, {
     water: 0,
     feed: 0,
-    herbs: 5,
+    herbs: 27,
     wood: 10,
-    stone: 15,
+    stone: 90,
   });
   assert.equal(state.resources.wood, state.capacity);
   assert.equal(state.inventory.leather_vest, 2);
   const guardian = state.wolves.find((wolf) => wolf.id === 'wolf-guardian');
-  assert.equal(guardian.xp, 22);
-  assert.equal(guardian.hp, 162);
+  assert.equal(guardian.level, 3);
+  assert.equal(guardian.xp, 0);
+  assert.equal(guardian.hp, 182);
   assert.equal(state.firstWatch.milestones.escort, now);
   assert.equal(validateGame(state), true);
   const repeated = await api.session(player.cookie);
@@ -1064,46 +1070,33 @@ test('legacy outings without a plan retain their original timing and rewards thr
   let now = 100_000;
   const api = await fixture(t, { clock: () => now });
   const player = await api.session();
-  const launch = async (revision) => {
-    const response = await api.request('/api/action', {
-      method: 'POST',
-      cookie: player.cookie,
-      body: {
-        action: {
-          type: 'expedition',
-          region: 'spring',
-          difficulty: 'easy',
-          wolfIds: ['wolf-scout'],
-        },
-        revision,
+  const legacy = structuredClone(player.data.state);
+  const departLegacy = () => {
+    applyAction(
+      legacy,
+      {
+        type: 'expedition',
+        region: 'spring',
+        difficulty: 'easy',
+        wolfIds: ['wolf-scout'],
       },
-    });
-    assert.equal(response.status, 200);
-    return response.json();
+      now,
+    );
+    delete legacy.adventure.active.plan;
+    delete legacy.adventure.active.economyVersion;
+    legacy.adventure.active.endsAt = now + 60_000;
+    assert.equal(validateGame(legacy), true);
   };
-  const first = await launch(player.data.revision);
-  now = first.state.adventure.active.endsAt;
-  const completed = await (await api.request('/api/state', { cookie: player.cookie })).json();
-  const second = await launch(completed.revision);
-  const legacy = structuredClone(second.state);
-  delete legacy.adventure.active.plan;
-  delete legacy.adventure.active.economyVersion;
-  delete legacy.adventure.history[0].plan;
-  delete legacy.adventure.history[0].economyVersion;
-  // Recreate a completed pre-release receipt and its already credited balances.
-  legacy.adventure.history[0].reward = { water: 0, feed: 0, herbs: 7, wood: 32, stone: 21 };
-  legacy.resources.wood += 16;
-  legacy.resources.stone += 11;
-  legacy.resources.herbs += 4;
-  assert.equal(validateGame(legacy), true);
-  const database = new DatabaseSync(api.dbPath);
-  database.prepare('UPDATE google_accounts SET state_json = ?').run(JSON.stringify(legacy));
-  database.close();
+  departLegacy();
+  now += 60_000;
+  advanceGame(legacy, now);
+  const firstReceipt = structuredClone(legacy.adventure.history[0]);
+  departLegacy();
+  await saveAccountState(api, player, legacy);
 
   await api.restart();
   const resumed = await api.session(player.cookie);
   assert.deepEqual(resumed.data.state, legacy);
-  assert.equal(resumed.data.revision, second.revision);
   assert.equal(resumed.data.state.adventure.active.endsAt - now, 60_000);
   now = legacy.adventure.active.endsAt;
   const arrived = await (await api.request('/api/state', { cookie: player.cookie })).json();
@@ -1116,8 +1109,9 @@ test('legacy outings without a plan retain their original timing and rewards thr
     wood: 18,
     stone: 21,
   });
-  assert.deepEqual(arrived.state.adventure.history[1], legacy.adventure.history[0]);
+  assert.deepEqual(arrived.state.adventure.history[1], firstReceipt);
   assert.equal(Object.hasOwn(arrived.state.adventure.history[0], 'economyVersion'), false);
+  assert.equal(Object.hasOwn(arrived.state.adventure.history[0], 'plan'), false);
   assert.equal(arrived.state.inventory.leather_vest, 2);
   const scout = arrived.state.wolves.find((wolf) => wolf.id === 'wolf-scout');
   assert.equal(scout.level, 2);
@@ -1633,20 +1627,166 @@ test('slower passive production remains authoritative and client economy overrid
     economyVersion: 1,
     reward: { wood: 999999, stone: 999999, herbs: 999999 },
   });
-  assert.equal(started.state.adventure.active.economyVersion, 2);
-  assert.equal(started.state.adventure.active.endsAt, now + 60_000);
+  assert.equal(started.state.adventure.active.economyVersion, 3);
+  assert.equal(started.state.adventure.active.endsAt, now + 6 * 60 * 60_000);
   now = started.state.adventure.active.endsAt;
   const arrived = await (await api.request('/api/state', { cookie: player.cookie })).json();
   assert.deepEqual(arrived.state.adventure.history[0].reward, {
     water: 0,
     feed: 0,
-    wood: 16,
-    stone: 10,
-    herbs: 3,
+    wood: 0,
+    stone: 0,
+    herbs: 18,
   });
-  assert.equal(arrived.state.adventure.history[0].economyVersion, 2);
-  assert.equal(arrived.state.adventure.history[0].xp, 30);
+  assert.equal(arrived.state.adventure.history[0].economyVersion, 3);
+  assert.equal(arrived.state.adventure.history[0].xp, 180);
   assert.equal(arrived.state.inventory.leather_vest, 1);
   await api.restart();
   assert.deepEqual((await api.session(player.cookie)).data.state, arrived.state);
 });
+
+for (const kind of ['expedition', 'caravan']) {
+  test(`a twelve-hour ${kind} cannot finish early, survives a mid-route restart and credits its authoritative reward once`, async (t) => {
+    const startedAt = 100_000;
+    let now = startedAt;
+    const api = await fixture(t, { clock: () => now });
+    const player = await api.session();
+    const other = await api.session();
+    const initial = structuredClone(player.data.state);
+    initial.adventure.unlocked = ['homeland', 'spring', 'meadow', 'highland', 'ruins'];
+    for (const key of ['wood', 'stone', 'herbs']) initial.resources[key] = 0;
+    await saveAccountState(api, player, initial);
+    const wolfIds = ['wolf-alpha', 'wolf-guardian', 'wolf-hunter'];
+    const departure = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        revision: player.data.revision,
+        action: {
+          type: kind,
+          region: 'ruins',
+          difficulty: 'hard',
+          plan: 'standard',
+          wolfIds,
+          economyVersion: 1,
+          seconds: 1,
+          endsAt: startedAt + 1,
+          xp: 999999,
+          reward: { wood: 999999, stone: 999999, herbs: 999999 },
+        },
+      },
+    });
+    assert.equal(departure.status, 200);
+    const started = await departure.json();
+    const endsAt = startedAt + 12 * 60 * 60_000;
+    assert.equal(started.state.adventure.active.economyVersion, 3);
+    assert.equal(started.state.adventure.active.endsAt, endsAt);
+    assert.equal(started.state.location, 'homeland');
+    assert.equal(started.state.resources.water, initial.resources.water - 37);
+    assert.equal(started.state.resources.feed, initial.resources.feed - 49);
+    const expectedBeforeArrival = structuredClone(started.state);
+
+    now += 6 * 60 * 60_000;
+    const halfway = await (await api.request('/api/state', { cookie: player.cookie })).json();
+    assert.equal(halfway.state.adventure.active.endsAt - now, 6 * 60 * 60_000);
+    assert.equal(halfway.state.adventure.history.length, 0);
+    assert.deepEqual(halfway.state.resources, expectedBeforeArrival.resources);
+    assert.deepEqual(halfway.state.wolves, initial.wolves);
+    assert.deepEqual(halfway.state.inventory, initial.inventory);
+    await api.restart();
+    assert.deepEqual((await api.session(player.cookie)).data, { ...halfway, mode: 'online' });
+    now = endsAt - 1;
+    const waiting = await (await api.request('/api/state', { cookie: player.cookie })).json();
+    assert.equal(waiting.state.adventure.active.endsAt - now, 1);
+    assert.equal(waiting.state.adventure.history.length, 0);
+    assert.deepEqual(waiting.state.wolves, initial.wolves);
+
+    now = endsAt;
+    const completed = await (await api.request('/api/state', { cookie: player.cookie })).json();
+    assert.equal(completed.state.adventure.active, null);
+    assert.equal(completed.state.adventure.history.length, 1);
+    assert.deepEqual(completed.state.adventure.history[0].reward, {
+      water: 0,
+      feed: 0,
+      wood: 384,
+      stone: 240,
+      herbs: 72,
+    });
+    assert.equal(completed.state.adventure.history[0].xp, 720);
+    assert.equal(completed.state.adventure.history[0].economyVersion, 3);
+    assert.equal(completed.state.adventure.history[0].completedAt, endsAt);
+    assert.equal(completed.state.inventory.healer_satchel, 1);
+    assert.equal(completed.state.location, kind === 'caravan' ? 'ruins' : 'homeland');
+    assert.equal(
+      completed.state.firstWatch.milestones[kind === 'caravan' ? 'escort' : 'explore'],
+      endsAt,
+    );
+    for (const wolf of completed.state.wolves) {
+      const totalXp = (45 * wolf.level * (wolf.level - 1)) / 2 + wolf.xp;
+      if (wolfIds.includes(wolf.id)) assert.equal(totalXp, 720);
+      else
+        assert.deepEqual(
+          wolf,
+          initial.wolves.find((entry) => entry.id === wolf.id),
+        );
+    }
+    assert.equal(validateGame(completed.state), true);
+    await api.restart();
+    assert.deepEqual((await api.session(player.cookie)).data, { ...completed, mode: 'online' });
+    assert.deepEqual(
+      await (await api.request('/api/state', { cookie: player.cookie })).json(),
+      completed,
+    );
+    const isolated = (await api.session(other.cookie)).data;
+    assert.deepEqual(isolated.state.wolves, other.data.state.wolves);
+    assert.deepEqual(isolated.state.inventory, other.data.state.inventory);
+    assert.equal(isolated.state.adventure.history.length, 0);
+  });
+}
+
+for (const marker of [undefined, 1, 2]) {
+  test(`persisted ${marker ?? 'unmarked'} short journeys retain their promise through restart before the next departure adopts v3`, async (t) => {
+    let now = 100_000;
+    const api = await fixture(t, { clock: () => now });
+    const player = await api.session();
+    const state = structuredClone(player.data.state);
+    const choice = {
+      type: 'expedition',
+      region: 'spring',
+      difficulty: 'easy',
+      plan: 'survey',
+      wolfIds: ['wolf-scout'],
+    };
+    applyAction(state, choice, now);
+    const old = adventureQuote(state, choice, { economyVersion: marker ?? 1 });
+    if (marker === undefined) delete state.adventure.active.economyVersion;
+    else state.adventure.active.economyVersion = marker;
+    state.adventure.active.endsAt = now + old.seconds * 1000;
+    for (const key of ['wood', 'stone', 'herbs']) state.resources[key] = 0;
+    await saveAccountState(api, player, state);
+    now += 30_000;
+    await api.restart();
+    const restored = await api.session(player.cookie);
+    assert.equal(restored.data.state.adventure.active.endsAt - now, 45_000);
+    assert.equal(restored.data.state.adventure.history.length, 0);
+    assert.deepEqual(restored.data.state.wolves, state.wolves);
+    now = state.adventure.active.endsAt;
+    const arrived = await (await api.request('/api/state', { cookie: player.cookie })).json();
+    const receipt = arrived.state.adventure.history[0];
+    assert.equal(receipt.xp, 45);
+    assert.deepEqual(receipt.reward, { water: 0, feed: 0, ...old.reward });
+    assert.equal(receipt.completedAt - receipt.startedAt, 75_000);
+    if (marker === undefined) assert.equal(Object.hasOwn(receipt, 'economyVersion'), false);
+    else assert.equal(receipt.economyVersion, marker);
+    const next = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { revision: arrived.revision, action: { ...choice, economyVersion: marker ?? 1 } },
+    });
+    assert.equal(next.status, 200);
+    const nextState = (await next.json()).state;
+    assert.equal(nextState.adventure.active.economyVersion, 3);
+    assert.equal(nextState.adventure.active.endsAt - now, 6 * 60 * 60_000);
+    assert.deepEqual(nextState.adventure.history[0], receipt);
+  });
+}

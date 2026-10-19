@@ -57,7 +57,7 @@ test('mission plans compare real consequences, preserve focus and submit the sel
     const quote = adventureQuote(state, { ...selection, plan: id });
     await expect(card(page, id).locator('[data-plan-xp]')).toHaveText('+' + quote.xp);
     await expect(card(page, id).locator('[data-plan-seconds]')).toHaveText(
-      quote.seconds + ' ' + translations.tr.seconds,
+      '6 ' + translations.tr.journeyHours,
     );
     await expect(card(page, id).locator('[data-plan-fatigue]')).toContainText(
       String(quote.fatigue),
@@ -82,7 +82,7 @@ test('mission plans compare real consequences, preserve focus and submit the sel
   await page.locator('#adventure-difficulty').selectOption('normal');
   await page.locator('#adventure-wolf-scout').check();
   await expect(plan(page, 'survey')).toBeChecked();
-  await expect(card(page, 'survey').locator('[data-plan-xp]')).toHaveText('+90');
+  await expect(card(page, 'survey').locator('[data-plan-xp]')).toHaveText('+405');
   expect(actions).toEqual([]);
   const response = page.waitForResponse('**/api/action');
   await page.locator('[data-action="startAdventure"]').click();
@@ -126,7 +126,7 @@ test('story stages follow server time, keep objectives locked and report actual 
     translations.tr.story_expedition_spring_departure,
   );
   await expect(plan(page, 'survey')).toBeDisabled();
-  await poll(page, 26000);
+  await poll(page, 7_201_000);
   await expect(page.locator('[data-active-adventure]')).toHaveAttribute(
     'data-mission-stage',
     'middle',
@@ -134,7 +134,7 @@ test('story stages follow server time, keep objectives locked and report actual 
   await expect(page.locator('.mission-stages [aria-current="step"]')).toContainText(
     translations.tr.missionStageMiddle,
   );
-  await poll(page, 26000);
+  await poll(page, 7_201_000);
   await expect(page.locator('[data-active-adventure]')).toHaveAttribute(
     'data-mission-stage',
     'arrival',
@@ -143,7 +143,7 @@ test('story stages follow server time, keep objectives locked and report actual 
     translations.tr.story_expedition_spring_arrival,
   );
   await expect(page.locator('[data-mission-report]')).toHaveCount(0);
-  await poll(page, 24000);
+  await poll(page, 7_199_000);
   await expect(page.locator('[data-active-adventure]')).toHaveCount(0);
   const report = page.locator('[data-mission-report="outing-1"]');
   await expect(report.locator('[data-report-plan]')).toHaveText(translations.tr.missionPlan_survey);
@@ -168,6 +168,7 @@ test('legacy missions keep the standard label and a full store gives an explicit
   );
   delete state.adventure.active.plan;
   delete state.adventure.active.economyVersion;
+  state.adventure.active.endsAt = START + 60_000;
   await mockJourney(page, state);
   await page.goto('/#world');
   await expect(plan(page, 'standard')).toBeChecked();

@@ -64,7 +64,7 @@ test('exploration, equipment and caravan guidance advances only after confirmed 
   await expect(page.locator('[data-active-adventure]')).toBeVisible();
   expect(state.firstWatch.milestones.explore).toBeNull();
   let polled = page.waitForResponse('**/api/state');
-  await page.clock.fastForward(61000);
+  await page.clock.fastForward(state.adventure.active.endsAt - state.updatedAt + 1000);
   await (await polled).finished();
   await page.locator('.nav-item[data-view="quests"]').click();
   await expect(page.locator('#fw-action-explore')).toHaveAttribute(
@@ -84,7 +84,7 @@ test('exploration, equipment and caravan guidance advances only after confirmed 
   await page.locator('[data-action="startAdventure"]').click();
   await expect(page.locator('[data-active-adventure]')).toBeVisible();
   polled = page.waitForResponse('**/api/state');
-  await page.clock.fastForward(61000);
+  await page.clock.fastForward(state.adventure.active.endsAt - state.updatedAt + 1000);
   await (await polled).finished();
   await page.locator('.nav-item[data-view="quests"]').click();
   await page.locator('#fw-action-escort').click();

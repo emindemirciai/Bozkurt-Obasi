@@ -41,14 +41,15 @@ test('suggestions and forecasts are repeatable and do not mutate frozen game or 
   );
 });
 
-test('scouting chooses equipped guardians and quotes the actual recommended party duration', () => {
+test('scouting chooses equipped guardians and quotes discounted supplies with the same route duration', () => {
   const state = createGame(NOW);
   state.wolves[3].equipment = 'scout_charm';
   state.wolves[3].hp = 20;
   const best = byStrategy(adventurePartySuggestions(state, choice()), 'scouting');
   assert.deepEqual(best.wolfIds, ['wolf-scout']);
   assert.equal(best.scouting, 15);
-  assert.equal(best.quote.seconds, 51);
+  assert.equal(best.quote.seconds, 21600);
+  assert.deepEqual(best.quote.cost, { water: 16, feed: 20 });
   assert.equal(best.ready, true);
   state.wolves[0].equipment = 'scout_charm';
   state.wolves[1].equipment = 'scout_charm';
@@ -57,7 +58,12 @@ test('scouting chooses equipped guardians and quotes the actual recommended part
     'scouting',
   );
   assert.equal(hard.scouting, 45);
-  assert.equal(hard.quote.seconds, 126, 'equipment reduction retains the authoritative 30% cap');
+  assert.equal(hard.quote.seconds, 21600);
+  assert.deepEqual(
+    hard.quote.cost,
+    { water: 20, feed: 26 },
+    'supplies retain the authoritative 30% scouting discount cap',
+  );
 });
 
 test('resilience ranks post-fatigue reserve and scouting ties use health fraction then state order', () => {
@@ -264,13 +270,13 @@ test('forecast applies fatigue first, then multi-level healing and training poin
     }),
   ).wolves[0];
   assert.equal(prediction.postFatigueHp, 1);
-  assert.equal(prediction.levelsGained, 3);
-  assert.equal(prediction.level, 4);
-  assert.equal(prediction.hp, 55);
-  assert.equal(prediction.maxHp, 158);
-  assert.equal(prediction.points, 5);
-  assert.equal(prediction.xpGained, 270);
-  assert.equal(prediction.nominalXp, 270);
+  assert.equal(prediction.levelsGained, 6);
+  assert.equal(prediction.level, 7);
+  assert.equal(prediction.hp, 109);
+  assert.equal(prediction.maxHp, 176);
+  assert.equal(prediction.points, 8);
+  assert.equal(prediction.xpGained, 1080);
+  assert.equal(prediction.nominalXp, 1080);
 });
 
 test('forecast distinguishes nominal XP from accepted XP at the level 20 cap', () => {
@@ -280,10 +286,10 @@ test('forecast distinguishes nominal XP from accepted XP at the level 20 cap', (
   let prediction = adventurePartyForecast(state, choice()).wolves[0];
   assert.equal(prediction.levelsGained, 0);
   assert.equal(prediction.xpGained, 1);
-  assert.equal(prediction.nominalXp, 30);
+  assert.equal(prediction.nominalXp, 180);
   assert.equal(prediction.xp, 899);
   state.wolves[0].xp = 899;
   prediction = adventurePartyForecast(state, choice()).wolves[0];
   assert.equal(prediction.xpGained, 0);
-  assert.equal(prediction.nominalXp, 30);
+  assert.equal(prediction.nominalXp, 180);
 });

@@ -6,7 +6,12 @@ export const v2Translations = {
     buildingConstructionCost: 'Yeni bina maliyeti',
     buildingPlotHint:
       'Bina düğmelerindeki seviye gelişim aşamasını, arsa ise köydeki yer numarasını gösterir.',
-    missionLegacyReward: 'Bu seferde yola çıkarken vaat edilen malzeme ödülü korunur.',
+    journeyHours: 'sa',
+    journeyMinutes: 'dk',
+    journeyScheduleHint:
+      'Yeni keşif ve sevkiyatlar gerçek zamanda 6–12 saat sürer: Su Gözü 6, Şifalı Çayır 8, Yüksek Otlak 10, Kadim Kalıntılar 12 saat. Ana yurda dönüş 6 saattir. Amaç, zorluk ve izcilik bu süreleri değiştirmez; çevrimdışıyken de ilerler. Dönüşe kadar yeni savaş veya sefer başlatılamaz; seçilen kurtlar eğitim ve ekipmana kapalıdır. Bu sırada obanın kaynaklarını ve yapılarını yönetebilirsin. Üretim yol boyunca depoyu doldurabilir; varışta sığmayan kazanımlar bekletilmez. Planlama uyarısı yalnızca şu anki boş alanı karşılaştırır.',
+    missionLegacyReward:
+      'Bu sefer önceki kurallarla başladı. Çıkışta belirlenen süre ve kazanımlar korunur.',
     demolitionEyebrow: 'Oba düzenlemesi',
     demolitionTitle: 'Bina kaldırılsın mı?',
     demolitionIntro:
@@ -38,7 +43,8 @@ export const v2Translations = {
     demolitionPreviewOpen: 'İade uyarısını incele',
     partyForecastMaxXp: 'Azami seviye · {xp} / 899 kayıtlı deneyim',
     partySuggestionScoutingTotal: 'Ekipman izciliği (toplam)',
-    partySuggestionScoutingCap: 'Yol süresi indirimi en çok %30 olabilir.',
+    partySuggestionScoutingCap:
+      'Yeni seferlerde izcilik, yola çıkış erzağını en fazla %30 azaltır; süreyi değiştirmez.',
     partySuggestionTitle: 'Sefer kadrosu',
     partySuggestionHint:
       'Amacına göre bir ekip önerisi seç veya aşağıdaki muhafızları kendin işaretle. Öneriler mevcut seçim sayını ve zorluğun asgari kadrosunu korur.',
@@ -46,7 +52,7 @@ export const v2Translations = {
     partySuggestion_resilience: 'Dayanıklı kadro',
     partySuggestion_training: 'Gelişim kadrosu',
     partySuggestion_scoutingHint:
-      'İzci ekipmanı yüksek muhafızlara öncelik verir. Yol süresi ekipmanın gerçek etkisine göre hesaplanır.',
+      'İzci ekipmanı yüksek muhafızlara öncelik verir. Yeni seferlerde bu ekipman, yola çıkış için gereken su ve yemi azaltır.',
     partySuggestion_resilienceHint:
       'Yorgunluk sonrasında en çok canı kalacak muhafızlara öncelik verir.',
     partySuggestion_trainingHint:
@@ -100,13 +106,13 @@ export const v2Translations = {
     missionNoMaterials: 'Depo dolu; malzeme eklenmedi.',
     missionPlanTitle: 'Seferin amacı',
     missionPlanHint:
-      'Aynı rotada farklı bir görev seç. Süre, erzak, kazanım ve yorgunluk aşağıda karşılaştırılır.',
+      'Aynı rotada farklı bir görev seç. Yeni seferlerde rota süresi sabittir; erzak, kazanım ve yorgunluk amaca göre değişir.',
     missionPlan_standard: 'Dengeli nöbet',
     missionPlan_survey: 'İz sürme',
     missionPlan_supply: 'İkmal seferi',
-    missionPlan_standardHint: 'Daha kısa yol; deneyim ve malzeme dengede.',
+    missionPlan_standardHint: 'Aynı rota süresinde deneyim ve malzeme dengede.',
     missionPlan_surveyHint: 'Ek izleri araştır; daha çok deneyim, daha az malzeme.',
-    missionPlan_supplyHint: 'Yük toplamaya zaman ayır; daha çok malzeme, daha az deneyim.',
+    missionPlan_supplyHint: 'Rotada yük toplamaya odaklan; daha çok malzeme, daha az deneyim.',
     missionPlan_standardStory:
       'Ekip ana patikayı izleyerek düzenli aralıklarla çevreyi kontrol ediyor.',
     missionPlan_surveyStory:
@@ -314,7 +320,7 @@ export const v2Translations = {
     noEquipment: 'Ekipman yok',
     attackBonus: 'Saldırı',
     defenseBonus: 'Koruma',
-    scoutBonus: 'Yol süresi azalması',
+    scoutBonus: 'Sefer erzağı indirimi',
     healBonus: 'İyileştirme',
     leather_vest: 'Deri muhafız yeleği',
     iron_guard: 'Demir boyun zırhı',
@@ -373,7 +379,12 @@ export const v2Translations = {
     buildingConstructionCost: 'New building cost',
     buildingPlotHint:
       'Building buttons show the upgrade level and the numbered plot where the building stands.',
-    missionLegacyReward: 'This journey keeps the material reward promised when it departed.',
+    journeyHours: 'hr',
+    journeyMinutes: 'min',
+    journeyScheduleHint:
+      'New explorations and escorts take 6–12 real hours: Wellspring 6, Healing Meadow 8, High Pastures 10 and Ancient Ruins 12 hours. Returning to the homeland takes 6 hours. Purpose, difficulty and scouting do not change these durations; journeys progress while you are offline. Until arrival, new battles and journeys are unavailable, and selected guardians cannot train or change equipment. You can still manage village resources and buildings. Production can fill storage during the trip; rewards that do not fit on arrival are not queued. The planning warning compares only the space available now.',
+    missionLegacyReward:
+      'This journey departed under earlier rules. Its original duration and promised rewards are preserved.',
     demolitionEyebrow: 'Village layout',
     demolitionTitle: 'Remove this building?',
     demolitionIntro:
@@ -408,7 +419,8 @@ export const v2Translations = {
     demolitionPreviewOpen: 'Inspect refund warning',
     partyForecastMaxXp: 'Maximum level · {xp} / 899 stored experience',
     partySuggestionScoutingTotal: 'Total equipment scouting',
-    partySuggestionScoutingCap: 'The travel time reduction is capped at 30%.',
+    partySuggestionScoutingCap:
+      'For new journeys, scouting reduces departure supplies by up to 30%; it does not shorten travel time.',
     partySuggestionTitle: 'Mission party',
     partySuggestionHint:
       'Choose a party for your goal or select guardians below. Suggestions keep your selected party size and the difficulty’s minimum.',
@@ -416,7 +428,7 @@ export const v2Translations = {
     partySuggestion_resilience: 'Resilient party',
     partySuggestion_training: 'Training party',
     partySuggestion_scoutingHint:
-      'Prioritizes guardians with scouting equipment. Travel time uses the equipment’s actual effect.',
+      'Prioritizes guardians with scouting equipment. On new journeys, this equipment reduces the water and feed required for departure.',
     partySuggestion_resilienceHint:
       'Prioritizes guardians with the most health left after fatigue.',
     partySuggestion_trainingHint:
@@ -471,13 +483,14 @@ export const v2Translations = {
     missionNoMaterials: 'Storage was full; no materials were added.',
     missionPlanTitle: 'Purpose of the journey',
     missionPlanHint:
-      'Choose a task on this route. Compare time, supplies, rewards and fatigue before departure.',
+      'Choose a task on this route. New journeys have a fixed route duration; supplies, rewards and fatigue vary with the task.',
     missionPlan_standard: 'Balanced watch',
     missionPlan_survey: 'Trail survey',
     missionPlan_supply: 'Supply run',
-    missionPlan_standardHint: 'A shorter journey with balanced experience and materials.',
+    missionPlan_standardHint: 'Balanced experience and materials within the same route duration.',
     missionPlan_surveyHint: 'Investigate extra tracks for more experience and fewer materials.',
-    missionPlan_supplyHint: 'Spend time collecting loads for more materials and less experience.',
+    missionPlan_supplyHint:
+      'Focus on collecting loads along the route for more materials and less experience.',
     missionPlan_standardStory:
       'The party follows the main trail, checking its surroundings at regular intervals.',
     missionPlan_surveyStory: 'The guardians read tracks on side paths and gather new knowledge.',
@@ -686,7 +699,7 @@ export const v2Translations = {
     noEquipment: 'No equipment',
     attackBonus: 'Attack',
     defenseBonus: 'Protection',
-    scoutBonus: 'Travel time reduction',
+    scoutBonus: 'Departure supply discount',
     healBonus: 'Healing',
     leather_vest: 'Leather guardian vest',
     iron_guard: 'Iron neck guard',

@@ -29,12 +29,15 @@ for (const legacy of [true, false]) {
         },
         START,
       );
-      if (legacy) delete state.adventure.active.economyVersion;
+      if (legacy) {
+        delete state.adventure.active.economyVersion;
+        state.adventure.active.endsAt = START + 75_000;
+      }
       expect(validateGame(state)).toBe(true);
       const outing = structuredClone(state.adventure.active);
       const promised = outingQuote(state, outing);
       const newDeparture = adventureQuote(state, outing);
-      if (legacy) expect(promised.reward.wood).toBeGreaterThan(newDeparture.reward.wood);
+      if (legacy) expect(promised.reward.wood).toBeLessThan(newDeparture.reward.wood);
       else expect(promised.reward).toEqual(newDeparture.reward);
       await page.clock.install({ time: new Date(START - 1000) });
       await page.clock.pauseAt(new Date(START));

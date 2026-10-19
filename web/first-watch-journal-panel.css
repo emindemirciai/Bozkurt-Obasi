@@ -1,0 +1,242 @@
+.first-watch-journal {
+  --journal-accent: var(--forest);
+  margin-top: 32px;
+  padding: 28px;
+  min-width: 0;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.fw-journal-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.fw-journal-heading h3 {
+  margin: 10px 0 0;
+  font:
+    30px Georgia,
+    serif;
+}
+.fw-journal-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.fw-journal-intro,
+.fw-journal-clock-note,
+.fw-journal-timing-note,
+.fw-journal-footnote {
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.fw-journal-intro {
+  margin: 20px 0 10px;
+}
+.fw-journal-clock-note {
+  margin: 0;
+  color: var(--muted);
+}
+.fw-journal-timing-note {
+  margin: 12px 0 22px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--journal-accent);
+  background: var(--bg);
+}
+.fw-journal-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.fw-journal-metrics dl {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-width: 0;
+}
+.fw-journal-metrics dt {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.fw-journal-metrics dd {
+  margin: 10px 0 0;
+  font-size: 19px;
+  font-family: Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.fw-journal-window {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin: 22px 0;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.fw-journal-window-marker {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--journal-accent);
+  border: 1px solid currentColor;
+  font:
+    20px Georgia,
+    serif;
+}
+.fw-journal-window h4 {
+  margin: 0 0 5px;
+  font-size: 13px;
+}
+.fw-journal-window p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.fw-journal-window .fw-journal-window-hint {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.fw-journal-steps {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.fw-journal-steps > li {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(0, 1.75fr);
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.fw-journal-step-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+}
+.fw-journal-step-number {
+  padding-top: 3px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.fw-journal-step-heading h4 {
+  margin: 0;
+  font:
+    18px/1.5 Georgia,
+    serif;
+}
+.fw-journal-status {
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.fw-journal-steps > li[data-journal-status='claimed'] .fw-journal-status,
+.fw-journal-steps > li[data-journal-status='pendingClaim'] .fw-journal-status {
+  color: var(--journal-accent);
+}
+.fw-journal-step-times {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  min-width: 0;
+}
+.fw-journal-step-times dt {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.fw-journal-step-times dd {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.fw-journal-steps > li[data-journal-window='within'] .fw-journal-window-cell dd {
+  color: var(--journal-accent);
+}
+.fw-journal-footnote {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+.first-watch-journal :focus-visible,
+#fw-journal-title:focus {
+  outline: 3px solid #b6974e;
+  outline-offset: 5px;
+}
+html[data-theme='dark'] .first-watch-journal {
+  --journal-accent: #c4d3a9;
+}
+.first-watch-journal-link {
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .fw-journal-steps > li {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+@media (max-width: 600px) {
+  .first-watch-journal {
+    padding: 19px 16px;
+  }
+  .fw-journal-heading h3 {
+    font-size: 26px;
+  }
+  .fw-journal-counts {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px 14px;
+    padding: 0;
+  }
+  .fw-journal-metrics {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .fw-journal-metrics dl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+  }
+  .fw-journal-metrics dd {
+    margin: 0;
+    font-size: 17px;
+  }
+  .fw-journal-window {
+    gap: 10px;
+    padding: 13px;
+  }
+  .fw-journal-step-times {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .first-watch-journal *,
+  .first-watch-journal *::before,
+  .first-watch-journal *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

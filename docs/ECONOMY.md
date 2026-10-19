@@ -1,6 +1,12 @@
-# Kaynak dengesi / Resource balance — v2.8.0
+# Kaynak ve sefer dengesi / Resource and journey balance
 
 ## Türkçe
+
+### v2.11.0 — Uzun seferler
+
+Yeni seferler 6/8/10/12 saat sürer; kolay/standart XP saat × 30, odun ×16, taş ×10, ot ×3. Zorluk 1/1,5/2 ve plan katsayıları uygulanır. İzcilik yalnızca erzak indirir. [Tam güncel tablo](LONG-JOURNEYS.md). Üretim, toplama ve savaşın aşağıdaki v2.8.0 ayarları korunur; başlamış seferler eski tarifeyle biter.
+
+### v2.8.0 — Önceki kaynak ayarı
 
 Amaç, sürekli gelen kaynakları azaltarak inşaat ve sefer seçimlerini daha önemli hale getirmek. Bu ayar kullanıcı isteği üzerine yapılmıştır; gerçek oyuncu oturumlarıyla henüz ölçülmüş bir zorluk hedefi değildir.
 
@@ -24,6 +30,12 @@ Başlamış keşif/sevkiyatlar **önceden vaat edilen ödüllerle** biter. Eski 
 Bina kaldırmanın %50 iadesi gelir indirimi değildir: [inşaat ve tüm yükseltmelerin maliyet toplamından](DEMOLITION.md) hesaplanır. Alıp kaldırmak kâr oluşturmaz. [Köy planlaması](VILLAGE-PLANNING.md) · [Sefer örnekleri](ADVENTURE-PLANNING.md) · [Çevrimdışı index](../preview/index.html).
 
 ## English
+
+### v2.11.0 — Long journeys
+
+New journeys take 6/8/10/12 hours. Easy/standard XP is hours ×30; wood ×16, stone ×10 and herbs ×3. Apply difficulty 1/1.5/2 and purpose multipliers. Scouting discounts supplies only. [Current full table](LONG-JOURNEYS.md). The v2.8.0 production/gathering/battle rules below remain; existing departures finish under their original rules.
+
+### v2.8.0 — Previous resource adjustment
 
 Repeatable materials are reduced so construction and journey choices carry more weight. This tuning follows the user's request; it has not yet been calibrated against observed player sessions.
 

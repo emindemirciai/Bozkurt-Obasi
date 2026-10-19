@@ -53,7 +53,7 @@ test('computed party choices preserve focus and server state, then an explicit d
     translations.tr.scout,
   );
   await expect(page.locator('[data-party-card="scouting"] [data-party-seconds]')).toHaveText(
-    '51 ' + translations.tr.seconds,
+    '6 ' + translations.tr.journeyHours,
   );
   await expect(page.locator('[data-party-card="resilience"] .party-suggestion-names')).toHaveText(
     translations.tr.guardian,
@@ -79,13 +79,13 @@ test('computed party choices preserve focus and server state, then an explicit d
     true,
   );
   await expect(page.locator('[data-adventure-cost]')).toContainText(
-    '51 ' + translations.tr.seconds,
+    '6 ' + translations.tr.journeyHours,
   );
   await expect(page.locator('[data-mission-plan="standard"] [data-plan-seconds]')).toHaveText(
-    '51 ' + translations.tr.seconds,
+    '6 ' + translations.tr.journeyHours,
   );
   await expect(page.locator('[data-region="spring"] .route-detail')).toContainText(
-    '51 ' + translations.tr.seconds,
+    '6 ' + translations.tr.journeyHours,
   );
   expect(actions).toEqual([]);
   expect(state).toEqual(before);
@@ -167,9 +167,9 @@ test('arrival rows show real fatigue, level-up healing and only accepted XP at t
         : arrived.xp + ' / ' + arrived.level * 45,
     );
   }
-  await expect(forecastRow(page, 'wolf-alpha').locator('.party-level-up')).toContainText('3');
+  await expect(forecastRow(page, 'wolf-alpha').locator('.party-level-up')).toContainText('6');
   await expect(forecastRow(page, 'wolf-alpha')).toContainText(
-    translations.tr.partyForecastHealing.replace('{count}', '2').replace('{points}', '2'),
+    translations.tr.partyForecastHealing.replace('{count}', '5').replace('{points}', '5'),
   );
   await expect(forecastRow(page, 'wolf-guardian').locator('[data-party-arrival-xp]')).toContainText(
     '+1 ' + translations.tr.xp,

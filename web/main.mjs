@@ -15,6 +15,7 @@ import {
 import { PLOTS, getWallUpgradeCost, demolitionQuote } from '../shared/settlement.mjs';
 import { demolitionDialog, demolitionStatus, updateDemolitionDialog } from './demolition-panel.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
+import { formatJourneyDuration } from './journey-time.mjs';
 import { createArrivalTracker } from './arrival-notices.mjs';
 import { arrivalPanel } from './arrival-panel.mjs';
 import { adventurePartySuggestions } from './adventure-party.mjs';
@@ -40,6 +41,10 @@ import {
 import { translations } from './i18n.mjs';
 import { firstWatchProgress } from '../shared/first-watch.mjs';
 import { firstWatchPanel, updateFirstWatchPanel } from './first-watch-panel.mjs';
+import {
+  firstWatchJournalPanel,
+  updateFirstWatchJournalPanel,
+} from './first-watch-journal-panel.mjs';
 import { constructionPlan } from './planning.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { herdPanel, updateHerdPanel } from './herd-panel.mjs';
@@ -453,6 +458,8 @@ function render(restoreFocus, preservePlanning = false) {
     preservePlanning && view === 'village' ? root.querySelector('#economy-panel') : null;
   const previousHerd = preservePlanning ? root.querySelector('#herd-recovery-panel') : null;
   const previousCare = preservePlanning ? root.querySelector('#recovery-panel') : null;
+  const previousJournal =
+    preservePlanning && view === 'quests' ? root.querySelector('#first-watch-journal') : null;
   const previousGuardian =
     preservePlanning && view === 'wolves' ? root.querySelector('#guardian-panel') : null;
   const previousParty =
@@ -521,6 +528,10 @@ function render(restoreFocus, preservePlanning = false) {
   if (previousCare) {
     root.querySelector('#recovery-panel')?.replaceWith(previousCare);
     updateRecoveryPanel(root, state, { t, language, busy });
+  }
+  if (previousJournal) {
+    root.querySelector('#first-watch-journal')?.replaceWith(previousJournal);
+    updateFirstWatchJournalPanel(root, state, { t, language });
   }
   if (previousGuardian) {
     root.querySelector('#guardian-panel')?.replaceWith(previousGuardian);
@@ -747,7 +758,7 @@ function worldView() {
 }
 
 function questsView() {
-  return `${firstWatchPanel(state, { t, language, busy })}<section class="first-watch-legacy"><h2>${t('fwLegacy')}</h2><p>${t('fwLegacyText')}</p></section><div class="quest-grid">${state.quests.map((q, i) => `<article class="quest-card ${q.claimed ? 'quest-complete' : ''}"><div class="quest-number">0${i + 1}</div><div class="quest-icon">${icon(['village', 'feed', 'battle', 'wolves'][i], 34)}</div><span class="quest-tag">${t(q.claimed ? 'claimed' : 'inProgress')}</span><h2>${t(q.id)}</h2><p>${t(`${q.id}Desc`)}</p><div class="quest-progress-label"><span>${t('quests')}</span><strong>${q.progress} / ${q.target}</strong></div>${progress(q.progress, q.target)}${button((q.claimed ? icon('check', 17) : icon('flag', 17)) + t(q.claimed ? 'claimed' : 'claim'), 'claimQuest', 'button ' + (q.claimed ? 'outline' : 'primary'), q.claimed || q.progress < q.target || busy, `data-id="${q.id}"`)}</article>`).join('')}</div>`;
+  return `${firstWatchPanel(state, { t, language, busy })}${firstWatchJournalPanel(state, { t, language })}<section class="first-watch-legacy"><h2>${t('fwLegacy')}</h2><p>${t('fwLegacyText')}</p></section><div class="quest-grid">${state.quests.map((q, i) => `<article class="quest-card ${q.claimed ? 'quest-complete' : ''}"><div class="quest-number">0${i + 1}</div><div class="quest-icon">${icon(['village', 'feed', 'battle', 'wolves'][i], 34)}</div><span class="quest-tag">${t(q.claimed ? 'claimed' : 'inProgress')}</span><h2>${t(q.id)}</h2><p>${t(`${q.id}Desc`)}</p><div class="quest-progress-label"><span>${t('quests')}</span><strong>${q.progress} / ${q.target}</strong></div>${progress(q.progress, q.target)}${button((q.claimed ? icon('check', 17) : icon('flag', 17)) + t(q.claimed ? 'claimed' : 'claim'), 'claimQuest', 'button ' + (q.claimed ? 'outline' : 'primary'), q.claimed || q.progress < q.target || busy, `data-id="${q.id}"`)}</article>`).join('')}</div>`;
 }
 
 function updatesView() {
@@ -1769,6 +1780,14 @@ root.addEventListener('click', async (event) => {
     render('account-password');
     return;
   }
+  if (a === 'firstWatchJournal') {
+    if (busy || !auth.authenticated || mode !== 'online') return;
+    navigate('quests');
+    const heading = root.querySelector('#fw-journal-title');
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    return;
+  }
   if (a === 'firstWatchStorage') {
     if (busy) return;
     plannedBuilding = 'storage';
@@ -2061,6 +2080,7 @@ setInterval(async () => {
   updateHerdPanel(root, state, herdAmount, economyContext());
   updateRecoveryPanel(root, state, { t, language, busy });
   updateFirstWatchPanel(root, state, { t, language, busy });
+  if (view === 'quests') updateFirstWatchJournalPanel(root, state, { t, language });
   if (view === 'wolves') updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());
   if (view === 'world')
@@ -2109,7 +2129,10 @@ setInterval(async () => {
   }
   const journey = document.querySelector('[data-journey]');
   if (journey && state.journey)
-    journey.textContent = `${Math.max(0, Math.ceil((state.journey.endsAt - Date.now()) / 1000))} ${t('seconds')}`;
+    journey.textContent = formatJourneyDuration(
+      Math.max(0, Math.ceil((state.journey.endsAt - Date.now()) / 1000)),
+      { t, language },
+    );
   renderNotice();
 }, 1000);
 window.addEventListener('popstate', () => {

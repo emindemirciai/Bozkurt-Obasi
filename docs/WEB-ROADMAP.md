@@ -28,7 +28,9 @@
 
 **v2.10.0:** Sefer dönüşü bildirimi son raporun gerçek kazanımlarını gösterir, hesaba özel okundu bilgisi ve mevcut rapora odaklanma sunar. [Bildirim rehberi](JOURNEY-ARRIVALS.md).
 
-Sıradaki sınırlı aday: mevcut zaman damgalarından türetilmiş İlk Nöbet günlüğü. Bu aday henüz uygulanmış değildir; gerçek oyuncu gözlemi halen gereklidir.
+**v2.11.0:** Yeni seferler 6/8/10/12 saat; XP/malzemeler süreye ve amaca göre ölçeklenir, önceki görevler korunur. [Uzun seferler](LONG-JOURNEYS.md). İlk Nöbet Günlüğü mevcut zaman damgalarından hedef/ödül sürelerini, ilk zaferi ve toparlanma aralığını gösterir. İlk 15 dakika işaretleri çevrimdışı süreyi de kapsar; önceki köylerden çıkarılan zamanlar ölçülmüş süre sayılmaz. [Günlük rehberi](FIRST-WATCH-JOURNAL.md).
+
+Sıradaki doğrulama: gerçek oyuncularda İlk Nöbet, kaynak dengesi ve sefer kazanımlarının anlaşılmasını gözlemlemek. Henüz gerçek oyuncu araştırması yapılmış sayılmaz.
 
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
 
@@ -67,7 +69,9 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 
 **v2.10.0:** Journey-arrival notices show the latest actual receipt, account-scoped read state and focus on the existing report. [Notice guide](JOURNEY-ARRIVALS.md).
 
-Next bounded candidate: a First Watch journal derived from existing timestamps. These candidates are not implemented features; real player observation remains necessary.
+**v2.11.0:** New journeys take 6/8/10/12 hours with time/purpose-scaled XP and supplies, preserving existing departures. [Long journeys](LONG-JOURNEYS.md). The First Watch Journal derives objective/claim timings, first victory and recovery intervals from existing timestamps. First-15-minute markers include offline time; inferred returning-village times are excluded. [Journal guide](FIRST-WATCH-JOURNAL.md).
+
+Next validation: observe real players using First Watch, resource balance and journey receipts. Real player research has not yet been completed.
 
 **Current web release:** A playable village, production, construction/progression, guardian and formation choices, jackal battles, Turkish/English interface, an offline visual homepage preview, and Google- or email-linked progress in SQLite. The homepage is public; the village and game screens require a valid account session. Delivery uses GitHub → Docker → Dokploy and includes local previews, tests, line counts, and clean source archives. Concurrent players have independent villages; a shared world and PvP are outside this release.
 

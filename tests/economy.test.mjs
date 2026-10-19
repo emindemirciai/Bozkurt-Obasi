@@ -94,7 +94,7 @@ test('battle victories give half the repeatable material loot while guardian XP 
   assert.equal(validateGame(state), true);
 });
 
-test('all routes, plans and difficulties halve only materials and preserve supplies, XP, fatigue and time', () => {
+test('persisted version-two routes halve legacy materials and preserve their original supplies, XP, fatigue and time', () => {
   const state = createGame(NOW);
   for (const region of REGIONS) {
     for (const difficulty of ['easy', 'normal', 'hard']) {
@@ -102,7 +102,7 @@ test('all routes, plans and difficulties halve only materials and preserve suppl
         for (const kind of ['expedition', 'caravan']) {
           const choice = selection({ region: region.id, difficulty, plan, kind });
           const legacy = adventureQuote(state, choice, { economyVersion: 1 });
-          const current = adventureQuote(state, choice);
+          const current = adventureQuote(state, choice, { economyVersion: 2 });
           assert.deepEqual(current, {
             ...legacy,
             reward: Object.fromEntries(
@@ -120,19 +120,19 @@ test('new departures always persist the current economy and client legacy marker
     const state = createGame(NOW);
     const choice = selection({ economyVersion });
     const quote = adventureQuote(state, choice);
-    assert.deepEqual(quote.reward, { wood: 16, stone: 10, herbs: 3 });
+    assert.deepEqual(quote.reward, { wood: 96, stone: 60, herbs: 18 });
     depart(state, choice);
-    assert.equal(state.adventure.active.economyVersion, 2);
+    assert.equal(state.adventure.active.economyVersion, 3);
     emptyMaterials(state);
     advanceGame(state, state.adventure.active.endsAt);
     assert.deepEqual(state.adventure.history[0].reward, {
       water: 0,
       feed: 0,
-      herbs: 3,
-      wood: 16,
-      stone: 10,
+      herbs: 18,
+      wood: 96,
+      stone: 60,
     });
-    assert.equal(state.adventure.history[0].economyVersion, 2);
+    assert.equal(state.adventure.history[0].economyVersion, 3);
     assert.equal(validateGame(state), true);
   }
 });
@@ -150,6 +150,7 @@ test('legacy active missions retain promised full rewards through reload for eve
       if (plan === undefined) delete state.adventure.active.plan;
       emptyMaterials(state);
       const promised = adventureQuote(state, choice, { economyVersion: 1 });
+      state.adventure.active.endsAt = NOW + promised.seconds * 1000;
       const before = structuredClone(state);
       assert.deepEqual(outingQuote(state, state.adventure.active), promised);
       assert.equal(validateGame(state), true);
@@ -172,10 +173,13 @@ test('legacy active missions retain promised full rewards through reload for eve
   }
 });
 
-test('legacy full-value receipts remain valid beside new half-value receipts without rewriting balances', () => {
+test('legacy full-value receipts remain valid beside new long-journey receipts without rewriting balances', () => {
   const state = createGame(NOW);
   depart(state, selection({ plan: 'supply' }));
   delete state.adventure.active.economyVersion;
+  state.adventure.active.endsAt =
+    NOW +
+    adventureQuote(state, selection({ plan: 'supply' }), { economyVersion: 1 }).seconds * 1000;
   emptyMaterials(state);
   advanceGame(state, state.adventure.active.endsAt);
   const oldReceipt = structuredClone(state.adventure.history[0]);
@@ -189,31 +193,31 @@ test('legacy full-value receipts remain valid beside new half-value receipts wit
   assert.deepEqual(restored.adventure.history[0].reward, {
     water: 0,
     feed: 0,
-    herbs: 5,
-    wood: 24,
-    stone: 15,
+    herbs: 27,
+    wood: 144,
+    stone: 90,
   });
-  assert.equal(restored.adventure.history[0].economyVersion, 2);
+  assert.equal(restored.adventure.history[0].economyVersion, 3);
   assert.equal(validateGame(restored), true);
 });
 
 test('invalid persisted economy markers and oversized current receipts fail strict save validation', () => {
   const state = createGame(NOW);
   depart(state, selection());
-  for (const marker of [1, 0, 3, null, undefined, '2', false, {}]) {
+  for (const marker of [1, 2, 0, 4, null, undefined, '2', false, {}]) {
     const forged = structuredClone(state);
     forged.adventure.active.economyVersion = marker;
     assert.equal(validateGame(forged), false);
     assert.throws(() => migrateGame(forged), { code: 'INVALID_SAVE' });
   }
   advanceGame(state, state.adventure.active.endsAt);
-  for (const marker of [1, null, undefined, '2']) {
+  for (const marker of [1, 2, null, undefined, '2']) {
     const forged = structuredClone(state);
     forged.adventure.history[0].economyVersion = marker;
     assert.equal(validateGame(forged), false);
   }
   const forged = structuredClone(state);
-  forged.adventure.history[0].reward.wood = 17;
+  forged.adventure.history[0].reward.wood = 97;
   assert.equal(validateGame(forged), false);
 });
 

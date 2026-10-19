@@ -16,7 +16,7 @@
 
 Önerilen sayı mevcut seçimin sayısını korur, zorluğun gerektirdiği minimumun altına inmez: kolay/orta/zorda en az 1/2/3 kurt. Kutularla daha fazla kurt seçersen öneriler bu sayıyı kullanır. Canı 20'nin altında olanlar önerilmez. Yeterli uygun muhafız yoksa eksik sayı açıklanır; eksik kadro kendiliğinden uygulanmaz. Savaş veya yolculuk sürerken kadro değiştirme kapalıdır. Rota kilidi, sürü canı ve erzak koşulları ayrıca hazırlık panelinde denetlenir.
 
-Kartlar önerilen kurtları ve bu ekibin izci ekipmanıyla hesaplanan yol süresini gösterir. İzci indirimi toplamda en fazla %30'dur; **İz sürme** görev planı bunun üzerine daha uzun araştırma süresi ekler. Kadro önceliği ile görev planı farklı seçimlerdir.
+Kartlar önerilen kurtları, sabit rota süresini ve gerçek erzak maliyetini gösterir. v2.11.0’da izci ekipmanı su/yem maliyetini en fazla %30 azaltır; 6/8/10/12 saatlik süreyi değiştirmez. Görev planları da süreyi değiştirmeden XP/malzeme/erzak ve yorgunluğu değiştirir. [Saatlik ödül tablosu](LONG-JOURNEYS.md).
 
 ### Varış öngörüsü
 
@@ -46,7 +46,7 @@ Suggestions use saved equipment, health and progression rather than assuming abi
 
 Party size keeps the current selected count and never falls below difficulty requirements: at least 1/2/3 wolves on easy/normal/hard. Select extra checkboxes to increase the suggested count. Wolves below 20 health are ineligible. If too few guardians qualify, the panel explains the shortage and does not silently apply an incomplete party. Battles and ongoing journeys lock party changes. Route unlocks, herd health and supplies remain separate checks in the readiness panel.
 
-Cards show the proposed guardians and travel time with their actual scouting equipment. Scouting reduces duration by at most 30%; the **Survey** mission plan then adds research time. Party priority and mission plan are separate choices.
+Cards show the proposed guardians, fixed route duration and actual supplies. From v2.11.0, scouting discounts water/feed by at most 30% while keeping 6/8/10/12-hour travel fixed. Plans change XP/materials/supplies and fatigue without changing duration. [Hourly reward table](LONG-JOURNEYS.md).
 
 ### Arrival forecast
 

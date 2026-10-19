@@ -1,3 +1,4 @@
+import { formatJourneyDuration } from './journey-time.mjs';
 import { adventurePartySuggestions, adventurePartyForecast } from './adventure-party.mjs';
 
 const portraits = new URL('./assets/v2/wolf-roles.webp', import.meta.url).href;
@@ -44,7 +45,7 @@ function suggestionContent(state, suggestion, { t, busy = false, language = 'tr'
     detail(t('partySuggestionCount'), wolves.length + ' / ' + suggestion.proposedCount) +
     detail(
       t('missionTime'),
-      suggestion.quote.seconds + ' ' + escape(t('seconds')),
+      escape(formatJourneyDuration(suggestion.quote.seconds, { t, language })),
       'data-party-seconds',
     ) +
     detail(t('partySuggestionScoutingTotal'), number(suggestion.scouting, language) + '%') +

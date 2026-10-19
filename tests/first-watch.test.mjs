@@ -46,10 +46,10 @@ function completeChapter() {
   if (state.firstWatch.milestones.recover === null) act(state, { type: 'rest' });
   claim(state, 'recover');
   outing(state);
+  // Six-hour pasture production fills feed storage; build real capacity before claiming.
+  act(state, { type: 'build', building: 'storage', plotId: 'p1' });
   claim(state, 'explore');
   act(state, { type: 'equip', id: 'wolf-scout', item: 'leather_vest' });
-  // Growing storage is a real available action, not a test-only resource reset.
-  act(state, { type: 'build', building: 'storage', plotId: 'p1' });
   claim(state, 'equip');
   outing(state, 'caravan');
   claim(state, 'escort');

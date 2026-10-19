@@ -29,6 +29,10 @@ Bölüm, mevcut v2 köy kaydına `firstWatch` alanı ekler. Önceki v1 ve v2 kay
 
 Ödül alma sunucunun mevcut revizyon korumasını kullanır. Aynı ödülün tekrarı, sırası gelmemiş hedef veya eski revizyon reddedilir. İlerleme SQLite kaydında kalır ve yeniden başlatma sonrasında devam eder. Yeni ortam anahtarı veya SQL tablo değişikliği gerekmez. Dört servisi birlikte dağıtın; kalıcı volume'ları koruyun.
 
+### Nöbet günlüğü — v2.11.0
+
+Görevler ekranındaki [günlük](FIRST-WATCH-JOURNAL.md), hedef ve ödül zamanlarını başlangıca göre gösterir. Çevrimdışı zaman dahildir; önceki köylerin çıkarımsal zamanları ölçüme katılmaz. Köy kartından salt yönlendirmeyle açılır.
+
 ### Ölçüm ve önizleme
 
 Mevcut analiz ayarları açıkken HTTPS istemcisi sabit hedef kodlarını, alınmış ödül kodlarını, ilk zafer göstergesini ve yeni/geri dönen kayıt grubunu iletir. Olay oyun kaydını, kaynakları, e-postayı, hesap kimliğini veya özel mesajları içermez. DNT/GPC tercihleri korunur. Tarayıcı/bölüm için aynı olay güncellenir; yinelenen durumlar yeni trafik görüntülemesi sayılmaz. İzlenen örnekler kesin oyuncu sayısı değildir; farklı cihaz veya temizlenen tarayıcı verileri ayrı örnek oluşturabilir. Sıradaki hedef sayısı kesin terk etme olarak yorumlanmamalıdır.
@@ -46,6 +50,8 @@ The village next-goal card navigates without spending or starting commands. Ques
 From v2.9.0, the recovery direction focuses an eligible [Camp Care](CAMP-CARE.md) option or its blocker explanation. Navigation never purchases care.
 
 The additive `firstWatch` field is migrated from validated v1/v2 saves without resetting villages, resources, guardians, items or old claims. Previous activity is recognized only from available counters, logs, equipment and mission history; unobservable history is not guessed. Inferred timestamps reflect migration observation time, not exact historical dates. Migration grants no resources. Existing revision checks prevent repeated claims, out-of-order claims and stale writes. SQLite persistence survives restart. No new environment keys or SQL tables are required; deploy all four services while preserving volumes.
+
+The v2.11.0 [journal](FIRST-WATCH-JOURNAL.md) shows relative completion and claim timings in Quests, including offline time. Inferred returning-village timestamps are excluded from numeric comparisons. The village card navigates without sending commands.
 
 When existing HTTPS analytics is enabled, a minimal snapshot sends allowlisted objective/claim codes, first-victory status and new/returning cohort. It excludes saves, resources, email/account identifiers and private messages; DNT/GPC is respected. One browser/chapter event is updated and excluded from page-view totals. Samples are not exact unique players: another device or cleared storage may create a new sample. Pending objectives are not confirmed abandonment.
 

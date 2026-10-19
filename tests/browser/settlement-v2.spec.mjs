@@ -206,11 +206,14 @@ test('selected expedition and escort parties receive story progress, experience,
   await expect(page.locator('.training-row button').first()).toBeDisabled();
   await expect(page.locator('.equipment-panel')).toContainText(translations.tr.away);
   await page.locator('[data-view="world"]').click();
-  await pollVillage(page, 45_000);
+  const expedition = structuredClone(state.adventure.active);
+  expect(expedition.endsAt - expedition.startedAt).toBe(6 * 60 * 60_000);
+  await pollVillage(page, Math.floor((expedition.endsAt - expedition.startedAt) / 2));
   await expect(page.locator('[data-active-adventure]')).toContainText(
     translations.tr.story_expedition_spring_middle,
   );
-  await pollVillage(page, 80_000);
+  expect(state.adventure.history).toHaveLength(0);
+  await pollVillage(page, expedition.endsAt - state.updatedAt + 1000);
   await expect(page.locator('[data-active-adventure]')).toHaveCount(0);
   await expect(page.locator('.adventure-reports article')).toHaveCount(1);
   await expect(page.locator('.adventure-reports')).toContainText(
@@ -218,9 +221,10 @@ test('selected expedition and escort parties receive story progress, experience,
   );
   expect(state.adventure.unlocked).toEqual(['homeland', 'spring']);
   expect(state.inventory.leather_vest).toBe(1);
+  expect(state.adventure.history[0]).toMatchObject({ xp: 270, completedAt: expedition.endsAt });
   for (const wolf of state.wolves) {
     expect({ level: wolf.level, xp: wolf.xp }).toEqual(
-      ['wolf-alpha', 'wolf-scout'].includes(wolf.id) ? { level: 2, xp: 15 } : { level: 1, xp: 0 },
+      ['wolf-alpha', 'wolf-scout'].includes(wolf.id) ? { level: 4, xp: 0 } : { level: 1, xp: 0 },
     );
   }
   await page.locator('[data-view="wolves"]').click();
@@ -233,12 +237,15 @@ test('selected expedition and escort parties receive story progress, experience,
   await page.locator('[data-action="startAdventure"]').click();
   await expect(page.locator('[data-active-adventure]')).toBeVisible();
   expect(state.adventure.active.kind).toBe('caravan');
-  await pollVillage(page, 125_000);
+  const escort = structuredClone(state.adventure.active);
+  expect(escort.endsAt - escort.startedAt).toBe(6 * 60 * 60_000);
+  await pollVillage(page, escort.endsAt - state.updatedAt + 1000);
   await expect(page.locator('.adventure-reports article')).toHaveCount(2);
   expect(state.location).toBe('spring');
   expect(state.inventory.leather_vest).toBe(1);
-  expect(state.wolves[0]).toMatchObject({ level: 2, xp: 75, equipment: 'leather_vest' });
-  expect(state.wolves[3]).toMatchObject({ level: 2, xp: 75 });
+  expect(state.adventure.history[0]).toMatchObject({ xp: 270, completedAt: escort.endsAt });
+  expect(state.wolves[0]).toMatchObject({ level: 5, xp: 90, equipment: 'leather_vest' });
+  expect(state.wolves[3]).toMatchObject({ level: 5, xp: 90 });
   await pollVillage(page, 5_000);
   expect(state.inventory.leather_vest).toBe(1);
   expect(state.adventure.history).toHaveLength(2);

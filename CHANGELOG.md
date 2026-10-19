@@ -4,6 +4,23 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.11.0 — 2026-10-19
+
+**TR**
+
+- Yeni keşif ve sevkiyatlar bölgeye göre gerçek zamanda 6/8/10/12 saat sürer; plan, zorluk ve izcilik süreyi değiştirmez.
+- XP ve hammaddeler süre, zorluk ve amaca göre dengelendi; izcilik yola çıkış erzağını en fazla %30 azaltır. Eski seferlerin bitiş ve ödülleri korunur.
+- İlk Nöbet Günlüğü sekiz hedefin tamamlanma/ödül zamanlarını, ilk zaferi ve toparlanmayı gösterir; çevrimdışı zaman dahildir, eski kayıtlar sayısal ölçüme katılmaz.
+- Saat/dakika gösterimi, TR/EN mobil arayüz ve salt okunur önizlemeler güncellendi; mevcut hesaplar ve köyler korunur.
+
+**EN**
+
+- New exploration and escorts take 6/8/10/12 real hours by destination; plan, difficulty and scouting do not change duration.
+- XP and materials scale with time, difficulty and purpose; scouting discounts departure supplies by at most 30%. Existing departures retain deadlines and rewards.
+- First Watch Journal shows completion/claim times for eight objectives, first victory and recovery; offline time counts and inferred legacy records are excluded from numeric comparisons.
+- Hour/minute displays, TR/EN mobile UI and read-only previews are updated; existing accounts and villages remain.
+
+
 ## v2.10.0 — 2026-10-19
 
 **TR**

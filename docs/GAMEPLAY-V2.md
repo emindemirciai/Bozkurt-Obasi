@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+**v2.11.0 güncellemesi:** Yeni keşif ve sevkiyatlar bölgeye göre 6/8/10/12 saat sürer. XP/hammadde ve izcilik etkisi için [uzun sefer rehberi](LONG-JOURNEYS.md). Eski seferler aynı süre ve ödülle biter.
+
 ### Obayı kendin kur
 
 Yeni hesapların obası 36 boş parsel ve seviye 1 tahta çitle başlar. Başlangıç stoğu 450 odun, 350 taş, 180 su, 180 yem ve 80 ottur. **+** alanını seç, açılan menüden binayı seç: kaynak yalnızca bu son seçimde harcanır ve yapı seçtiğin parselde oluşur. Harita mobilde kendi içinde kaydırılır; sayfa genişlemez.
@@ -43,6 +45,8 @@ Oyun kaydı `version: 2` kullanır. `shared/legacy-v1.mjs` önceki sürümün do
 Yeni ortam değişkeni veya servis gerekmez. Dokploy'da mevcut veri volume'larını koruyup dört servisi birlikte yeniden dağıtın. [Köy önizlemesi](../preview/village.html), [savaş önizlemesi](../preview/battle.html) ve [ana sayfa index](../preview/index.html) internet olmadan açılır; oyuncu hesabını değiştirmez.
 
 ## English
+
+**v2.11.0 update:** New exploration and escorts take 6/8/10/12 hours by destination. See [long journeys](LONG-JOURNEYS.md) for XP/materials and scouting. Existing departures retain deadlines/rewards.
 
 ### Build your own village
 
