@@ -7,7 +7,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomBytes } from 'node:crypto';
 import { createApp } from '../server/web/app.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
-import { createGame, validateGame } from '../shared/game.mjs';
+import { createGame, applyAction, validateGame } from '../shared/game.mjs';
+import { recoveryPlan } from '../shared/recovery.mjs';
 import {
   createGame as createLegacyGame,
   applyAction as applyLegacyAction,
@@ -1148,6 +1149,161 @@ async function saveAccountState(api, session, state) {
     database.close();
   }
 }
+
+for (const kind of ['healHerd', 'rest']) {
+  test(`camp ${kind} matches its capped forecast, charges once under replay, and survives restart`, async (t) => {
+    const api = await fixture(t);
+    const player = await api.session();
+    const other = await api.session();
+    const before = structuredClone(player.data.state);
+    before.herd = { count: 20, hp: 140, maxHp: 200, panic: 35 };
+    before.wolves[0].hp = 40;
+    before.resources.herbs = 1;
+    before.resources.water = 25;
+    before.resources.feed = 30;
+    // A saved completed encounter can precede preparation for the next battle.
+    before.firstWatch.milestones.battle = before.updatedAt;
+    await saveAccountState(api, player, before);
+    const quote = recoveryPlan(before, kind);
+    assert.equal(quote.ready, true);
+    assert.deepEqual(quote.cost, kind === 'healHerd' ? { herbs: 1 } : { water: 25, feed: 30 });
+    assert.equal(quote.herd.after, kind === 'healHerd' ? 200 : 165);
+    assert.equal(quote.herd.panicAfter, kind === 'healHerd' ? 10 : 5);
+    const body = { action: { type: kind }, revision: player.data.revision };
+    const responses = await Promise.all([
+      api.request('/api/action', { method: 'POST', cookie: player.cookie, body }),
+      api.request('/api/action', { method: 'POST', cookie: player.cookie, body }),
+    ]);
+    assert.deepEqual(responses.map((response) => response.status).sort(), [200, 409]);
+    const saved = await responses.find((response) => response.status === 200).json();
+    const resources = structuredClone(before.resources);
+    for (const [resource, amount] of Object.entries(quote.cost)) resources[resource] -= amount;
+    assert.deepEqual(saved.state.resources, resources);
+    assert.deepEqual(saved.state.herd, {
+      ...before.herd,
+      hp: quote.herd.after,
+      panic: quote.herd.panicAfter,
+    });
+    assert.deepEqual(
+      saved.state.wolves,
+      before.wolves.map((wolf, index) => ({ ...wolf, hp: quote.wolves[index].after })),
+    );
+    assert.equal(saved.state.herd.count, before.herd.count);
+    assert.equal(saved.state.firstWatch.milestones.recover, before.updatedAt);
+    assert.deepEqual(saved.state.firstWatch.claims, before.firstWatch.claims);
+    assert.equal(saved.state.log.at(-1).key, kind === 'healHerd' ? 'herdHealed' : 'packRested');
+    assert.equal(saved.revision, player.data.revision + 1);
+    assert.equal(validateGame(saved.state), true);
+    assert.deepEqual(await responses.find((response) => response.status === 409).json(), {
+      error: 'stale_revision',
+      ...saved,
+    });
+    const replay = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body,
+    });
+    assert.equal(replay.status, 409);
+    assert.deepEqual(await replay.json(), { error: 'stale_revision', ...saved });
+    assert.deepEqual(
+      (await (await api.request('/api/state', { cookie: other.cookie })).json()).state,
+      other.data.state,
+    );
+    await api.restart();
+    const restored = await api.session(player.cookie);
+    assert.deepEqual(restored.data.state, saved.state);
+    assert.equal(restored.data.revision, saved.revision);
+  });
+}
+
+test('unavailable camp care preserves all saved health, supplies and progression', async (t) => {
+  const api = await fixture(t);
+  const cases = [
+    ['healHerd', 'herbs', 'INSUFFICIENT_RESOURCES'],
+    ['rest', 'water', 'INSUFFICIENT_RESOURCES'],
+    ['rest', 'feed', 'INSUFFICIENT_RESOURCES'],
+    ['healHerd', 'healthy', 'ALREADY_HEALTHY'],
+    ['rest', 'healthy', 'ALREADY_HEALTHY'],
+    ['rest', 'adventure', 'JOURNEY_ACTIVE'],
+    ['rest', 'legacyJourney', 'JOURNEY_ACTIVE'],
+    ['healHerd', 'battle', 'BATTLE_ACTIVE'],
+    ['rest', 'battle', 'BATTLE_ACTIVE'],
+  ];
+  for (const [kind, blocker, error] of cases) {
+    const player = await api.session();
+    const before = structuredClone(player.data.state);
+    if (blocker !== 'healthy') {
+      before.herd.hp -= 80;
+      before.herd.panic = 35;
+      before.wolves[0].hp -= 50;
+    }
+    if (['herbs', 'water', 'feed'].includes(blocker))
+      before.resources[blocker] = { herbs: 0.99, water: 24.99, feed: 29.99 }[blocker];
+    if (blocker === 'adventure')
+      applyAction(
+        before,
+        {
+          type: 'expedition',
+          region: 'spring',
+          difficulty: 'easy',
+          wolfIds: ['wolf-scout'],
+        },
+        before.updatedAt,
+      );
+    if (blocker === 'legacyJourney')
+      before.journey = { destination: 'spring', endsAt: before.updatedAt + 60_000 };
+    if (blocker === 'battle') applyAction(before, { type: 'startBattle' }, before.updatedAt);
+    await saveAccountState(api, player, before);
+    assert.equal(recoveryPlan(before, kind).reason, error, `${kind}: ${blocker}`);
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action: { type: kind }, revision: player.data.revision },
+    });
+    assert.equal(response.status, 400, `${kind}: ${blocker}`);
+    assert.deepEqual(await response.json(), { error });
+    assert.deepEqual(await (await api.request('/api/state', { cookie: player.cookie })).json(), {
+      state: before,
+      revision: player.data.revision,
+    });
+  }
+});
+
+test('herd treatment remains available during either kind of saved journey', async (t) => {
+  const api = await fixture(t);
+  for (const legacy of [false, true]) {
+    const player = await api.session();
+    const before = structuredClone(player.data.state);
+    if (legacy) before.journey = { destination: 'spring', endsAt: before.updatedAt + 60_000 };
+    else
+      applyAction(
+        before,
+        {
+          type: 'expedition',
+          region: 'spring',
+          difficulty: 'easy',
+          wolfIds: ['wolf-scout'],
+        },
+        before.updatedAt,
+      );
+    before.herd.hp -= 10;
+    before.herd.panic = 5;
+    await saveAccountState(api, player, before);
+    assert.equal(recoveryPlan(before, 'healHerd').ready, true);
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action: { type: 'healHerd' }, revision: player.data.revision },
+    });
+    assert.equal(response.status, 200);
+    const saved = await response.json();
+    assert.deepEqual(saved.state.herd, { ...before.herd, hp: before.herd.maxHp, panic: 0 });
+    assert.equal(saved.state.resources.herbs, before.resources.herbs - 1);
+    assert.deepEqual(saved.state.wolves, before.wolves);
+    assert.deepEqual(saved.state.journey, before.journey);
+    assert.deepEqual(saved.state.adventure, before.adventure);
+  }
+});
 
 test('demolition refunds half of construction and upgrades for the selected copy and persists the freed plot', async (t) => {
   const api = await fixture(t);

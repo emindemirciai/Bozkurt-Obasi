@@ -1,6 +1,7 @@
 import '../web/style.css';
 import '../web/v2.css';
 import { guardianPanel } from '../web/guardian-panel.mjs';
+import { recoveryPanel } from '../web/recovery-panel.mjs';
 import { createGame } from '../shared/game.mjs';
 import { ITEM_DEFINITIONS } from '../shared/adventures.mjs';
 import { translations } from '../web/i18n.mjs';
@@ -19,12 +20,16 @@ const labels = {
   tr: {
     title: 'Muhafız gelişimi',
     notice:
-      'Çevrimdışı görsel önizleme · Örnek muhafızlar · Salt okunur. Eğitim ve ekipman işlemleri kapalıdır; kaynak harcanmaz, oyuncu kaydına erişilmez.',
+      'Çevrimdışı görsel önizleme · Örnek muhafızlar · Salt okunur. Eğitim, ekipman ve kamp bakımı kapalıdır; kaynak harcanmaz, oyuncu kaydına erişilmez.',
     scenario: 'Örnek durum',
     ready: 'Eğitime hazır muhafızlar',
     supplies: 'Eksik eğitim kaynakları',
     away: 'Seferdeki izci',
     maximum: 'En yüksek seviyedeki alfa',
+    wounded: 'Yaralı muhafızlar ve sürü',
+    herd: 'Yalnızca sürü yaralı',
+    healthy: 'Tam canlı ve sakin oba',
+    battle: 'Devam eden savaş',
     dark: 'Koyu tema',
     light: 'Açık tema',
     language: 'Switch to English',
@@ -33,12 +38,16 @@ const labels = {
   en: {
     title: 'Guardian progression',
     notice:
-      'Offline visual preview · Fictional guardians · Read-only. Training and equipment actions are disabled; no resources are spent and no player save is accessed.',
+      'Offline visual preview · Fictional guardians · Read-only. Training, equipment and camp care are disabled; no resources are spent and no player save is accessed.',
     scenario: 'Example scenario',
     ready: 'Guardians ready to train',
     supplies: 'Insufficient training supplies',
     away: 'Scout on an expedition',
     maximum: 'Alpha at the level cap',
+    wounded: 'Wounded guardians and herd',
+    herd: 'Only the herd is wounded',
+    healthy: 'Full health and calm herd',
+    battle: 'Battle in progress',
     dark: 'Dark theme',
     light: 'Light theme',
     language: 'Türkçeye geç',
@@ -63,7 +72,8 @@ function setScenario(value) {
   state.wolves[2].ranks.hunter = 2;
   state.wolves[4].ranks.healer = 2;
   if (scenario === 'supplies') {
-    state.resources.herbs = 3;
+    state.resources.herbs = 0;
+    state.resources.water = 20;
     state.resources.feed = 7;
   } else if (scenario === 'away') {
     selectedId = 'wolf-scout';
@@ -87,6 +97,19 @@ function setScenario(value) {
     wolf.points = 2;
     wolf.ranks.leader = 5;
   }
+  if (['wounded', 'supplies', 'away', 'battle'].includes(scenario)) {
+    state.herd.hp = 90;
+    state.herd.panic = 65;
+  }
+  if (scenario === 'herd' || scenario === 'healthy') {
+    for (const wolf of state.wolves) wolf.hp = wolf.maxHp;
+    state.herd.hp = scenario === 'herd' ? 190 : state.herd.maxHp;
+    state.herd.panic = scenario === 'herd' ? 10 : 0;
+  }
+  if (scenario === 'battle') {
+    state.battle.status = 'active';
+    state.battle.startedAt = now;
+  }
 }
 function render(focusWolf = false) {
   const copy = labels[language];
@@ -98,9 +121,9 @@ function render(focusWolf = false) {
     <header class="guardian-preview-header"><div class="wordmark">${brandMark}${brandName}</div><div>
       <button id="language" class="button outline" aria-label="${copy.language}">${language === 'tr' ? 'EN' : 'TR'}</button>
       <button id="theme" class="button outline">${copy[theme === 'light' ? 'dark' : 'light']}</button></div></header>
-    <main><section class="guardian-preview-toolbar"><h1>${copy.title}</h1><label>${copy.scenario}<select id="preview-scenario">${['ready', 'supplies', 'away', 'maximum'].map((value) => `<option value="${value}" ${scenario === value ? 'selected' : ''}>${copy[value]}</option>`).join('')}</select></label></section>
+    <main><section class="guardian-preview-toolbar"><h1>${copy.title}</h1><label>${copy.scenario}<select id="preview-scenario">${['ready', 'supplies', 'away', 'maximum', 'wounded', 'herd', 'healthy', 'battle'].map((value) => `<option value="${value}" ${scenario === value ? 'selected' : ''}>${copy[value]}</option>`).join('')}</select></label></section>
       <p id="preview-guardian-note" class="guardian-preview-hint">${copy.hint}</p>
-      ${guardianPanel(state, selectedId, { t, language, busy: false, readOnly: true })}</main></div>`;
+      ${guardianPanel(state, selectedId, { t, language, busy: false, readOnly: true })}${recoveryPanel(state, { t, language, readOnly: true })}</main></div>`;
   // This preview never registers gameplay action handlers, and all action buttons stay locked.
   root.querySelectorAll('[data-action]').forEach((button) => {
     button.disabled = true;
@@ -131,7 +154,12 @@ root.addEventListener('click', (event) => {
 root.addEventListener('change', (event) => {
   if (event.target.id !== 'preview-scenario' || !Object.hasOwn(labels.tr, event.target.value))
     return;
-  if (!['ready', 'supplies', 'away', 'maximum'].includes(event.target.value)) return;
+  if (
+    !['ready', 'supplies', 'away', 'maximum', 'wounded', 'herd', 'healthy', 'battle'].includes(
+      event.target.value,
+    )
+  )
+    return;
   setScenario(event.target.value);
   render();
   root.querySelector('#preview-scenario')?.focus({ preventScroll: true });

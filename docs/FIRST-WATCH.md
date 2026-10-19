@@ -21,6 +21,8 @@ Ana yurttaki küçük kart sıradaki alınmamış görev ödülünü ve hedefi g
 
 Hedefler erken yapılabilir, fakat sekiz ödül sırayla alınır. Tamamlanmış bir hedef sonradan geri alınmaz: ekipmanı çıkarmak veya muhafızın yeniden yaralanması ilerlemeyi silmez. Depo herhangi bir ödül kaynağını tam alamıyorsa işlem engellenir; bir kısmı verilmez ve ödül kaybolmaz. İlgili kaynağı harcayarak veya depoyu yükselterek yer açın. İlk savaşta yenilgi bölüm akışını durdurmaz; kesilip yeniden hazırlığa döndürülen savaş tamamlanmış sayılmaz.
 
+Toparlanma yönlendirmesi v2.9.0 ile uygun [Kamp Bakımı](CAMP-CARE.md) seçeneğine odaklanır; uygun seçenek yoksa nedenini gösterir. Bu geçiş tedavi/dinlenme satın almaz.
+
 ### Kayıt geçişi
 
 Bölüm, mevcut v2 köy kaydına `firstWatch` alanı ekler. Önceki v1 ve v2 kayıtları sunucuda doğrulanıp geçirilir. Kaynaklar, yapılar, kurtlar, ekipman, arkadaş verileri ve eski görev ödülleri sıfırlanmaz. Sayaç, mevcut ekipman, olay günlüğü veya sefer geçmişiyle doğrulanabilen eski başarımlar tanınır. Tarihçeden düşmüş ve doğrulanamayan geçmiş eylemler tahmin edilmez. Geçiş kendi başına ödül vermez. Bölümdeki tarihler yeni sürümün gözlem zamanıdır; eski eylemlere kesin tarih atfedilmez.
@@ -40,6 +42,8 @@ As the village prepares for the day, jackals ambush the herd in the pass. Guardi
 The chapter has eight objectives: collect once; construct any building on a chosen plot; train a guardian once; finish a battle (win or loss); rest/heal after combat or return completely healthy; complete an expedition; equip a guardian; complete a caravan to a different explored region. Rewards, in order: 20 wood/10 stone; 15 water/15 feed; 8 herbs/12 feed; 25 water/30 feed; 8 herbs/12 water; 10 herbs/15 feed; 25 wood/15 stone; 40 wood/25 stone/10 herbs.
 
 The village next-goal card navigates without spending or starting commands. Quests shows all chapter steps alongside the four existing quests. Objectives can be achieved early, but rewards are claimed sequentially and once. Achievements persist after equipment removal or later injuries. A reward that cannot fit entirely in storage stays pending without partial grants or loss. An interrupted battle returned to preparation is not a finished battle. Losing a finished battle does not block progression.
+
+From v2.9.0, the recovery direction focuses an eligible [Camp Care](CAMP-CARE.md) option or its blocker explanation. Navigation never purchases care.
 
 The additive `firstWatch` field is migrated from validated v1/v2 saves without resetting villages, resources, guardians, items or old claims. Previous activity is recognized only from available counters, logs, equipment and mission history; unobservable history is not guessed. Inferred timestamps reflect migration observation time, not exact historical dates. Migration grants no resources. Existing revision checks prevent repeated claims, out-of-order claims and stale writes. SQLite persistence survives restart. No new environment keys or SQL tables are required; deploy all four services while preserving volumes.
 

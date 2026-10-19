@@ -42,6 +42,7 @@ import { constructionPlan } from './planning.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { herdPanel, updateHerdPanel } from './herd-panel.mjs';
 import { guardianPanel, updateGuardianPanel } from './guardian-panel.mjs';
+import { recoveryPanel, updateRecoveryPanel, recommendedRecovery } from './recovery-panel.mjs';
 import { brandMark, brandName } from './logo.mjs';
 import releaseNotes from '../releases.json';
 import { icon, miniBuilding, scene, wolfArt } from './art.mjs';
@@ -445,6 +446,7 @@ function render(restoreFocus, preservePlanning = false) {
   const previousPlanning =
     preservePlanning && view === 'village' ? root.querySelector('#economy-panel') : null;
   const previousHerd = preservePlanning ? root.querySelector('#herd-recovery-panel') : null;
+  const previousCare = preservePlanning ? root.querySelector('#recovery-panel') : null;
   const previousGuardian =
     preservePlanning && view === 'wolves' ? root.querySelector('#guardian-panel') : null;
   const previousParty =
@@ -508,6 +510,10 @@ function render(restoreFocus, preservePlanning = false) {
   if (previousHerd) {
     root.querySelector('#herd-recovery-panel')?.replaceWith(previousHerd);
     updateHerdPanel(root, state, herdAmount, economyContext());
+  }
+  if (previousCare) {
+    root.querySelector('#recovery-panel')?.replaceWith(previousCare);
+    updateRecoveryPanel(root, state, { t, language, busy });
   }
   if (previousGuardian) {
     root.querySelector('#guardian-panel')?.replaceWith(previousGuardian);
@@ -581,12 +587,20 @@ function followFirstWatch(id) {
   const chapter = firstWatchProgress(state);
   const step = chapter.steps.find((entry) => entry.id === id);
   if (!step || step.locked || step.claimed) return;
+  const recovery = id === 'recover' ? recommendedRecovery(state) : null;
   const targets = {
     gather: ['village', '#collect-button'],
     build: ['village', '[data-plot]'],
     train: ['wolves', '[data-action="train"]:not(:disabled)'],
     battle: ['battle', '[data-action="startBattle"], [data-action="newBattle"]'],
-    recover: ['wolves', '[data-action="rest"]'],
+    recover: [
+      'wolves',
+      recovery === 'rest'
+        ? '#recovery-rest'
+        : recovery === 'healHerd'
+          ? '#recovery-heal-herd'
+          : '#recovery-title',
+    ],
     explore: ['world', '#adventure-difficulty'],
     equip: ['wolves', '[data-action="equip"]:not(:disabled)'],
     escort: ['world', '#adventure-difficulty'],
@@ -698,15 +712,15 @@ function refreshBattleView() {
   const herd = root.querySelector('.map-toolbar > span');
   if (herd?.lastChild)
     herd.lastChild.textContent = ` ${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}`;
-  const recovery = root.querySelector('.recovery-bar p');
-  if (recovery)
-    recovery.textContent = `${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}`;
+  updateRecoveryPanel(root, state, { t, language, busy });
   renderedSignature = interfaceSignature();
   return true;
 }
 
 function battleRecovery() {
-  return `<div class="recovery-bar"><div><h3>${t('herd')}</h3><p>${state.herd.count} · ${t('health')} ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}</p></div><div class="recovery-actions">${button(icon('herbs', 18) + t('healHerd') + costView({ herbs: 1 }, { focusable: false }), 'healHerd', 'button outline', state.battle.status === 'active' || busy)}${button(icon('heart', 18) + t('rest') + costView({ water: 25, feed: 30 }, { focusable: false }), 'rest', 'button outline', state.battle.status === 'active' || busy)}</div></div>${herdPanel(state, herdAmount, economyContext())}`;
+  return (
+    recoveryPanel(state, { t, language, busy }) + herdPanel(state, herdAmount, economyContext())
+  );
 }
 
 function wolvesView() {
@@ -2003,6 +2017,7 @@ setInterval(async () => {
   }
   updateCostHints();
   updateHerdPanel(root, state, herdAmount, economyContext());
+  updateRecoveryPanel(root, state, { t, language, busy });
   updateFirstWatchPanel(root, state, { t, language, busy });
   if (view === 'wolves') updateGuardianPanel(root, state, selectedWolf, { t, language, busy });
   if (view === 'village') updateEconomyPanel(root, state, plannedBuilding, economyContext());

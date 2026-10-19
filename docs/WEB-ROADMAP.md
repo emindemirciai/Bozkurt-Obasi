@@ -24,6 +24,10 @@
 
 **v2.8.0:** Eksik bina kaldırma akışı eklendi. Seçili örnek, %50 inşaat/yükseltme iadesi ve açık onayla kaldırılır; kapasite, eski onay ve tekrar ödeme korumaları sunucuda denetlenir. Boşalan parsel yeniden kullanılabilir. [Kaldırma rehberi](DEMOLITION.md). Üretim ve tekrar eden malzeme ödülleri yaklaşık yarıya, toplama aralığı 20 saniyeye çekildi; eski birikimler ve başlamış seferlerin ödülleri korunur. Yapı listesinde seviye/arsa ve maliyet kaynakları açıklandı. [Denge tablosu](ECONOMY.md). Ana Yurt sabit kamera, gerçek yakınlaştırma ve azaltılmış hareketi destekleyen hava/şelale efektleri kazandı.
 
+**v2.9.0:** Kamp Bakımı, tedavi ve dinlenmenin gerçek maliyetini ve can/panik sonucunu işlemden önce açıklar. Sağlıklı sürü, kaynak eksikliği, savaş ve yolculuk engelleri görünür; İlk Nöbet uygun seçeneğe yönlendirir. Önceki bakım giderleri, etkileri ve kayıt biçimi korunur. [Bakım rehberi](CAMP-CARE.md).
+
+Sıradaki sınırlı adaylar: köyde/muhafız ekranında sefer dönüşünü görünür kılan bildirim ve mevcut zaman damgalarından türetilmiş İlk Nöbet günlüğü. Bunlar henüz uygulanmış özellikler değildir; gerçek oyuncu gözlemi halen gereklidir.
+
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
 
 1. **Oynanış doğrulaması:** İnşaat maliyetleri, üretim süreleri, savaş güçlüğü ve yenilgi sonrası toparlanmayı gerçek oyuncularla deneyin. Küçük bir oyun günlüğüyle ilk 15 dakikada nerede takılındığını kaydedin. Tamamlanan otlak takviyesinin maliyetini ve yenilgi sonrası yeniden savaşa hazırlanma süresini oyuncularla doğrulayın; tedavi kalan sürünün yaralarını, takviye kaybedilen hayvanları karşılar. Bu aşama yeni içerikten önce oyunun temel döngüsünü doğrular.
@@ -56,6 +60,10 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 **v2.7.0:** Journey Party adds scouting/resilience/training suggestions and arrival health/XP/level forecasts. Applying a suggestion changes local selection; spending and departure require server approval. No balance or reward rules are added. [Party guide](ADVENTURE-PARTY.md). Real player observation and evidence-based balance work remain the next step.
 
 **v2.8.0:** Adds the missing building-removal flow. Explicit confirmation removes the selected instance with a 50% construction/upgrade refund; server checks protect capacity, stale confirmations and duplicate payouts. Freed plots can be rebuilt. [Demolition guide](DEMOLITION.md). Production and repeatable material rewards are roughly halved, with a 20-second gathering interval; existing balances and ongoing journey rewards remain. Structure lists clarify level/plot and cost resources. [Balance table](ECONOMY.md). Homeland adds a fixed camera, actual zoom and weather/waterfall effects respecting reduced motion.
+
+**v2.9.0:** Camp Care explains actual treatment/rest costs and health/panic forecasts before purchase. Healthy herds, shortages, combat and travel blockers are visible; First Watch directs players to an eligible choice. Existing care prices, effects and saves remain. [Care guide](CAMP-CARE.md).
+
+Next bounded candidates: visible journey-arrival notices while in the village/guardian screen, and a First Watch journal derived from existing timestamps. These candidates are not implemented features; real player observation remains necessary.
 
 **Current web release:** A playable village, production, construction/progression, guardian and formation choices, jackal battles, Turkish/English interface, an offline visual homepage preview, and Google- or email-linked progress in SQLite. The homepage is public; the village and game screens require a valid account session. Delivery uses GitHub → Docker → Dokploy and includes local previews, tests, line counts, and clean source archives. Concurrent players have independent villages; a shared world and PvP are outside this release.
 

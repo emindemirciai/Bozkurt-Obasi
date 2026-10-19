@@ -1,6 +1,22 @@
 {
-  "version": "2.8.0",
+  "version": "2.9.0",
   "releases": [
+    {
+      "version": "2.9.0",
+      "date": "2026-10-19",
+      "changes": {
+        "tr": [
+          "Kamp Bakımı: sürü tedavisi ve kampta dinlenme için gerçek maliyet, sağlık/panik öncesi-sonrası ve açık kullanılabilirlik açıklamaları.",
+          "İlk Nöbet toparlanma hedefi uygun bakım seçeneğine yönlendirir; kaynak güncellemelerinde seçim ve klavye odağı korunur.",
+          "Mevcut bakım etkileri, giderler ve kayıtlar korunur; TR/EN mobil arayüz ve çevrimdışı muhafız önizlemesi güncellendi."
+        ],
+        "en": [
+          "Camp Care: actual costs, before/after health and panic forecasts, and clear availability explanations for herd treatment and resting.",
+          "First Watch recovery guides players to an eligible care option; resource refreshes preserve selection and keyboard focus.",
+          "Existing care effects, costs and saves remain; the TR/EN mobile interface and offline guardian preview are updated."
+        ]
+      }
+    },
     {
       "version": "2.8.0",
       "date": "2026-10-19",

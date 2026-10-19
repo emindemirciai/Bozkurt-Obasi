@@ -23,6 +23,7 @@ import {
   grantWolfXp,
 } from './adventures.mjs';
 import { replenishHerd } from './herd.mjs';
+import { applyRecovery } from './recovery.mjs';
 import {
   applyBattleCommand,
   battleCommandEffects,
@@ -540,27 +541,12 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       log(state, 'herdReplenished', at);
       break;
     case 'healHerd':
-      requirePeace(state);
-      if (state.herd.hp === state.herd.maxHp && state.herd.panic === 0) fail('ALREADY_HEALTHY');
-      spend(state, { herbs: 1 });
-      state.herd.hp = Math.min(state.herd.maxHp, state.herd.hp + 75);
-      state.herd.panic = Math.max(0, state.herd.panic - 25);
+      applyRecovery(state, 'healHerd');
       log(state, 'herdHealed', at);
       recordFirstWatch(state, 'recover', at);
       break;
     case 'rest':
-      requirePeace(state);
-      requireHome(state);
-      if (
-        state.wolves.every((wolf) => wolf.hp === wolf.maxHp) &&
-        state.herd.hp === state.herd.maxHp &&
-        state.herd.panic === 0
-      )
-        fail('ALREADY_HEALTHY');
-      spend(state, { water: 25, feed: 30 });
-      for (const wolf of state.wolves) wolf.hp = wolf.maxHp;
-      state.herd.hp = Math.min(state.herd.maxHp, state.herd.hp + 25);
-      state.herd.panic = Math.max(0, state.herd.panic - 30);
+      applyRecovery(state, 'rest');
       log(state, 'packRested', at);
       recordFirstWatch(state, 'recover', at);
       break;

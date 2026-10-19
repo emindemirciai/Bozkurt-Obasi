@@ -1225,3 +1225,79 @@ const villageCameraTranslations = {
 };
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], villageCameraTranslations[language]);
+
+const careTranslations = {
+  tr: {
+    careEyebrow: 'Bir sonraki nöbete hazırlan',
+    careTitle: 'Kamp bakımı',
+    careIntro:
+      'Yaraları ve sürünün paniğini kontrol et. Aşağıdaki öngörüler seçtiğin bakımın gerçek etkisini gösterir; kaynak yalnızca düğmeye bastığında harcanır.',
+    careGuardians: 'Muhafızların canı',
+    careHerdHealth: 'Sürünün canı',
+    careForecast: 'Bakımdan önce → sonra',
+    careHp: 'can',
+    carePanicPoints: 'panik puanı',
+    careSuggested: 'Önerilen',
+    careRestEffect:
+      'Tüm kurtların canını doldurur. Sürüye en fazla 25 can verir ve paniği en fazla 30 puan azaltır.',
+    careHealEffect:
+      'Sürüye en fazla 75 can verir ve paniği en fazla 25 puan azaltır. Muhafızların canı değişmez.',
+    careWolfUnchanged: 'Değişmez',
+    careCost: 'Bir işlem için kaynak',
+    careAvailableRequired: 'Mevcut / gerekli · düğmeye bir kez basmanın maliyeti',
+    careShortage: 'Eksik kaynak',
+    careReady: 'Bakım uygulanabilir. Etki ve maliyeti inceleyip düğmeyi seç.',
+    careBattleBlocked: 'Savaş sürüyor. Bakım için savaşın bitmesini bekle.',
+    careJourneyBlocked:
+      'Kurtlar veya sürü yolculukta. Birlikte dinlenmek için dönüşlerini bekle; sürü tedavisi yolculukta da yapılabilir.',
+    carePackHealthy: 'Tüm muhafızlar ve sürü tam canlı; sürü sakin. Dinlenmeye gerek yok.',
+    careHerdHealthy: 'Sürü tam canlı ve sakin. Tedaviye gerek yok.',
+    careRecommendRest:
+      'Önerilen: Birlikte dinlen. Muhafızların canı tam olur; sürünün kazanımları aşağıda gösterilir.',
+    careRecommendHerd:
+      'Önerilen: Sürüyü tedavi et. Sürünün yaraları veya paniği için 1 şifalı ot kullanır.',
+    careChooseWhenReady:
+      'Bakım gerekiyor. Her seçeneğin altında hazırlık koşulunu ve eksik kaynakları incele.',
+    careAllHealthy: 'Oba hazır: tüm muhafızlar ve sürü tam canlı, sürü sakin.',
+    careSending: 'İşlem tamamlanıyor…',
+    careReadOnly: 'Salt okunur önizleme. Bakım uygulanmaz ve kaynak harcanmaz.',
+  },
+  en: {
+    careEyebrow: 'Prepare for the next watch',
+    careTitle: 'Camp care',
+    careIntro:
+      'Check wounds and herd panic. The forecasts below show each care option’s actual effect; supplies are spent only when you press its button.',
+    careGuardians: 'Guardian health',
+    careHerdHealth: 'Herd health',
+    careForecast: 'Before care → after care',
+    careHp: 'HP',
+    carePanicPoints: 'panic points',
+    careSuggested: 'Suggested',
+    careRestEffect:
+      'Restores every wolf to full health. Gives the herd up to 25 HP and reduces panic by up to 30 points.',
+    careHealEffect:
+      'Gives the herd up to 75 HP and reduces panic by up to 25 points. Guardian health stays the same.',
+    careWolfUnchanged: 'Unchanged',
+    careCost: 'Supplies for one action',
+    careAvailableRequired: 'Available / required · cost of pressing the button once',
+    careShortage: 'Missing supplies',
+    careReady: 'Care is available. Review the effect and cost, then choose the button.',
+    careBattleBlocked: 'Battle is ongoing. Wait until it ends to provide care.',
+    careJourneyBlocked:
+      'Guardians or herd are travelling. Wait for their return to rest together; herd treatment is also available during journeys.',
+    carePackHealthy:
+      'Every guardian and the herd are at full health; the herd is calm. Rest is unnecessary.',
+    careHerdHealthy: 'The herd is at full health and calm. Treatment is unnecessary.',
+    careRecommendRest:
+      'Suggested: Rest together. Guardians finish at full health; the herd’s gains are shown below.',
+    careRecommendHerd: 'Suggested: Treat the herd. Spend 1 herb to tend herd wounds or panic.',
+    careChooseWhenReady:
+      'Care is needed. Check each option’s requirements and missing supplies below.',
+    careAllHealthy:
+      'Camp is ready: every guardian and the herd are at full health, and the herd is calm.',
+    careSending: 'Completing action…',
+    careReadOnly: 'Read-only preview. Care is unavailable and no supplies are spent.',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], careTranslations[language]);

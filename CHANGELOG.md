@@ -4,6 +4,20 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.9.0 — 2026-10-19
+
+**TR**
+
+- Kamp Bakımı: sürü tedavisi ve kampta dinlenme için gerçek maliyet, sağlık/panik öncesi-sonrası ve açık kullanılabilirlik açıklamaları.
+- İlk Nöbet toparlanma hedefi uygun bakım seçeneğine yönlendirir; kaynak güncellemelerinde seçim ve klavye odağı korunur.
+- Mevcut bakım etkileri, giderler ve kayıtlar korunur; TR/EN mobil arayüz ve çevrimdışı muhafız önizlemesi güncellendi.
+
+**EN**
+
+- Camp Care: actual costs, before/after health and panic forecasts, and clear availability explanations for herd treatment and resting.
+- First Watch recovery guides players to an eligible care option; resource refreshes preserve selection and keyboard focus.
+- Existing care effects, costs and saves remain; the TR/EN mobile interface and offline guardian preview are updated.
+
 ## v2.8.0 — 2026-10-19
 
 **TR**
