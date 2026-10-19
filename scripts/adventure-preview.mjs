@@ -1,6 +1,7 @@
 import '../web/style.css';
 import '../web/v2.css';
 import { adventureView, updateAdventurePlanning } from '../web/v2-view.mjs';
+import { arrivalPanel } from '../web/arrival-panel.mjs';
 import { adventurePartySuggestions } from '../web/adventure-party.mjs';
 import { createGame, applyAction, advanceGame } from '../shared/game.mjs';
 import { adventureQuote, REGIONS, ADVENTURE_PLANS } from '../shared/adventures.mjs';
@@ -100,12 +101,17 @@ function render() {
     <main><section class="adventure-preview-toolbar"><h1>${copy.title}</h1><label>${copy.scenario}<select id="preview-scenario">${['ready', 'lowresources', 'activejourney', 'completedjourney'].map((value) => `<option value="${value}" ${scenario === value ? 'selected' : ''}>${copy[value]}</option>`).join('')}</select></label></section>
       <p id="preview-departure-note" class="adventure-preview-lock">${copy.locked}</p>
       ${scenario === 'activejourney' ? `<p class="adventure-preview-clock">${copy.fixed}</p>` : ''}
+      ${state.adventure.history[0] ? arrivalPanel({ ...state.adventure.history[0], source: 'returned' }, state, { t, language, readOnly: true }) : ''}
       ${adventureView(state, { t, busy: false, selection, language, now })}</main></div>`;
   // Keep the real readiness report while preventing every gameplay action.
-  root.querySelectorAll('[data-action]:not([data-action="selectRegion"])').forEach((button) => {
-    button.disabled = true;
-    button.setAttribute('aria-describedby', 'preview-departure-note');
-  });
+  root
+    .querySelectorAll(
+      '[data-action]:not([data-action="selectRegion"]):not([data-action="openArrivalReport"])',
+    )
+    .forEach((button) => {
+      button.disabled = true;
+      button.setAttribute('aria-describedby', 'preview-departure-note');
+    });
   const target = focusId
     ? document.getElementById(focusId)
     : focusRegion
@@ -115,6 +121,18 @@ function render() {
 }
 root.addEventListener('submit', (event) => event.preventDefault());
 root.addEventListener('click', (event) => {
+  if (event.target.closest('[data-action="openArrivalReport"]')) {
+    const id = state.adventure.history[0]?.id;
+    const report = [...root.querySelectorAll('[data-mission-report]')].find(
+      (entry) => entry.dataset.missionReport === id,
+    );
+    if (report) {
+      report.tabIndex = -1;
+      report.focus({ preventScroll: true });
+      report.scrollIntoView({ block: 'center', behavior: 'instant' });
+    }
+    return;
+  }
   if (event.target.closest('#language')) {
     language = language === 'tr' ? 'en' : 'tr';
   } else if (event.target.closest('#theme')) {

@@ -1,0 +1,212 @@
+.arrival-panel {
+  margin: 0 0 24px;
+  padding: 22px;
+  border: 1px solid #b9c7a9;
+  border-radius: 15px;
+  background: #f0f3e7;
+  color: var(--ink, #2b4238);
+  overflow-wrap: anywhere;
+}
+.arrival-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.arrival-heading-icon {
+  display: grid;
+  flex: 0 0 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #c2ceb2;
+  border-radius: 11px;
+  color: var(--forest);
+}
+.arrival-heading > div:last-child,
+.arrival-receipt > div {
+  min-width: 0;
+}
+.arrival-eyebrow {
+  margin: 0 0 5px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.arrival-heading h2 {
+  margin: 0;
+  font:
+    25px Georgia,
+    serif;
+}
+.arrival-credit-note,
+.arrival-limit-note,
+.arrival-readonly-note {
+  font-size: 11px;
+  line-height: 1.65;
+}
+.arrival-credit-note {
+  margin: 13px 0 18px;
+}
+.arrival-receipt {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 22px;
+}
+.arrival-receipt h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+.arrival-materials dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+}
+.arrival-materials dl > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #d5ddc9;
+  border-radius: 8px;
+  background: #f9faf4;
+  font-size: 11px;
+}
+.arrival-materials dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.arrival-materials dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.arrival-item > p[data-arrival-item] {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.arrival-experience ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+}
+.arrival-experience li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 12px;
+}
+.arrival-experience strong {
+  font-variant-numeric: tabular-nums;
+}
+.arrival-limit-note {
+  margin: 9px 0 0;
+  color: #5e6c57;
+}
+.arrival-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.arrival-actions .button {
+  justify-content: center;
+  white-space: normal;
+}
+.arrival-readonly-note {
+  margin: 12px 0 0;
+  color: #5e6c57;
+}
+.arrival-unread {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 10px;
+  background: #e6d8b3;
+  color: #3b432b;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.arrival-unread[hidden] {
+  display: none;
+}
+:root[data-theme='dark'] .arrival-panel {
+  border-color: #5e6a48;
+  background: #342e22;
+  color: #f1e8d3;
+}
+:root[data-theme='dark'] .arrival-heading-icon {
+  border-color: #69714d;
+  color: #ccdbb0;
+}
+:root[data-theme='dark'] .arrival-eyebrow,
+:root[data-theme='dark'] .arrival-limit-note,
+:root[data-theme='dark'] .arrival-readonly-note {
+  color: #c4c6aa;
+}
+:root[data-theme='dark'] .arrival-materials dl > div {
+  border-color: #535840;
+  background: #2a2b20;
+}
+:root[data-theme='dark'] .arrival-unread {
+  background: #657044;
+  color: #fff8df;
+}
+@media (max-width: 900px) {
+  .arrival-receipt {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+  .arrival-experience {
+    grid-column: 1 / -1;
+  }
+  .arrival-experience ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+  }
+}
+@media (max-width: 560px) {
+  .arrival-panel {
+    padding: 16px;
+  }
+  .arrival-heading {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .arrival-heading-icon {
+    flex-basis: 34px;
+    height: 34px;
+  }
+  .arrival-heading h2 {
+    font-size: 22px;
+    line-height: 1.2;
+  }
+  .arrival-receipt {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .arrival-experience {
+    grid-column: auto;
+  }
+  .arrival-experience ul {
+    display: grid;
+  }
+  .arrival-actions .button {
+    flex: 1 1 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrival-panel button {
+    transition: none;
+  }
+}

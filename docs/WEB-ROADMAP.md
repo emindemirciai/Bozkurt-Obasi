@@ -26,7 +26,9 @@
 
 **v2.9.0:** Kamp Bakımı, tedavi ve dinlenmenin gerçek maliyetini ve can/panik sonucunu işlemden önce açıklar. Sağlıklı sürü, kaynak eksikliği, savaş ve yolculuk engelleri görünür; İlk Nöbet uygun seçeneğe yönlendirir. Önceki bakım giderleri, etkileri ve kayıt biçimi korunur. [Bakım rehberi](CAMP-CARE.md).
 
-Sıradaki sınırlı adaylar: köyde/muhafız ekranında sefer dönüşünü görünür kılan bildirim ve mevcut zaman damgalarından türetilmiş İlk Nöbet günlüğü. Bunlar henüz uygulanmış özellikler değildir; gerçek oyuncu gözlemi halen gereklidir.
+**v2.10.0:** Sefer dönüşü bildirimi son raporun gerçek kazanımlarını gösterir, hesaba özel okundu bilgisi ve mevcut rapora odaklanma sunar. [Bildirim rehberi](JOURNEY-ARRIVALS.md).
+
+Sıradaki sınırlı aday: mevcut zaman damgalarından türetilmiş İlk Nöbet günlüğü. Bu aday henüz uygulanmış değildir; gerçek oyuncu gözlemi halen gereklidir.
 
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
 
@@ -63,7 +65,9 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 
 **v2.9.0:** Camp Care explains actual treatment/rest costs and health/panic forecasts before purchase. Healthy herds, shortages, combat and travel blockers are visible; First Watch directs players to an eligible choice. Existing care prices, effects and saves remain. [Care guide](CAMP-CARE.md).
 
-Next bounded candidates: visible journey-arrival notices while in the village/guardian screen, and a First Watch journal derived from existing timestamps. These candidates are not implemented features; real player observation remains necessary.
+**v2.10.0:** Journey-arrival notices show the latest actual receipt, account-scoped read state and focus on the existing report. [Notice guide](JOURNEY-ARRIVALS.md).
+
+Next bounded candidate: a First Watch journal derived from existing timestamps. These candidates are not implemented features; real player observation remains necessary.
 
 **Current web release:** A playable village, production, construction/progression, guardian and formation choices, jackal battles, Turkish/English interface, an offline visual homepage preview, and Google- or email-linked progress in SQLite. The homepage is public; the village and game screens require a valid account session. Delivery uses GitHub → Docker → Dokploy and includes local previews, tests, line counts, and clean source archives. Concurrent players have independent villages; a shared world and PvP are outside this release.
 

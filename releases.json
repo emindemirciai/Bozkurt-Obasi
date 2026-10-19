@@ -1,6 +1,20 @@
 {
-  "version": "2.9.0",
+  "version": "2.10.0",
   "releases": [
+    {
+      "version": "2.10.0",
+      "date": "2026-10-19",
+      "changes": {
+        "tr": [
+          "Sefer dönüşü: son yolculuğun gerçekten verilen malzeme, eşya ve muhafız deneyimini tüm oyun ekranlarından gör.",
+          "Hesaba özel okundu bilgisi, mevcut rapora klavye odağıyla geçiş ve TR/EN çevrimdışı sefer önizlemesi; yeni ödül alma işlemi veya kayıt şeması değişikliği yok."
+        ],
+        "en": [
+          "Journey arrivals: view the latest journey actual credited materials, equipment and guardian experience from every game screen.",
+          "Account-scoped read receipts, keyboard focus on the saved report and TR/EN offline journey preview; no extra reward claim or save schema change."
+        ]
+      }
+    },
     {
       "version": "2.9.0",
       "date": "2026-10-19",

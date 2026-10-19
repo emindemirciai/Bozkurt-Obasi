@@ -1,6 +1,23 @@
 import { v2Translations } from './v2-i18n.mjs';
 export const translations = {
   tr: {
+    arrivalExistingTitle: 'Son yolculuk raporun',
+    arrivalReturnedTitle: 'Yolculuk tamamlandı',
+    arrivalAlreadyCredited:
+      'Bu kazanımlar yolculuk tamamlandığında hesabına işlendi. Yeniden ödül alman gerekmez.',
+    arrivalMaterials: 'Depoya eklenen malzemeler',
+    arrivalStorageNote:
+      'Gerçekte eklenen miktarlar gösterilir; depo sınırı nedeniyle kazanım sıfır olabilir.',
+    arrivalItem: 'Çantaya eklenen eşya',
+    arrivalNoItem: 'Bu yolculukta çantaya yeni eşya eklenmedi.',
+    arrivalExperience: 'Katılan muhafızların yolculuk deneyimi',
+    arrivalXpLimit:
+      'Raporlanan yolculuk deneyimidir. En yüksek seviye ve deneyim sınırı geçerlidir.',
+    arrivalUnknownGuardian: 'Muhafız',
+    arrivalOpenReport: 'Raporu incele',
+    arrivalDismiss: 'Bildirimi kapat',
+    arrivalReadOnly: 'Salt okunur örnek: raporu inceleyebilirsin. Ödül veya kayıt oluşturulmaz.',
+    arrivalUnread: 'Yeni yolculuk raporu',
     guardianPreviewReady: 'Gereksinimler uygun. Bu önizlemede işlem yapılamaz.',
     guardianStat_attack: 'Saldırı katkısı',
     guardianStat_mitigation: 'Kişisel hasar azaltma',
@@ -483,6 +500,23 @@ export const translations = {
     recovery: 'Yedek kayıt geri yüklendi.',
   },
   en: {
+    arrivalExistingTitle: 'Your latest journey report',
+    arrivalReturnedTitle: 'Journey completed',
+    arrivalAlreadyCredited:
+      'These rewards were applied when the journey ended. There is nothing else to claim.',
+    arrivalMaterials: 'Materials added to storage',
+    arrivalStorageNote: 'Actual additions are shown; storage limits may reduce a reward to zero.',
+    arrivalItem: 'Item added to inventory',
+    arrivalNoItem: 'No new item was added to inventory on this journey.',
+    arrivalExperience: 'Journey experience for participating guardians',
+    arrivalXpLimit:
+      'Experience recorded by the journey report. Maximum level and experience limits apply.',
+    arrivalUnknownGuardian: 'Guardian',
+    arrivalOpenReport: 'View report',
+    arrivalDismiss: 'Dismiss notice',
+    arrivalReadOnly:
+      'Read-only example: you can inspect the report. No rewards or saves are created.',
+    arrivalUnread: 'New journey report',
     guardianPreviewReady: 'Requirements are met. Actions are disabled in this preview.',
     guardianStat_attack: 'Attack contribution',
     guardianStat_mitigation: 'Personal damage reduction',

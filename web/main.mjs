@@ -15,6 +15,8 @@ import {
 import { PLOTS, getWallUpgradeCost, demolitionQuote } from '../shared/settlement.mjs';
 import { demolitionDialog, demolitionStatus, updateDemolitionDialog } from './demolition-panel.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
+import { createArrivalTracker } from './arrival-notices.mjs';
+import { arrivalPanel } from './arrival-panel.mjs';
 import { adventurePartySuggestions } from './adventure-party.mjs';
 import {
   placementDialog,
@@ -87,6 +89,8 @@ const write = (key, value) => {
     storageOk = false;
   }
 };
+const arrivalTracker = createArrivalTracker({ storage: { getItem: read, setItem: write } });
+let arrivals = { notice: null, unreadCount: 0 };
 let language = read('bozkurt.language') === 'en' ? 'en' : 'tr';
 let theme = read('bozkurt.theme') === 'dark' ? 'dark' : 'light';
 document.documentElement.dataset.theme = theme;
@@ -374,6 +378,8 @@ function denyGameAccess() {
   villageCamera = null;
   villageCameraState = {};
   analytics.reset();
+  arrivalTracker.clear();
+  arrivals = { notice: null, unreadCount: 0 };
   sessionGeneration++;
   polling = null;
   mode = 'local';
@@ -475,11 +481,12 @@ function render(restoreFocus, preservePlanning = false) {
   const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'friends', 'updates'];
   root.innerHTML = `<div class="game-shell">
     <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}">${brandMark}</a>
-    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key === 'friends' ? 'wolves' : key, 24)}<span>${t(key)}</span>${key === 'quests' && (state.quests.some((q) => !q.claimed && q.progress === q.target) || firstWatchProgress(state).steps.some((step) => step.claimable)) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
+    <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key === 'friends' ? 'wolves' : key, 24)}<span>${t(key)}</span>${key === 'world' ? '<span id="arrival-unread" class="arrival-unread" ' + (arrivals.unreadCount ? '' : 'hidden') + ' aria-label="' + escape(t('arrivalUnread')) + '">1</span>' : ''}${key === 'quests' && (state.quests.some((q) => !q.claimed && q.progress === q.target) || firstWatchProgress(state).steps.some((step) => step.claimable)) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
     <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${resourceNumber(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
+    <div id="arrival-slot">${arrivals.notice ? arrivalPanel(arrivals.notice, state, { t, language }) : ''}</div>
     ${view === 'village' || view === 'battle' ? playView() : view === 'world' ? worldView() : view === 'wolves' ? wolvesView() : view === 'quests' ? questsView() : view === 'friends' ? friendsView({ t, escape, number, button, data: friendsData, user: auth.user, loaded: friendsLoaded, busy, draft: friendsDraft }) + socialPanel({ t, escape, data: friendsData, conversation, draft: friendsDraft, busy, language }) : updatesView()}
     <footer><span>${icon('save', 13)} ${t(storageOk || mode === 'online' ? 'saved' : 'storageFailed')}</span><span>${t('projectVersion')} ${releaseNotes.version} · ${mode === 'online' ? 'VPS' : t('local')} · <a href="${privacyHref}">${t('privacyPolicy')}</a> · <a href="${termsHref}">${t('termsOfUse')}</a></span></footer></main></div></div>
     <div id="notice" class="toast" role="status" aria-live="polite"></div>${modalView()}`;
@@ -1387,6 +1394,7 @@ async function api(path, body, generation = sessionGeneration) {
     }
     state = payload.state;
     revision = payload.revision;
+    if (auth.authenticated) arrivals = arrivalTracker.update(auth.user?.userCode || '', state);
     if (auth.authenticated)
       void analytics.progress(state, auth.user?.userCode || auth.user?.email || '');
   }
@@ -1401,6 +1409,17 @@ async function api(path, body, generation = sessionGeneration) {
       code: payload?.error || 'request_failed',
     });
   return payload;
+}
+
+function refreshArrivalNotice() {
+  const slot = root.querySelector('#arrival-slot');
+  const html = arrivals.notice ? arrivalPanel(arrivals.notice, state, { t, language }) : '';
+  const fragment = document.createElement('template');
+  fragment.innerHTML = html;
+  // Compare browser-normalized markup so stable SVG controls retain their nodes and focus.
+  if (slot && slot.innerHTML !== fragment.innerHTML) slot.replaceChildren(fragment.content);
+  const badge = root.querySelector('#arrival-unread');
+  if (badge) badge.hidden = !arrivals.unreadCount;
 }
 
 function pollOnline() {
@@ -1630,6 +1649,28 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const a = target.dataset.action;
+  if (a === 'openArrivalReport' || a === 'dismissArrival') {
+    if (busy || !arrivals.notice || !auth.authenticated || mode !== 'online') return;
+    const reportId = arrivals.notice.id;
+    arrivalTracker.dismiss(auth.user?.userCode || '', arrivals.notice.key);
+    arrivals = arrivalTracker.update(auth.user?.userCode || '', state);
+    if (a === 'openArrivalReport') {
+      navigate('world');
+      const report = [...root.querySelectorAll('[data-mission-report]')].find(
+        (entry) => entry.dataset.missionReport === reportId,
+      );
+      report?.focus({ preventScroll: true });
+      report?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    } else {
+      refreshArrivalNotice();
+      const heading = root.querySelector('.page-heading h1');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    }
+    return;
+  }
   if (a === 'openDemolition') {
     if (busy) return;
     try {
@@ -2000,6 +2041,7 @@ setInterval(async () => {
   const generation = sessionGeneration;
   if (mode === 'online') await pollOnline();
   if (generation !== sessionGeneration || busy) return;
+  refreshArrivalNotice();
   if (view === 'home') {
     renderNotice();
     return;

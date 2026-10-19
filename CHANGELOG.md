@@ -4,6 +4,18 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.10.0 — 2026-10-19
+
+**TR**
+
+- Sefer dönüşü: son yolculuğun gerçekten verilen malzeme, eşya ve muhafız deneyimini tüm oyun ekranlarından gör.
+- Hesaba özel okundu bilgisi, mevcut rapora klavye odağıyla geçiş ve TR/EN çevrimdışı sefer önizlemesi; yeni ödül alma işlemi veya kayıt şeması değişikliği yok.
+
+**EN**
+
+- Journey arrivals: view the latest journey actual credited materials, equipment and guardian experience from every game screen.
+- Account-scoped read receipts, keyboard focus on the saved report and TR/EN offline journey preview; no extra reward claim or save schema change.
+
 ## v2.9.0 — 2026-10-19
 
 **TR**
