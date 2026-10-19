@@ -1,0 +1,102 @@
+/* Game screens use one high-contrast earth palette; landing keeps its theme choice. */
+.game-shell {
+  --line: #776044;
+  --muted: #d2c2a6;
+  --panel: #45392d;
+  --surface: #514333;
+  --ink: #fff0d4;
+  --accent: #dec58c;
+  background: #33291f;
+  color: var(--ink);
+}
+:root[data-theme='dark'] .game-shell .rail {
+  background: #30261d;
+  border-right-color: #7d6649;
+}
+:root[data-theme='dark'] .game-shell .nav-item {
+  color: #e2d0b0;
+}
+:root[data-theme='dark'] .game-shell .nav-item:hover {
+  color: #fff3d6;
+  background: #46382a;
+}
+:root[data-theme='dark'] .game-shell .nav-item.active {
+  background: #655037;
+  color: #fff1c6;
+  font-weight: 750;
+  box-shadow: inset 0 0 0 1px #a08454;
+}
+.game-shell .nav-item.active::before {
+  background: #f2ce78;
+  width: 4px;
+}
+:root[data-theme='dark']
+  .game-shell
+  :is(.detail-card, .build-card, .quest-card, .release-card, .first-watch-journal) {
+  background: #45392d;
+  border-color: #7d674c;
+  box-shadow: 0 4px 14px #100d092e;
+}
+:root[data-theme='dark'] .game-shell :is(h2, h3, h4, legend) {
+  color: #ffedc5;
+}
+:root[data-theme='dark'] .game-shell :is(.muted, .eyebrow, .section-label, .resource-label) {
+  color: #dec69f;
+}
+:root[data-theme='dark']
+  .game-shell
+  :is(.adventure-intro, .route-map-heading, .preparation-heading) {
+  border-bottom: 1px solid #806b4d;
+  padding-bottom: 16px;
+}
+:root[data-theme='dark'] .game-shell :is(input, select, textarea) {
+  border-color: #9e8967;
+  background: #30261e;
+  color: #fff0d4;
+}
+.game-shell :is(input[type='checkbox'], input[type='radio']) {
+  accent-color: #c3d499;
+}
+.game-shell :is(button, a, input, select, textarea, [role='button']):focus-visible {
+  outline: 3px solid #f0c977;
+  outline-offset: 3px;
+}
+:root[data-theme='dark'] .game-shell .button.outline {
+  border-color: #9c8660;
+  color: #f4e5c4;
+  background: #4a402f;
+}
+:root[data-theme='dark'] .game-shell .button.primary {
+  background: #bed09b;
+  color: #19251c;
+  font-weight: 750;
+}
+:root[data-theme='dark'] .game-shell .button:disabled {
+  opacity: 0.6;
+}
+
+:root[data-theme='dark'] .game-shell :is(.topbar, .map-toolbar) {
+  background: #423429;
+}
+:root[data-theme='dark']
+  .game-shell
+  :is(
+    .resource-bar,
+    .map-card,
+    .recovery-bar,
+    .guardian-card,
+    .region-card,
+    .release-card article
+  ) {
+  background: #45382c;
+  border-color: #897052;
+}
+:root[data-theme='dark'] .game-shell .friends-panel {
+  --surface: #45392d;
+  --bg: #382e24;
+  --border: #897052;
+}
+:root[data-theme='dark']:has(.game-shell) .modal {
+  background: #45382c;
+  border-color: #927859;
+}

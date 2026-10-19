@@ -16,7 +16,7 @@ export const BUILDINGS = Object.freeze(
     Object.freeze({
       ...building,
       maxLevel: 5,
-      maxCount: PRODUCERS.includes(building.id) ? 6 : 1,
+      maxCount: building.id === 'watchtower' ? 4 : PRODUCERS.includes(building.id) ? 6 : 1,
       cost: Object.freeze(building.cost),
       production: Object.freeze(
         Object.fromEntries(RESOURCES.map((key) => [key, building.production[key] || 0])),
@@ -34,6 +34,9 @@ export const PLOTS = Object.freeze(
     }),
   ),
 );
+
+/** Suggested inner corners only; every plot remains available for free placement. */
+export const CORNER_PLOT_IDS = Object.freeze(['p0', 'p5', 'p30', 'p35']);
 
 const WALL_COSTS = Object.freeze([
   null,

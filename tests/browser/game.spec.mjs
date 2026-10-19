@@ -98,7 +98,8 @@ test('realistic battle cutouts load with alpha, face opponents and remain select
   await mkdir('artifacts', { recursive: true });
   await page.locator('.map-card').screenshot({ path: 'artifacts/battle-realistic-desktop.png' });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page
     .locator('.map-card')
@@ -187,23 +188,22 @@ test('battle reveals a random jackal tactic at start and animates both sides', a
   );
   expect(errors).toEqual([]);
 });
-test('appearance persists and the bilingual release history remains readable on mobile', async ({
+test('the dark game theme overrides a stored light homepage preference and release history remains readable on mobile', async ({
   page,
 }) => {
+  await page.addInitScript(() => localStorage.setItem('bozkurt.theme', 'light'));
   await page.goto('/#village');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  const lightBackground = await page
-    .locator('html')
-    .evaluate((node) => getComputedStyle(node).backgroundColor);
-  await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
   const darkBackground = await page
     .locator('html')
     .evaluate((node) => getComputedStyle(node).backgroundColor);
-  expect(darkBackground).not.toBe(lightBackground);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.getByRole('button', { name: 'Açık temaya geç' })).toBeVisible();
+  expect(
+    await page.locator('html').evaluate((node) => getComputedStyle(node).backgroundColor),
+  ).toBe(darkBackground);
+  expect(await page.evaluate(() => localStorage.getItem('bozkurt.theme'))).toBe('light');
 
   await page.getByRole('button', { name: 'Yenilikler', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Yenilikler', exact: true })).toBeVisible();
@@ -247,9 +247,10 @@ test('appearance persists and the bilingual release history remains readable on 
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await page.screenshot({ path: 'artifacts/updates-dark-mobile.png', fullPage: true });
 
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  expect(await page.evaluate(() => localStorage.getItem('bozkurt.theme'))).toBe('light');
 });
 
 test('authenticated village survives browser reload without a guest-mode switch', async ({

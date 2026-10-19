@@ -27,7 +27,7 @@ for (const [name, viewport] of [
   ['wide desktop', { width: 1920, height: 1080 }],
   ['mobile', { width: 390, height: 844 }],
 ]) {
-  test(`battlefield fills its surface at every zoom in light and dark mode on ${name}`, async ({
+  test(`battlefield fills its surface at every zoom in the dark game theme on ${name}`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -42,8 +42,8 @@ for (const [name, viewport] of [
     });
     expect(decoded).toBe(true);
 
-    for (const theme of ['light', 'dark']) {
-      if (theme === 'dark') await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
+    for (const theme of ['dark']) {
+      await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
       await page.locator('[data-action="resetZoom"]').click();
       await expectCoveredTerrain(page);
@@ -148,9 +148,19 @@ test('dark terrain keeps wolf bodies readable without dimming them', async ({ pa
     );
   }
 
-  const light = await paintedColors();
-  await page.getByRole('button', { name: 'Koyu temaya geç' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
+  // Temporarily remove only terrain shading as a visual reference; the game stays dark.
+  const originalFilter = await scene.locator('.battlefield-terrain').evaluate((node) => {
+    const filter = node.style.filter;
+    node.style.filter = 'none';
+    return filter;
+  });
+  const light = await paintedColors();
+  await scene.locator('.battlefield-terrain').evaluate((node, filter) => {
+    if (filter) node.style.filter = filter;
+    else node.style.removeProperty('filter');
+  }, originalFilter);
   const dark = await paintedColors();
   const brightness = (rgb) => rgb.reduce((sum, channel) => sum + channel, 0) / 3;
   expect(brightness(light.terrain)).toBeGreaterThan(20);

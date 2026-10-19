@@ -248,7 +248,7 @@ test('a delayed old journal poll cannot reappear after logout or leak timings in
   expect(fixture.actions).toEqual([]);
 });
 
-test('journal timings and labels remain readable on narrow phones in both languages and themes', async ({
+test('journal timings and labels remain readable on narrow phones in both languages and the dark game theme', async ({
   page,
 }) => {
   const state = recordedChapter();
@@ -258,9 +258,9 @@ test('journal timings and labels remain readable on narrow phones in both langua
     for (const language of ['tr', 'en']) {
       if ((await page.locator('html').getAttribute('lang')) !== language)
         await page.locator('[data-action="language"]').click();
-      for (const theme of ['light', 'dark']) {
-        if ((await page.locator('html').getAttribute('data-theme')) !== theme)
-          await page.locator('[data-action="theme"]').click();
+      for (const theme of ['dark']) {
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
         await expect(journal(page)).toBeVisible();
         await expect(value(page, 'completed-gather')).toHaveText(
           language === 'tr' ? '2 dk 03 sn' : '2 min 03 sec',

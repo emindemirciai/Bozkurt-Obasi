@@ -1,3 +1,6 @@
+@import './adventure-selection.css';
+@import './village-fortifications.css';
+
 .scene-wrap:has(.settlement-scene) {
   overflow: auto;
   height: 620px;

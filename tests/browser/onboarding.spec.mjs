@@ -66,7 +66,7 @@ test('First Watch directs without spending, claims real rewards once and survive
   expect(errors).toEqual([]);
 });
 
-test('earlier out-of-order actions remain completed while chapter rewards stay sequential in both themes', async ({
+test('earlier out-of-order actions remain completed while chapter rewards stay sequential in the dark game theme', async ({
   page,
 }) => {
   let response = await page.request.post('/api/session', { data: {} });
@@ -91,7 +91,8 @@ test('earlier out-of-order actions remain completed while chapter rewards stay s
   await expect(chapter.locator('[data-step="build"]')).toContainText('Hedef tamamlandı');
   await expect(chapter.locator('#fw-action-build')).toBeDisabled();
   await expect(chapter.locator('[data-step="train"]')).toContainText('Hedef tamamlandı');
-  await page.getByRole('button', { name: 'Koyu temaya geç', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Switch to English', exact: true }).click();
   await expect(chapter.getByRole('heading', { name: 'First Watch', exact: true })).toBeVisible();
   await expect(chapter.locator('.first-watch-count')).toHaveText('0 / 8 rewards claimed');
@@ -99,7 +100,7 @@ test('earlier out-of-order actions remain completed while chapter rewards stay s
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(chapter.locator('[data-step="build"]')).toContainText('Objective complete');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click();
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Türkçeye geç', exact: true }).click();
   await expect(chapter.locator('#fw-action-gather')).toHaveText('Kaynak toplamaya git');
 });

@@ -1,6 +1,14 @@
+import { regionArtwork } from './region-art.mjs';
+import { villageFortifications } from './village-fortifications.mjs';
 import { formatJourneyDuration } from './journey-time.mjs';
 import { villageAtmosphere } from './village-camera.mjs';
-import { BUILDINGS, PLOTS, visualTier, getWallUpgradeCost } from '../shared/settlement.mjs';
+import {
+  BUILDINGS,
+  PLOTS,
+  CORNER_PLOT_IDS,
+  visualTier,
+  getWallUpgradeCost,
+} from '../shared/settlement.mjs';
 import {
   REGIONS,
   DIFFICULTIES,
@@ -57,39 +65,50 @@ export function wolfPortrait(wolf, label = wolf.name) {
 }
 const point = (x, y) => [720 + (x - y) * 98, 240 + (x + y) * 57];
 export function settlementScene(state, { t, zoom = 1, selected = '' }) {
-  const wallLevel = state.walls?.level || 1,
-    stone = wallLevel >= 3,
-    color = stone ? '#aaa18c' : '#a67b49';
-  const perimeter = '720,112 1345,477 720,844 95,477 720,112';
-  const wall = `<polyline points="${perimeter}" fill="none" stroke="#30291f" stroke-width="${stone ? 32 : 22}" opacity=".7"/><polyline points="${perimeter}" fill="none" stroke="${color}" stroke-width="${stone ? 26 : 16}" stroke-dasharray="${stone ? '25 2' : '5 3'}"/>${wallLevel >= 2 ? `<polyline points="720,97 1345,462 720,829 95,462 720,97" fill="none" stroke="${stone ? '#d2c7b1' : '#d0a766'}" stroke-width="${wallLevel === 5 ? 14 : 6}" stroke-dasharray="${wallLevel === 5 ? '17 12' : 'none'}"/>` : ''}${stone ? [point(-0.9, -0.9), point(5.9, -0.9), point(5.9, 5.9), point(-0.9, 5.9)].map(([x, y]) => `<g transform="translate(${x} ${y})"><path d="M-23 0v-44h46V0L0 13Z" fill="#827968" stroke="#4b443a" stroke-width="3"/><path d="M-26-44h52v-13h-9v7h-10v-7H-7v7h-10v-7h-9Z" fill="#c7bda7"/></g>`).join('') : ''}`;
   const plots = PLOTS.filter((p) => !state.buildings.some((b) => b.x === p.x && b.y === p.y))
     .map((p) => {
       const [x, y] = point(p.x, p.y);
-      return `<g class="empty-plot scene-building" data-plot="${p.id}" tabindex="0" role="button" aria-label="${escape(t('plot'))} ${Number(p.id.slice(1)) + 1}" transform="translate(${x} ${y})"><path d="M0-45 83 0 0 45-83 0Z" fill="#eddeb4" fill-opacity=".3" stroke="#f8e6b8" stroke-width="2" stroke-dasharray="5 6"/><circle r="20" fill="#273d2c" fill-opacity=".84"/><path d="M-9 0H9M0-9V9" stroke="#f4e2b5" stroke-width="3"/></g>`;
+      const corner = CORNER_PLOT_IDS.includes(p.id);
+      return `<g class="empty-plot scene-building" data-plot="${p.id}" ${corner ? `data-corner-plot="true" aria-describedby="corner-plot-hint-${p.id}"` : ''} tabindex="0" role="button" aria-label="${escape(t('plot'))} ${Number(p.id.slice(1)) + 1}" transform="translate(${x} ${y})">${corner ? `<title id="corner-plot-hint-${p.id}">${escape(t('cornerPlotHint'))}</title>` : ''}<path d="M0-45 83 0 0 45-83 0Z" fill="#eddeb4" fill-opacity=".3" stroke="#f8e6b8" stroke-width="2" stroke-dasharray="5 6"/><circle r="20" fill="#273d2c" fill-opacity=".84"/><path d="M-9 0H9M0-9V9" stroke="#f4e2b5" stroke-width="3"/>${corner ? '<path class="corner-tower-plot-marker" d="M34-10v-17h-2v-6h5v3h4v-3h5v6h-2v17Zm3-4h4v-7h-4Z" aria-hidden="true"/>' : ''}</g>`;
     })
     .join('');
   const buildings = [...state.buildings]
     .sort((a, b) => a.x + a.y - (b.x + b.y))
     .map((b) => {
       const [x, y] = point(b.x, b.y);
-      return `<g data-building="${b.id}" role="button" tabindex="0" aria-label="${escape(t(b.type))}, ${escape(t('level'))} ${b.level}" class="scene-building ${selected === b.id ? 'selected' : ''}" transform="translate(${x} ${y})"><ellipse class="selection-ring" rx="74" ry="36" fill="none" stroke="#ffe3a2" stroke-width="3"/>${buildingImage(b.type, b.level)}<g transform="translate(0 49)"><rect x="-79" y="-16" width="158" height="24" rx="8" fill="#172d23" fill-opacity=".92"/><text text-anchor="middle" fill="#fff0c8" font-size="12">${escape(t(b.type))} · ${b.level}</text></g></g>`;
+      const hall = b.type === 'hall';
+      const foundation = hall
+        ? '<g class="hall-foundation" aria-hidden="true" pointer-events="none"><ellipse cy="11" rx="97" ry="43" fill="#243e2b" fill-opacity=".43" stroke="#d6bb74" stroke-width="2"/><ellipse cy="11" rx="89" ry="36" fill="none" stroke="#85966a" stroke-opacity=".8" stroke-width="2"/></g><g class="hall-standard" aria-hidden="true" pointer-events="none"><path d="M73-156v58" stroke="#b89d65" stroke-width="2.5"/><path d="M74-155h29l-7 11 7 11H74Z" fill="#294b36" stroke="#dbc27e" stroke-width="1.5"/><path d="M85-150a6 6 0 1 0 0 12 5 5 0 1 1 0-12Z" fill="#e0c47e"/></g>'
+        : '';
+      const sprite = hall
+        ? `<g class="hall-building-sprite" pointer-events="none" transform="scale(1.28)">${buildingImage(b.type, b.level)}</g><rect class="hall-building-hit" x="-78" y="-118" width="156" height="156" fill="transparent" pointer-events="all"/>`
+        : buildingImage(b.type, b.level);
+      return `<g data-building="${b.id}" role="button" tabindex="0" aria-label="${escape(t(b.type))}, ${escape(t('level'))} ${b.level}" class="scene-building ${hall ? 'hall-building' : ''} ${selected === b.id ? 'selected' : ''}" transform="translate(${x} ${y})">${foundation}<ellipse class="selection-ring" ${hall ? 'cy="11" rx="102" ry="47"' : 'rx="74" ry="36"'} fill="none" stroke="#ffe3a2" stroke-width="3"/>${sprite}<g class="${hall ? 'hall-building-label' : 'building-label'}" transform="translate(0 ${hall ? 75 : 49})"><rect x="${hall ? -88 : -79}" y="-16" width="${hall ? 176 : 158}" height="${hall ? 27 : 24}" rx="8" fill="${hall ? '#243e2b' : '#172d23'}" fill-opacity="${hall ? '.96' : '.92'}" ${hall ? 'stroke="#d6bb74" stroke-width="1.7"' : ''}/><text text-anchor="middle" fill="#fff0c8" font-size="${hall ? 13 : 12}" font-weight="${hall ? 700 : 400}">${escape(t(b.type))} · ${b.level}</text></g></g>`;
     })
     .join('');
-  return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/>${villageAtmosphere()}${wall}${plots}${buildings}</svg>`;
+
+  return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/>${villageAtmosphere()}${villageFortifications(state)}${plots}${buildings}</svg>`;
 }
 export function settlementControls(state, { t, busy, movingId }) {
   const cost = getWallUpgradeCost(state.walls);
-  return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}</section>`;
+  const towers = state.buildings.filter((building) => building.type === 'watchtower').length;
+  const towerLimit = BUILDINGS.find((building) => building.id === 'watchtower').maxCount;
+  const count = t('cornerTowerCount').replace('{count}', towers).replace('{max}', towerLimit);
+  return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}<div class="fortification-overview"><h4>${t('cornerFortificationsTitle')} · ${escape(count)}</h4><p>${t('cornerFortificationsHint')}</p><p>${t('cornerTowerBonusHint')}</p><p>${t('villageGateHint')}</p></div></section>`;
 }
 export function placementDialog(state, { plotId, t, busy }) {
   const plot = PLOTS.find((p) => p.id === plotId);
   if (!plot) return '';
-  return `<div class="modal-backdrop"><section class="modal placement-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">×</button><span class="eyebrow">${t('plot')} ${Number(plotId.slice(1)) + 1}</span><h2 id="modal-title">${t('placeTitle')}</h2><p>${t('producerLimit')}</p><div class="placement-grid">${BUILDINGS.filter(
+  const corner = CORNER_PLOT_IDS.includes(plotId);
+  const towerLimit = BUILDINGS.find((building) => building.id === 'watchtower').maxCount;
+  const towers = state.buildings.filter((building) => building.type === 'watchtower').length;
+  const count = t('cornerTowerCount').replace('{count}', towers).replace('{max}', towerLimit);
+  return `<div class="modal-backdrop"><section class="modal placement-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">×</button><span class="eyebrow">${t('plot')} ${Number(plotId.slice(1)) + 1}</span><h2 id="modal-title">${t('placeTitle')}</h2><p>${t('producerLimit')}</p>${corner ? `<p class="corner-placement-hint" data-corner-placement>${t('cornerPlacementHint')} · ${escape(count)}${towers >= towerLimit ? ' · ' + t('cornerTowerLimitHint') : ''}</p>` : ''}<div class="placement-grid">${BUILDINGS.filter(
     (d) => state.buildings.filter((b) => b.type === d.id).length < d.maxCount,
   )
     .map(
       (d) =>
-        `<button class="placement-choice" data-action="placeBuilding" data-building-type="${d.id}" data-plot-id="${plotId}" ${busy || state.battle.status === 'active' || Object.entries(d.cost).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}><svg viewBox="-82 -122 164 180">${buildingImage(d.id)}</svg><strong>${t(d.id)}</strong><small>${costs(d.cost, t)}</small><span>${t('placeHere')}</span></button>`,
+        `<button class="placement-choice ${corner && d.id === 'watchtower' ? 'is-corner-recommended' : ''}" data-action="placeBuilding" data-building-type="${d.id}" data-plot-id="${plotId}" ${busy || state.battle.status === 'active' || Object.entries(d.cost).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}><svg viewBox="-82 -122 164 180">${buildingImage(d.id)}</svg><strong>${t(d.id)}</strong>${corner && d.id === 'watchtower' ? `<em class="corner-recommendation">${t('cornerTowerRecommended')}</em>` : ''}<small>${costs(d.cost, t)}</small><span>${t('placeHere')}</span></button>`,
     )
     .join('')}</div></section></div>`;
 }
@@ -156,7 +175,7 @@ function routeCards(state, selection, { t, busy, lock, language = 'tr' }) {
             : 'routeLocked';
       const routeQuote = adventureQuote(state, { ...selection, region: region.id });
       const unavailableHome = selection.kind === 'expedition' && region.id === 'homeland';
-      return `<button class="route-card route-${region.id} ${selection.region === region.id ? 'selected' : ''}" data-action="selectRegion" data-region="${region.id}" aria-pressed="${selection.region === region.id}" ${busy || lock || unavailableHome ? 'disabled' : ''}><span class="route-number" aria-hidden="true">0${index + 1}</span><span class="route-status" data-region-status="${region.id}">${t(label)}</span><strong>${t(region.id)}</strong><span class="route-detail">${formatJourneyDuration(routeQuote.seconds, { t, language })} · ${t(routeQuote.item)}</span><span class="route-affordance">${t(unavailableHome ? 'routeHomeBase' : selection.region === region.id ? 'routeSelected' : 'routeInspect')}<span aria-hidden="true">${selection.region === region.id ? '✓' : '→'}</span></span></button>`;
+      return `<button class="route-card route-${region.id} ${selection.region === region.id ? 'selected' : ''}" data-action="selectRegion" data-region="${region.id}" aria-pressed="${selection.region === region.id}" ${busy || lock || unavailableHome ? 'disabled' : ''}><span class="route-image"><img class="route-landscape" src="${escape(regionArtwork(region.id))}" alt="" width="640" height="360" loading="lazy" decoding="async"></span><span class="route-number" aria-hidden="true">0${index + 1}</span><span class="route-card-content"><span class="route-status" data-region-status="${region.id}">${t(label)}</span><strong>${t(region.id)}</strong><span class="route-detail">${formatJourneyDuration(routeQuote.seconds, { t, language })} · ${t(routeQuote.item)}</span><span class="route-affordance">${t(unavailableHome ? 'routeHomeBase' : selection.region === region.id ? 'routeSelected' : 'routeInspect')}<span aria-hidden="true">${selection.region === region.id ? '✓' : '→'}</span></span></span></button>`;
     },
   ).join('')}</div></section>`;
 }
@@ -180,16 +199,25 @@ export function updateAdventurePlanning(root, state, { t, busy, selection, langu
   );
   updateAdventurePartyPanel(root, state, selection, { t, busy, language, outing });
   for (const card of root.querySelectorAll('[data-mission-plan]')) {
-    const seconds = card.querySelector('[data-plan-seconds]');
-    if (seconds)
-      seconds.textContent = formatJourneyDuration(
-        (outing
-          ? outingQuote(state, { ...outing, plan: card.dataset.missionPlan })
-          : adventureQuote(state, { ...selection, plan: card.dataset.missionPlan })
-        ).seconds,
-        { t, language },
-      );
+    const quote = outing
+      ? outingQuote(state, { ...outing, plan: card.dataset.missionPlan })
+      : adventureQuote(state, { ...selection, plan: card.dataset.missionPlan });
+    const quantities = {
+      '[data-plan-seconds]': formatJourneyDuration(quote.seconds, { t, language }),
+      '[data-plan-cost]': costs(quote.cost, t),
+      '[data-plan-reward]': costs(quote.reward, t),
+      '[data-plan-xp]': '+' + quote.xp,
+      '[data-plan-fatigue]': '−' + quote.fatigue + ' ' + t('missionHp'),
+    };
+    for (const [selector, content] of Object.entries(quantities)) {
+      const node = card.querySelector(selector);
+      if (node && node.innerHTML !== content) node.innerHTML = content;
+    }
   }
+  set(
+    '[data-selected-party-count]',
+    escape(t('adventurePartySelectedCount').replace('{count}', selection.wolfIds.length)),
+  );
   for (const card of root.querySelectorAll('[data-action="selectRegion"]')) {
     const quote = adventureQuote(state, { ...selection, region: card.dataset.region });
     const detail = card.querySelector('.route-detail');
@@ -199,6 +227,16 @@ export function updateAdventurePlanning(root, state, { t, busy, selection, langu
   }
   const depart = root.querySelector('[data-action="startAdventure"]');
   if (depart) depart.disabled = Boolean(busy) || !readiness.ready;
+}
+
+function guardianChoiceCards(state, selection, { t, lock, busy, quote }) {
+  return `<fieldset class="adventure-party" aria-describedby="adventure-party-hint"><legend>${t('party')} · ${t('minimumParty')}: ${quote.minimumWolves}</legend><p id="adventure-party-hint" class="adventure-choice-hint">${t('adventurePartyChoiceHint')}</p><p class="adventure-selected-count" data-selected-party-count>${t('adventurePartySelectedCount').replace('{count}', selection.wolfIds.length)}</p><div class="adventure-guardian-grid">${state.wolves
+    .map((wolf) => {
+      const unavailable = lock || busy || wolf.hp < 20;
+      const name = t(wolf.name === 'healer' ? 'healerPath' : wolf.name);
+      return `<label class="guardian-choice ${wolf.hp < 20 ? 'guardian-needs-rest' : ''}" data-guardian-choice="${wolf.id}"><input type="checkbox" id="adventure-${wolf.id}" name="adventure-wolf" aria-labelledby="adventure-label-${wolf.id}" value="${wolf.id}" ${selection.wolfIds.includes(wolf.id) ? 'checked' : ''} ${unavailable ? 'disabled' : ''}>${wolfPortrait(wolf, name)}<span class="guardian-choice-info"><strong id="adventure-label-${wolf.id}">${name}</strong><small>${Math.ceil(wolf.hp)}/${wolf.maxHp} · ${t('level')} ${wolf.level}${wolf.hp < 20 ? ` · ${t('guardianNeedsRest')}` : ''}</small><span class="guardian-choice-state" aria-hidden="true"><span class="choice-selected">✓ ${t('adventureChoiceSelected')}</span><span class="choice-unselected">${t(unavailable ? 'adventureChoiceLocked' : 'adventureChoiceSelect')}</span></span></span></label>`;
+    })
+    .join('')}</div></fieldset>`;
 }
 
 export function adventureView(state, { t, busy, selection, language = 'tr', now = Date.now() }) {
@@ -216,5 +254,5 @@ export function adventureView(state, { t, busy, selection, language = 'tr', now 
     )
     .join(
       '',
-    )}</select></label><label>${t('difficulty')}<select id="adventure-difficulty" ${lock || busy ? 'disabled' : ''}>${DIFFICULTIES.map((d) => `<option value="${d}" ${s.difficulty === d ? 'selected' : ''}>${t(d)}</option>`).join('')}</select></label></div>${missionPlanPicker(state, s, { t, language, disabled: lock || busy, active: Boolean(a), outing: a })}${adventurePartySuggestionsPanel(state, s, { t, busy, language })}<fieldset class="adventure-party"><legend>${t('party')} · ${t('minimumParty')}: ${quote.minimumWolves}</legend>${state.wolves.map((w) => `<label class="${w.hp < 20 ? 'guardian-needs-rest' : ''}"><input type="checkbox" id="adventure-${w.id}" name="adventure-wolf" value="${w.id}" ${s.wolfIds.includes(w.id) ? 'checked' : ''} ${lock || busy || w.hp < 20 ? 'disabled' : ''}>${wolfPortrait(w, t(w.name === 'healer' ? 'healerPath' : w.name))}<span>${t(w.name === 'healer' ? 'healerPath' : w.name)}<small>${Math.ceil(w.hp)}/${w.maxHp} · ${t('level')} ${w.level}${w.hp < 20 ? ` · ${t('guardianNeedsRest')}` : ''}</small></span></label>`).join('')}</fieldset>${adventurePartyForecastPanel(state, s, { t, language, outing: a })}<p class="adventure-cost" data-adventure-cost>${costs(quote.cost, t)} · ${formatJourneyDuration(quote.seconds, { t, language })}</p><section class="preparation-summary" id="adventure-readiness" data-adventure-readiness data-ready="${readiness.ready}" aria-live="polite" aria-atomic="true">${readinessContent(readiness, t)}</section><button class="button primary adventure-depart" data-action="startAdventure" aria-describedby="adventure-readiness" ${busy || !readiness.ready ? 'disabled' : ''}>${t('depart')}<span aria-hidden="true">→</span></button></section><aside class="detail-card adventure-brief">${missionBrief(s, { t })}<h3>${t('expectedReward')}</h3><p data-adventure-reward>${costs(quote.reward, t)}</p>${a && (a.economyVersion ?? 1) < 3 ? `<p class="muted" data-active-economy="legacy">${t('missionLegacyReward')}</p>` : ''}<p>+${quote.xp} ${t('xp')} / ${t('wolfCount')} · ${t(quote.item)}</p><div data-adventure-warnings>${preparationWarnings(readiness, t)}</div><p class="muted">${t('expeditionNote')}</p><h3>${t('inventory')}</h3>${ITEM_DEFINITIONS.map((i) => `<div class="inventory-row"><span>${t(i.id)}</span><b>${state.inventory[i.id]}</b></div>`).join('')}</aside></div><section class="adventure-reports"><h2>${t('report')}</h2>${state.adventure.history.length ? state.adventure.history.map((r) => missionReport(r, { t, language })).join('') : `<p>${t('noReports')}</p>`}</section>`;
+    )}</select></label><label>${t('difficulty')}<select id="adventure-difficulty" ${lock || busy ? 'disabled' : ''}>${DIFFICULTIES.map((d) => `<option value="${d}" ${s.difficulty === d ? 'selected' : ''}>${t(d)}</option>`).join('')}</select></label></div><p class="adventure-selection-note">${t('adventureSelectionLocalHint')}</p>${missionPlanPicker(state, s, { t, language, disabled: lock || busy, active: Boolean(a), outing: a })}${adventurePartySuggestionsPanel(state, s, { t, busy, language })}${guardianChoiceCards(state, s, { t, lock, busy, quote })}${adventurePartyForecastPanel(state, s, { t, language, outing: a })}<p class="adventure-cost" data-adventure-cost>${costs(quote.cost, t)} · ${formatJourneyDuration(quote.seconds, { t, language })}</p><section class="preparation-summary" id="adventure-readiness" data-adventure-readiness data-ready="${readiness.ready}" aria-live="polite" aria-atomic="true">${readinessContent(readiness, t)}</section><button class="button primary adventure-depart" data-action="startAdventure" aria-describedby="adventure-readiness" ${busy || !readiness.ready ? 'disabled' : ''}>${t('depart')}<span aria-hidden="true">→</span></button></section><aside class="detail-card adventure-brief">${missionBrief(s, { t })}<h3>${t('expectedReward')}</h3><p data-adventure-reward>${costs(quote.reward, t)}</p>${a && (a.economyVersion ?? 1) < 3 ? `<p class="muted" data-active-economy="legacy">${t('missionLegacyReward')}</p>` : ''}<p>+${quote.xp} ${t('xp')} / ${t('wolfCount')} · ${t(quote.item)}</p><div data-adventure-warnings>${preparationWarnings(readiness, t)}</div><p class="muted">${t('expeditionNote')}</p><h3>${t('inventory')}</h3>${ITEM_DEFINITIONS.map((i) => `<div class="inventory-row"><span>${t(i.id)}</span><b>${state.inventory[i.id]}</b></div>`).join('')}</aside></div><section class="adventure-reports"><h2>${t('report')}</h2>${state.adventure.history.length ? state.adventure.history.map((r) => missionReport(r, { t, language })).join('') : `<p>${t('noReports')}</p>`}</section>`;
 }

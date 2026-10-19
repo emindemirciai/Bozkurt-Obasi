@@ -114,7 +114,14 @@ test('wooden walls upgrade to stone through real saved actions and unavailable u
   expect(second.state.resources.stone).toBe(190);
   await expect(walls).toContainText(translations.tr.wall3);
   await expect(upgrade).toBeDisabled();
-  await expect(page.locator('.settlement-scene polyline[stroke-width="26"]')).toHaveCount(1);
+  await expect(page.locator('.settlement-scene .village-wall')).toHaveAttribute(
+    'data-wall-level',
+    '3',
+  );
+  await expect(page.locator('.settlement-scene .village-gate')).toHaveAttribute(
+    'data-gate-tier',
+    '2',
+  );
   await page.reload();
   await expect(walls).toContainText(translations.tr.wall3);
   await expect(upgrade).toBeDisabled();
@@ -126,6 +133,7 @@ test('three building tiers and role portraits load, with the mobile village cont
   await signIn(page);
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'hall', plotId: 'p0' }, START);
+  applyAction(state, { type: 'build', building: 'quarry', plotId: 'p5' }, START);
   await mockVillage(page, state);
   const tiers = [];
   for (const level of [1, 3, 5]) {
@@ -139,7 +147,14 @@ test('three building tiers and role portraits load, with the mobile village cont
     else await page.reload();
     const building = page.locator('.settlement-scene [data-building="building-hall"]');
     await expect(building).toHaveAttribute('aria-label', `Bey Otağı, Seviye ${level}`);
-    tiers.push(await building.locator(':scope > svg').getAttribute('viewBox'));
+    const hallSprite = building.locator('.hall-building-sprite > svg');
+    tiers.push(await hallSprite.getAttribute('viewBox'));
+    const hallBounds = await hallSprite.boundingBox();
+    const quarryBounds = await page
+      .locator('.settlement-scene [data-building="building-quarry"] > svg')
+      .boundingBox();
+    expect(hallBounds.width).toBeGreaterThan(quarryBounds.width * 1.2);
+    expect(hallBounds.height).toBeGreaterThan(quarryBounds.height * 1.2);
     await expect(page.locator('.settlement-controls')).toContainText(
       translations.tr[`wall${level}`],
     );

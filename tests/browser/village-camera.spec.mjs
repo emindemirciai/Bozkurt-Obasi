@@ -225,3 +225,131 @@ test('ordinary and zoomed plot clicks open their own placement dialog while drag
   expect(await terrain(page).getAttribute('viewBox')).not.toBe(before);
   expect(actions).toEqual([]);
 });
+
+test('clear weather visibly includes a river, waterfall and clouds without intercepting plots', async ({
+  page,
+}) => {
+  const actions = await village(page);
+  const frame = viewport(page);
+  await frame.scrollIntoViewIfNeeded();
+  await expect(frame).toHaveAttribute('data-weather', 'clear');
+  await expect(page.locator('[data-camera-action="weather"] svg')).toBeVisible();
+  await expect(page.locator('[data-camera-weather-label]')).toHaveText('Açık');
+  await expect(terrain(page).locator('.village-river-channel')).toBeVisible();
+  await expect(terrain(page).locator('.village-waterfall-flow')).toHaveCount(2);
+  await expect(terrain(page).locator('.village-cloud')).toBeVisible();
+  const river = await terrain(page).locator('.village-river-channel').boundingBox();
+  const scene = await frame.boundingBox();
+  expect(river.height).toBeGreaterThan(scene.height * 0.6);
+  expect(river.width).toBeGreaterThan(scene.width * 0.1);
+  const hitTargets = await terrain(page)
+    .locator('[data-plot]')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const rect = node.getBoundingClientRect();
+        return {
+          expected: node.dataset.plot,
+          actual: document
+            .elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+            ?.closest('[data-plot]')?.dataset.plot,
+        };
+      }),
+    );
+  expect(hitTargets).toHaveLength(36);
+  expect(hitTargets.every((entry) => entry.actual === entry.expected)).toBe(true);
+  const riverPoint = await terrain(page).evaluate((svg) => {
+    const point = new DOMPoint(1397, 559).matrixTransform(svg.getScreenCTM());
+    return { x: point.x, y: point.y };
+  });
+  await page.mouse.click(riverPoint.x, riverPoint.y);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(
+    await terrain(page)
+      .locator('.village-weather')
+      .evaluate((node) =>
+        [node, ...node.querySelectorAll('*')].every(
+          (child) => getComputedStyle(child).pointerEvents === 'none',
+        ),
+      ),
+  ).toBe(true);
+  expect(actions).toEqual([]);
+});
+
+test('rain and complete animation pause remain selected across camera reset, language and navigation in the dark game theme', async ({
+  page,
+}) => {
+  const actions = await village(page);
+  const frame = viewport(page);
+  const weather = page.locator('[data-camera-action="weather"]');
+  const motion = page.locator('[data-camera-action="motion"]');
+  await expect(terrain(page).locator('.village-rain')).toBeHidden();
+  await weather.click();
+  await expect(frame).toHaveAttribute('data-weather', 'rain');
+  await expect(weather).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-camera-weather-label]')).toHaveText('Yağmur');
+  await expect(terrain(page).locator('.village-rain')).toBeVisible();
+  await expect
+    .poll(() =>
+      terrain(page)
+        .locator('.village-rain-haze')
+        .evaluate((node) => Number(getComputedStyle(node).opacity)),
+    )
+    .toBeGreaterThan(0.8);
+  expect(
+    await terrain(page)
+      .locator('.village-river-current')
+      .first()
+      .evaluate((node) =>
+        node.getAnimations().some((animation) => animation.playState === 'running'),
+      ),
+  ).toBe(true);
+  await motion.click();
+  await expect(frame).toHaveAttribute('data-motion', 'off');
+  expect(
+    await terrain(page)
+      .locator('.village-weather')
+      .evaluate(
+        (node) =>
+          node
+            .getAnimations({ subtree: true })
+            .filter((animation) => animation.playState === 'running').length,
+      ),
+  ).toBe(0);
+  await page.locator('[data-action="zoomIn"]').click();
+  await page.locator('[data-action="zoomIn"]').click();
+  await page.locator('[data-action="resetZoom"]').click();
+  await expect(frame).toHaveAttribute('data-camera-zoom', '1');
+  await expect(frame).toHaveAttribute('data-weather', 'rain');
+  await expect(frame).toHaveAttribute('data-motion', 'off');
+  await page.locator('[data-action="language"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
+  await expect(page.locator('[data-camera-weather-label]')).toHaveText('Rain');
+  await expect(frame).toHaveAttribute('data-weather', 'rain');
+  await expect(frame).toHaveAttribute('data-motion', 'off');
+  await page.locator('[data-view="wolves"]').click();
+  await page.locator('[data-view="village"]').click();
+  await expect(frame).toHaveAttribute('data-weather', 'rain');
+  await expect(frame).toHaveAttribute('data-motion', 'off');
+  expect(
+    await terrain(page)
+      .locator('.village-weather')
+      .evaluate(
+        (node) =>
+          node
+            .getAnimations({ subtree: true })
+            .filter((animation) => animation.playState === 'running').length,
+      ),
+  ).toBe(0);
+  await motion.click();
+  await expect(frame).toHaveAttribute('data-motion', 'on');
+  expect(
+    await terrain(page)
+      .locator('.village-river-current')
+      .first()
+      .evaluate((node) =>
+        node.getAnimations().some((animation) => animation.playState === 'running'),
+      ),
+  ).toBe(true);
+  expect(actions).toEqual([]);
+});

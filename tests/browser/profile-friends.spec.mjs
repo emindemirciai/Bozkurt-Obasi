@@ -37,9 +37,10 @@ test('profile photo, immutable identity, nickname and logos persist across reloa
   await expect(dialog.getByLabel('Takma ad', { exact: true })).toHaveValue('Bozkır Reisi');
   await expect(dialog.locator('.profile-photo img')).toHaveAttribute('src', /api\/player\/avatar/);
   await mkdir('artifacts', { recursive: true });
-  await page.screenshot({ path: 'artifacts/profile-light-desktop.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/profile-dark-desktop-v2.12.0.png', fullPage: true });
   await dialog.getByRole('button', { name: 'Kapat', exact: true }).click();
-  await page.locator('[data-action=theme]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action=theme]')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.profile').click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

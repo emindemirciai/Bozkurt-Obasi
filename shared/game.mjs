@@ -75,6 +75,14 @@ const round = (value) => Math.round(value * 1e6) / 1e6;
 const levelOf = (state, type) =>
   state.buildings.find((building) => building.type === type)?.level || 0;
 
+// Multiple towers share the strongest level, preserving the single-tower combat cap.
+const watchtowerLevel = (state) =>
+  state.buildings.reduce(
+    (highest, building) =>
+      building.type === 'watchtower' ? Math.max(highest, building.level) : highest,
+    0,
+  );
+
 function checkClock(now) {
   if (!Number.isSafeInteger(now) || now < 0 || now > MAX_TIME) fail('INVALID_CLOCK');
 }
@@ -258,7 +266,7 @@ function battleTick(state, at) {
     0,
   );
   let damage = Math.round(
-    (teamAttack + levelOf(state, 'hall') + levelOf(state, 'watchtower') * 2) *
+    (teamAttack + levelOf(state, 'hall') + watchtowerLevel(state) * 2) *
       tactic.attack *
       formationAttack *
       commandEffects.attack,

@@ -10,17 +10,135 @@ const escape = (value) =>
 
 /** Decorative SVG layers share the camera, but never intercept a plot or alter game data. */
 export function villageAtmosphere() {
-  const rain = Array.from({ length: 36 }, (_, index) => {
-    const x = 70 + (index % 9) * 170;
-    const y = -80 + Math.floor(index / 9) * 310;
-    return '<path d="M' + x + ' ' + y + 'l-54 220"/>';
+  const river =
+    'M1294 128C1308 181 1372 184 1380 253S1427 351 1413 425S1439 500 1397 559S1302 626 1284 691S1200 783 1167 839S1108 938 1090 1020';
+  const rain = Array.from({ length: 72 }, (_, index) => {
+    const x = 26 + (index % 12) * 131;
+    const y = -180 + Math.floor(index / 12) * 237;
+    return '<path d="M' + x + ' ' + y + 'l-64 183"/>';
   }).join('');
+  const stones = [
+    [1272, 48, 25, 15],
+    [1294, 91, 17, 10],
+    [1262, 114, 16, 10],
+    [1322, 147, 15, 8],
+    [1330, 201, 11, 7],
+    [1406, 243, 13, 8],
+    [1372, 330, 10, 6],
+    [1440, 381, 16, 9],
+    [1387, 447, 12, 7],
+    [1431, 527, 14, 8],
+    [1360, 580, 13, 7],
+    [1325, 643, 11, 7],
+    [1257, 708, 15, 8],
+    [1242, 780, 10, 6],
+    [1138, 850, 12, 7],
+    [1142, 915, 14, 8],
+    [1061, 966, 11, 6],
+  ]
+    .map(
+      ([x, y, rx, ry], index) =>
+        '<g transform="translate(' +
+        x +
+        ' ' +
+        y +
+        ') rotate(' +
+        (index % 3) * 23 +
+        ')"><ellipse cy="4" rx="' +
+        (rx + 3) +
+        '" ry="' +
+        ry +
+        '" fill="#383b2a" opacity=".24"/><path d="M' +
+        -rx +
+        ' 0L' +
+        -rx * 0.6 +
+        ' ' +
+        -ry +
+        'L' +
+        rx * 0.5 +
+        ' ' +
+        -ry * 0.8 +
+        'L' +
+        rx +
+        ' 0L' +
+        rx * 0.4 +
+        ' ' +
+        ry +
+        'L' +
+        -rx * 0.7 +
+        ' ' +
+        ry * 0.65 +
+        'Z" fill="url(#village-river-rock)"/><path d="M' +
+        -rx * 0.6 +
+        ' ' +
+        -ry +
+        'L0 1L' +
+        rx * 0.5 +
+        ' ' +
+        -ry * 0.8 +
+        '" fill="none" stroke="#ddd0ae" stroke-width="1.5" opacity=".5"/></g>',
+    )
+    .join('');
+  const reeds = [
+    [1304, 168],
+    [1350, 222],
+    [1400, 294],
+    [1386, 371],
+    [1435, 468],
+    [1373, 531],
+    [1358, 615],
+    [1265, 665],
+    [1297, 715],
+    [1205, 819],
+    [1128, 885],
+    [1114, 975],
+  ]
+    .map(
+      ([x, y], index) =>
+        '<g class="village-reeds" transform="translate(' +
+        x +
+        ' ' +
+        y +
+        ')"><ellipse rx="15" ry="5" fill="#555a36" opacity=".35"/><path d="M0 1Q-8-9-13-16M-2 0Q0-14-2-24M2 1Q5-12 12-18M5 3Q13-4 16-9" fill="none" stroke="' +
+        (index % 2 ? '#616f40' : '#78834c') +
+        '" stroke-width="3" stroke-linecap="round"/><path d="M-1 0L1-17M3 1L9-11" stroke="#b4ae69" stroke-width="1.1"/></g>',
+    )
+    .join('');
   return `<g class="village-weather" aria-hidden="true" pointer-events="none">
-    <defs><linearGradient id="village-water" x2="0" y2="1"><stop stop-color="#c1c8b7"/><stop offset=".5" stop-color="#82998b"/><stop offset="1" stop-color="#b7c4b4"/></linearGradient></defs>
-    <g class="village-waterfall" opacity=".8"><path d="M1272 54c9 18-1 27 3 43s8 22 4 36" fill="none" stroke="#3f4a3f" stroke-opacity=".35" stroke-width="7" stroke-linecap="round"/><path d="M1272 54c9 18-1 27 3 43s8 22 4 36" fill="none" stroke="url(#village-water)" stroke-width="3.5" stroke-linecap="round"/><path class="village-waterfall-flow" d="M1272 54c9 18-1 27 3 43s8 22 4 36" fill="none" stroke="#dddccd" stroke-opacity=".65" stroke-width="1.3" stroke-dasharray="2 9"/><ellipse class="village-waterfall-foam" cx="1279" cy="135" rx="9" ry="2.5" fill="none" stroke="#d7dbca" stroke-opacity=".45" stroke-width="1"/></g>
-    <g class="village-cloud"><ellipse cx="250" cy="130" rx="240" ry="100" fill="#fff4dc" opacity=".12"/><ellipse cx="1100" cy="690" rx="260" ry="130" fill="#292f26" opacity=".1"/></g>
-    <g class="village-rain" fill="none" stroke="#d7e8dd" stroke-width="2.5" stroke-dasharray="7 25" opacity=".5">${rain}</g>
-    <g class="village-dust" fill="#e8d3a0" opacity=".65"><circle cx="310" cy="730" r="2"/><circle cx="510" cy="215" r="2"/><circle cx="955" cy="625" r="2.5"/><circle cx="1160" cy="390" r="2"/><circle cx="220" cy="440" r="1.7"/><circle cx="745" cy="850" r="2"/></g>
+    <defs>
+      <linearGradient id="village-water" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="#4e7470"/><stop offset=".35" stop-color="#6f958c"/><stop offset=".7" stop-color="#4e7b79"/><stop offset="1" stop-color="#94aaa0"/></linearGradient>
+      <linearGradient id="village-river-rock" x2=".35" y2="1"><stop stop-color="#aaa58d"/><stop offset=".45" stop-color="#85856e"/><stop offset="1" stop-color="#555a48"/></linearGradient>
+      <radialGradient id="village-cloud-light"><stop stop-color="#f3efd8" stop-opacity=".6"/><stop offset=".6" stop-color="#e8e4d1" stop-opacity=".25"/><stop offset="1" stop-color="#e9e4ce" stop-opacity="0"/></radialGradient>
+      <radialGradient id="village-cloud-shadow"><stop stop-color="#354334" stop-opacity=".37"/><stop offset=".7" stop-color="#3d4b3a" stop-opacity=".14"/><stop offset="1" stop-color="#3d4b3a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="village-rain-tint" x2=".3" y2="1"><stop stop-color="#273f42" stop-opacity=".44"/><stop offset=".7" stop-color="#687a73" stop-opacity=".22"/><stop offset="1" stop-color="#829288" stop-opacity=".12"/></linearGradient>
+      <filter id="village-soft-water"><feGaussianBlur stdDeviation="3"/></filter>
+    </defs>
+    <g class="village-river" data-village-river>
+      <path d="${river}" fill="none" stroke="#3e4833" stroke-width="78" stroke-opacity=".4"/>
+      <path d="${river}" fill="none" stroke="#85876a" stroke-width="65" stroke-opacity=".78"/>
+      <path d="${river}" fill="none" stroke="#b4ae89" stroke-width="55" stroke-opacity=".8"/>
+      <path class="village-river-channel" d="${river}" fill="none" stroke="url(#village-water)" stroke-width="44" stroke-linecap="round"/>
+      <path class="village-river-depth" d="${river}" fill="none" stroke="#315d5a" stroke-opacity=".24" stroke-width="20"/>
+      <path class="village-river-current" d="${river}" fill="none" stroke="#dbe4ce" stroke-opacity=".56" stroke-width="3.2" stroke-dasharray="25 38 8 55" stroke-linecap="round"/>
+      <path class="village-river-current village-river-current-secondary" d="${river}" transform="translate(8 -2)" fill="none" stroke="#b7d3c8" stroke-opacity=".4" stroke-width="1.6" stroke-dasharray="12 57 24 49" stroke-linecap="round"/>
+      <g class="village-river-ripples" fill="none" stroke="#d4dfcb" stroke-width="2" stroke-opacity=".55"><path d="M1370 244q13 7 24-2M1403 412q12 8 23 1M1385 558q9 10 21 7M1274 697q10 8 23 6M1155 848q12 8 23 5"/><path d="M1370 249q8 6 15 3M1390 566q7 5 12 4M1276 704q5 4 12 3" stroke-width="1"/></g>
+      <g class="village-river-shore">${stones}${reeds}</g>
+    </g>
+    <g class="village-waterfall">
+      <path d="M1264 28l28 16 7 40-12 28 16 26-26 12-23-31 8-27-9-30Z" fill="#626955" opacity=".8"/>
+      <path d="M1272 42c9 25-1 43 8 64s10 18 14 30" fill="none" stroke="#3d5049" stroke-width="27" stroke-linecap="round"/>
+      <path d="M1272 42c9 25-1 43 8 64s10 18 14 30" fill="none" stroke="url(#village-water)" stroke-width="19" stroke-linecap="round"/>
+      <path class="village-waterfall-flow" d="M1272 42c9 25-1 43 8 64s10 18 14 30" fill="none" stroke="#e2e8d7" stroke-opacity=".85" stroke-width="8" stroke-dasharray="9 9" stroke-linecap="round"/>
+      <path class="village-waterfall-flow village-waterfall-fine" d="M1267 44c7 24-1 42 9 65s9 19 13 29" fill="none" stroke="#f0f1de" stroke-opacity=".7" stroke-width="2" stroke-dasharray="4 11"/>
+      <ellipse cx="1294" cy="138" rx="25" ry="10" fill="#dce5ce" opacity=".35" filter="url(#village-soft-water)"/>
+      <ellipse class="village-waterfall-foam" cx="1294" cy="138" rx="22" ry="7" fill="none" stroke="#e7ead7" stroke-opacity=".74" stroke-width="2.5"/>
+      <ellipse class="village-waterfall-foam village-waterfall-foam-delayed" cx="1296" cy="145" rx="16" ry="5" fill="none" stroke="#d9e4d1" stroke-opacity=".6" stroke-width="1.5"/>
+    </g>
+    <g class="village-sunlight"><path d="M900-100L1230-100 670 1100 460 1100Z" fill="#f5dc9a" opacity=".07"/><path d="M1030-100L1140-100 580 1100 490 1100Z" fill="#fff1bd" opacity=".09"/></g>
+    <g class="village-cloud"><ellipse cx="280" cy="155" rx="340" ry="145" fill="url(#village-cloud-shadow)"/><ellipse cx="310" cy="107" rx="300" ry="120" fill="url(#village-cloud-light)"/><ellipse cx="1100" cy="685" rx="300" ry="150" fill="url(#village-cloud-shadow)"/><ellipse cx="1150" cy="610" rx="310" ry="120" fill="url(#village-cloud-light)"/></g>
+    <rect class="village-rain-haze" x="-900" y="-700" width="3240" height="2380" fill="url(#village-rain-tint)"/>
+    <g class="village-rain" fill="none" stroke="#d5e4dd" stroke-width="2.7" stroke-dasharray="18 38" stroke-opacity=".64">${rain}</g>
+    <g class="village-dust" fill="#ecd49d" opacity=".62"><circle cx="310" cy="730" r="2.5"/><circle cx="510" cy="215" r="2"/><circle cx="955" cy="625" r="2.5"/><circle cx="1160" cy="390" r="2"/><circle cx="220" cy="440" r="2"/><circle cx="745" cy="850" r="2"/></g>
   </g>`;
 }
 
@@ -111,8 +229,19 @@ export function mountVillageCamera(
         }) + '×';
     const weather = viewport.querySelector('[data-camera-action="weather"]');
     if (weather) {
-      weather.textContent = t(state.weather === 'rain' ? 'villageRain' : 'villageClear');
-      weather.setAttribute('aria-label', t('villageWeatherLabel') + ': ' + weather.textContent);
+      const label = t(state.weather === 'rain' ? 'villageRain' : 'villageClear');
+      if (weather.dataset.weatherState !== state.weather) {
+        const path =
+          state.weather === 'rain'
+            ? 'M6 15a4 4 0 0 1-1-7 6 6 0 0 1 11-1 4 4 0 0 1 1 8M8 17l-1 3m6-3-1 3m6-3-1 3'
+            : 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5';
+        weather.innerHTML =
+          symbol(path) + '<span data-camera-weather-label>' + escape(label) + '</span>';
+        weather.dataset.weatherState = state.weather;
+      } else {
+        weather.querySelector('[data-camera-weather-label]').textContent = label;
+      }
+      weather.setAttribute('aria-label', t('villageWeatherLabel') + ': ' + label);
       weather.setAttribute('aria-pressed', String(state.weather === 'rain'));
     }
     const motion = viewport.querySelector('[data-camera-action="motion"]');
@@ -275,7 +404,9 @@ export function mountVillageCamera(
   });
   listen(viewport, 'focusin', (event) => {
     const target = event.target.closest('[data-plot], [data-building]');
-    if (!target || state.zoom === 1) return;
+    // A pointer press already identifies its visible target; moving it during focus loses the click.
+    // Keyboard/programmatic focus still brings distant plots into view.
+    if (!target || state.zoom === 1 || pointers.size > 0) return;
     const rect = target.getBoundingClientRect();
     const bounds = viewport.getBoundingClientRect();
     if (

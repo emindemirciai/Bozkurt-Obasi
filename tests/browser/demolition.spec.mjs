@@ -210,7 +210,7 @@ for (const change of ['upgraded', 'rebuilt']) {
   );
 }
 
-test('the demolition confirmation remains legible at 320 and 390 pixels in TR/EN and both themes', async ({
+test('the demolition confirmation remains legible at 320 and 390 pixels in TR/EN and the dark game theme', async ({
   page,
 }) => {
   await signIn(page);
@@ -222,9 +222,9 @@ test('the demolition confirmation remains legible at 320 and 390 pixels in TR/EN
     for (const language of ['tr', 'en']) {
       if ((await page.locator('html').getAttribute('lang')) !== language)
         await page.locator('[data-action="language"]').click();
-      for (const theme of ['light', 'dark']) {
-        if ((await page.locator('html').getAttribute('data-theme')) !== theme)
-          await page.locator('[data-action="theme"]').click();
+      for (const theme of ['dark']) {
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
         await open(page).click();
         await expect(dialog(page)).toBeVisible();
         await expect(confirm(page)).toBeVisible();
@@ -242,7 +242,7 @@ test('the demolition confirmation remains legible at 320 and 390 pixels in TR/EN
         expect(bounds.left).toBeGreaterThanOrEqual(0);
         expect(bounds.right).toBeLessThanOrEqual(width);
         expect(bounds.scroll).toBeLessThanOrEqual(bounds.client + 1);
-        if (width === 390 && language === 'tr' && theme === 'light')
+        if (width === 390 && language === 'tr' && theme === 'dark')
           await dialog(page).screenshot({ path: 'artifacts/demolition-390-v2.8.0.png' });
         await cancel(page).click();
       }

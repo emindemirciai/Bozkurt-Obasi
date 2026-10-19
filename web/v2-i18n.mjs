@@ -1,5 +1,29 @@
 export const v2Translations = {
   tr: {
+    adventureSelectionLocalHint:
+      'Rota, amaç ve kadro seçimleri kaynak harcamaz. Maliyetleri incele; sefer yalnızca Yola çık düğmesiyle başlar.',
+    adventureChoiceSelected: 'Seçili',
+    adventureChoiceSelect: 'Seç',
+    adventureChoiceLocked: 'Kilitli',
+    adventurePartyChoiceHint:
+      'Bir muhafızın kartını seçerek kadroya kat veya çıkar. Yola çıkmadan önce asgari kadroyu ve varış tahminini kontrol et.',
+    adventurePartySelectedCount: '{count} muhafız seçili',
+    adventureRegionPreview: 'Seçilen bölge',
+    cornerFortificationsTitle: 'Sur içi köşe kuleleri',
+    cornerFortificationsHint:
+      'Boş iç köşelerin + işaretinden kule önerisine ulaşabilirsin. Kuleler normal bina gibi malzemeyle kurulur; taşınabilir, yükseltilebilir ve kaldırılabilir. Diğer parsellere de kurulabilir; köşeler başka binalara açıktır.',
+    cornerTowerCount: '{count} / {max} kule kurulu',
+    cornerPlotHint:
+      'Sur içi köşe. Gözetleme kulesi için uygun; buraya başka bir bina da yerleştirebilirsin.',
+    cornerPlacementHint:
+      'Bu sur içi köşede gözetleme kulesi önerilir. Diğer binaları seçmekte özgürsün.',
+    cornerTowerRecommended: 'Bu köşe için önerilen',
+    cornerTowerLimitHint:
+      'Kule sınırı dolu. Yerini değiştirmek için mevcut kuleyi taşıyabilir veya kaldırabilirsin.',
+    cornerTowerBonusHint:
+      'En güçlü kulenin seviyesi savunma desteğini belirler; kule sayısı bonusu katlamaz. Dört kule için her birini ayrı ayrı inşa etmen ve yükseltmen gerekir.',
+    villageGateHint:
+      'Açık sur kapısı, önündeki yol ve iki nöbetçi görsel koruma hattını tamamlar. Kapı, surların ahşap, taş ve kale aşamalarına uyum sağlar; nöbetçiler yeni bir savaş birliği oluşturmaz.',
     buildingCostRequired: 'Gereken',
     buildingCostAvailable: 'Mevcut',
     buildingOwnedCount: 'Kurulu / sınır',
@@ -373,6 +397,30 @@ export const v2Translations = {
     regionLocked: 'Bu bölge henüz açılmadı.',
   },
   en: {
+    adventureSelectionLocalHint:
+      'Route, purpose and party choices spend no supplies. Review the costs; the journey starts only when you press Depart.',
+    adventureChoiceSelected: 'Selected',
+    adventureChoiceSelect: 'Choose',
+    adventureChoiceLocked: 'Locked',
+    adventurePartyChoiceHint:
+      'Choose a guardian’s card to add or remove them. Check the minimum party size and arrival forecast before departure.',
+    adventurePartySelectedCount: '{count} guardians selected',
+    adventureRegionPreview: 'Selected region',
+    cornerFortificationsTitle: 'Inner corner watchtowers',
+    cornerFortificationsHint:
+      'Use an empty inner corner’s + to see the watchtower suggestion. Towers cost supplies and behave like other buildings: move, upgrade or remove them. Other parcels also accept towers, and corners remain available for other buildings.',
+    cornerTowerCount: '{count} / {max} towers built',
+    cornerPlotHint:
+      'Inner wall corner. Suited to a watchtower; other buildings can also be placed here.',
+    cornerPlacementHint:
+      'A watchtower is suggested for this inner wall corner. You can choose another building.',
+    cornerTowerRecommended: 'Suggested for this corner',
+    cornerTowerLimitHint:
+      'The tower limit is reached. Move or remove an existing tower to change its position.',
+    cornerTowerBonusHint:
+      'The strongest tower’s level determines defensive support; more towers do not multiply the bonus. Each of the four towers must be built and upgraded separately.',
+    villageGateHint:
+      'An open gate, approach path and two sentries complete the visible perimeter. The gate follows the walls’ timber, stone and castle stages; sentries do not create an additional combat unit.',
     buildingCostRequired: 'Required',
     buildingCostAvailable: 'Available',
     buildingOwnedCount: 'Built / limit',

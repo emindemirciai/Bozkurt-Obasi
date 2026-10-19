@@ -174,7 +174,8 @@ test('a Google player can add a password and resume the same village through ema
   await page.goto('/#village');
   await page.locator('[data-plot="p0"]').click();
   await page.locator('.placement-dialog [data-building-type="quarry"]').click();
-  await page.locator('[data-action="theme"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
   await page.locator('.profile').click();
   await page.getByRole('button', { name: 'Şifre belirle', exact: true }).click();
   const dialog = page.getByRole('dialog');

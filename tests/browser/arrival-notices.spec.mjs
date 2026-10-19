@@ -280,7 +280,7 @@ test('an unchanged receipt preserves its report control and keyboard focus over 
   expect(actions).toEqual([]);
 });
 
-test('the receipt stays readable on narrow phones in both languages, themes and reduced motion', async ({
+test('the receipt stays readable on narrow phones in both languages, the dark game theme and reduced motion', async ({
   page,
 }) => {
   await signIn(page);
@@ -294,9 +294,9 @@ test('the receipt stays readable on narrow phones in both languages, themes and 
     for (const language of ['tr', 'en']) {
       if ((await page.locator('html').getAttribute('lang')) !== language)
         await page.locator('[data-action="language"]').click();
-      for (const theme of ['light', 'dark']) {
-        if ((await page.locator('html').getAttribute('data-theme')) !== theme)
-          await page.locator('[data-action="theme"]').click();
+      for (const theme of ['dark']) {
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(page.locator('[data-action="theme"]')).toHaveCount(0);
         await expect(notice(page)).toBeVisible();
         await expect(notice(page).locator('[data-arrival-resource="wood"]')).toContainText(
           translations[language].wood,

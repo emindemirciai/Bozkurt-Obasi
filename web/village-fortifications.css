@@ -1,0 +1,69 @@
+.village-fortifications,
+.village-fortifications * {
+  pointer-events: none;
+}
+.empty-plot[data-corner-plot='true'] > path:first-of-type {
+  stroke: #f3d68f;
+  stroke-width: 2.5;
+}
+.corner-tower-plot-marker {
+  fill: #ead599;
+  stroke: #263c2a;
+  stroke-width: 1.2;
+}
+.fortification-overview {
+  flex: 1 1 100%;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.fortification-overview h4 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 13px;
+}
+.fortification-overview p,
+.corner-placement-hint {
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.fortification-overview p {
+  margin: 5px 0 0;
+}
+.corner-placement-hint {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--forest);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.placement-choice.is-corner-recommended {
+  border-color: #b99a55;
+  box-shadow: inset 0 3px 0 #b99a55;
+}
+.placement-choice .corner-recommendation {
+  color: var(--forest);
+  font-size: 11px;
+  line-height: 1.6;
+}
+:root[data-theme='dark'] .placement-choice .corner-recommendation {
+  color: #c4d3a9;
+}
+@media (max-width: 600px) {
+  .fortification-overview {
+    padding-top: 13px;
+  }
+}
+
+.settlement-controls > .fortification-overview:last-of-type {
+  display: block;
+}
+
+.settlement-scene .scene-building:is(:hover, :focus-visible) .building-label rect {
+  fill: #51412e;
+  stroke: #d7bf80;
+}
+.settlement-scene .scene-building:is(:hover, :focus-visible) .building-label text {
+  fill: #fff0c8;
+}

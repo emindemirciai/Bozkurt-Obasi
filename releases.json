@@ -1,6 +1,32 @@
 {
-  "version": "2.11.0",
+  "version": "2.12.0",
   "releases": [
+    {
+      "version": "2.12.0",
+      "date": "2026-10-19",
+      "changes": {
+        "tr": [
+          "Sur Nöbeti: dört gözetleme kulesi, köşe arsalarında yönlendirme ve seviyeye göre gelişen kapı ile iki nöbetçi.",
+          "Ana Yurt yakınında belirgin akan ırmak, şelale, bulut ve yağmur; duraklatma ve azaltılmış hareket desteği.",
+          "Mevcut köy düzeni korunur; kuleler mevcut yerleştirme, taşıma, yükseltme ve yarı iade kurallarıyla yönetilir. Savunma desteği en yüksek kule seviyesine göre hesaplanır.",
+          "Site adı masaüstü ve mobilde sol üstteki logonun altında gösterilir; ana yurt bağlantısı korunur.",
+          "Oyun ekranları yalnızca koyu toprak teması kullanır; sekmeler, seçili durumlar ve içerik panelleri daha belirgindir. Ana sayfanın tema tercihi korunur.",
+          "Sefer bölgelerine özgü dört gerçekçi manzara, görselli rota kartları ve belirgin amaç/kadro seçimleri eklendi; seçim yapmak kaynak harcamaz.",
+          "Bey Otağı köyde daha büyük bir ana yapı olarak, ayırt edici zemin ve ad etiketiyle gösterilir.",
+          "Yakınlaştırılmış köyde fare basışı sırasında odak nedeniyle kamera kayması engellendi; komşu arsalar ve Bey Otağı ayrı ayrı seçilebilir, klavye ile gezinme korunur."
+        ],
+        "en": [
+          "Wall Watch: four watchtowers, corner-plot guidance, an evolving gate and two sentries.",
+          "A visible flowing river, waterfall, clouds and rain beside the Homeland, with pause and reduced-motion support.",
+          "Existing layouts remain; towers use current placement, movement, upgrades and half-refund rules. Defense support uses the highest tower level.",
+          "The site name appears below the top-left logo on desktop and mobile, preserving the Homeland link.",
+          "Game screens use a single dark earth palette with clearer tabs, selected states and content panels; the homepage theme preference remains.",
+          "Four realistic regional landscapes, illustrated route cards and clearer purpose/party selections were added; planning does not spend resources.",
+          "The Chief's Hall appears as a larger village landmark with distinctive ground and name markers.",
+          "Pointer focus no longer pans the zoomed village during a click; neighboring plots and the larger Hall remain independently selectable while keyboard navigation is preserved."
+        ]
+      }
+    },
     {
       "version": "2.11.0",
       "date": "2026-10-19",

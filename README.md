@@ -8,7 +8,7 @@
 
 [Gerçekçi savaş hayvanları ve tam istemler / Realistic battle animals and exact prompts](docs/BATTLE-ART.md) · [Çevrimdışı savaş görseli / Offline battlefield preview](preview/battle.html)
 
-**Güncel sürüm / Current version: v2.11.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
+**Güncel sürüm / Current version: v2.12.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
 
 [Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Hesap kaydı / Account registration](docs/ACCOUNT-SIGNIN.md) · [Görselli mail önizlemesi / Email preview](preview/mail.html) · [Şifre yenileme maili / Password reset email](preview/password-reset.html) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
@@ -34,7 +34,7 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli hesap oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Ana sayfadaki **Kayıt ol** ile e-posta/şifre hesabı oluşturabilir veya **Giriş yap** ile mevcut hesabınızı açabilirsiniz. Şifre 12–128 karakterdir. Google seçeneği için [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md). [Hesap rehberi](docs/ACCOUNT-SIGNIN.md). Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hikâyeli dalga savaşları, 5 bölge, seçilen kurtlarla keşif/sevkiyat ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce ile açık/koyu temayı destekler. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v2.11.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında 15 dakika geçerli, altı haneli doğrulama kodu `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden görselli HTML e-postayla gider. Kod doğrulanmadan oyun ve oyuncu API'leri açılmaz; SMTP hatası bu kapıyı kaldırmaz. Google'ın doğruladığı hesaplar Google ile başlayabilir. Profilde ad soyad ve e-posta sabit, takma ad ve fotoğraf değiştirilebilir; özel fotoğraf Google fotoğrafından önceliklidir. Kalıcı oyuncu koduyla arkadaş isteği gönderilir, kabul edilmiş arkadaşlarla özel mesajlaşılır; depo kapasitesi dahilinde beş kaynak ve envanterdeki ekipmanlar hediye edilir. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. Giriş ekranındaki **Şifremi unuttum**, görselli e-postayla tek kullanımlık kod gönderir. Yeni şifre belirlenince tüm e-posta ve bağlı Google oturumları kapatılır; köy, profil ve arkadaşlar korunur. PvP ve ödeme henüz yoktur.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hikâyeli dalga savaşları, 5 bölge, seçilen kurtlarla keşif/sevkiyat ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce destekler. Oyun içi ekranlar yalnızca koyu toprak teması kullanır; ana sayfa, yönetim ve analizde tema seçimi korunur. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v2.12.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında 15 dakika geçerli, altı haneli doğrulama kodu `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden görselli HTML e-postayla gider. Kod doğrulanmadan oyun ve oyuncu API'leri açılmaz; SMTP hatası bu kapıyı kaldırmaz. Google'ın doğruladığı hesaplar Google ile başlayabilir. Profilde ad soyad ve e-posta sabit, takma ad ve fotoğraf değiştirilebilir; özel fotoğraf Google fotoğrafından önceliklidir. Kalıcı oyuncu koduyla arkadaş isteği gönderilir, kabul edilmiş arkadaşlarla özel mesajlaşılır; depo kapasitesi dahilinde beş kaynak ve envanterdeki ekipmanlar hediye edilir. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. Giriş ekranındaki **Şifremi unuttum**, görselli e-postayla tek kullanımlık kod gönderir. Yeni şifre belirlenince tüm e-posta ve bağlı Google oturumları kapatılır; köy, profil ve arkadaşlar korunur. PvP ve ödeme henüz yoktur.
 
 Köydeki **İlk adımlar** rehberi kaynak toplama, yeni yapı, ilk görev ödülü, iki eğitim ve ilk zaferi kayıtlı ilerlemeden izler. Düğmeler ilgili kontrole götürür; kendiliğinden kaynak harcamaz. Önceden tamamlanan adımlar tanınır. Yeni hilal ve bozkurt logosu masaüstü/mobil, açık/koyu tema ve favicon için SVG olarak kullanılır; [logo dosyaları ve kullanım](docs/BRAND.md).
 
@@ -47,6 +47,14 @@ Yeni obalar 36 boş parsel ve ahşap çitle başlar. Haritadaki **+** seçildiğ
 **Savaş meydanı**, obadan ayrı geçit sahnesidir: yürüyüş → çakal pususu → hilal/yıldız düzeni → çatışma. Taktik savaş başında otomatik seçilir. **Keşif ve sevkiyat** ekranında bölge, zorluk ve muhafızlar seçilir. Keşif sıradaki bölgeyi açar; sürü yalnızca keşfedilmiş bölgelere sevk edilir. Katılan kurtlar XP ve yol yorgunluğu kazanır, malzeme ve ekipman ödülleri bir kez verilir. Ayrıntılar: [Oynanış rehberi](docs/GAMEPLAY-V2.md) · [Görsel üretim kaydı](docs/ART-V2.md).
 
 Mevcut v1 köyleri ilk yüklemede v2 biçimine geçirilir; yapılar, kaynaklar, kurtlar ve eski yolculuklar korunur. Yeni yerleştirme komutları açık parsel, yeni sevkiyatlar seçilmiş muhafız ister. Dokploy'da dört servisi birlikte **Deploy** edin; mevcut kalıcı veri volume'larını koruyun.
+
+### Sur Nöbeti — v2.12.0
+
+Bey Otağı yaklaşık %30 daha büyük ana yapı olarak öne çıkar. Obaya en fazla dört gözetleme kulesi kurabilir, sur içindeki köşe arsalarını kullanabilir veya başka boş bir arsa seçebilirsin. Kuleler 1–5. seviyelerde yükseltilir; en yüksek kulenin seviyesi savunma desteğini belirler. Sur kapısı ve iki nöbetçi, yakınından akan ırmak, şelale, bulutlar ve seçilebilir yağmur Ana Yurt'ta görünür. Hava görseldir; üretimi etkilemez. Site adı sol üst logonun altında gösterilir. [Kule, kapı ve hava rehberi](docs/VILLAGE-DEFENSE.md) · [Çevrimdışı köy](preview/village.html).
+
+### Görselli sefer seçimi ve koyu oyun — v2.12.0
+
+Her rotanın manzarası, süresi ve seçili durumu aynı kartta görünür. Amaç kartını ve muhafızları işaretlediğinde maliyet/XP/ödül öngörüleri güncellenir; kaynak yalnızca açık yola çıkış onayıyla harcanır. Oyunda tek koyu tema ve daha belirgin sekme/panel sınırları kullanılır. Ana sayfanın açık/koyu tercihi korunur. [Bölge görselleri ve üretim istemleri](docs/REGION-ART.md) · [Sefer önizlemesi](preview/adventure.html).
 
 ### Uzun Seferler — v2.11.0
 
@@ -171,7 +179,7 @@ Battlefield wolves, jackals, sheep and cows use realistic transparent cutouts. T
 
 Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, and register/sign in with email and password from the homepage, then confirm the emailed code. SMTP is required for new email accounts; Google can also verify ownership. A password must contain 12–128 characters. Alternatively, [configure Google OAuth](docs/GOOGLE-SIGNIN.md) to use Google. See the [account guide](docs/ACCOUNT-SIGNIN.md). The homepage and information pages are public; **the village and every other game screen require a valid account session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, five regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v2.11.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a six-digit, 15-minute verification code from `Bozkurtobasi.com <info@bozkurtobasi.com>` in illustrated HTML email. Game and player APIs stay locked until confirmation, including during SMTP failure. Google-verified accounts can start through Google. Profile email and full name are immutable; nickname and photo are editable, with custom uploads taking priority over Google pictures. Permanent player codes support accepted friendships, private messages and atomic gifts of all five materials and inventory equipment. Google and password sign-in for the same email open one account and village after ownership is confirmed. **Forgot password** sends a single-use code in illustrated email. Resetting revokes all email and linked Google sessions while preserving the village, profile and friends. PvP and payments are not yet included.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, five regions, and quests. The illustrated homepage, game, admin, and analytics interfaces support Turkish/English and light/dark themes. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v2.12.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a six-digit, 15-minute verification code from `Bozkurtobasi.com <info@bozkurtobasi.com>` in illustrated HTML email. Game and player APIs stay locked until confirmation, including during SMTP failure. Google-verified accounts can start through Google. Profile email and full name are immutable; nickname and photo are editable, with custom uploads taking priority over Google pictures. Permanent player codes support accepted friendships, private messages and atomic gifts of all five materials and inventory equipment. Google and password sign-in for the same email open one account and village after ownership is confirmed. **Forgot password** sends a single-use code in illustrated email. Resetting revokes all email and linked Google sessions while preserving the village, profile and friends. PvP and payments are not yet included.
 
 The village **First steps** guide follows gathering, construction, the first quest reward, two training actions and the first victory from saved progress. Buttons lead to the relevant control without spending resources. Previously completed steps are recognized. The new crescent-and-wolf SVG identity supports desktop/mobile, light/dark themes and the favicon; see [logo files and usage](docs/BRAND.md).
 
@@ -184,6 +192,14 @@ New villages start with 36 empty plots and timber fencing. Select a map **+** an
 The separate battlefield follows a march, ambush, crescent/star deployment and combat. Select regions, difficulty and guardians for exploration and herd escorts; discover new regions and receive party XP, supplies and equipment once per mission. Existing v1 saves migrate without resetting progress. [Gameplay guide](docs/GAMEPLAY-V2.md) · [Artwork record](docs/ART-V2.md).
 
 Redeploy all four Dokploy services together and retain existing persistent data volumes. No extra environment configuration is needed.
+
+### Wall Watch — v2.12.0
+
+The Chief’s Hall stands out as an approximately 30% larger landmark. Build up to four watchtowers on the inner corner plots or any other free plot. Towers upgrade through levels 1–5; the highest tower determines defense support. An evolving gate, two sentries, a nearby flowing river, waterfall, clouds and selectable rain enrich the Homeland. Weather is visual and does not affect production. The site name appears beneath the top-left logo. [Towers, gate and weather](docs/VILLAGE-DEFENSE.md) · [Offline village](preview/village.html).
+
+### Illustrated selection and dark game — v2.12.0
+
+Each route card combines its landscape, duration and selected state. Purpose and guardian choices update costs, XP and rewards without spending resources; only explicit departure submits the mission. The game uses one dark theme with clearer tabs and panel boundaries. The homepage retains its light/dark preference. [Regional images and exact prompts](docs/REGION-ART.md) · [Journey preview](preview/adventure.html).
 
 ### Long Journeys — v2.11.0
 
@@ -307,15 +323,15 @@ Open [`preview/admin.html`](preview/admin.html) for a standalone, responsive TR/
 <!-- metrics:start -->
 | Kapsam / Scope | Dosya / Files | Satır / Lines |
 | --- | ---: | ---: |
-| Web istemci / Web client | 43 | 15117 |
+| Web istemci / Web client | 48 | 16143 |
 | Web sunucu / Web server | 14 | 3879 |
 | Dağıtım servisleri / Deployment services | 33 | 6367 |
-| Paylaşılan oyun / Shared game | 9 | 2763 |
-| Web test ve araçlar / Web tests and tools | 103 | 23544 |
+| Paylaşılan oyun / Shared game | 9 | 2774 |
+| Web test ve araçlar / Web tests and tools | 106 | 24706 |
 | Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **277** | **61868** |
+| **Toplam / Total** | **285** | **64067** |
 
-Aktif web kaynakları / Active web source: **51670** satır / lines.
+Aktif web kaynakları / Active web source: **53869** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

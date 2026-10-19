@@ -1,0 +1,381 @@
+/* Native mission controls keep their keyboard behavior while making every choice visible. */
+.adventure-routes .route-card-grid {
+  gap: 14px;
+}
+.adventure-routes .route-card {
+  padding: 0;
+  min-height: 0;
+  border: 2px solid color-mix(in srgb, var(--ink) 22%, var(--surface));
+  background: var(--surface);
+  box-shadow: 0 5px 16px #00000018;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.adventure-routes .route-card::before {
+  display: none;
+}
+.adventure-routes .route-card.selected {
+  padding: 0;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+.adventure-routes .route-card[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #211b13;
+  font-weight: 800;
+  pointer-events: none;
+}
+.adventure-routes .route-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  box-shadow: 0 6px 19px #0000002b;
+}
+.adventure-routes .route-card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.adventure-routes .route-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.adventure-routes .route-image {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #393a2b;
+  border-bottom: 1px solid var(--line);
+}
+.adventure-routes .route-landscape {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.adventure-routes .route-number {
+  position: absolute;
+  top: 11px;
+  right: auto;
+  left: 11px;
+  margin: 0;
+  padding: 4px 7px;
+  border: 1px solid #e6d6ad42;
+  border-radius: 6px;
+  background: #231e18d9;
+  color: #f3e2b9;
+  font:
+    14px Georgia,
+    serif;
+}
+.adventure-routes .route-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 14px 13px 0;
+  width: 100%;
+  min-width: 0;
+}
+.adventure-routes .route-status {
+  display: block;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.adventure-routes .route-card strong {
+  font-size: 19px;
+}
+.adventure-routes .route-detail {
+  display: block;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.adventure-routes .route-affordance {
+  padding: 12px 0;
+  min-height: 44px;
+  font-size: 11px;
+  color: var(--ink);
+}
+.adventure-layout .adventure-fields label {
+  font-weight: 600;
+}
+.adventure-layout .adventure-fields select {
+  min-height: 46px;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, var(--surface));
+  background: var(--surface);
+}
+.adventure-layout .adventure-fields select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.adventure-layout .adventure-selection-note {
+  margin: 18px 0 0;
+  padding: 13px 15px;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--surface));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.adventure-layout .mission-plan-card {
+  padding: 17px;
+  border: 2px solid color-mix(in srgb, var(--ink) 24%, var(--surface));
+  border-radius: 13px;
+  background: var(--surface);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.adventure-layout .mission-plan-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 75%, var(--line));
+}
+.adventure-layout .mission-plan-card:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+.adventure-layout .mission-plan-card:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.adventure-layout .mission-plans:disabled .mission-plan-card {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+.adventure-layout .mission-plan-visual {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 15px;
+  color: var(--accent);
+}
+.adventure-layout .mission-plan-icon {
+  flex: 0 0 30px;
+}
+.adventure-layout .mission-plan-selection {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.adventure-layout .mission-plan-heading input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.adventure-layout .mission-plan-heading strong {
+  font-size: 14px;
+}
+.adventure-layout .mission-plan-card:has(input:checked) .mission-plan-selection {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #211b13;
+  font-weight: 700;
+}
+.adventure-layout .choice-selected {
+  display: none;
+}
+.adventure-layout label:has(input:checked) .choice-selected {
+  display: inline;
+}
+.adventure-layout label:has(input:checked) .choice-unselected {
+  display: none;
+}
+.adventure-layout .party-suggestion-card {
+  border: 2px solid color-mix(in srgb, var(--ink) 24%, var(--surface));
+  background: var(--surface);
+}
+.adventure-layout .party-suggestion-card.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 3px 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+.adventure-layout .party-suggestion-card.selected > .button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #211b13;
+}
+.adventure-layout .party-suggestion-card .button {
+  min-height: 46px;
+}
+.adventure-layout .adventure-choice-hint,
+.adventure-layout .adventure-selected-count {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.adventure-layout .adventure-selected-count {
+  color: var(--ink);
+  font-weight: 600;
+}
+.adventure-layout .adventure-guardian-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.adventure-layout .adventure-guardian-grid .guardian-choice {
+  display: grid;
+  grid-template-columns: 20px 64px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+  margin: 0;
+  min-height: 108px;
+  padding: 13px;
+  border: 2px solid color-mix(in srgb, var(--ink) 24%, var(--surface));
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.adventure-layout .guardian-choice:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: inset 0 3px 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 11%, var(--surface));
+}
+.adventure-layout .guardian-choice:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.adventure-layout .guardian-choice:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.adventure-layout .guardian-choice input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.adventure-layout .guardian-choice svg {
+  width: 64px;
+  height: 78px;
+  pointer-events: none;
+}
+.adventure-layout .guardian-choice-info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.adventure-layout .guardian-choice-info strong {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.adventure-layout .guardian-choice small {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.adventure-layout .guardian-choice-state {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.adventure-layout .guardian-choice:has(input:checked) .guardian-choice-state {
+  color: var(--accent);
+  font-weight: 700;
+}
+.adventure-layout .mission-region-visual {
+  position: relative;
+  margin: 0 0 24px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--surface));
+  border-radius: 11px;
+  background: #393a2b;
+}
+.adventure-layout .mission-region-visual img {
+  display: block;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+.adventure-layout .mission-region-visual figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 25px 15px 15px;
+  background: linear-gradient(transparent, #191713e8);
+  color: #fff0ce;
+}
+.adventure-layout .mission-region-visual figcaption span {
+  font-size: 10px;
+  line-height: 1.6;
+}
+.adventure-layout .mission-region-visual figcaption strong {
+  font:
+    21px/1.35 Georgia,
+    serif;
+}
+@media (max-width: 1100px) {
+  .adventure-layout .adventure-guardian-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .adventure-routes .route-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .adventure-routes .route-card-content {
+    padding: 11px 10px 0;
+  }
+  .adventure-routes .route-card strong {
+    font-size: 16px;
+  }
+  .adventure-routes .route-detail {
+    font-size: 10px;
+  }
+  .adventure-routes .route-affordance {
+    font-size: 10px;
+  }
+  .adventure-routes .route-number {
+    top: 7px;
+    left: 7px;
+    font-size: 12px;
+  }
+  .adventure-routes .route-card[aria-pressed='true']::after {
+    top: 7px;
+    right: 7px;
+    width: 22px;
+    height: 22px;
+  }
+  .adventure-layout .adventure-guardian-grid .guardian-choice {
+    grid-template-columns: 20px 54px minmax(0, 1fr);
+    padding: 10px;
+    gap: 9px;
+  }
+  .adventure-layout .guardian-choice svg {
+    width: 54px;
+    height: 69px;
+  }
+  .adventure-layout .mission-plan-card {
+    padding: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adventure-routes .route-card,
+  .adventure-layout .mission-plan-card,
+  .adventure-layout .guardian-choice {
+    transition: none;
+  }
+}

@@ -30,6 +30,8 @@
 
 **v2.11.0:** Yeni seferler 6/8/10/12 saat; XP/malzemeler süreye ve amaca göre ölçeklenir, önceki görevler korunur. [Uzun seferler](LONG-JOURNEYS.md). İlk Nöbet Günlüğü mevcut zaman damgalarından hedef/ödül sürelerini, ilk zaferi ve toparlanma aralığını gösterir. İlk 15 dakika işaretleri çevrimdışı süreyi de kapsar; önceki köylerden çıkarılan zamanlar ölçülmüş süre sayılmaz. [Günlük rehberi](FIRST-WATCH-JOURNAL.md).
 
+**v2.12.0:** Sur Nöbeti, dört gözetleme kulesi ve köşe arsası yönlendirmesi, gelişen kapı/iki nöbetçi ve görünür ırmak-hava katmanlarını ekler. Kayıtlar ve serbest yerleşim korunur. [Köy savunması](VILLAGE-DEFENSE.md).
+
 Sıradaki doğrulama: gerçek oyuncularda İlk Nöbet, kaynak dengesi ve sefer kazanımlarının anlaşılmasını gözlemlemek. Henüz gerçek oyuncu araştırması yapılmış sayılmaz.
 
 **Güncel web sürümü:** Oynanabilir köy, kaynak üretimi, inşaat/gelişim, muhafız ve formasyon tercihleri, çakallarla savaş, Türkçe/İngilizce arayüz, çevrimdışı görsel ana sayfa önizlemesi ve SQLite üzerinde Google veya e-posta hesabına bağlı ilerleme. Ana sayfa herkese açık; köy ve oyun ekranları geçerli hesap oturumu ister. Dağıtım yolu GitHub → Docker → Dokploy; yerel önizleme, testler, satır sayımı ve temiz ZIP teslim zincirine dahildir. Eş zamanlı oyuncuların ayrı köyleri vardır; paylaşılan dünya veya oyuncular arası savaş bu sürümün özelliği değildir.
@@ -42,6 +44,8 @@ Sıradaki doğrulama: gerçek oyuncularda İlk Nöbet, kaynak dengesi ve sefer k
 Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek test sonuçları, kaynak satır sayısı, tek dosyalık görsel önizleme ve temiz kaynak ZIP'i ile bütün yerel dosyaları içeren doğrulanmış Drive ZIP'i. Canlı sunucu yedekleri ayrı tutulur. İlk hedef küçük, geri bildirim alınabilen bir web oyunu; eski Unity WP-00–WP-11 kapsamının tamamını tek sürümde taşımak değildir.
 
 ## English
+
+**v2.12.0:** Wall Watch adds four watchtowers, corner-plot guidance, an evolving gate, two sentries and visible river/weather layers while retaining saves and free placement. [Village defenses](VILLAGE-DEFENSE.md).
 
 **Direction:** Develop Bozkurt Obası: Ay-Yıldız Nöbeti as a browser village-building and herd-defense game that does not depend on producing 3D models. Village production supports long-term progression; crescent-shaped wolf defense and the star-shaped herd preserve its visual identity. Unity files remain as historical source material; the web game is a separate application.
 

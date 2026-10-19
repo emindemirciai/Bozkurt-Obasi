@@ -2,6 +2,7 @@ import './style.css';
 import './v2.css';
 import './battle-feedback.css';
 import './village-camera.css';
+import './game-theme.css';
 import { mountVillageCamera, villageCameraControls } from './village-camera.mjs';
 import { battleCommandStatus } from '../shared/battle-commands.mjs';
 import {
@@ -467,8 +468,8 @@ function render(restoreFocus, preservePlanning = false) {
       ? root.querySelector('#adventure-party-suggestions')
       : null;
   document.documentElement.lang = language;
-  document.documentElement.dataset.theme = theme;
   const visibleView = auth.authenticated && mode === 'online' ? view : 'home';
+  document.documentElement.dataset.theme = visibleView === 'home' ? theme : 'dark';
   document.title =
     visibleView === 'home'
       ? 'Bozkurt Obası: Ay-Yıldız Nöbeti'
@@ -487,10 +488,10 @@ function render(restoreFocus, preservePlanning = false) {
   }
   const navigation = ['village', 'battle', 'world', 'wolves', 'quests', 'friends', 'updates'];
   root.innerHTML = `<div class="game-shell">
-    <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="${t('landingHome')}">${brandMark}</a>
+    <nav class="rail" aria-label="${t('village')}"><a href="/" class="brand-mark" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandMark}<span class="rail-brand-name">Bozkurt<br>Obası</span></a>
     <div class="nav-links">${navigation.map((key) => `<button data-view="${key}" class="nav-item ${view === key ? 'active' : ''}" aria-current="${view === key ? 'page' : 'false'}" title="${t(key)}">${icon(key === 'updates' ? 'save' : key === 'friends' ? 'wolves' : key, 24)}<span>${t(key)}</span>${key === 'world' ? '<span id="arrival-unread" class="arrival-unread" ' + (arrivals.unreadCount ? '' : 'hidden') + ' aria-label="' + escape(t('arrivalUnread')) + '">1</span>' : ''}${key === 'quests' && (state.quests.some((q) => !q.claimed && q.progress === q.target) || firstWatchProgress(state).steps.some((step) => step.claimable)) ? '<i class="nav-dot"></i>' : ''}</button>`).join('')}</div>
     <div class="rail-bottom">${button(icon('help', 23), 'help', 'rail-help', false, `aria-label="${t('help')}"`)}<span class="rail-version">v${releaseNotes.version}</span></div></nav>
-    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}">${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}" title="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
+    <div class="workspace"><header class="topbar"><button class="wordmark" data-action="brandHome" title="${t('landingHome')}" aria-label="BOZKURT OBASI · ${t('landingHome')}"><span class="wordmark-symbol" aria-hidden="true">${brandMark}</span>${brandName}</button><div class="topbar-end"><span class="connection"><i class="status-dot live"></i>${t('online')}${icon('cloud', 16)}</span><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}<span>⌄</span></button>${button(auth.user?.avatarUrl ? `<img src="${escape(auth.user.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : icon('wolves', 19), 'account', 'profile', false, `aria-label="${t('manageAccount')}"`)}</div></header>
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${t(view === 'village' ? 'greeting' : view)}</h1><p>${t(view === 'village' ? 'villageDesc' : `${view}Desc`)}</p></div><div class="weather">${icon('sun', 29)}<span>${t('sunny')}<small>${t(state.location)}</small></span></div></section>
     <section class="resource-bar" aria-label="${t('production')}">${['wood', 'stone', 'water', 'feed', 'herbs'].map((key) => `<div class="resource ${key}" title="${t('resourceTip')}"><span class="resource-icon">${icon(key, 23)}</span><div><span class="resource-label">${t(key)}</span><strong data-resource="${key}">${number(state.resources[key])}<small> / ${number(state.capacity)}</small></strong></div><span class="resource-rate">+${resourceNumber(getProduction(state)[key])}<small>${t('perMinute')}</small></span></div>`).join('')}</section>
     <div id="arrival-slot">${arrivals.notice ? arrivalPanel(arrivals.notice, state, { t, language }) : ''}</div>
@@ -807,7 +808,10 @@ function updatesView() {
 }
 
 function accountAppearanceControls() {
-  return `<div class="account-appearance"><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}</button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button></div>`;
+  const controls = `<div class="account-appearance"><button class="language" data-action="language" aria-label="${language === 'tr' ? 'Switch to English' : 'Türkçeye geç'}">${language.toUpperCase()}</button><button class="theme-toggle" data-action="theme" aria-label="${t(theme === 'dark' ? 'switchLight' : 'switchDark')}"><span aria-hidden="true">${theme === 'dark' ? '&#9788;' : '&#9790;'}</span></button></div>`;
+  return auth.authenticated && mode === 'online' && view !== 'home'
+    ? controls.replace(/<button class="theme-toggle"[\s\S]*?<\/button>/, '')
+    : controls;
 }
 
 function accountMethodControls() {
@@ -1304,7 +1308,7 @@ root.addEventListener('change', async (event) => {
     else adventureSelection[event.target.id.slice(10)] = event.target.value;
     if (adventureSelection.kind === 'expedition' && adventureSelection.region === 'homeland')
       adventureSelection.region = 'spring';
-    render();
+    render(event.target.id);
     return;
   }
   if (event.target.id === 'construction-plan') {
@@ -1929,6 +1933,7 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (a === 'theme') {
+    if (auth.authenticated && mode === 'online' && view !== 'home') return;
     theme = theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     write('bozkurt.theme', theme);

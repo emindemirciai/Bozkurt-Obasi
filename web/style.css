@@ -4216,3 +4216,82 @@ footer > span:first-child {
     font-size: 20px;
   }
 }
+
+/* Keep the site name beneath its symbol on the rail, homepage and mobile header. */
+.brand-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 70px;
+  height: 76px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.brand-mark > svg {
+  width: 44px;
+  height: 44px;
+}
+.rail-brand-name {
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 1.25px;
+  line-height: 1.25;
+  text-align: center;
+  text-transform: uppercase;
+  color: #f1dfac;
+}
+.rail .nav-links {
+  margin-top: 34px;
+}
+.wordmark .wordmark-symbol {
+  display: none;
+}
+.landing-brand {
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+.landing-brand .landing-brand-symbol {
+  width: 38px;
+  height: 38px;
+}
+.landing-brand .brand-name {
+  font-size: 12px;
+  letter-spacing: 1.1px;
+}
+.landing-brand .brand-name small {
+  font-size: 6px;
+  letter-spacing: 2.1px;
+  margin-top: 3px;
+}
+@media (max-width: 700px) {
+  .rail .brand-mark {
+    display: none;
+  }
+  .rail .nav-links {
+    margin-top: 0;
+  }
+  .topbar .wordmark {
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 0;
+  }
+  .wordmark .wordmark-symbol {
+    display: block;
+    width: 26px;
+    height: 26px;
+    margin: 0;
+  }
+  .wordmark-symbol svg {
+    width: 100%;
+    height: 100%;
+  }
+  .wordmark .brand-name small {
+    font-size: 6px;
+    letter-spacing: 1.4px;
+    margin-top: 2px;
+  }
+}

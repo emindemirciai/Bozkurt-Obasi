@@ -1790,3 +1790,63 @@ for (const marker of [undefined, 1, 2]) {
     assert.deepEqual(nextState.adventure.history[0], receipt);
   });
 }
+
+test('four freely placed towers persist through API restart while a fifth fails without a charge or revision change', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const other = await api.session();
+  let current = player.data;
+  for (const plotId of ['p0', 'p5', 'p30', 'p35']) {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        revision: current.revision,
+        action: { type: 'build', building: 'watchtower', plotId },
+      },
+    });
+    assert.equal(response.status, 200);
+    current = await response.json();
+  }
+  assert.equal(current.state.buildings.length, 4);
+  assert.equal(current.state.resources.wood, 50);
+  assert.equal(current.state.resources.stone, 70);
+  const paid = structuredClone(current);
+  const fifth = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: {
+      revision: current.revision,
+      action: { type: 'build', building: 'watchtower', plotId: 'p17' },
+    },
+  });
+  assert.equal(fifth.status, 400);
+  assert.deepEqual(await fifth.json(), { error: 'BUILDING_LIMIT' });
+  assert.deepEqual(await (await api.request('/api/state', { cookie: player.cookie })).json(), paid);
+  await api.restart();
+  const restored = await api.session(player.cookie);
+  assert.deepEqual(restored.data.state, paid.state);
+  assert.equal(restored.data.revision, paid.revision);
+  const moved = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: {
+      revision: restored.data.revision,
+      action: { type: 'moveBuilding', id: 'building-watchtower-4', plotId: 'p17' },
+    },
+  });
+  assert.equal(moved.status, 200);
+  current = await moved.json();
+  assert.deepEqual(current.state.buildings.at(-1), {
+    id: 'building-watchtower-4',
+    type: 'watchtower',
+    level: 1,
+    x: 5,
+    y: 2,
+  });
+  assert.deepEqual(current.state.resources, paid.state.resources);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data.state, current.state);
+  assert.deepEqual((await api.session(other.cookie)).data.state, other.data.state);
+  assert.equal(validateGame(current.state), true);
+});
