@@ -1126,8 +1126,8 @@ const demolitionSnapshot = (state, id) => {
   return { type, level, x, y, builds: state.stats.builds };
 };
 
-async function saveAccountState(api, session, state) {
-  assert.equal(validateGame(state), true);
+async function saveAccountState(api, session, state, validationOptions = {}) {
+  assert.equal(validateGame(state, validationOptions), true);
   const token = session.cookie.slice('bozkurt_session='.length);
   const database = new DatabaseSync(api.dbPath);
   try {
@@ -1791,12 +1791,30 @@ for (const marker of [undefined, 1, 2]) {
   });
 }
 
-test('four freely placed towers persist through API restart while a fifth fails without a charge or revision change', async (t) => {
+test('four purchased corner towers persist while invalid placements and moves fail without charges or revision changes', async (t) => {
   const api = await fixture(t);
   const player = await api.session();
   const other = await api.session();
   let current = player.data;
-  for (const plotId of ['p0', 'p5', 'p30', 'p35']) {
+  assert.equal(current.state.buildings.length, 0);
+  async function reject(action, code) {
+    const before = structuredClone({ state: current.state, revision: current.revision });
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { revision: current.revision, action },
+    });
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error: code });
+    assert.deepEqual(
+      await (await api.request('/api/state', { cookie: player.cookie })).json(),
+      before,
+    );
+  }
+  for (const plotId of ['t0', 't1', 't2', 't3'])
+    await reject({ type: 'build', building: 'quarry', plotId }, 'INVALID_BUILDING_PLOT');
+  await reject({ type: 'build', building: 'watchtower', plotId: 'p0' }, 'INVALID_BUILDING_PLOT');
+  for (const plotId of ['t0', 't1', 't2', 't3']) {
     const response = await api.request('/api/action', {
       method: 'POST',
       cookie: player.cookie,
@@ -1811,42 +1829,107 @@ test('four freely placed towers persist through API restart while a fifth fails 
   assert.equal(current.state.buildings.length, 4);
   assert.equal(current.state.resources.wood, 50);
   assert.equal(current.state.resources.stone, 70);
-  const paid = structuredClone(current);
-  const fifth = await api.request('/api/action', {
-    method: 'POST',
-    cookie: player.cookie,
-    body: {
-      revision: current.revision,
-      action: { type: 'build', building: 'watchtower', plotId: 'p17' },
-    },
-  });
-  assert.equal(fifth.status, 400);
-  assert.deepEqual(await fifth.json(), { error: 'BUILDING_LIMIT' });
-  assert.deepEqual(await (await api.request('/api/state', { cookie: player.cookie })).json(), paid);
+  assert.deepEqual(
+    current.state.buildings.map(({ x, y }) => [x, y]),
+    [
+      [6, 0],
+      [6, 1],
+      [6, 2],
+      [6, 3],
+    ],
+  );
+  await reject({ type: 'build', building: 'watchtower', plotId: 't0' }, 'PLOT_OCCUPIED');
+  await reject({ type: 'build', building: 'watchtower', plotId: 'p17' }, 'INVALID_BUILDING_PLOT');
+  for (const plotId of ['p17', 't0', 't3'])
+    await reject({ type: 'moveBuilding', id: 'building-watchtower-4', plotId }, 'TOWER_FIXED');
   await api.restart();
   const restored = await api.session(player.cookie);
-  assert.deepEqual(restored.data.state, paid.state);
-  assert.equal(restored.data.revision, paid.revision);
-  const moved = await api.request('/api/action', {
-    method: 'POST',
-    cookie: player.cookie,
-    body: {
-      revision: restored.data.revision,
-      action: { type: 'moveBuilding', id: 'building-watchtower-4', plotId: 'p17' },
-    },
-  });
-  assert.equal(moved.status, 200);
-  current = await moved.json();
-  assert.deepEqual(current.state.buildings.at(-1), {
-    id: 'building-watchtower-4',
-    type: 'watchtower',
-    level: 1,
-    x: 5,
-    y: 2,
-  });
-  assert.deepEqual(current.state.resources, paid.state.resources);
-  await api.restart();
-  assert.deepEqual((await api.session(player.cookie)).data.state, current.state);
+  assert.deepEqual(restored.data.state, current.state);
+  assert.equal(restored.data.revision, current.revision);
   assert.deepEqual((await api.session(other.cookie)).data.state, other.data.state);
   assert.equal(validateGame(current.state), true);
+});
+
+test('corner towers upgrade and demolish with exact half refunds, block replay, and retain reusable dedicated slots', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  let current = player.data;
+  async function action(value) {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { revision: current.revision, action: value },
+    });
+    assert.equal(response.status, 200);
+    current = await response.json();
+  }
+  await action({ type: 'build', building: 'watchtower', plotId: 't2' });
+  await action({ type: 'upgrade', id: 'building-watchtower' });
+  await action({ type: 'build', building: 'watchtower', plotId: 't1' });
+  const tower = structuredClone(current.state.buildings[0]);
+  assert.deepEqual(tower, { id: 'building-watchtower', type: 'watchtower', level: 2, x: 6, y: 2 });
+  const before = { ...current.state.resources };
+  const remove = {
+    type: 'demolishBuilding',
+    id: tower.id,
+    expected: demolitionSnapshot(current.state, tower.id),
+  };
+  const revision = current.revision;
+  await action(remove);
+  assert.equal(current.state.resources.wood, before.wood + 127.5);
+  assert.equal(current.state.resources.stone, before.stone + 89.5);
+  assert.equal(current.state.buildings.length, 1);
+  const replay = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: { revision, action: remove },
+  });
+  assert.equal(replay.status, 409);
+  assert.deepEqual(
+    await (await api.request('/api/state', { cookie: player.cookie })).json(),
+    current,
+  );
+  await action({ type: 'build', building: 'watchtower', plotId: 't2' });
+  assert.deepEqual(current.state.buildings.at(-1), { ...tower, level: 1 });
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data.state, current.state);
+});
+
+test('paid legacy tower migration persists once per account and remains stable across API restart', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const other = await api.session();
+  const legacy = structuredClone(player.data.state);
+  applyAction(legacy, { type: 'build', building: 'quarry', plotId: 'p0' }, legacy.updatedAt);
+  applyAction(legacy, { type: 'build', building: 'watchtower', plotId: 't3' }, legacy.updatedAt);
+  applyAction(legacy, { type: 'upgrade', id: 'building-watchtower' }, legacy.updatedAt);
+  const tower = legacy.buildings.find((building) => building.type === 'watchtower');
+  Object.assign(tower, { x: 5, y: 5 });
+  assert.equal(validateGame(legacy), false);
+  await saveAccountState(api, player, legacy, { allowLegacyTowerPlots: true });
+  const expected = structuredClone(legacy);
+  Object.assign(
+    expected.buildings.find((building) => building.type === 'watchtower'),
+    { x: 6, y: 0 },
+  );
+  await api.restart();
+  const restored = await api.session(player.cookie);
+  assert.deepEqual(restored.data.state, expected);
+  assert.equal(restored.data.revision, player.data.revision + 1);
+  const database = new DatabaseSync(api.dbPath);
+  try {
+    const token = player.cookie.slice('bozkurt_session='.length);
+    const saved = database
+      .prepare(
+        'SELECT state_json, revision FROM google_accounts WHERE sub = (SELECT account_sub FROM sessions WHERE token_hash = ?)',
+      )
+      .get(createHash('sha256').update(token).digest('hex'));
+    assert.deepEqual(JSON.parse(saved.state_json), expected);
+    assert.equal(saved.revision, restored.data.revision);
+  } finally {
+    database.close();
+  }
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data, restored.data);
+  assert.deepEqual((await api.session(other.cookie)).data.state, other.data.state);
 });

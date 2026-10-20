@@ -1,12 +1,14 @@
-# Sur Nöbeti / Wall Watch — v2.13.0
+# Sur Nöbeti / Wall Watch — v2.14.0
 
 ## Türkçe
 
-Surun dört köşesindeki **dört sabit kule** yeni ve mevcut obalarda hazırdır. Yapı parsellerinin dışında, sur hattının parçasıdır; taşınmaz veya ayrı kaldırılmaz. Sur yükseltmesi kuleleri ve kapıyı birlikte geliştirir. Seviyeler 1–2 ahşap, 3–4 taş, 5 kale görünümünü kullanır. Sur, kule, açık kapı ve kapının iki yanındaki nöbetçiler gerçekçi dokulu görsellerle çizilir.
+Surun dört köşesinde **yalnızca gözcü kulesine ayrılmış dört sabit yer** vardır. Sabit olan kulelerin konumudur; kuleler kendiliğinden hazır gelmez. Yeni obada bu alanlar boştur. Köşedeki **+** işaretini seçerek gözcü kulesi inşa edebilirsin. Bu alanlara başka bina yapılamaz veya taşınamaz; gözcü kuleleri de köy içindeki normal parsellere kurulamaz.
 
-**36 parselin tamamı korunur.** Bu güncelleme mevcut binaları taşımaz, kaldırmaz veya ücretsiz yeni bina kaydına dönüştürmez. Köyün içine ayrıca en fazla dört gözetleme kulesi kurulabilir; bunlar malzeme isteyen normal yapılardır. Köşe arsaları 1, 6, 31 ve 36 (`p0`, `p5`, `p30`, `p35`) başka binalar için de kullanılabilir. Sabit sur kulesi bu arsaların üzerinde değildir.
+**36 normal parselin tamamı korunur.** Dört kule yeri (`t0`–`t3`) bunlara ek olarak surun dört köşesinde bulunur. Önceki sürümlerde oyuncunun malzeme harcayarak kurduğu kuleler, bina kimliği ve seviyesi korunarak boş köşe yerlerine aktarılır. Kaynak yeniden harcanmaz; diğer binalar yerinde kalır ve kulelerin boşalttığı normal parseller yeniden kullanılabilir. Önceki ücretsiz dekoratif sur kuleleri artık çizilmez.
 
-Ek gözetleme kulesi **100 odun + 70 taş** ister. Mevcut taşıma, 1–5 seviye yükseltme ve açık onayla toplam malzemenin yarısını iade ederek kaldırma kuralları geçerlidir. Savaş desteğini en yüksek ek gözetleme kulesi seviyesi belirler; kule seviyeleri toplanmaz. Sabit kuleler sur görselinin parçasıdır ve mevcut sur savunmasına ayrı bir bonus eklemez. İki insan nöbetçi de bağımsız birlik değildir.
+Bir gözcü kulesi **100 odun + 70 taş** ister. İnşa edilmiş kule kendi köşesinde kalır; **taşınamaz**, 1–5 seviyeleri arasında **yükseltilebilir** ve açık onayla **kaldırılabilir**. Kaldırma, inşaat/yükseltme tarifesinin toplamının tam yarısını iade eder. İade depoya sığmıyorsa işlem engellenir; kaynak veya iade eksiltilmez. Boşalan köşe yine yalnızca kuleye ayrılmış olur. Aktif savaşta inşaat, yükseltme ve kaldırma kapalıdır; aktif yolculuk da kaldırmayı engeller.
+
+Kule görseli **kendi seviyesine** göre değişir: 1–2 ahşap, 3–4 taş, 5 kale. Sur yükseltmesi kuleyi ücretsiz yükseltmez. Sur, kapı ve iki nöbetçinin görünümü sur seviyesine bağlı kalır. Savaş desteğini inşa edilmiş en yüksek kule seviyesi belirler; kule seviyeleri toplanmaz. Kule yoksa kule desteği de yoktur. İki insan nöbetçi bağımsız birlik değildir.
 
 Bey Otağı diğer binalardan %28 büyük gösterilir; kaidesi, flaması ve ad etiketi ana yapıyı belirginleştirir. Tıklama alanı komşu parselleri kapatmaz.
 
@@ -14,17 +16,21 @@ Dağ eteği, üst kenarda ırmağın kaynağından sola doğru orantılı uzanı
 
 Harita üzerindeyken **fare tekerleği** ile yakınlaş/uzaklaş; Ctrl gerekmez. Ekrandaki **+/−**, klavyedeki **+/−**, iki parmakla yakınlaştırma, yakınlaşınca sürükleme ve **Home** ile sıfırlama kullanılabilir. Klavye kontrolleri harita veya haritadaki bir denetim odaktayken çalışır. Tekerlek haritanın dışındayken sayfa normal kayar; haritanın içinde kaydırma çubuğu oluşmaz.
 
-**Açık / Yağmur** yerel görsel hava durumudur. Su, bulut, yağmur ve ışık üretim veya savaşı etkilemez. Duraklatma ve azaltılmış hareket tercihi animasyonları durdurur. Mevcut köy kayıtları, ekonomi, SQL ve ENV aynı kalır.
+**Açık / Yağmur** yerel görsel hava durumudur. Su, bulut, yağmur ve ışık üretim veya savaşı etkilemez. Duraklatma ve azaltılmış hareket tercihi animasyonları durdurur. Yeni SQL alanı, ENV değişkeni veya servis gerekmez.
+
+Çevrimdışı önizleme dört boş kule yeriyle açılır. **Ayrılmış kule yerleri** seçicisi örnek kuleleri gösterir; **Kulelerin kendi seviyesi** seçicisi surdan bağımsız görünümünü değiştirir. Bu salt okunur örnek kaynak harcamaz veya hesap kaydını değiştirmez.
 
 [Çevrimdışı köy](../preview/village.html) · [Sur görselleri ve istemler](FORTIFICATION-ART.md) · [Dağ/ırmak görseli ve istem](VILLAGE-TERRAIN-ART.md)
 
 ## English
 
-**Four permanent corner towers** are present in new and existing villages as part of the walls, outside the building plots. They cannot be moved or removed separately. Wall upgrades develop the towers and gate together: timber at levels 1–2, stone at 3–4 and castle at 5. The walls, towers, open gate and two flanking sentries use realistically textured artwork.
+The wall corners provide **four fixed sites reserved exclusively for watchtowers**. The locations are fixed; the towers do not come prebuilt. New villages start with these sites empty. Select a corner **+** to build a watchtower. Other buildings cannot be built or moved there, and watchtowers cannot be built on ordinary village plots.
 
-**All 36 plots remain.** This update never relocates or removes existing buildings or converts them into free building records. Up to four additional watchtowers can still be built inside the village using the normal construction rules. Inner corner plots 1, 6, 31 and 36 (`p0`, `p5`, `p30`, `p35`) also accept other buildings; permanent wall towers stand outside them.
+**All 36 ordinary plots remain.** The four tower sites (`t0`–`t3`) are additional positions at the wall corners. Watchtowers paid for in earlier releases move into free corner sites while retaining their building IDs and levels. No resources are charged again; other buildings stay in place, and the ordinary plots vacated by towers become available. The former free decorative corner towers are no longer rendered.
 
-An additional watchtower costs **100 wood + 70 stone**. Existing movement, level 1–5 upgrades and confirmed demolition with a half-investment refund remain. Defense support uses the highest additional watchtower level rather than adding levels together. Permanent towers belong to the wall artwork and grant no separate combat bonus. Human sentries are not independent units.
+A watchtower costs **100 wood + 70 stone**. Once built it stays at its corner: it **cannot move**, can be **upgraded** through levels 1–5 and can be **demolished** after explicit confirmation. Demolition refunds exactly half the total construction/upgrade recipe cost. If the refund will not fit storage, demolition is blocked; no resources or refund are discarded. The vacated corner remains reserved for a tower. Active combat blocks construction, upgrades and demolition; an active journey also blocks demolition.
+
+A tower's appearance follows **its own level**: timber at 1–2, stone at 3–4 and castle at 5. Upgrading walls does not upgrade towers for free. The wall, gate and two sentries retain their wall-level appearance. Defense support uses the highest built watchtower level rather than adding levels together; no built towers means no tower support. Human sentries are not independent units.
 
 The Chief's Hall is drawn 28% larger with a distinctive foundation, standard and label. Its click target does not cover neighboring plots.
 
@@ -32,6 +38,8 @@ Rocky foothills extend proportionately left across the upper edge from the river
 
 Use the **mouse wheel** over the map to zoom without Ctrl. On-screen **+/−**, keyboard **+/−**, touch pinch, dragging while zoomed and **Home** to reset remain available. Keyboard controls require map/control focus. Outside the map, the wheel scrolls the page normally; the map has no internal scrollbars.
 
-**Clear / Rain** controls local visual weather. Water, clouds, rain and sunlight do not change production or battle. Pause and reduced-motion preferences stop animation. Existing village saves, economy, SQL and environment configuration remain.
+**Clear / Rain** controls local visual weather. Water, clouds, rain and sunlight do not change production or battle. Pause and reduced-motion preferences stop animation. No new SQL fields, environment variables or services are required.
+
+The offline preview opens with four empty tower sites. **Reserved tower sites** displays sample towers; **Towers’ own level** changes their appearance independently of the walls. This read-only example spends no resources and never changes account saves.
 
 [Offline village](../preview/village.html) · [Fortification artwork and prompts](FORTIFICATION-ART.md) · [Foothills/river artwork and prompt](VILLAGE-TERRAIN-ART.md)

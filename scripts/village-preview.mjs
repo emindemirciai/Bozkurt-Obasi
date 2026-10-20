@@ -3,7 +3,7 @@ import '../web/v2.css';
 import '../web/village-camera.css';
 import { mountVillageCamera, villageCameraControls } from '../web/village-camera.mjs';
 import { wolfPortrait, settlementControls } from '../web/v2-view.mjs';
-import { BUILDINGS, PLOTS, CORNER_PLOT_IDS, demolitionQuote } from '../shared/settlement.mjs';
+import { BUILDINGS, TOWER_PLOTS, demolitionQuote } from '../shared/settlement.mjs';
 import { demolitionDialog } from '../web/demolition-panel.mjs';
 import { createGame } from '../shared/game.mjs';
 import { translations } from '../web/i18n.mjs';
@@ -24,13 +24,12 @@ const villageBuildings = BUILDINGS.filter((building) => building.id !== 'watchto
     y: 1 + Math.floor(index / 4) * 2,
   }),
 );
-const cornerTowers = (uniformLevel = null) =>
-  CORNER_PLOT_IDS.map((id, index) => {
-    const plot = PLOTS.find((entry) => entry.id === id);
+const cornerTowers = (level) =>
+  TOWER_PLOTS.map((plot, index) => {
     return {
       id: 'building-watchtower' + (index ? '-' + (index + 1) : ''),
       type: 'watchtower',
-      level: uniformLevel ?? [1, 3, 5, 3][index],
+      level,
       x: plot.x,
       y: plot.y,
     };
@@ -59,6 +58,7 @@ state.resources.stone = 12;
 let language = 'tr',
   theme = 'light',
   plannedBuilding = 'quarry',
+  towerLevel = 1,
   replenishAmount = 1,
   demolitionOpen = false;
 const root = document.querySelector('#app');
@@ -68,9 +68,12 @@ const labels = {
   tr: {
     title: 'Oba planlaması',
     tier: 'Mimari aşama',
-    corners: 'Ek iç kuleler',
-    towersBuilt: 'Dört ek gözetleme kulesi',
-    towersEmpty: 'Ek kule yok · Dört sur kulesi sabit',
+    corners: 'Ayrılmış kule yerleri',
+    towersBuilt: 'Dört köşe kulesi inşa edilmiş',
+    towersEmpty: 'Dört boş kule yeri',
+    towerTier: 'Kulelerin kendi seviyesi',
+    towerNotice:
+      'Dört köşe yalnızca gözcü kulesine ayrılır. Kuleleri oyuncu inşa eder; taşınamaz, yükseltilebilir veya kaldırılabilir. Sur seviyesi kule seviyesini değiştirmez.',
     guardians: 'Gerçekçi muhafızlar',
     notice:
       'Çevrimdışı görsel önizleme · Örnek köy · Salt okunur. Kaynak harcanmaz. Oyuna giriş için doğrulanmış hesabın gerekir.',
@@ -81,9 +84,12 @@ const labels = {
   en: {
     title: 'Village planning',
     tier: 'Architecture tier',
-    corners: 'Additional inner towers',
-    towersBuilt: 'Four additional watchtowers',
-    towersEmpty: 'No extras · Four permanent wall towers',
+    corners: 'Reserved tower sites',
+    towersBuilt: 'Four corner towers built',
+    towersEmpty: 'Four empty tower sites',
+    towerTier: 'Towers’ own level',
+    towerNotice:
+      'The four corners accept watchtowers only. Players build them; towers cannot move but can be upgraded or demolished. Wall level does not change tower level.',
     guardians: 'Realistic guardians',
     notice:
       'Offline visual preview · Fictional village · Read-only. No resources are spent. A verified account is required to play.',
@@ -142,7 +148,7 @@ function render() {
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${labels[language].title}</h1></div></section>
       <section class="map-card"><div class="map-top"><span class="map-title">${t('homeland')}</span><span class="map-chip">${state.buildings.length} ${t('buildingCount')}</span></div>
         <div class="scene-wrap">${scene(state, { battle: false, selected: 'building-hall', t })}${villageCameraControls({ t })}</div></section>
-      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1" ${state.walls.level === 1 ? 'selected' : ''}>1</option><option value="3" ${state.walls.level === 3 ? 'selected' : ''}>3</option><option value="5" ${state.walls.level === 5 ? 'selected' : ''}>5</option></select></label><label class="preview-tier">${labels[language].corners} <select id="preview-corners"><option value="built" ${state.buildings.some((building) => building.type === 'watchtower') ? 'selected' : ''}>${labels[language].towersBuilt}</option><option value="empty" ${state.buildings.some((building) => building.type === 'watchtower') ? '' : 'selected'}>${labels[language].towersEmpty}</option></select></label><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
+      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1" ${state.walls.level === 1 ? 'selected' : ''}>1</option><option value="3" ${state.walls.level === 3 ? 'selected' : ''}>3</option><option value="5" ${state.walls.level === 5 ? 'selected' : ''}>5</option></select></label><label class="preview-tier">${labels[language].corners} <select id="preview-corners"><option value="built" ${state.buildings.some((building) => building.type === 'watchtower') ? 'selected' : ''}>${labels[language].towersBuilt}</option><option value="empty" ${state.buildings.some((building) => building.type === 'watchtower') ? '' : 'selected'}>${labels[language].towersEmpty}</option></select></label><label class="preview-tier">${labels[language].towerTier} <select id="preview-tower-tier"><option value="1" ${towerLevel === 1 ? 'selected' : ''}>1</option><option value="3" ${towerLevel === 3 ? 'selected' : ''}>3</option><option value="5" ${towerLevel === 5 ? 'selected' : ''}>5</option></select></label><p class="village-preview-notice">${labels[language].towerNotice}</p><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
   camera = mountVillageCamera(root.querySelector('.scene-wrap'), {
     saved: cameraState,
     t,
@@ -183,16 +189,27 @@ root.addEventListener('click', async (event) => {
 root.addEventListener('change', (event) => {
   if (event.target.id === 'preview-corners') {
     state.buildings = state.buildings.filter((building) => building.type !== 'watchtower');
-    if (event.target.value === 'built') state.buildings.push(...cornerTowers(state.walls.level));
+    if (event.target.value === 'built') state.buildings.push(...cornerTowers(towerLevel));
     state.stats.builds = state.buildings.length;
     updateCapacity();
     render();
     root.querySelector('#preview-corners')?.focus({ preventScroll: true });
     return;
   }
+  if (event.target.id === 'preview-tower-tier') {
+    towerLevel = Number(event.target.value);
+    state.buildings
+      .filter((building) => building.type === 'watchtower')
+      .forEach((building) => (building.level = towerLevel));
+    render();
+    root.querySelector('#preview-tower-tier')?.focus({ preventScroll: true });
+    return;
+  }
   if (event.target.id === 'preview-tier') {
     const level = Number(event.target.value);
-    state.buildings.forEach((b) => (b.level = level));
+    state.buildings
+      .filter((building) => building.type !== 'watchtower')
+      .forEach((building) => (building.level = level));
     state.walls.level = level;
     updateCapacity();
     render();

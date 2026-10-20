@@ -1,5 +1,11 @@
 export const v2Translations = {
   tr: {
+    towerPlot: 'Sur köşesi',
+    towerFixedHint:
+      'Gözcü kulelerinin yeri sabittir. Yükseltebilir veya malzemelerin yarısını geri alarak kaldırabilirsin.',
+    towerPlotRequired:
+      'Gözcü kuleleri yalnızca dört sur köşesine, diğer binalar yalnızca köy arsalarına kurulabilir.',
+    chooseTowerPlot: 'Sur köşelerindeki boş + işaretlerinden birini seç.',
     adventureSelectionLocalHint:
       'Rota, amaç ve kadro seçimleri kaynak harcamaz. Maliyetleri incele; sefer yalnızca Yola çık düğmesiyle başlar.',
     adventureChoiceSelected: 'Seçili',
@@ -9,19 +15,18 @@ export const v2Translations = {
       'Bir muhafızın kartını seçerek kadroya kat veya çıkar. Yola çıkmadan önce asgari kadroyu ve varış tahminini kontrol et.',
     adventurePartySelectedCount: '{count} muhafız seçili',
     adventureRegionPreview: 'Seçilen bölge',
-    cornerFortificationsTitle: 'Dört sabit sur kulesi',
+    cornerFortificationsTitle: 'Sur köşelerinde gözcü kuleleri',
     cornerFortificationsHint:
-      'Dört sur köşesinde kuleler hazırdır; arsa kullanmaz, taşınmaz veya ayrı kaldırılmaz. Sur yükseltildiğinde kuleler ve kapı birlikte gelişir. Köyün içine ayrıca gözetleme kulesi kurabilirsin.',
-    cornerTowerCount: '{count} / {max} ek gözetleme kulesi kurulu',
-    cornerPlotHint:
-      'Sur içi köşe arsası. Sabit sur kulesine ek bir gözetleme kulesi veya başka bir bina kurabilirsin.',
+      'Dört sur köşesi yalnızca gözcü kuleleri için ayrılmıştır. Boş köşedeki + işaretini seçerek malzemeyle kule kur; diğer binalar köyün 36 arsasına yerleştirilir.',
+    cornerTowerCount: '{count} / {max} köşe kulesi kurulu',
+    cornerPlotHint: 'Yalnızca gözcü kulesi kurulabilir. Kulenin konumu sabittir.',
     cornerPlacementHint:
-      'Sabit sur kulesi bu arsanın dışındadır. Buraya ek gözetleme kulesi veya başka bir bina kurabilirsin.',
-    cornerTowerRecommended: 'Ek iç savunma seçeneği',
+      'Bu köşe gözcü kulesine ayrılmıştır; başka bir bina kurulamaz. Kuleyi sonradan yükseltebilir veya yarı malzeme iadesiyle kaldırabilirsin.',
+    cornerTowerRecommended: 'Yalnızca gözcü kulesi',
     cornerTowerLimitHint:
-      'Kule sınırı dolu. Yerini değiştirmek için mevcut kuleyi taşıyabilir veya kaldırabilirsin.',
+      'Dört köşe dolu. Mevcut kuleyi yükseltebilir veya onayla kaldırabilirsin.',
     cornerTowerBonusHint:
-      'Ek gözetleme kuleleri malzemeyle kurulur, ayrı yükseltilir ve taşınabilir. En güçlü ek kulenin seviyesi savunma desteğini belirler. Sabit köşe kuleleri surun parçasıdır; ayrı savaş bonusu vermez.',
+      'Kuleler malzemeyle kurulur ve surdan bağımsız yükseltilir. En yüksek kule seviyesi savunma desteğini belirler; seviyeler toplanmaz. Kuleler taşınmaz, kaldırılan köşe yalnızca yeni bir kule için boşalır.',
     villageGateHint:
       'Açık sur kapısı, önündeki yol ve iki nöbetçi görsel koruma hattını tamamlar. Kapı, surların ahşap, taş ve kale aşamalarına uyum sağlar; nöbetçiler yeni bir savaş birliği oluşturmaz.',
     buildingCostRequired: 'Gereken',
@@ -29,7 +34,7 @@ export const v2Translations = {
     buildingOwnedCount: 'Kurulu / sınır',
     buildingConstructionCost: 'Yeni bina maliyeti',
     buildingPlotHint:
-      'Bina düğmelerindeki seviye gelişim aşamasını, arsa ise köydeki yer numarasını gösterir.',
+      'Seviye binanın gelişimini, arsa köy içindeki yerini gösterir. Sur köşeleri yalnızca gözcü kulelerine ayrılmıştır.',
     journeyHours: 'sa',
     journeyMinutes: 'dk',
     journeyScheduleHint:
@@ -397,6 +402,12 @@ export const v2Translations = {
     regionLocked: 'Bu bölge henüz açılmadı.',
   },
   en: {
+    towerPlot: 'Wall corner',
+    towerFixedHint:
+      'Watchtower locations are fixed. Upgrade the tower or remove it for half the materials back.',
+    towerPlotRequired:
+      'Watchtowers belong only at the four wall corners; other buildings belong only on village plots.',
+    chooseTowerPlot: 'Choose an empty + marker at a wall corner.',
     adventureSelectionLocalHint:
       'Route, purpose and party choices spend no supplies. Review the costs; the journey starts only when you press Depart.',
     adventureChoiceSelected: 'Selected',
@@ -406,19 +417,18 @@ export const v2Translations = {
       'Choose a guardian’s card to add or remove them. Check the minimum party size and arrival forecast before departure.',
     adventurePartySelectedCount: '{count} guardians selected',
     adventureRegionPreview: 'Selected region',
-    cornerFortificationsTitle: 'Four fixed wall towers',
+    cornerFortificationsTitle: 'Watchtowers at the wall corners',
     cornerFortificationsHint:
-      'Four towers are already part of the wall corners; they occupy no plots and cannot be moved or removed separately. Wall upgrades develop the towers and gate together. You may also build additional watchtowers inside the village.',
-    cornerTowerCount: '{count} / {max} additional watchtowers built',
-    cornerPlotHint:
-      'Inner corner plot. Build an additional watchtower or another building beside the fixed wall tower.',
+      'The four wall corners are reserved exclusively for watchtowers. Select + at an empty corner to build with supplies; other buildings use the village’s 36 plots.',
+    cornerTowerCount: '{count} / {max} corner towers built',
+    cornerPlotHint: 'Only a watchtower can be built here. Its location is fixed.',
     cornerPlacementHint:
-      'The fixed wall tower stands outside this plot. Choose an additional watchtower or any other building here.',
-    cornerTowerRecommended: 'Additional inner defense',
+      'This corner is reserved for a watchtower; other buildings are not allowed. Upgrade it later or remove it for a half-material refund.',
+    cornerTowerRecommended: 'Watchtower only',
     cornerTowerLimitHint:
-      'The tower limit is reached. Move or remove an existing tower to change its position.',
+      'All four corners are occupied. Upgrade an existing tower or remove it with confirmation.',
     cornerTowerBonusHint:
-      'Additional watchtowers cost supplies, upgrade individually and can be moved. Their highest level determines defense support. Fixed corner towers are part of the walls and grant no separate combat bonus.',
+      'Towers cost supplies and upgrade independently of the walls. The highest tower level determines defense support; levels do not stack. Towers cannot move; removing one frees the site only for another tower.',
     villageGateHint:
       'An open gate, approach path and two sentries complete the visible perimeter. The gate follows the walls’ timber, stone and castle stages; sentries do not create an additional combat unit.',
     buildingCostRequired: 'Required',
@@ -426,7 +436,7 @@ export const v2Translations = {
     buildingOwnedCount: 'Built / limit',
     buildingConstructionCost: 'New building cost',
     buildingPlotHint:
-      'Building buttons show the upgrade level and the numbered plot where the building stands.',
+      'Level shows a building’s development; plot shows its village location. Wall corners are reserved exclusively for watchtowers.',
     journeyHours: 'hr',
     journeyMinutes: 'min',
     journeyScheduleHint:

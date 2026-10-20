@@ -1,6 +1,24 @@
 {
-  "version": "2.13.0",
+  "version": "2.14.0",
   "releases": [
+    {
+      "version": "2.14.0",
+      "date": "2026-10-20",
+      "changes": {
+        "tr": [
+          "Sur köşeleri yalnızca gözcü kulesi kurulabilen dört sabit inşa noktasıdır; kuleler hazır gelmez, malzemeyle inşa edilir.",
+          "Kuleler taşınamaz; kendi seviyelerine göre yükselir ve onayla kaldırıldığında harcanan malzemelerin yarısı iade edilir. Boşalan köşe başka bina kabul etmez.",
+          "Önceden inşa edilmiş kuleler kimlikleri ve seviyeleri korunarak boş sur köşelerine aktarılır; 36 köy arsası ve diğer binalar yerinde kalır.",
+          "İnşa, geliştirme ve kaldırma ekranları sur köşelerini ayrı adlandırır; TR/EN çevrimdışı önizlemede boş/dolu köşeler ve bağımsız kule seviyeleri görülebilir."
+        ],
+        "en": [
+          "Wall corners are four fixed building sites reserved exclusively for watchtowers; towers are optional and cost construction materials.",
+          "Towers cannot move; they upgrade independently and confirmed demolition refunds half their investment. A freed corner still rejects other buildings.",
+          "Previously constructed towers move to free wall corners with IDs and levels preserved; all 36 village plots and other buildings stay in place.",
+          "Construction, upgrades and demolition label wall corners separately; the TR/EN offline preview shows empty/built corners and independent tower levels."
+        ]
+      }
+    },
     {
       "version": "2.13.0",
       "date": "2026-10-19",

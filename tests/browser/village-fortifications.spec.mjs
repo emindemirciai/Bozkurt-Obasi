@@ -6,21 +6,37 @@ import { translations } from '../../web/i18n.mjs';
 import { signIn } from './sign-in.mjs';
 
 const START = Date.UTC(2026, 9, 20, 12);
-const corners = ['p0', 'p5', 'p30', 'p35'];
+const corners = ['t0', 't1', 't2', 't3'];
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
 const scene = (page) => page.locator('.settlement-scene');
 const frame = (page) => page.locator('.scene-wrap:has(.settlement-scene)');
 
-async function fixedCornerTowers(page, tier = 1) {
-  const towers = scene(page).locator('.village-fixed-tower');
-  await expect(towers).toHaveCount(4);
-  expect(
-    await towers.evaluateAll((nodes) => nodes.map((node) => node.dataset.corner).sort()),
-  ).toEqual(['back', 'front', 'left', 'right']);
+async function cornerPlots(page, ids = corners) {
+  const plots = scene(page).locator('.village-corner-plot');
+  await expect(plots).toHaveCount(ids.length);
+  expect(await plots.evaluateAll((nodes) => nodes.map((node) => node.dataset.plot).sort())).toEqual(
+    [...ids].sort(),
+  );
+  await expect(scene(page).locator('.village-fixed-tower')).toHaveCount(0);
+  for (const id of ids) {
+    const plot = plots
+      .filter({ has: page.locator('title') })
+      .and(scene(page).locator('[data-plot="' + id + '"]'));
+    await expect(plot).toBeVisible();
+    await expect(plot).toHaveAttribute('data-corner-plot', 'true');
+    await expect(plot).toHaveAttribute(
+      'data-corner',
+      ['back', 'right', 'front', 'left'][corners.indexOf(id)],
+    );
+  }
+}
+
+async function cornerTowers(page, count = 4) {
+  const towers = scene(page).locator('.village-corner-tower');
+  await expect(towers).toHaveCount(count);
   for (const tower of await towers.all()) {
     await expect(tower).toBeVisible();
-    await expect(tower).toHaveAttribute('data-tower-tier', String(tier));
-    await expect(tower).not.toHaveAttribute('data-building');
+    await expect(tower).toHaveAttribute('data-building', /^building-watchtower/);
     await expect(tower).not.toHaveAttribute('data-plot');
   }
 }
@@ -90,35 +106,42 @@ async function placeTower(page, plotId) {
   await plot.click();
   const dialog = page.locator('.placement-dialog');
   await expect(dialog.locator('[data-corner-placement]')).toBeVisible();
+  await expect(dialog.locator('[data-building-type]')).toHaveCount(1);
+  await expect(dialog.locator('[data-building-type="watchtower"]')).toBeVisible();
   await act(page, dialog.locator('[data-building-type="watchtower"]'));
   await expect(dialog).toHaveCount(0);
 }
 
-test('four permanent corner towers belong to the walls without occupying or charging any village plots', async ({
+test('four empty wall corners reserve watchtower plots without free towers or loss of normal village space', async ({
   page,
 }) => {
   const { state, actions } = await establishedVillage(page);
   const before = structuredClone(state);
-  await fixedCornerTowers(page);
-  await expect(scene(page).locator('[data-plot]')).toHaveCount(35);
+  await cornerPlots(page);
+  await cornerTowers(page, 0);
+  await expect(scene(page).locator('.empty-plot')).toHaveCount(35);
+  await expect(scene(page).locator('[data-plot]')).toHaveCount(39);
   await expect(scene(page).locator('[data-building]')).toHaveCount(1);
-  await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(0);
+  await page.locator('[data-plot="p0"]').click();
+  await expect(page.locator('.placement-dialog [data-building-type="watchtower"]')).toHaveCount(0);
+  await expect(page.locator('.placement-dialog [data-building-type="lumber"]')).toBeVisible();
+  await page.locator('.placement-dialog .modal-close').click();
   const art = await fortificationArtwork(page);
-  expect(art.length).toBeGreaterThan(0);
   expect(art.some((image) => image.width >= 500 && image.height >= 300)).toBe(true);
   expect(art.every((image) => image.width > 0 && image.height > 0)).toBe(true);
   await page.reload();
-  await fixedCornerTowers(page);
+  await cornerPlots(page);
+  await cornerTowers(page, 0);
   expect(state).toEqual(before);
   expect(actions).toEqual([]);
 });
 
-test('four optional inner watchtowers keep their own plots and limit alongside the four permanent wall towers', async ({
+test('four purchased watchtowers occupy only their reserved corners and persist without reducing normal plots', async ({
   page,
 }) => {
   const { state, actions } = await establishedVillage(page);
-  await fixedCornerTowers(page);
-  await expect(scene(page).locator('[data-corner-plot="true"]')).toHaveCount(4);
+  const resources = { ...state.resources };
+  await cornerPlots(page);
   for (const id of corners) {
     const plot = page.locator('[data-plot="' + id + '"]');
     await expect(plot).toHaveAttribute('aria-describedby', 'corner-plot-hint-' + id);
@@ -126,19 +149,18 @@ test('four optional inner watchtowers keep their own plots and limit alongside t
     await placeTower(page, id);
   }
   expect(state.buildings.filter((building) => building.type === 'watchtower')).toEqual([
-    { id: 'building-watchtower', type: 'watchtower', level: 1, x: 0, y: 0 },
-    { id: 'building-watchtower-2', type: 'watchtower', level: 1, x: 5, y: 0 },
-    { id: 'building-watchtower-3', type: 'watchtower', level: 1, x: 0, y: 5 },
-    { id: 'building-watchtower-4', type: 'watchtower', level: 1, x: 5, y: 5 },
+    { id: 'building-watchtower', type: 'watchtower', level: 1, x: 6, y: 0 },
+    { id: 'building-watchtower-2', type: 'watchtower', level: 1, x: 6, y: 1 },
+    { id: 'building-watchtower-3', type: 'watchtower', level: 1, x: 6, y: 2 },
+    { id: 'building-watchtower-4', type: 'watchtower', level: 1, x: 6, y: 3 },
   ]);
-  await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(4);
-  await page.locator('[data-plot="p1"]').click();
-  await expect(page.locator('.placement-dialog [data-building-type="watchtower"]')).toHaveCount(0);
-  await expect(page.locator('.placement-dialog [data-building-type="lumber"]')).toBeVisible();
-  await page.locator('.placement-dialog .modal-close').click();
+  expect(state.resources.wood).toBe(resources.wood - 400);
+  expect(state.resources.stone).toBe(resources.stone - 280);
+  await cornerTowers(page);
+  await cornerPlots(page, []);
+  await expect(scene(page).locator('.empty-plot')).toHaveCount(35);
   await page.reload();
-  await fixedCornerTowers(page);
-  await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(4);
+  await cornerTowers(page);
   expect(actions).toEqual(
     corners.map((plotId) => ({ type: 'build', building: 'watchtower', plotId })),
   );
@@ -184,33 +206,81 @@ test('four optional inner watchtowers keep their own plots and limit alongside t
   });
   expect(labelContrast.ratio, JSON.stringify(labelContrast)).toBeGreaterThan(4.5);
   await frame(page).screenshot({
-    path: 'artifacts/village-towers-desktop-v2.13.0.png',
+    path: 'artifacts/village-towers-desktop-v2.14.0.png',
     animations: 'disabled',
   });
   await page.setViewportSize({ width: 390, height: 1000 });
   await page.locator('[data-action="resetZoom"]').click();
   await frame(page).screenshot({
-    path: 'artifacts/village-towers-mobile-v2.13.0.png',
+    path: 'artifacts/village-towers-mobile-v2.14.0.png',
     animations: 'disabled',
   });
 });
 
-test('a player watchtower changes architectural crops at levels three and five while the gate follows wall tiers', async ({
+test('real API persists corner purchases and rejects other buildings or relocation into reserved slots', async ({
+  page,
+}) => {
+  await signIn(page);
+  const now = new Date();
+  await page.clock.install({ time: new Date(now.getTime() - 1000) });
+  await page.clock.pauseAt(now);
+  await page.goto('/#village');
+  await cornerPlots(page);
+  const builtResponse = page.waitForResponse('**/api/action');
+  await placeTower(page, 't0');
+  const built = await (await builtResponse).json();
+  expect(built.state.buildings).toEqual([
+    { id: 'building-watchtower', type: 'watchtower', level: 1, x: 6, y: 0 },
+  ]);
+  await page.reload();
+  await cornerTowers(page, 1);
+  await cornerPlots(page, ['t1', 't2', 't3']);
+  for (const [action, error] of [
+    [{ type: 'build', building: 'lumber', plotId: 't1' }, 'INVALID_BUILDING_PLOT'],
+    [{ type: 'build', building: 'watchtower', plotId: 'p0' }, 'INVALID_BUILDING_PLOT'],
+    [{ type: 'moveBuilding', id: 'building-watchtower', plotId: 't1' }, 'TOWER_FIXED'],
+    [{ type: 'moveBuilding', id: 'building-watchtower', plotId: 'p0' }, 'TOWER_FIXED'],
+  ]) {
+    const saved = await (await page.request.get('/api/state')).json();
+    const rejected = await page.request.post('/api/action', {
+      data: { action, revision: saved.revision },
+    });
+    expect(rejected.status()).toBe(400);
+    expect((await rejected.json()).error).toBe(error);
+  }
+  const saved = await (await page.request.get('/api/state')).json();
+  expect(saved.state.buildings).toEqual(built.state.buildings);
+  expect(saved.state.resources).toEqual(built.state.resources);
+  expect(saved.state.stats.builds).toBe(1);
+  await page.reload();
+  await cornerTowers(page, 1);
+  await cornerPlots(page, ['t1', 't2', 't3']);
+});
+
+test('a corner tower upgrades its own architecture independently of wall and gate tiers and cannot move', async ({
   page,
 }) => {
   const { state } = await establishedVillage(page);
-  await placeTower(page, 'p0');
+  await placeTower(page, 't0');
   const tower = scene(page).locator('[data-building="building-watchtower"]');
   const crops = [];
   for (const target of [1, 3, 5]) {
     while (state.buildings.find((building) => building.type === 'watchtower').level < target) {
       await tower.click();
+      await expect(page.locator('[data-action="moveBuilding"]')).toHaveCount(0);
       await act(page, page.locator('[data-action="upgrade"][data-id="building-watchtower"]'));
     }
     await expect(tower).toHaveAttribute(
       'aria-label',
-      translations.tr.watchtower + ', ' + translations.tr.level + ' ' + target,
+      new RegExp(
+        '^' + translations.tr.watchtower + ', ' + translations.tr.level + ' ' + target + ', ',
+      ),
     );
+    await expect(tower).toHaveAttribute(
+      'data-tower-tier',
+      String(target === 5 ? 3 : target === 3 ? 2 : 1),
+    );
+    await expect(scene(page).locator('.village-gate')).toHaveAttribute('data-gate-tier', '1');
     crops.push(await tower.locator(':scope > svg').getAttribute('viewBox'));
   }
   expect(new Set(crops).size).toBe(3);
@@ -219,7 +289,6 @@ test('a player watchtower changes architectural crops at levels three and five w
     0,
   );
   const architecture = [];
-  // Fresh wall upgrades use the same authoritative action route, without replacing towers.
   for (const resource of Object.keys(state.resources)) state.resources[resource] = state.capacity;
   for (const [level, tier] of [
     [1, 1],
@@ -231,9 +300,9 @@ test('a player watchtower changes architectural crops at levels three and five w
       'data-gate-tier',
       String(tier),
     );
-    await fixedCornerTowers(page, tier);
+    await expect(tower).toHaveAttribute('data-tower-tier', '3');
+    await cornerPlots(page, ['t1', 't2', 't3']);
     const art = await fortificationArtwork(page);
-    expect(art.length).toBeGreaterThan(0);
     expect(art.some((image) => image.width >= 500 && image.height >= 300)).toBe(true);
     expect(art.every((image) => image.width > 0 && image.height > 0)).toBe(true);
     architecture.push(
@@ -248,13 +317,83 @@ test('a player watchtower changes architectural crops at levels three and five w
   }
   expect(new Set(architecture).size).toBe(3);
   await page.reload();
-  await fixedCornerTowers(page, 3);
+  await cornerTowers(page, 1);
   await expect(tower.locator(':scope > svg')).toHaveAttribute('viewBox', crops[2]);
   await expect(scene(page).locator('.village-gate')).toHaveAttribute('data-gate-tier', '3');
-  await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(1);
 });
 
-test('permanent corner towers, gate, sentries and realistic terrain fit mobile languages in the dark game theme without blocking plots', async ({
+test('corner demolition confirms the exact half-cost refund and restores a tower-only plot after reload', async ({
+  page,
+}) => {
+  const { state, actions } = await establishedVillage(page);
+  await placeTower(page, 't2');
+  const tower = scene(page).locator('[data-building="building-watchtower"]');
+  await tower.click();
+  await expect(page.locator('[data-action="moveBuilding"]')).toHaveCount(0);
+  await act(page, page.locator('[data-action="upgrade"][data-id="building-watchtower"]'));
+  const before = structuredClone(state);
+  await page.locator('#demolish-building-button').click();
+  const dialog = page.locator('#demolition-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(/(?:50%|%50)/);
+  await expect(dialog.locator('[data-demolition-refund]')).toContainText(/127[.,]5/);
+  await expect(dialog.locator('[data-demolition-refund]')).toContainText(/89[.,]5/);
+  await page.locator('#demolition-cancel').click();
+  expect(state).toEqual(before);
+  expect(actions).toHaveLength(2);
+  await page.locator('#demolish-building-button').click();
+  await act(page, page.locator('#demolition-confirm'));
+  await expect(dialog).toHaveCount(0);
+  await cornerTowers(page, 0);
+  await cornerPlots(page);
+  expect(state.resources.wood).toBe(before.resources.wood + 127.5);
+  expect(state.resources.stone).toBe(before.resources.stone + 89.5);
+  expect(state.buildings).toEqual(
+    before.buildings.filter((building) => building.type !== 'watchtower'),
+  );
+  expect(actions.at(-1)).toEqual({
+    type: 'demolishBuilding',
+    id: 'building-watchtower',
+    expected: { type: 'watchtower', level: 2, x: 6, y: 2, builds: 2 },
+  });
+  await page.reload();
+  await cornerPlots(page);
+  await placeTower(page, 't2');
+  expect(state.buildings.find((building) => building.type === 'watchtower')).toMatchObject({
+    level: 1,
+    x: 6,
+    y: 2,
+  });
+});
+
+test('reserved corner construction stays clickable after wheel zoom and keyboard camera navigation', async ({
+  page,
+}) => {
+  const { actions } = await establishedVillage(page);
+  await frame(page).scrollIntoViewIfNeeded();
+  const target = scene(page).locator('[data-plot="t1"]');
+  const bounds = await target.boundingBox();
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.wheel(0, -200);
+  await expect
+    .poll(async () => Number(await frame(page).getAttribute('data-camera-zoom')))
+    .toBeGreaterThan(1);
+  await target.focus();
+  const viewBox = await scene(page).getAttribute('viewBox');
+  await placeTower(page, 't1');
+  await expect(scene(page)).toHaveAttribute('viewBox', viewBox);
+  await cornerTowers(page, 1);
+  await page.locator('[data-action="zoomIn"]').click();
+  const next = scene(page).locator('[data-plot="t3"]');
+  await next.focus();
+  await placeTower(page, 't3');
+  await cornerTowers(page, 2);
+  expect(actions).toEqual(
+    ['t1', 't3'].map((plotId) => ({ type: 'build', building: 'watchtower', plotId })),
+  );
+});
+
+test('reserved corner plots, gate, sentries and realistic terrain fit mobile languages without blocking construction', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -270,9 +409,9 @@ test('permanent corner towers, gate, sentries and realistic terrain fit mobile l
         await page.locator('[data-action="resetZoom"]').click();
         await frame(page).scrollIntoViewIfNeeded();
         await expect(scene(page).locator('.village-gate')).toBeVisible();
-        await fixedCornerTowers(page);
+        await cornerPlots(page);
         const mapBounds = await frame(page).boundingBox();
-        for (const tower of await scene(page).locator('.village-fixed-tower').all()) {
+        for (const tower of await scene(page).locator('.village-corner-plot').all()) {
           const towerBounds = await tower.boundingBox();
           expect(towerBounds.x).toBeGreaterThanOrEqual(mapBounds.x);
           expect(towerBounds.y).toBeGreaterThanOrEqual(mapBounds.y);
@@ -329,7 +468,7 @@ test('permanent corner towers, gate, sentries and realistic terrain fit mobile l
   expect(actions).toEqual([]);
 });
 
-test('offline village preview exposes both corner layouts and architectural gate tiers without network or save writes', async ({
+test('offline village preview separates optional corner towers from wall tiers without network or save writes', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -345,8 +484,8 @@ test('offline village preview exposes both corner layouts and architectural gate
     await page.goto(pathToFileURL(resolve('preview/village.html')).href);
     const stored = await page.evaluate(() => ({ ...localStorage }));
     await expect(page.locator('#preview-corners')).toHaveValue('empty');
-    await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(0);
-    await fixedCornerTowers(page, 2);
+    await cornerTowers(page, 0);
+    await cornerPlots(page);
     for (const [level, tier] of [
       [1, 1],
       [3, 2],
@@ -357,57 +496,73 @@ test('offline village preview exposes both corner layouts and architectural gate
         'data-gate-tier',
         String(tier),
       );
-      await fixedCornerTowers(page, tier);
+      await cornerTowers(page, 0);
+      await cornerPlots(page);
       await expect(scene(page).locator('.village-sentry')).toHaveCount(2);
       await expect(scene(page).locator('.village-terrain-detail')).toBeVisible();
+    }
+    await page.locator('#preview-corners').selectOption('built');
+    await cornerTowers(page);
+    await cornerPlots(page, []);
+    for (const [level, tier] of [
+      [1, 1],
+      [3, 2],
+      [5, 3],
+    ]) {
+      await page.locator('#preview-tower-tier').selectOption(String(level));
+      await expect(scene(page).locator('.village-gate')).toHaveAttribute('data-gate-tier', '3');
+      for (const tower of await scene(page).locator('.village-corner-tower').all())
+        await expect(tower).toHaveAttribute('data-tower-tier', String(tier));
       await frame(page).screenshot({
-        path: 'artifacts/village-fortification-tier-' + tier + '-v2.13.0.png',
+        path: 'artifacts/village-corner-tier-' + tier + '-v2.14.0.png',
         animations: 'disabled',
       });
     }
-    await page.locator('#preview-corners').selectOption('empty');
-    await fixedCornerTowers(page, 3);
-    await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(0);
-    await expect(scene(page).locator('[data-corner-plot="true"]')).toHaveCount(4);
-    await page.setViewportSize({ width: 320, height: 1000 });
-    for (const language of ['tr', 'en']) {
-      if ((await page.locator('html').getAttribute('lang')) !== language)
-        await page.locator('#language').click();
-      for (const theme of ['light', 'dark']) {
-        if ((await page.locator('html').getAttribute('data-theme')) !== theme)
-          await page.locator('#theme').click();
-        await expect(scene(page).locator('.village-gate')).toBeVisible();
-        await expect(frame(page)).toHaveAttribute('data-motion', 'off');
-        await expect(page.locator('[data-action="upgradeWall"]')).toBeDisabled();
-        await expect(page.locator('[data-camera-weather-label]')).toHaveText(
-          translations[language].villageClear,
-        );
-        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-          320,
-        );
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      for (const language of ['tr', 'en']) {
+        if ((await page.locator('html').getAttribute('lang')) !== language)
+          await page.locator('#language').click();
+        for (const theme of ['light', 'dark']) {
+          if ((await page.locator('html').getAttribute('data-theme')) !== theme)
+            await page.locator('#theme').click();
+          await page.locator('[data-action="resetZoom"]').click();
+          await frame(page).scrollIntoViewIfNeeded();
+          await cornerTowers(page);
+          const mapBounds = await frame(page).boundingBox();
+          for (const tower of await scene(page).locator('.village-corner-tower').all()) {
+            const box = await tower.boundingBox();
+            expect(box.x).toBeGreaterThanOrEqual(mapBounds.x);
+            expect(box.y).toBeGreaterThanOrEqual(mapBounds.y);
+            expect(box.x + box.width).toBeLessThanOrEqual(mapBounds.x + mapBounds.width);
+            expect(box.y + box.height).toBeLessThanOrEqual(mapBounds.y + mapBounds.height);
+          }
+          await expect(frame(page)).toHaveAttribute('data-motion', 'off');
+          await expect(page.locator('[data-action="upgradeWall"]')).toBeDisabled();
+          expect(
+            await page.evaluate(() => document.documentElement.scrollWidth),
+          ).toBeLessThanOrEqual(width);
+        }
       }
     }
-    await page.locator('#preview-corners').selectOption('built');
-    await fixedCornerTowers(page, 3);
-    await expect(scene(page).locator('[data-building^="building-watchtower"]')).toHaveCount(4);
-    await page.locator('#preview-corners').selectOption('empty');
-    await fixedCornerTowers(page, 3);
     if ((await page.locator('html').getAttribute('lang')) !== 'tr')
       await page.locator('#language').click();
     if ((await page.locator('html').getAttribute('data-theme')) !== 'dark')
       await page.locator('#theme').click();
-    await page.setViewportSize({ width: 1440, height: 1100 });
-    await page.locator('[data-action="resetZoom"]').click();
-    await frame(page).screenshot({
-      path: 'artifacts/village-desktop-v2.13.0.png',
-      animations: 'disabled',
-    });
-    await page.setViewportSize({ width: 390, height: 1000 });
-    await page.locator('[data-action="resetZoom"]').click();
-    await frame(page).screenshot({
-      path: 'artifacts/village-mobile-v2.13.0.png',
-      animations: 'disabled',
-    });
+    for (const mode of ['empty', 'built']) {
+      await page.locator('#preview-corners').selectOption(mode);
+      for (const [device, width] of [
+        ['desktop', 1440],
+        ['mobile', 390],
+      ]) {
+        await page.setViewportSize({ width, height: 1100 });
+        await page.locator('[data-action="resetZoom"]').click();
+        await frame(page).screenshot({
+          path: 'artifacts/village-' + mode + '-' + device + '-v2.14.0.png',
+          animations: 'disabled',
+        });
+      }
+    }
     expect(await page.evaluate(() => ({ ...localStorage }))).toEqual(stored);
     expect(network).toEqual([]);
     expect(errors).toEqual([]);

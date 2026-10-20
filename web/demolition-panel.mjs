@@ -1,4 +1,5 @@
-import { demolitionQuote, PLOTS } from '../shared/settlement.mjs';
+import { buildingSiteLabel } from './settlement-labels.mjs';
+import { demolitionQuote } from '../shared/settlement.mjs';
 
 const escape = (value) =>
   String(value).replace(
@@ -26,11 +27,8 @@ export function demolitionStatus(state, selection) {
 
 function quoteContent(status, selection, { t, language }) {
   const { quote, changed } = status;
-  const plot =
-    PLOTS.findIndex(
-      (entry) => entry.x === selection.expected.x && entry.y === selection.expected.y,
-    ) + 1;
-  return `<div class="demolition-building"><strong>${escape(t(selection.expected.type))}</strong><span>${t('level')} ${selection.expected.level} · ${t('plot')} ${plot}</span></div>
+  const plot = buildingSiteLabel(selection.expected, t);
+  return `<div class="demolition-building"><strong>${escape(t(selection.expected.type))}</strong><span>${t('level')} ${selection.expected.level} · ${escape(plot)}</span></div>
     <section class="demolition-refund" aria-labelledby="demolition-refund-title"><h3 id="demolition-refund-title">${t('demolitionRefund')}</h3><dl data-demolition-refund>${Object.entries(
       quote.refund,
     )

@@ -319,3 +319,31 @@ test('new copy planning rejects a full grid and stale instance targets never upg
   assert.equal(stale.buildingId, null);
   assert.equal(stale.affordable, false);
 });
+
+test('construction availability keeps corner tower slots separate from the normal village grid', () => {
+  const state = fresh();
+  // A full synthetic grid exercises future capacity without altering the current per-type caps.
+  state.buildings = Array.from({ length: 36 }, (_, index) => ({
+    id: `occupied-${index}`,
+    type: 'lumber',
+    level: 1,
+    x: index % 6,
+    y: Math.floor(index / 6),
+  }));
+  assert.equal(constructionPlan(state, 'new:quarry').blocked, 'plotsFull');
+  assert.equal(constructionPlan(state, 'new:watchtower').affordable, true);
+  assert.equal(constructionPlan(state, 'new:watchtower').blocked, null);
+  for (let index = 0; index < 4; index++) {
+    state.buildings.push({
+      id: index ? `building-watchtower-${index + 1}` : 'building-watchtower',
+      type: 'watchtower',
+      level: 1,
+      x: 6,
+      y: index,
+    });
+  }
+  assert.equal(constructionPlan(state, 'new:watchtower').blocked, 'buildingLimit');
+  state.buildings.shift();
+  assert.equal(constructionPlan(state, 'new:quarry').affordable, true);
+  assert.equal(constructionPlan(state, 'new:watchtower').affordable, false);
+});

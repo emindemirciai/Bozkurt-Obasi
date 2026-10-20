@@ -2,7 +2,9 @@
 
 ## Türkçe
 
-**v2.13.0:** Gerçekçi ahşap/taş/kale surları, sabit dört köşe kulesi, kapı ve nöbetçiler; sola uzanan dağ eteğinden doğan doğal ırmak. Fare tekerleği ve +/− kontrolleriyle sabit alanda yakınlaştırma. Eski yapılar, 36 parsel ve ekonomi korunur. [Güncel köy rehberi](VILLAGE-DEFENSE.md).
+**v2.14.0:** Sur köşeleri oyuncunun inşa ettiği gözcü kulelerine ayrıldı. Dört yer sabittir, başlangıçta boştur ve başka bina kabul etmez. Kuleler taşınamaz; kendi seviyelerine göre yükseltilebilir veya %50 malzeme iadesiyle kaldırılabilir. Önceki ücretli kuleler kimlik/seviyeleri korunarak boş köşelere aktarılır; 36 normal parsel korunur. [Güncel köy rehberi](VILLAGE-DEFENSE.md).
+
+**v2.13.0:** Gerçekçi ahşap/taş/kale surları, kapı ve nöbetçiler; sola uzanan dağ eteğinden doğan doğal ırmak. Fare tekerleği ve +/− kontrolleriyle sabit alanda yakınlaştırma eklendi. Bu sürümdeki hazır dekoratif köşe kuleleri v2.14.0 ile isteğe bağlı gerçek binalara dönüştü.
 
 **Yön:** Bozkurt Obası: Ay-Yıldız Nöbeti'ni 3B model üretimine bağımlı olmayan, tarayıcıda çalışan bir köy kurma ve sürü savunma oyunu olarak geliştirmek. Köy üretimi ve gelişimi kalıcı ilerlemeyi taşır; savaşlarda bozkurtların hilali ve sürünün yıldızı oyunun görsel kimliğini korur. Eski Unity dosyaları tarihsel kaynak olarak saklanır; web oyunu ayrı bir uygulamadır.
 
@@ -47,7 +49,9 @@ Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek 
 
 ## English
 
-**v2.13.0:** Realistic timber/stone/castle walls, four fixed corner towers, a gate and sentries; a natural river rising from foothills extending left. Mouse-wheel and +/− zoom inside the fixed viewport. Existing buildings, 36 plots and economy remain. [Current village guide](VILLAGE-DEFENSE.md).
+**v2.14.0:** Wall corners are reserved for player-built watchtowers. The four sites are fixed, initially empty and cannot accept other buildings. Towers cannot move, but can be upgraded by their own level or demolished with a 50% material refund. Earlier paid towers move into free corners while retaining IDs and levels; all 36 ordinary plots remain. [Current village guide](VILLAGE-DEFENSE.md).
+
+**v2.13.0:** Added realistic timber/stone/castle walls, a gate and sentries, a natural river rising from foothills extending left, and mouse-wheel / +/− zoom inside the fixed viewport. That release’s prebuilt decorative corner towers became optional actual buildings in v2.14.0.
 
 **v2.12.0:** Wall Watch adds four watchtowers, corner-plot guidance, an evolving gate, two sentries and visible river/weather layers while retaining saves and free placement. [Village defenses](VILLAGE-DEFENSE.md).
 

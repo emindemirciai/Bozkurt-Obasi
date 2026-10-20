@@ -1,5 +1,5 @@
 import { BUILDINGS, RESOURCE_KEYS, getProduction, getUpgradeCost } from '../shared/game.mjs';
-import { PLOTS } from '../shared/settlement.mjs';
+import { PLOTS, TOWER_PLOTS } from '../shared/settlement.mjs';
 
 // Estimates keep current production fixed; they never advance or change the authoritative save.
 export function resourceOutlook(state) {
@@ -83,7 +83,7 @@ export function constructionPlan(state, selection = 'quarry') {
   const atLimit =
     !building &&
     state.buildings.filter((entry) => entry.type === definition.id).length >= definition.maxCount;
-  const hasEmptyPlot = PLOTS.some(
+  const hasEmptyPlot = (definition.id === 'watchtower' ? TOWER_PLOTS : PLOTS).some(
     (plot) => !state.buildings.some((entry) => entry.x === plot.x && entry.y === plot.y),
   );
   const blocked =

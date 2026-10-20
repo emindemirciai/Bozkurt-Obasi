@@ -171,23 +171,20 @@ export function createGame(now = Date.now()) {
 }
 
 export function migrateGame(state) {
-  if (
-    state?.version === 2 &&
-    Object.hasOwn(state, 'firstWatch') &&
-    Object.hasOwn(state.battle ?? {}, 'commands')
-  ) {
-    if (!validateGame(state)) fail('INVALID_SAVE');
-    return state;
-  }
+  if (validateGame(state)) return state;
   if (
     state?.version === 2
-      ? !validateGame(state, { allowLegacyFirstWatch: true, allowLegacyBattleCommands: true })
+      ? !validateGame(state, {
+          allowLegacyFirstWatch: true,
+          allowLegacyBattleCommands: true,
+          allowLegacyTowerPlots: true,
+        })
       : !validateLegacyGame(state)
   )
     fail('INVALID_SAVE');
   const migrated = structuredClone(state);
+  migrateSettlement(migrated);
   if (migrated.version !== 2) {
-    migrateSettlement(migrated);
     migrateAdventureState(migrated);
     migrated.version = 2;
   }
@@ -621,7 +618,11 @@ const machineKey = (value) =>
 /** Reject corrupted/imported states, including every nested non-finite numeric value. */
 export function validateGame(
   state,
-  { allowLegacyFirstWatch = false, allowLegacyBattleCommands = false } = {},
+  {
+    allowLegacyFirstWatch = false,
+    allowLegacyBattleCommands = false,
+    allowLegacyTowerPlots = false,
+  } = {},
 ) {
   try {
     if (
@@ -660,7 +661,8 @@ export function validateGame(
       !RESOURCE_KEYS.every((key) => number(state.resources[key], 0, state.capacity))
     )
       return false;
-    if (!validateSettlement(state) || !validateAdventureState(state)) return false;
+    if (!validateSettlement(state, { allowLegacyTowerPlots }) || !validateAdventureState(state))
+      return false;
     if (
       state.capacity !==
       500 + Math.max(0, levelOf(state, 'hall') - 1) * 100 + levelOf(state, 'storage') * 250

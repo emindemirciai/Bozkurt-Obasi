@@ -67,3 +67,25 @@
 .settlement-scene .scene-building:is(:hover, :focus-visible) .building-label text {
   fill: #fff0c8;
 }
+
+.village-corner-plot > path:first-of-type {
+  stroke: #f3d68f;
+  stroke-width: 2.5;
+}
+.village-corner-plot:is(:hover, :focus-visible) > path:first-of-type {
+  fill: #655334;
+}
+.village-corner-sites .scene-building {
+  cursor: pointer;
+}
+.tower-fixed-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.buildings-section .subtle-count {
+  white-space: normal;
+  text-align: right;
+}

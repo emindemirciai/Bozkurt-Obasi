@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../shared/game.mjs';
-import { PLOTS } from '../shared/settlement.mjs';
+import { buildingSiteLabel } from './settlement-labels.mjs';
 import { icon } from './art.mjs';
 import { resourceOutlook, constructionPlan } from './planning.mjs';
 
@@ -138,10 +138,9 @@ function buildingOptions(state, selected, { t }) {
   return options.map((target) => {
     const plan = constructionPlan(state, target);
     const building = state.buildings.find((entry) => entry.id === plan.buildingId);
-    const plot =
-      building && PLOTS.findIndex((entry) => entry.x === building.x && entry.y === building.y) + 1;
+    const plot = building && buildingSiteLabel(building, t);
     const detail = building
-      ? `${t('plot')} ${plot} · ${t('level')} ${building.level} · ${t(plan.blocked === 'maxLevel' ? 'maxLevel' : 'upgrade')}${plan.blocked === 'maxLevel' ? '' : ` ${plan.level}`}`
+      ? `${plot} · ${t('level')} ${building.level} · ${t(plan.blocked === 'maxLevel' ? 'maxLevel' : 'upgrade')}${plan.blocked === 'maxLevel' ? '' : ` ${plan.level}`}`
       : `${target.startsWith('new:') ? t('planningNewCopy') : t('build')} · ${t('level')} 1`;
     return { value: target, label: `${t(plan.type)} — ${detail}` };
   });

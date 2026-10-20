@@ -44,7 +44,7 @@ const buildToLevel = (state, type, level, plotId) => {
 const supported = (type = 'quarry', level = 1) => {
   const state = createGame(START);
   buildToLevel(state, type === 'storage' ? 'hall' : 'storage', 5, 'p35');
-  const result = buildToLevel(state, type, level, 'p0');
+  const result = buildToLevel(state, type, level, type === 'watchtower' ? 't0' : 'p0');
   clearResources(state);
   assert.equal(validateGame(state), true);
   return { state, ...result };

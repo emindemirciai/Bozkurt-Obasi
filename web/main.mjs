@@ -1,3 +1,4 @@
+import { buildingSiteLabel } from './settlement-labels.mjs';
 import './style.css';
 import './v2.css';
 import './battle-feedback.css';
@@ -13,7 +14,13 @@ import {
   battleCommandBadge,
   updateBattleCommandBadge,
 } from './battle-command-panel.mjs';
-import { PLOTS, getWallUpgradeCost, demolitionQuote } from '../shared/settlement.mjs';
+import {
+  PLOTS,
+  ALL_PLOTS,
+  CORNER_PLOT_IDS,
+  getWallUpgradeCost,
+  demolitionQuote,
+} from '../shared/settlement.mjs';
 import { demolitionDialog, demolitionStatus, updateDemolitionDialog } from './demolition-panel.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
 import { formatJourneyDuration } from './journey-time.mjs';
@@ -657,7 +664,7 @@ function villagePanel() {
       .join('') ||
     `<div><span>${t('capacity')}</span><strong>${number(state.capacity)}</strong></div>`
   }</div>${b.level < 5 ? `<div class="upgrade-row">${costView(cost)}${button(t('upgrade') + icon('arrow', 15), 'upgrade', 'button outline', !affordable(cost) || busy, `data-id="${b.id}"`)}</div>` : `<div class="completed">${icon('check', 16)}${t('maxLevel')}</div>`}</section>
-    <div class="building-layout-actions">${button(t('moveBuilding'), 'moveBuilding', 'button outline move-building', busy || state.battle.status === 'active', `data-id="${b.id}"`)}${button(t('removeBuilding'), 'openDemolition', 'button outline remove-building', busy, `id="demolish-building-button" data-id="${b.id}"`)}</div>${firstStepsView()}
+    <div class="building-layout-actions">${b.type === 'watchtower' ? `<p class="tower-fixed-hint">${t('towerFixedHint')}</p>` : button(t('moveBuilding'), 'moveBuilding', 'button outline move-building', busy || state.battle.status === 'active', `data-id="${b.id}"`)}${button(t('removeBuilding'), 'openDemolition', 'button outline remove-building', busy, `id="demolish-building-button" data-id="${b.id}"`)}</div>${firstStepsView()}
     <section class="activity-card"><h3>${t('activity')}<span class="pulse"></span></h3>${state.log
       .slice(-3)
       .reverse()
@@ -669,10 +676,10 @@ function villagePanel() {
 }
 
 function buildingList() {
-  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p><p class="building-plot-hint">${t('buildingPlotHint')}</p></div><span class="subtle-count">${state.buildings.length} / ${PLOTS.length}</span></div><div class="buildings-grid">${BUILDINGS.map(
+  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p><p class="building-plot-hint">${t('buildingPlotHint')}</p></div><span class="subtle-count">${state.buildings.filter((b) => b.type !== 'watchtower').length} / ${PLOTS.length} ${t('plot')} · ${state.buildings.filter((b) => b.type === 'watchtower').length} / 4 ${t('watchtower')}</span></div><div class="buildings-grid">${BUILDINGS.map(
     (def) => {
       const owned = state.buildings.filter((b) => b.type === def.id);
-      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)}</h3><p class="building-owned-count">${t('buildingOwnedCount')}: ${owned.length} / ${def.maxCount}</p><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + t('plot') + ' ' + (PLOTS.findIndex((p) => p.x === b.x && p.y === b.y) + 1), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom"><div class="building-cost-group"><span class="building-cost-caption">${t('buildingConstructionCost')}</span>${costView(def.cost)}</div>${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active', `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
+      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)}</h3><p class="building-owned-count">${t('buildingOwnedCount')}: ${owned.length} / ${def.maxCount}</p><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + buildingSiteLabel(b, t), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom"><div class="building-cost-group"><span class="building-cost-caption">${t('buildingConstructionCost')}</span>${costView(def.cost)}</div>${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active', `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
     },
   ).join('')}</div></section>`;
 }
@@ -1464,6 +1471,8 @@ function reportError(error) {
     USE_CARAVAN: 'adventureIntro',
     PLOT_REQUIRED: 'choosePlot',
     INVALID_PLOT: 'choosePlot',
+    INVALID_BUILDING_PLOT: 'towerPlotRequired',
+    TOWER_FIXED: 'towerFixedHint',
     PLOT_OCCUPIED: 'plotOccupied',
     BUILDING_LIMIT: 'buildingLimit',
     BUILDING_CHANGED: 'demolitionChanged',
@@ -1522,7 +1531,7 @@ async function command(action) {
     await api('action', { action, revision }, generation);
     succeeded = true;
     if (action.type === 'build') {
-      const plot = PLOTS.find((p) => p.id === action.plotId);
+      const plot = ALL_PLOTS.find((p) => p.id === action.plotId);
       selected = state.buildings.find((b) => b.x === plot?.x && b.y === plot?.y)?.id || selected;
       modal = '';
     }
@@ -1643,6 +1652,10 @@ root.addEventListener('click', async (event) => {
   if (target.dataset.plot) {
     if (busy) return;
     selectedPlot = target.dataset.plot;
+    if (movingId && CORNER_PLOT_IDS.includes(selectedPlot)) {
+      toast('towerPlotRequired');
+      return;
+    }
     if (movingId) await command({ type: 'moveBuilding', id: movingId, plotId: selectedPlot });
     else {
       accountOpener = target.id;
@@ -1722,6 +1735,13 @@ root.addEventListener('click', async (event) => {
     return;
   }
   if (a === 'moveBuilding' || a === 'cancelMove') {
+    if (
+      a === 'moveBuilding' &&
+      state.buildings.find((b) => b.id === target.dataset.id)?.type === 'watchtower'
+    ) {
+      toast('towerFixedHint');
+      return;
+    }
     movingId = a === 'moveBuilding' ? target.dataset.id : '';
     render();
     root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
@@ -1729,8 +1749,10 @@ root.addEventListener('click', async (event) => {
   }
   if (a === 'build') {
     plannedBuilding = target.dataset.buildingType;
-    toast('choosePlot');
-    root.querySelector('[data-plot]')?.focus({ preventScroll: true });
+    toast(plannedBuilding === 'watchtower' ? 'chooseTowerPlot' : 'choosePlot');
+    root
+      .querySelector(plannedBuilding === 'watchtower' ? '.village-corner-plot' : '.empty-plot')
+      ?.focus({ preventScroll: true });
     root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
     return;
   }
@@ -1988,9 +2010,11 @@ root.addEventListener('click', async (event) => {
     const plan = constructionPlan(state, plannedBuilding);
     if (plan.blocked || !plan.affordable || busy) return;
     if (plan.mode === 'build') {
-      toast('choosePlot');
+      toast(plan.type === 'watchtower' ? 'chooseTowerPlot' : 'choosePlot');
       root.querySelector('.map-card')?.scrollIntoView({ block: 'start' });
-      root.querySelector('[data-plot]')?.focus({ preventScroll: true });
+      root
+        .querySelector(plan.type === 'watchtower' ? '.village-corner-plot' : '.empty-plot')
+        ?.focus({ preventScroll: true });
       return;
     }
     await command(
@@ -2096,7 +2120,7 @@ setInterval(async () => {
   if (modal === 'placement') {
     for (const choice of root.querySelectorAll('[data-action="placeBuilding"]')) {
       const definition = BUILDINGS.find((building) => building.id === choice.dataset.buildingType);
-      const plot = PLOTS.find((entry) => entry.id === choice.dataset.plotId);
+      const plot = ALL_PLOTS.find((entry) => entry.id === choice.dataset.plotId);
       choice.disabled =
         busy ||
         state.battle.status === 'active' ||

@@ -7,11 +7,12 @@ const t = (key) => key;
 
 test('village rendering follows saved plot coordinates for duplicate producers and relocation', () => {
   const state = createGame(1_000);
-  assert.equal((scene(state, { t }).match(/data-plot=/g) || []).length, 36);
+  assert.equal((scene(state, { t }).match(/data-plot="p/g) || []).length, 36);
+  assert.equal((scene(state, { t }).match(/data-plot="t/g) || []).length, 4);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p0' }, 1_000);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p5' }, 1_000);
   let artwork = scene(state, { t });
-  assert.equal((artwork.match(/data-plot=/g) || []).length, 34);
+  assert.equal((artwork.match(/data-plot="p/g) || []).length, 34);
   assert.match(artwork, /data-building="building-quarry"[^>]*transform="translate\(720 240\)"/);
   assert.match(artwork, /data-building="building-quarry-2"[^>]*transform="translate\(1210 525\)"/);
   applyAction(state, { type: 'moveBuilding', id: 'building-quarry', plotId: 'p35' }, 1_000);

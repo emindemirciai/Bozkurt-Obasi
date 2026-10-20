@@ -11,9 +11,16 @@ import {
   BUILDINGS,
   CORNER_PLOT_IDS,
   PLOTS,
+  TOWER_PLOTS,
+  ALL_PLOTS,
   demolitionQuote,
   visualTier,
 } from '../shared/settlement.mjs';
+
+import {
+  createGame as createLegacyGame,
+  applyAction as applyLegacyAction,
+} from '../shared/legacy-v1.mjs';
 
 const START = 1_000_000;
 const act = (state, action) => applyAction(state, action, state.updatedAt, () => 0);
@@ -52,21 +59,27 @@ function firstCombatDamage(state) {
   return initial - copy.battle.enemies.reduce((sum, enemy) => sum + enemy.hp, 0);
 }
 
-test('the four suggested tower plots are immutable inner corners without restricting other building limits', () => {
+test('four reserved wall corners are independent of the unchanged 36 village plots', () => {
   assert.equal(Object.isFrozen(CORNER_PLOT_IDS), true);
-  assert.deepEqual(CORNER_PLOT_IDS, ['p0', 'p5', 'p30', 'p35']);
+  assert.deepEqual(CORNER_PLOT_IDS, ['t0', 't1', 't2', 't3']);
   assert.deepEqual(
     CORNER_PLOT_IDS.map((id) => {
-      const { x, y } = PLOTS.find((plot) => plot.id === id);
+      const { x, y } = ALL_PLOTS.find((plot) => plot.id === id);
       return [x, y];
     }),
     [
-      [0, 0],
-      [5, 0],
-      [0, 5],
-      [5, 5],
+      [6, 0],
+      [6, 1],
+      [6, 2],
+      [6, 3],
     ],
   );
+  assert.equal(PLOTS.length, 36);
+  assert.equal(TOWER_PLOTS.length, 4);
+  assert.equal(ALL_PLOTS.length, 40);
+  assert.ok(Object.isFrozen(TOWER_PLOTS) && TOWER_PLOTS.every(Object.isFrozen));
+  assert.ok(Object.isFrozen(ALL_PLOTS));
+  assert.equal(createGame(START).buildings.length, 0);
   assert.equal(BUILDINGS.find((building) => building.id === 'watchtower').maxCount, 4);
   for (const building of BUILDINGS.filter((entry) => entry.id !== 'watchtower'))
     assert.equal(
@@ -75,7 +88,7 @@ test('the four suggested tower plots are immutable inner corners without restric
     );
 });
 
-test('four towers use their requested plots and existing recipes; a fifth rejects without spending', () => {
+test('four towers cost their existing recipes at the selected corner; extra and occupied placements reject without spending', () => {
   const state = createGame(START);
   for (const plotId of CORNER_PLOT_IDS)
     act(state, { type: 'build', building: 'watchtower', plotId });
@@ -91,10 +104,10 @@ test('four towers use their requested plots and existing recipes; a fifth reject
   assert.deepEqual(
     state.buildings.map(({ x, y }) => [x, y]),
     [
-      [0, 0],
-      [5, 0],
-      [0, 5],
-      [5, 5],
+      [6, 0],
+      [6, 1],
+      [6, 2],
+      [6, 3],
     ],
   );
   assert.equal(state.resources.wood, 50);
@@ -106,37 +119,161 @@ test('four towers use their requested plots and existing recipes; a fifth reject
   rejectUnchanged(
     state,
     { type: 'build', building: 'watchtower', plotId: 'p17' },
-    'BUILDING_LIMIT',
+    'INVALID_BUILDING_PLOT',
   );
+  rejectUnchanged(state, { type: 'build', building: 'watchtower', plotId: 't0' }, 'PLOT_OCCUPIED');
   assert.equal(validateGame(state), true);
   const forged = structuredClone(state);
   forged.buildings.push({ id: 'building-watchtower-5', type: 'watchtower', level: 1, x: 5, y: 2 });
   assert.equal(validateGame(forged), false);
 });
 
-test('earlier corner buildings and a non-corner tower survive reload without relocation or reserved plots', () => {
+test('every non-tower building is rejected at each tower plot, and towers reject every regular plot', () => {
   const state = createGame(START);
+  for (const definition of BUILDINGS.filter((entry) => entry.id !== 'watchtower'))
+    for (const { id: plotId } of TOWER_PLOTS)
+      rejectUnchanged(
+        state,
+        { type: 'build', building: definition.id, plotId },
+        'INVALID_BUILDING_PLOT',
+      );
+  for (const { id: plotId } of PLOTS)
+    rejectUnchanged(
+      state,
+      { type: 'build', building: 'watchtower', plotId },
+      'INVALID_BUILDING_PLOT',
+    );
   act(state, { type: 'build', building: 'quarry', plotId: 'p0' });
-  act(state, { type: 'build', building: 'watchtower', plotId: 'p18' });
-  const oldBuildings = structuredClone(state.buildings);
-  const restored = migrateGame(JSON.parse(JSON.stringify(state)));
-  assert.deepEqual(restored.buildings, oldBuildings);
-  act(restored, { type: 'build', building: 'watchtower', plotId: 'p5' });
-  assert.deepEqual(restored.buildings.slice(0, 2), oldBuildings);
-  rejectUnchanged(
-    restored,
-    { type: 'build', building: 'watchtower', plotId: 'p0' },
-    'PLOT_OCCUPIED',
+  for (const plotId of CORNER_PLOT_IDS)
+    rejectUnchanged(
+      state,
+      { type: 'moveBuilding', id: 'building-quarry', plotId },
+      'INVALID_BUILDING_PLOT',
+    );
+  act(state, { type: 'moveBuilding', id: 'building-quarry', plotId: 'p35' });
+  assert.equal(state.buildings[0].x, 5);
+  assert.equal(state.buildings[0].y, 5);
+  assert.equal(validateGame(state), true);
+});
+
+test('legacy paid towers move deterministically to free corner slots without changing any other player state', () => {
+  const legacy = supportedTowers([1, 3, 2, 5]);
+  fund(legacy);
+  act(legacy, { type: 'build', building: 'quarry', plotId: 'p0' });
+  const towers = legacy.buildings.filter((building) => building.type === 'watchtower');
+  for (const [index, tower] of towers.entries()) Object.assign(tower, { x: index + 1, y: 3 });
+  const original = structuredClone(legacy);
+  assert.equal(validateGame(legacy), false);
+  assert.equal(validateGame(legacy, { allowLegacyTowerPlots: true }), true);
+  const migrated = migrateGame(legacy);
+  assert.notEqual(migrated, legacy);
+  assert.deepEqual(legacy, original, 'migration never changes the input save');
+  const expected = structuredClone(legacy);
+  expected.buildings
+    .filter((building) => building.type === 'watchtower')
+    .forEach((tower, index) => Object.assign(tower, { x: 6, y: index }));
+  assert.deepEqual(migrated, expected);
+  assert.equal(migrateGame(migrated), migrated, 'completed migration is idempotent');
+  const reordered = structuredClone(legacy);
+  reordered.buildings.reverse();
+  const remapped = migrateGame(reordered);
+  for (const tower of migrated.buildings.filter((building) => building.type === 'watchtower'))
+    assert.deepEqual(
+      remapped.buildings.find((entry) => entry.id === tower.id),
+      tower,
+    );
+  assert.equal(validateGame(migrated), true);
+
+  const mixed = structuredClone(legacy);
+  Object.assign(
+    mixed.buildings.find((building) => building.id === 'building-watchtower-4'),
+    { x: 6, y: 0 },
   );
-  act(restored, { type: 'build', building: 'well', plotId: 'p30' });
-  assert.deepEqual(restored.buildings.at(-1), {
-    id: 'building-well',
-    type: 'well',
-    level: 1,
-    x: 0,
-    y: 5,
-  });
-  assert.equal(validateGame(restored), true);
+  const mixedMigrated = migrateGame(mixed);
+  assert.deepEqual(
+    mixedMigrated.buildings
+      .filter((building) => building.type === 'watchtower')
+      .map((tower) => tower.y),
+    [1, 2, 3, 0],
+  );
+  assert.equal(migrateGame(mixedMigrated), mixedMigrated);
+});
+
+test('v1 and pre-tutorial v2 saves migrate paid towers while empty saves never gain free towers', () => {
+  const legacy = createLegacyGame(START);
+  applyLegacyAction(legacy, { type: 'build', building: 'watchtower' }, START);
+  const priorTower = legacy.buildings.find((building) => building.type === 'watchtower');
+  const migrated = migrateGame(legacy);
+  assert.deepEqual(
+    migrated.buildings.find((building) => building.type === 'watchtower'),
+    { ...priorTower, x: 6, y: 0 },
+  );
+  assert.deepEqual(migrated.resources, legacy.resources);
+  assert.deepEqual(migrated.stats, legacy.stats);
+  assert.equal(validateGame(migrated), true);
+  const oldV2 = supportedTowers([2]);
+  Object.assign(
+    oldV2.buildings.find((building) => building.type === 'watchtower'),
+    { x: 3, y: 0 },
+  );
+  delete oldV2.firstWatch;
+  delete oldV2.battle.commands;
+  const upgraded = migrateGame(oldV2);
+  assert.equal(validateGame(upgraded), true);
+  assert.equal(upgraded.buildings.find((building) => building.type === 'watchtower').x, 6);
+  const empty = createGame(START);
+  assert.equal(migrateGame(empty), empty);
+  assert.equal(empty.buildings.length, 0);
+});
+
+test('legacy tower migration rejects malformed coordinates, overlaps, duplicate ids and excess towers', () => {
+  const legacy = supportedTowers([1, 2, 3, 4]);
+  legacy.buildings
+    .filter((building) => building.type === 'watchtower')
+    .forEach((tower, index) => Object.assign(tower, { x: index, y: 0 }));
+  const corruptions = [
+    (save) => {
+      save.buildings.at(-1).x = 7;
+    },
+    (save) => {
+      Object.assign(save.buildings.at(-1), { x: 6, y: 4 });
+    },
+    (save) => {
+      save.buildings.at(-1).x = '3';
+    },
+    (save) => {
+      Object.assign(save.buildings.at(-1), { x: 0, y: 0 });
+    },
+    (save) => {
+      save.buildings.at(-1).id = 'building-watchtower';
+    },
+    (save) => {
+      save.buildings.push({
+        id: 'building-watchtower-5',
+        type: 'watchtower',
+        level: 1,
+        x: 4,
+        y: 0,
+      });
+    },
+    (save) => {
+      Object.assign(save.buildings[0], { x: 6, y: 0 });
+    },
+    (save) => {
+      save.buildings.at(-1).level = 6;
+    },
+    (save) => {
+      save.resources.wood = Number.NaN;
+    },
+  ];
+  for (const corrupt of corruptions) {
+    const broken = structuredClone(legacy);
+    corrupt(broken);
+    const before = structuredClone(broken);
+    assert.equal(validateGame(broken, { allowLegacyTowerPlots: true }), false, corrupt.toString());
+    assert.throws(() => migrateGame(broken), { code: 'INVALID_SAVE' }, corrupt.toString());
+    assert.deepEqual(broken, before);
+  }
 });
 
 test('each of four tower identities upgrades independently through all five levels and survives serialization', () => {
@@ -162,28 +299,11 @@ test('each of four tower identities upgrades independently through all five leve
   for (const id of ids) rejectUnchanged(restored, { type: 'upgrade', id }, 'MAX_LEVEL');
 });
 
-test('moving an upgraded tower changes only its selected position and respects other occupants', () => {
+test('built towers cannot move to regular plots, other corners, or even their own corner', () => {
   const state = supportedTowers([1, 3, 1, 1]);
   const id = 'building-watchtower-2';
-  const others = structuredClone(state.buildings.filter((building) => building.id !== id));
-  const resources = structuredClone(state.resources);
-  act(state, { type: 'moveBuilding', id, plotId: 'p17' });
-  assert.deepEqual(
-    state.buildings.find((building) => building.id === id),
-    {
-      id,
-      type: 'watchtower',
-      level: 3,
-      x: 5,
-      y: 2,
-    },
-  );
-  assert.deepEqual(state.resources, resources);
-  assert.deepEqual(
-    state.buildings.filter((building) => building.id !== id),
-    others,
-  );
-  rejectUnchanged(state, { type: 'moveBuilding', id, plotId: 'p30' }, 'PLOT_OCCUPIED');
+  for (const plotId of ['p17', ...CORNER_PLOT_IDS])
+    rejectUnchanged(state, { type: 'moveBuilding', id, plotId }, 'TOWER_FIXED');
   assert.equal(validateGame(state), true);
 });
 
@@ -208,7 +328,7 @@ test('demolishing one upgraded tower refunds half its actual investment and free
   assert.equal(state.resources.stone, paid.stone / 2);
   assert.deepEqual(state.buildings, others);
   assert.equal(state.buildings.filter((building) => building.type === 'watchtower').length, 3);
-  act(state, { type: 'build', building: 'watchtower', plotId: 'p17' });
+  act(state, { type: 'build', building: 'watchtower', plotId: 't2' });
   assert.equal(state.buildings.at(-1).id, id);
   assert.equal(state.buildings.at(-1).level, 1);
   assert.equal(state.buildings.filter((building) => building.type === 'watchtower').length, 4);

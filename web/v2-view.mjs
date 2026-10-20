@@ -1,10 +1,12 @@
 import { regionArtwork } from './region-art.mjs';
-import { villageFortifications } from './village-fortifications.mjs';
+import { villageFortifications, villageCornerSites } from './village-fortifications.mjs';
+import { buildingSiteLabel } from './settlement-labels.mjs';
 import { formatJourneyDuration } from './journey-time.mjs';
 import { villageAtmosphere } from './village-camera.mjs';
 import {
   BUILDINGS,
   PLOTS,
+  ALL_PLOTS,
   CORNER_PLOT_IDS,
   visualTier,
   getWallUpgradeCost,
@@ -69,11 +71,11 @@ export function settlementScene(state, { t, zoom = 1, selected = '' }) {
   const plots = PLOTS.filter((p) => !state.buildings.some((b) => b.x === p.x && b.y === p.y))
     .map((p) => {
       const [x, y] = point(p.x, p.y);
-      const corner = CORNER_PLOT_IDS.includes(p.id);
-      return `<g class="empty-plot scene-building" data-plot="${p.id}" ${corner ? `data-corner-plot="true" aria-describedby="corner-plot-hint-${p.id}"` : ''} tabindex="0" role="button" aria-label="${escape(t('plot'))} ${Number(p.id.slice(1)) + 1}" transform="translate(${x} ${y})">${corner ? `<title id="corner-plot-hint-${p.id}">${escape(t('cornerPlotHint'))}</title>` : ''}<path d="M0-45 83 0 0 45-83 0Z" fill="#eddeb4" fill-opacity=".3" stroke="#f8e6b8" stroke-width="2" stroke-dasharray="5 6"/><circle r="20" fill="#273d2c" fill-opacity=".84"/><path d="M-9 0H9M0-9V9" stroke="#f4e2b5" stroke-width="3"/>${corner ? '<path class="corner-tower-plot-marker" d="M34-10v-17h-2v-6h5v3h4v-3h5v6h-2v17Zm3-4h4v-7h-4Z" aria-hidden="true"/>' : ''}</g>`;
+      return `<g class="empty-plot scene-building" data-plot="${p.id}" tabindex="0" role="button" aria-label="${escape(buildingSiteLabel(p, t))}" transform="translate(${x} ${y})"><path d="M0-45 83 0 0 45-83 0Z" fill="#eddeb4" fill-opacity=".3" stroke="#f8e6b8" stroke-width="2" stroke-dasharray="5 6"/><circle r="20" fill="#273d2c" fill-opacity=".84"/><path d="M-9 0H9M0-9V9" stroke="#f4e2b5" stroke-width="3"/></g>`;
     })
     .join('');
-  const buildings = [...state.buildings]
+  const buildings = state.buildings
+    .filter((building) => building.type !== 'watchtower')
     .sort((a, b) => a.x + a.y - (b.x + b.y))
     .map((b) => {
       const [x, y] = point(b.x, b.y);
@@ -88,7 +90,7 @@ export function settlementScene(state, { t, zoom = 1, selected = '' }) {
     })
     .join('');
 
-  return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/><defs><linearGradient id="village-terrain-edge-x"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="village-terrain-edge-y" x2="0" y2="1"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><mask id="village-terrain-feather-x" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-x)"/></mask><mask id="village-terrain-feather-y" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-y)"/></mask></defs><g mask="url(#village-terrain-feather-x)"><image mask="url(#village-terrain-feather-y)" class="village-terrain-detail" data-river-source="mountain-foothills" href="${riverTerrainUrl}" width="1440" height="980" preserveAspectRatio="none" pointer-events="none"/></g>${villageAtmosphere()}${villageFortifications(state)}${plots}${buildings}</svg>`;
+  return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/><defs><linearGradient id="village-terrain-edge-x"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="village-terrain-edge-y" x2="0" y2="1"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><mask id="village-terrain-feather-x" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-x)"/></mask><mask id="village-terrain-feather-y" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-y)"/></mask></defs><g mask="url(#village-terrain-feather-x)"><image mask="url(#village-terrain-feather-y)" class="village-terrain-detail" data-river-source="mountain-foothills" href="${riverTerrainUrl}" width="1440" height="980" preserveAspectRatio="none" pointer-events="none"/></g>${villageAtmosphere()}${villageFortifications(state)}${plots}${buildings}${villageCornerSites(state, { t, selected })}</svg>`;
 }
 export function settlementControls(state, { t, busy, movingId }) {
   const cost = getWallUpgradeCost(state.walls);
@@ -98,14 +100,16 @@ export function settlementControls(state, { t, busy, movingId }) {
   return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}<div class="fortification-overview"><h4>${t('cornerFortificationsTitle')}</h4><p>${t('cornerFortificationsHint')}</p><p>${escape(count)}</p><p>${t('cornerTowerBonusHint')}</p><p>${t('villageGateHint')}</p></div></section>`;
 }
 export function placementDialog(state, { plotId, t, busy }) {
-  const plot = PLOTS.find((p) => p.id === plotId);
+  const plot = ALL_PLOTS.find((p) => p.id === plotId);
   if (!plot) return '';
   const corner = CORNER_PLOT_IDS.includes(plotId);
   const towerLimit = BUILDINGS.find((building) => building.id === 'watchtower').maxCount;
   const towers = state.buildings.filter((building) => building.type === 'watchtower').length;
   const count = t('cornerTowerCount').replace('{count}', towers).replace('{max}', towerLimit);
-  return `<div class="modal-backdrop"><section class="modal placement-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">×</button><span class="eyebrow">${t('plot')} ${Number(plotId.slice(1)) + 1}</span><h2 id="modal-title">${t('placeTitle')}</h2><p>${t('producerLimit')}</p>${corner ? `<p class="corner-placement-hint" data-corner-placement>${t('cornerPlacementHint')} · ${escape(count)}${towers >= towerLimit ? ' · ' + t('cornerTowerLimitHint') : ''}</p>` : ''}<div class="placement-grid">${BUILDINGS.filter(
-    (d) => state.buildings.filter((b) => b.type === d.id).length < d.maxCount,
+  return `<div class="modal-backdrop"><section class="modal placement-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">×</button><span class="eyebrow">${escape(buildingSiteLabel(plot, t))}</span><h2 id="modal-title">${t('placeTitle')}</h2>${corner ? '' : `<p>${t('producerLimit')}</p>`}${corner ? `<p class="corner-placement-hint" data-corner-placement>${t('cornerPlacementHint')} · ${escape(count)}${towers >= towerLimit ? ' · ' + t('cornerTowerLimitHint') : ''}</p>` : ''}<div class="placement-grid">${BUILDINGS.filter(
+    (d) =>
+      (corner ? d.id === 'watchtower' : d.id !== 'watchtower') &&
+      state.buildings.filter((b) => b.type === d.id).length < d.maxCount,
   )
     .map(
       (d) =>

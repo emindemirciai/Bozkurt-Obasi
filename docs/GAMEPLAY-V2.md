@@ -2,15 +2,15 @@
 
 ## Türkçe
 
-**v2.13.0:** Dört sabit sur kulesi, gerçekçi kapı/nöbetçiler ve dağ eteğinden doğan ırmak için [Sur Nöbeti](VILLAGE-DEFENSE.md).
+**v2.14.0:** Dört sur köşesi yalnızca oyuncunun inşa ettiği gözcü kulelerine ayrılır. Kule yerleri sabittir; kuleler isteğe bağlıdır, kendi seviyeleriyle gelişir ve kaldırılabilir. [Sur Nöbeti](VILLAGE-DEFENSE.md).
 
 **v2.11.0 güncellemesi:** Yeni keşif ve sevkiyatlar bölgeye göre 6/8/10/12 saat sürer. XP/hammadde ve izcilik etkisi için [uzun sefer rehberi](LONG-JOURNEYS.md). Eski seferler aynı süre ve ödülle biter.
 
 ### Obayı kendin kur
 
-Yeni hesapların obası 36 boş parsel ve seviye 1 tahta çitle başlar. Başlangıç stoğu 450 odun, 350 taş, 180 su, 180 yem ve 80 ottur. **+** alanını seç, açılan menüden binayı seç: kaynak yalnızca bu son seçimde harcanır ve yapı seçtiğin parselde oluşur. Harita sabit alana sığar; kendi içinde kaydırma çubuğu yoktur. Yakınlaştırma düğmeleri ve yakın görünümde sürükleme kullanılabilir.
+Yeni hesapların obası 36 boş normal parsel, yalnızca kuleye ayrılmış dört boş köşe yeri ve seviye 1 tahta çitle başlar. Başlangıç stoğu 450 odun, 350 taş, 180 su, 180 yem ve 80 ottur. **+** alanını seç, açılan menüden binayı seç: kaynak yalnızca bu son seçimde harcanır ve yapı seçtiğin parselde oluşur. Harita sabit alana sığar; kendi içinde kaydırma çubuğu yoktur. Yakınlaştırma düğmeleri ve yakın görünümde sürükleme kullanılabilir.
 
-Oduncu, taş ocağı, kuyu, otlak ve şifa otağının her birinden en fazla altı tane yapılabilir. Bey otağı, depo ve sürü sığınağı birer tanedir; ek gözetleme kulesi en fazla dört tanedir. Surun dört köşesinde ayrıca surla gelişen, parsel kullanmayan sabit kuleler vardır. Boş köşe arsaları ek kule önerir; serbest yerleşim korunur. En yüksek ek gözetleme kulesi seviyesi savunma desteğini belirler. [Sur Nöbeti](VILLAGE-DEFENSE.md). Kurulu binayı seçip **Binayı taşı** ile boş parsele ücretsiz taşı. **Yükselt** aynı binanın seviyesini artırır. Binalar 1–2, 3–4 ve 5. seviyelerde üç ayrı görsel kullanır. Sur beş seviyede tahta çitten güçlendirilmiş çite, taş sura ve kale suruna gelişir. Aktif çatışmada inşaat ve taşıma kapalıdır.
+Oduncu, taş ocağı, kuyu, otlak ve şifa otağının her birinden en fazla altı tane yapılabilir. Bey otağı, depo ve sürü sığınağı birer tanedir. En fazla dört gözcü kulesi yalnızca sur köşelerindeki ayrılmış yerlere kurulabilir; bu yerlere başka bina yapılamaz. Kuleler otomatik verilmez: her biri 100 odun + 70 taş ister. İnşa edilmiş kule taşınamaz; kendi seviyesine göre yükseltilir veya %50 malzeme iadesiyle onaydan sonra kaldırılır. En yüksek kurulu kule seviyesi savunma desteğini belirler. [Sur Nöbeti](VILLAGE-DEFENSE.md). Kule dışındaki kurulu binayı seçip **Binayı taşı** ile boş normal parsele ücretsiz taşı. **Yükselt** aynı binanın seviyesini artırır. Binalar 1–2, 3–4 ve 5. seviyelerde üç ayrı görsel kullanır. Sur beş seviyede tahta çitten güçlendirilmiş çite, taş sura ve kale suruna gelişir. Aktif çatışmada inşaat ve taşıma kapalıdır.
 
 ### Geçitte pusu
 
@@ -42,21 +42,21 @@ Arkadaşlığı kaldırınca konuşma ve transfer erişimi kapanır. Kayıtlar v
 
 ### Dağıtım ve kayıt geçişi
 
-Oyun kaydı `version: 2` kullanır. `shared/legacy-v1.mjs` önceki sürümün doğrulama kurallarını sabit tutar; yalnızca geçerli v1 kayıtları kopyalanarak taşınır. Kaynaklar, bina konum/seviyeleri, görevler, kurtlar, savaş ve devam eden eski yolculuk korunur. Yeni sur/envanter/keşif alanları eklenir. Bozuk kayıt sessizce boş köyle değiştirilmez. API'de yeni `build` isteği `plotId` ister; eski `travel` yerine seçilmiş `wolfIds` ile `caravan` kullanılır.
+Oyun kaydı `version: 2` kullanır. `shared/legacy-v1.mjs` önceki sürümün doğrulama kurallarını sabit tutar; yalnızca geçerli v1 kayıtları kopyalanarak taşınır. Kaynaklar, bina seviyeleri, görevler, kurtlar, savaş ve devam eden eski yolculuk korunur. v2.14.0 önceki sürümlerde normal parsellerde kurulmuş gözcü kulelerini kimlik/seviyeleri korunarak boş kule köşelerine taşır; diğer bina konumları değişmez. Yeni sur/envanter/keşif alanları eklenir. Bozuk kayıt sessizce boş köyle değiştirilmez. API'de yeni `build` isteği `plotId` ister; eski `travel` yerine seçilmiş `wolfIds` ile `caravan` kullanılır.
 
 Yeni ortam değişkeni veya servis gerekmez. Dokploy'da mevcut veri volume'larını koruyup dört servisi birlikte yeniden dağıtın. [Köy önizlemesi](../preview/village.html), [savaş önizlemesi](../preview/battle.html) ve [ana sayfa index](../preview/index.html) internet olmadan açılır; oyuncu hesabını değiştirmez.
 
 ## English
 
-**v2.13.0:** See [Wall Watch](VILLAGE-DEFENSE.md) for four fixed wall towers, realistic gate/sentries and a river rising at mountain foothills.
+**v2.14.0:** Four wall corners are reserved for player-built watchtowers. Locations are fixed; towers are optional, develop with their own levels and can be demolished. See [Wall Watch](VILLAGE-DEFENSE.md).
 
 **v2.11.0 update:** New exploration and escorts take 6/8/10/12 hours by destination. See [long journeys](LONG-JOURNEYS.md) for XP/materials and scouting. Existing departures retain deadlines/rewards.
 
 ### Build your own village
 
-New accounts start with 36 empty plots, level-one timber fencing and 450 wood, 350 stone, 180 water, 180 feed and 80 herbs. Choose a map **+**, then a building. Only the final choice spends resources and it uses that exact plot. The map fits a fixed viewport without inner scrollbars; use zoom controls and drag while zoomed.
+New accounts start with 36 empty ordinary plots, four empty tower-only corner sites, level-one timber fencing and 450 wood, 350 stone, 180 water, 180 feed and 80 herbs. Choose a map **+**, then a building. Only the final choice spends resources and it uses that exact plot. The map fits a fixed viewport without inner scrollbars; use zoom controls and drag while zoomed.
 
-Each producer type (lumber, quarry, well, pasture, healer) supports six copies. Hall, warehouse and shelter are unique; up to four additional watchtowers can be built. Four permanent wall-corner towers evolve with the walls and occupy no plots. Empty inner corner plots recommend additional towers while free placement remains. The highest additional watchtower level determines defense support. [Wall Watch](VILLAGE-DEFENSE.md). Select a placed building and **Move building** to relocate it freely; upgrades improve that instance. Buildings have five levels and three visual tiers (1–2, 3–4, 5). Walls progress from timber fencing through reinforced palisades and stone to castle ramparts. Active combat blocks construction and relocation.
+Each producer type (lumber, quarry, well, pasture, healer) supports six copies. Hall, warehouse and shelter are unique. Up to four watchtowers can be built only at their reserved wall-corner sites; other buildings cannot use those sites. Towers are not granted automatically: each costs 100 wood + 70 stone. A built tower cannot move; it can be upgraded by its own level or demolished with confirmation and a 50% material refund. The highest built tower level determines defense support. [Wall Watch](VILLAGE-DEFENSE.md). Select a placed building other than a watchtower and **Move building** to relocate it to a free ordinary plot; upgrades improve that instance. Buildings have five levels and three visual tiers (1–2, 3–4, 5). Walls progress from timber fencing through reinforced palisades and stone to castle ramparts. Active combat blocks construction and relocation.
 
 ### Trail, ambush and formations
 
@@ -78,6 +78,6 @@ Removing a friendship blocks conversation and transfer access. Records remain un
 
 ### Save migration and deployment
 
-Schema version 2 clones and upgrades validated v1 saves while retaining positions, levels, balances, guardians, quests, battle state and pending old journeys. Frozen validation in `shared/legacy-v1.mjs` prevents future rules from invalidating legitimate old saves. Invalid records are never silently replaced by a new village. New `build` commands require `plotId`; replace legacy `travel` with `caravan` and explicit `wolfIds`.
+Schema version 2 clones and upgrades validated v1 saves while retaining levels, balances, guardians, quests, battle state and pending old journeys. Version 2.14.0 relocates watchtowers built on ordinary plots in earlier releases into free tower corners while preserving IDs and levels; all other buildings retain their positions. Frozen validation in `shared/legacy-v1.mjs` prevents future rules from invalidating legitimate old saves. Invalid records are never silently replaced by a new village. New `build` commands require `plotId`; replace legacy `travel` with `caravan` and explicit `wolfIds`.
 
 No new environment variables or services are required. Redeploy all four Dokploy services together while retaining existing data volumes. The standalone [village](../preview/village.html), [battlefield](../preview/battle.html) and [homepage](../preview/index.html) previews work offline and cannot change player accounts.

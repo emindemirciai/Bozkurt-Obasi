@@ -305,7 +305,7 @@ test('clear weather visibly includes a river, waterfall and clouds without inter
         };
       }),
     );
-  expect(hitTargets).toHaveLength(36);
+  expect(hitTargets).toHaveLength(40);
   expect(hitTargets.every((entry) => entry.actual === entry.expected)).toBe(true);
   const riverPoint = await terrain(page).evaluate((svg) => {
     const point = new DOMPoint(1397, 559).matrixTransform(svg.getScreenCTM());

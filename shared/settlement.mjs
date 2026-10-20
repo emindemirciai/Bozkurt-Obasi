@@ -35,8 +35,12 @@ export const PLOTS = Object.freeze(
   ),
 );
 
-/** Suggested inner corners only; every plot remains available for free placement. */
-export const CORNER_PLOT_IDS = Object.freeze(['p0', 'p5', 'p30', 'p35']);
+/** Reserved wall corners are separate from the 36 freely placed village buildings. */
+export const TOWER_PLOTS = Object.freeze(
+  Array.from({ length: 4 }, (_, index) => Object.freeze({ id: `t${index}`, x: 6, y: index })),
+);
+export const ALL_PLOTS = Object.freeze([...PLOTS, ...TOWER_PLOTS]);
+export const CORNER_PLOT_IDS = Object.freeze(TOWER_PLOTS.map((plot) => plot.id));
 
 const WALL_COSTS = Object.freeze([
   null,
@@ -58,7 +62,16 @@ const fail = (code) => {
 const peace = (state) => {
   if (state.battle?.status === 'active') fail('BATTLE_ACTIVE');
 };
-const getPlot = (plotId) => PLOTS.find((plot) => plot.id === plotId);
+const getPlot = (plotId) => ALL_PLOTS.find((plot) => plot.id === plotId);
+const fitsPlot = (type, plot) => (type === 'watchtower') === TOWER_PLOTS.includes(plot);
+const validBuildingPosition = (building, allowLegacyTowerPlots = false) => {
+  const plot = ALL_PLOTS.find((entry) => entry.x === building.x && entry.y === building.y);
+  return (
+    !!plot &&
+    (fitsPlot(building.type, plot) ||
+      (allowLegacyTowerPlots && building.type === 'watchtower' && PLOTS.includes(plot)))
+  );
+};
 const occupied = (state, plot, exceptId) =>
   state.buildings.some(
     (building) => building.id !== exceptId && building.x === plot.x && building.y === plot.y,
@@ -77,9 +90,25 @@ export function initializeSettlement() {
   return { buildings: [], walls: { level: 1 } };
 }
 
-/** Old villages already used integral coordinates within this larger map. No assets are reset. */
+/** Move only previously purchased towers into free wall corners, preserving their investment. */
 export function migrateSettlement(state) {
   if (!Object.hasOwn(state, 'walls')) state.walls = { level: 1 };
+  if (!validateSettlement(state, { allowLegacyTowerPlots: true })) fail('INVALID_SAVE');
+  const used = new Set(
+    state.buildings
+      .filter((building) => building.type === 'watchtower' && building.x === 6)
+      .map((building) => building.y),
+  );
+  const legacy = state.buildings
+    .filter((building) => building.type === 'watchtower' && building.x !== 6)
+    .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+  for (const tower of legacy) {
+    const plot = TOWER_PLOTS.find((entry) => !used.has(entry.y));
+    if (!plot) fail('INVALID_SAVE');
+    tower.x = plot.x;
+    tower.y = plot.y;
+    used.add(plot.y);
+  }
   return state;
 }
 
@@ -168,12 +197,7 @@ export function demolishBuilding(state, action) {
     !Number.isSafeInteger(action.expected.level) ||
     action.expected.level < 1 ||
     action.expected.level > 5 ||
-    !Number.isSafeInteger(action.expected.x) ||
-    action.expected.x < 0 ||
-    action.expected.x > 5 ||
-    !Number.isSafeInteger(action.expected.y) ||
-    action.expected.y < 0 ||
-    action.expected.y > 5 ||
+    !validBuildingPosition(action.expected) ||
     !Number.isSafeInteger(action.expected.builds) ||
     action.expected.builds < 0 ||
     action.expected.builds > 1_000_000
@@ -204,6 +228,7 @@ export function placeBuilding(state, type, plotId) {
   if (!definition) fail('INVALID_BUILDING');
   const plot = getPlot(plotId);
   if (!plot) fail('INVALID_PLOT');
+  if (!fitsPlot(type, plot)) fail('INVALID_BUILDING_PLOT');
   if (occupied(state, plot)) fail('PLOT_OCCUPIED');
   if (state.buildings.filter((building) => building.type === type).length >= definition.maxCount)
     fail(definition.maxCount === 1 ? 'BUILDING_EXISTS' : 'BUILDING_LIMIT');
@@ -221,8 +246,10 @@ export function relocateBuilding(state, id, plotId) {
   peace(state);
   const building = state.buildings.find((entry) => entry.id === id);
   if (!building) fail('INVALID_BUILDING');
+  if (building.type === 'watchtower') fail('TOWER_FIXED');
   const plot = getPlot(plotId);
   if (!plot) fail('INVALID_PLOT');
+  if (!fitsPlot(building.type, plot)) fail('INVALID_BUILDING_PLOT');
   if (occupied(state, plot, id)) fail('PLOT_OCCUPIED');
   building.x = plot.x;
   building.y = plot.y;
@@ -239,10 +266,10 @@ export function upgradeWall(state) {
 }
 
 /** Validate only the settlement portion; full game validation checks resources and capacity. */
-export function validateSettlement(state) {
+export function validateSettlement(state, { allowLegacyTowerPlots = false } = {}) {
   if (
     !Array.isArray(state.buildings) ||
-    state.buildings.length > PLOTS.length ||
+    state.buildings.length > ALL_PLOTS.length ||
     !exactKeys(state.walls, ['level']) ||
     !Number.isSafeInteger(state.walls.level) ||
     state.walls.level < 1 ||
@@ -265,15 +292,7 @@ export function validateSettlement(state) {
       building.level > definition.maxLevel
     )
       return false;
-    if (
-      !Number.isSafeInteger(building.x) ||
-      !Number.isSafeInteger(building.y) ||
-      building.x < 0 ||
-      building.x > 5 ||
-      building.y < 0 ||
-      building.y > 5
-    )
-      return false;
+    if (!validBuildingPosition(building, allowLegacyTowerPlots)) return false;
     const spot = `${building.x},${building.y}`;
     const count = (counts.get(building.type) || 0) + 1;
     if (spots.has(spot) || count > definition.maxCount) return false;
