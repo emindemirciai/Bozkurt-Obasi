@@ -114,7 +114,7 @@ test('passive production enables the quote while preserving selection and focuse
     window.originalHerdButton = document.querySelector('#herd-replenish-button');
   });
   const polled = page.waitForResponse('**/api/state');
-  await page.clock.fastForward(1000);
+  await page.clock.fastForward(11_000);
   await (await polled).finished();
   await expect(button).toBeEnabled();
   await expect(select).toHaveValue('2');

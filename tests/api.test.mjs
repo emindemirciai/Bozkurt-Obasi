@@ -895,7 +895,7 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
   assert.equal(completed.state.adventure.active, null);
   assert.equal(receipt.plan, 'survey');
   assert.equal(receipt.xp, 270);
-  assert.deepEqual(receipt.reward, { water: 0, feed: 0, herbs: 13, wood: 50, stone: 45 });
+  assert.deepEqual(receipt.reward, { water: 0, feed: 0, herbs: 13, wood: 72, stone: 45 });
   assert.equal(receipt.item, 'leather_vest');
   assert.equal(receipt.itemCount, 1);
   assert.equal(completed.state.inventory.leather_vest, 1);
@@ -944,7 +944,7 @@ test('supply caravans persist their destination, capped receipt and fatigue once
   );
   now = exploration.state.adventure.active.endsAt;
   const unlocked = await (await api.request('/api/state', { cookie: player.cookie })).json();
-  unlocked.state.resources.wood = 490;
+  unlocked.state.resources.wood = unlocked.state.capacity - 10;
   await saveAccountState(api, player, unlocked.state);
   const started = await send(
     {
@@ -1106,7 +1106,7 @@ test('legacy outings without a plan retain their original timing and rewards thr
     water: 0,
     feed: 0,
     herbs: 7,
-    wood: 18,
+    wood: 32,
     stone: 21,
   });
   assert.deepEqual(arrived.state.adventure.history[1], firstReceipt);
@@ -1447,7 +1447,7 @@ test('storage demolition checks every resource against the reduced capacity and 
   });
   const built = await response.json();
   const crowded = structuredClone(built.state);
-  crowded.resources.water = 501;
+  crowded.resources.water = 1001;
   await saveAccountState(api, player, crowded);
   const action = {
     type: 'demolishBuilding',
@@ -1464,7 +1464,7 @@ test('storage demolition checks every resource against the reduced capacity and 
   const saved = await (await api.request('/api/state', { cookie: player.cookie })).json();
   assert.deepEqual(saved.state, crowded);
   assert.equal(saved.revision, built.revision);
-  crowded.resources.water = 500;
+  crowded.resources.water = 1000;
   await saveAccountState(api, player, crowded);
   const accepted = await api.request('/api/action', {
     method: 'POST',
@@ -1473,8 +1473,8 @@ test('storage demolition checks every resource against the reduced capacity and 
   });
   assert.equal(accepted.status, 200);
   const removed = await accepted.json();
-  assert.equal(removed.state.capacity, 500);
-  assert.equal(removed.state.resources.water, 500);
+  assert.equal(removed.state.capacity, 1000);
+  assert.equal(removed.state.resources.water, 1000);
   assert.equal(removed.state.resources.wood, crowded.resources.wood + 40);
   assert.equal(removed.state.resources.stone, crowded.resources.stone + 27.5);
   assert.equal(validateGame(removed.state), true);
@@ -1537,7 +1537,7 @@ test('battle and expedition activity reject demolition while preserving structur
   }
 });
 
-test('manual collection awards the slower fixed bundle, persists its 20-second cooldown, and cannot replay after restart', async (t) => {
+test('manual collection awards the slower fixed bundle, persists its 90-second cooldown, and cannot replay after restart', async (t) => {
   let now = 100_000;
   const api = await fixture(t, { clock: () => now });
   const player = await api.session();
@@ -1555,34 +1555,34 @@ test('manual collection awards the slower fixed bundle, persists its 20-second c
   const first = await send(player.data.revision);
   assert.equal(first.status, 200);
   assert.deepEqual(first.data.state.resources, {
-    water: 184,
-    feed: 184,
+    water: 182,
+    feed: 182,
     herbs: 80,
-    wood: 457,
-    stone: 354,
+    wood: 453,
+    stone: 352,
   });
-  assert.equal(first.data.state.collectReadyAt, 120_000);
+  assert.equal(first.data.state.collectReadyAt, 190_000);
   await api.restart();
   const restored = await api.session(player.cookie);
   assert.deepEqual(restored.data.state, first.data.state);
-  now = 119_999;
+  now = 189_999;
   const tooEarly = await send(restored.data.revision);
   assert.equal(tooEarly.status, 400);
   assert.equal(tooEarly.data.error, 'COLLECT_COOLDOWN');
   const observed = await (await api.request('/api/state', { cookie: player.cookie })).json();
   assert.deepEqual(observed.state.resources, first.data.state.resources);
   assert.equal(observed.state.stats.gathers, 1);
-  now = 120_000;
+  now = 190_000;
   const second = await send(observed.revision);
   assert.equal(second.status, 200);
   assert.deepEqual(second.data.state.resources, {
-    water: 188,
-    feed: 188,
+    water: 184,
+    feed: 184,
     herbs: 80,
-    wood: 464,
-    stone: 358,
+    wood: 456,
+    stone: 354,
   });
-  assert.equal(second.data.state.collectReadyAt, 140_000);
+  assert.equal(second.data.state.collectReadyAt, 280_000);
   assert.equal(second.data.state.stats.gathers, 2);
   assert.equal(second.data.state.firstWatch.milestones.gather, 100_000);
   const replay = await send(observed.revision);
@@ -1611,10 +1611,10 @@ test('slower passive production remains authoritative and client economy overrid
   now += 60_000;
   current = await (await api.request('/api/state', { cookie: player.cookie })).json();
   assert.deepEqual(current.state.resources, {
-    wood: before.wood + 6,
-    stone: before.stone + 4.5,
-    water: before.water + 7,
-    feed: before.feed + 6,
+    wood: before.wood + 0.6,
+    stone: before.stone + 0.45,
+    water: before.water + 0.7,
+    feed: before.feed + 0.6,
     herbs: before.herbs,
   });
   await api.restart();
@@ -1634,8 +1634,8 @@ test('slower passive production remains authoritative and client economy overrid
   assert.deepEqual(arrived.state.adventure.history[0].reward, {
     water: 0,
     feed: 0,
-    wood: 0,
-    stone: 0,
+    wood: 96,
+    stone: 60,
     herbs: 18,
   });
   assert.equal(arrived.state.adventure.history[0].economyVersion, 3);
@@ -1932,4 +1932,122 @@ test('paid legacy tower migration persists once per account and remains stable a
   await api.restart();
   assert.deepEqual((await api.session(player.cookie)).data, restored.data);
   assert.deepEqual((await api.session(other.cookie)).data.state, other.data.state);
+});
+
+test('legacy storage expands once through restart while balances, running journeys and other accounts remain unchanged', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const other = await api.session();
+  const legacy = structuredClone(player.data.state);
+  applyAction(legacy, { type: 'build', building: 'storage', plotId: 'p0' }, legacy.updatedAt);
+  while (legacy.buildings[0].level < 5) {
+    for (const key of Object.keys(legacy.resources)) legacy.resources[key] = legacy.capacity;
+    applyAction(legacy, { type: 'upgrade', id: 'building-storage' }, legacy.updatedAt);
+  }
+  applyAction(
+    legacy,
+    { type: 'expedition', region: 'spring', difficulty: 'easy', wolfIds: ['wolf-scout'] },
+    legacy.updatedAt,
+  );
+  legacy.capacity = 1750;
+  for (const key of Object.keys(legacy.resources)) legacy.resources[key] = legacy.capacity - 0.125;
+  legacy.collectReadyAt = legacy.updatedAt + 20_000;
+  await saveAccountState(api, player, legacy, { allowLegacyCapacity: true });
+  const expected = { ...structuredClone(legacy), capacity: 5000000 };
+  await api.restart();
+  const restored = await api.session(player.cookie);
+  assert.deepEqual(restored.data.state, expected);
+  assert.equal(restored.data.revision, player.data.revision + 1);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data, restored.data);
+  assert.deepEqual((await api.session(other.cookie)).data, other.data);
+});
+
+test('focused collection is server-authoritative, concurrent choices award once and share the saved cooldown', async (t) => {
+  let now = 100_000;
+  const api = await fixture(t, { clock: () => now });
+  const player = await api.session();
+  const other = await api.session();
+  const send = async (resource, revision) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: {
+        revision,
+        action: { type: 'collect', resource, reward: { wood: 999999 }, cooldown: 0 },
+      },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const first = await send('wood', player.data.revision);
+  assert.equal(first.status, 200);
+  assert.deepEqual(first.data.state.resources, { ...player.data.state.resources, wood: 460 });
+  assert.equal(first.data.state.collectReadyAt, now + 90_000);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data, { ...first.data, mode: 'online' });
+  const wrong = await send('herbs', first.data.revision);
+  assert.equal(wrong.status, 400);
+  assert.equal(wrong.data.error, 'COLLECT_COOLDOWN');
+  now += 90_000;
+  const observed = await (await api.request('/api/state', { cookie: player.cookie })).json();
+  const choices = await Promise.all([
+    send('stone', observed.revision),
+    send('herbs', observed.revision),
+  ]);
+  assert.deepEqual(choices.map((entry) => entry.status).sort(), [200, 409]);
+  const accepted = choices.find((entry) => entry.status === 200).data;
+  assert.equal(accepted.state.stats.gathers, 2);
+  assert.equal(accepted.state.collectReadyAt, now + 90_000);
+  assert.ok(
+    (accepted.state.resources.stone === 357 && accepted.state.resources.herbs === 80) ||
+      (accepted.state.resources.stone === 350 && accepted.state.resources.herbs === 82),
+  );
+  assert.equal(accepted.state.resources.wood, 460);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data, { ...accepted, mode: 'online' });
+  const replay = await send('stone', observed.revision);
+  assert.equal(replay.status, 409);
+  assert.deepEqual(replay.data, { error: 'stale_revision', ...accepted });
+  assert.deepEqual(
+    (await api.session(other.cookie)).data.state.resources,
+    other.data.state.resources,
+  );
+});
+
+test('invalid and fully stocked work does not change the persisted revision, resources or tutorial progress', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const full = structuredClone(player.data.state);
+  for (const key of Object.keys(full.resources)) full.resources[key] = full.capacity;
+  await saveAccountState(api, player, full);
+  for (const [resource, error] of [
+    [null, 'INVALID_COLLECTION'],
+    ['unknown', 'INVALID_COLLECTION'],
+    ['wood', 'COLLECT_STORAGE_FULL'],
+    ['mixed', 'COLLECT_STORAGE_FULL'],
+  ]) {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { revision: player.data.revision, action: { type: 'collect', resource } },
+    });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, error);
+    assert.deepEqual(await (await api.request('/api/state', { cookie: player.cookie })).json(), {
+      state: full,
+      revision: player.data.revision,
+    });
+  }
+  full.resources.wood -= 0.5;
+  await saveAccountState(api, player, full);
+  const response = await api.request('/api/action', {
+    method: 'POST',
+    cookie: player.cookie,
+    body: { revision: player.data.revision, action: { type: 'collect', resource: 'wood' } },
+  });
+  assert.equal(response.status, 200);
+  const collected = await response.json();
+  assert.equal(collected.state.resources.wood, full.capacity);
+  assert.equal(collected.state.stats.gathers, 1);
+  assert.equal(collected.state.collectReadyAt, full.updatedAt + 90_000);
 });

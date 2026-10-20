@@ -2,6 +2,7 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { test, expect } from '@playwright/test';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
+import { getStorageCapacity } from '../../shared/settlement.mjs';
 import { translations } from '../../web/i18n.mjs';
 import { signIn } from './sign-in.mjs';
 
@@ -62,7 +63,7 @@ async function establishedVillage(page, { hall = false } = {}) {
   applyAction(state, { type: 'build', building: 'storage', plotId: 'p14' }, START);
   // A valid mature storage snapshot funds the placement and architectural upgrade paths.
   state.buildings[0].level = 5;
-  state.capacity = 1750;
+  state.capacity = getStorageCapacity(state);
   for (const resource of Object.keys(state.resources)) state.resources[resource] = state.capacity;
   if (hall) {
     applyAction(state, { type: 'moveBuilding', id: 'building-storage', plotId: 'p10' }, START);

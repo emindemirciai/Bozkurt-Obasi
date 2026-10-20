@@ -4,6 +4,22 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.15.0 — 2026-10-20
+
+**TR**
+
+- Depo kapasitesi yükseltmelerle 10.000, 50.000, 250.000, 1.000.000 ve 5.000.000 olur; Bey Otağı katkısı ayrıca eklenir. Eski kaynaklar kayıpsız korunur.
+- Pasif üretim yüzde 90 azaltıldı. Odun, taş, su, yem ve şifalı ot için hedefli toplama eylemleri ortak 90 saniyelik beklemeyle çalışır.
+- Ana Yurt depo genişletme planını, sonraki kapasiteyi ve toplama kazanımlarını TR/EN gösterir; kaynak seçmek otomatik işlem başlatmaz.
+- İnşaat tarifeleri, yüzde 50 kaldırma iadeleri, tek seferlik görev ödülleri ve başlamış uzun seferlerin vaatleri korunur.
+
+**EN**
+
+- Storage upgrades provide 10,000, 50,000, 250,000, 1,000,000 and 5,000,000 capacity, plus the hall contribution. Existing balances are preserved.
+- Passive production is reduced by 90%. Focused wood, stone, water, feed and herb gathering share a 90-second cooldown.
+- The homeland shows storage expansion, next capacity and gathering rewards in TR/EN; choosing a resource never starts an automatic action.
+- Construction recipes, 50% demolition refunds, one-time quest rewards and existing long-journey promises remain unchanged.
+
 ## v2.14.0 — 2026-10-20
 
 **TR**

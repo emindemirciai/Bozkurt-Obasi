@@ -4295,3 +4295,300 @@ footer > span:first-child {
     margin-top: 2px;
   }
 }
+
+/* Expandable storage and deliberate, server-timed gathering. */
+.resource-storage-shortcut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: -16px 0 24px;
+  font-size: 11px;
+  color: var(--muted, #71806a);
+}
+.resource-storage-shortcut strong {
+  color: var(--ink, #3d5843);
+}
+.resource-storage-shortcut .button {
+  min-height: 36px;
+  padding: 5px 8px;
+}
+.resource-work {
+  padding: 18px 20px 20px;
+  border-top: 1px solid #dfe5d5;
+  background: #f2f3e9;
+  color: #3d5843;
+}
+.resource-work-heading,
+.storage-expansion-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.resource-work-heading h3 {
+  font-size: 15px;
+}
+.resource-work-heading > span {
+  font-size: 10px;
+}
+.resource-work-intro {
+  margin: 8px 0 16px;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.resource-work-controls {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(160px, 1.4fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+.resource-work-controls > div {
+  min-width: 0;
+}
+.resource-work-controls label,
+.resource-work-yield > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+}
+.resource-work-controls select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid #b3bea1;
+  border-radius: 7px;
+  background: #fafbf3;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}
+.resource-work-yield strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.resource-work-yield small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.resource-work .button {
+  min-height: 42px;
+  white-space: normal;
+}
+.storage-expansion {
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--economy-border);
+  border-radius: 10px;
+  background: var(--economy-tint);
+}
+.storage-expansion-heading > div {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.storage-expansion-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+.storage-expansion-heading h3 svg {
+  flex-shrink: 0;
+}
+.storage-expansion-heading p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.storage-expansion-heading > span {
+  font-size: 11px;
+  font-weight: 650;
+}
+.storage-capacity-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 18px 0;
+  margin: 16px 0;
+  border-block: 1px solid var(--economy-border);
+}
+.storage-capacity-steps div {
+  min-width: 0;
+}
+.storage-capacity-steps div span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+}
+.storage-capacity-steps strong {
+  display: block;
+  font-size: clamp(18px, 2vw, 25px);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.storage-capacity-steps > div:last-child {
+  color: var(--economy-muted);
+}
+.storage-step-arrow {
+  font-size: 24px;
+  color: var(--economy-brown);
+}
+.storage-expansion-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+.storage-expansion-action > div {
+  flex: 1 1 200px;
+}
+.storage-expansion-action p {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+.storage-expansion-action small {
+  font-size: 11px;
+}
+.storage-expansion-action button {
+  min-height: 44px;
+  white-space: normal;
+}
+.storage-expansion-note {
+  margin: 15px 0 0;
+  color: var(--economy-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+:root[data-theme='dark'] .resource-work {
+  background: #3d3328;
+  border-color: #897052;
+  color: #f6e7c8;
+}
+:root[data-theme='dark'] .resource-work select {
+  background: #30261e;
+  border-color: #9e8967;
+  color: #fff0d4;
+}
+.game-shell .resource {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+}
+.game-shell .resource > div {
+  min-width: 0;
+}
+.game-shell .resource-icon {
+  flex-shrink: 0;
+  grid-row: 1 / 3;
+}
+.game-shell .resource-rate {
+  grid-column: 2;
+  margin-left: 0;
+  text-align: left;
+}
+.game-shell .resource strong {
+  font-size: clamp(12px, 1.1vw, 16px);
+  font-variant-numeric: tabular-nums;
+}
+.game-shell .resource strong small {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+}
+:root[data-theme='dark'] .game-shell .economy-panel {
+  --economy-surface: #45392d;
+  --economy-text: #f6e7c8;
+  --economy-muted: #d2c2a6;
+  --economy-border: #897052;
+  --economy-track: #5c4e3b;
+  --economy-green: #b7ca92;
+  --economy-brown: #e8c68b;
+  --economy-tint: #4e402f;
+}
+@media (max-width: 1100px) {
+  .resource-work-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .resource-work-controls > button {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+  .game-shell .resource {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 6px;
+    gap: 6px;
+    text-align: center;
+  }
+  .game-shell .resource-rate {
+    font-size: 10px;
+    text-align: center;
+  }
+}
+@media (max-width: 600px) {
+  .resource-work {
+    padding: 16px 12px;
+  }
+  .resource-work-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .resource-work-controls > button {
+    justify-self: stretch;
+  }
+  .resource-work-heading {
+    align-items: start;
+  }
+  .storage-expansion {
+    padding: 16px 12px;
+  }
+  .storage-capacity-steps {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  .storage-capacity-steps > div:last-child {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--economy-border);
+  }
+  .storage-capacity-steps > div:last-child span {
+    margin: 0;
+  }
+  .storage-expansion-action button {
+    width: 100%;
+  }
+  .resource-storage-shortcut {
+    margin-top: -6px;
+    font-size: 10px;
+  }
+  /* Three resources above two: million-scale stocks stay readable without clipping. */
+  .game-shell .resource-bar {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .game-shell .resource {
+    grid-column: span 2;
+  }
+  .game-shell .resource:nth-child(n + 4) {
+    grid-column: span 3;
+    border-top: 1px solid var(--line, #897052);
+  }
+  .game-shell .resource:nth-child(3)::after {
+    display: none;
+  }
+  .game-shell .resource strong {
+    font-size: 12px;
+  }
+  .game-shell .resource strong small {
+    font-size: 11px;
+  }
+}

@@ -349,9 +349,9 @@ test('legacy planned missions validate up to 563 seconds without widening their 
 
 test('resource and item storage caps apply to enhanced supply receipts without duplicate awards', () => {
   const state = createGame(NOW);
-  state.resources.wood = 499.5;
-  state.resources.stone = 500;
-  state.resources.herbs = 498;
+  state.resources.wood = state.capacity - 0.5;
+  state.resources.stone = state.capacity;
+  state.resources.herbs = state.capacity - 2;
   state.inventory.leather_vest = 10000;
   act(state, choice({ plan: 'supply' }));
   finish(state);
@@ -375,7 +375,7 @@ test('readiness shows authoritative plan fatigue, costs and extra storage pressu
   const state = createGame(NOW);
   state.resources.water = 18;
   state.resources.feed = 23;
-  state.resources.wood = 480;
+  state.resources.wood = state.capacity - 20;
   const before = structuredClone(state);
   assert.equal(adventureReadiness(state, choice()).ready, true);
   for (const plan of ['survey', 'supply']) {

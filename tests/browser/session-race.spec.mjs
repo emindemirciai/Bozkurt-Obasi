@@ -145,7 +145,7 @@ test('server production unlocks construction without navigating or clicking', as
   const choice = page.locator('.placement-dialog [data-building-type="quarry"]');
   await expect(choice).toBeDisabled();
   await page.locator('[data-action="close"]').click();
-  await page.clock.fastForward(10100);
+  await page.clock.fastForward(100_100);
   await expect(quarry).toBeEnabled();
   await quarry.click();
   await page.locator('[data-plot="p0"]').click();

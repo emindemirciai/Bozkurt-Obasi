@@ -137,7 +137,7 @@ test('failed transfers roll back both villages and capacity/amount checks preven
   assert.throws(() => social.transfer('alice@example.com', body, now), /insufficient_stone/);
   assert.deepEqual(db.prepare('SELECT * FROM email_accounts').all(), before);
   const state = createGame(now);
-  state.resources.stone = 499;
+  state.resources.stone = state.capacity - 1;
   db.prepare("UPDATE email_accounts SET state_json=? WHERE sub='bob'").run(JSON.stringify(state));
   assert.throws(
     () => social.transfer('alice@example.com', { ...body, amount: 2 }, now),

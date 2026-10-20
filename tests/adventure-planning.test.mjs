@@ -112,8 +112,8 @@ test('readiness explains the actual route and multiple shortages without blockin
   const state = createGame(NOW);
   state.resources.water = 16.5;
   state.resources.feed = 20;
-  state.resources.wood = 499;
-  state.resources.stone = 500;
+  state.resources.wood = state.capacity - 1;
+  state.resources.stone = state.capacity;
   state.inventory.leather_vest = 10000;
   const plan = adventureReadiness(state, selection());
   assert.deepEqual(plan.shortages, [

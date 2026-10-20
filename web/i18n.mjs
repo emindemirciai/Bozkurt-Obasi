@@ -375,7 +375,8 @@ export const translations = {
     wellDesc: 'Bozkırdaki yaşamın kaynağı.',
     pastureDesc: 'Sürünü besleyen bereketli topraklar.',
     healerDesc: 'Şifalı bitki üretir; sürüne can verir.',
-    storageDesc: 'Kaynak saklama kapasitesini büyütür.',
+    storageDesc:
+      'Her kaynak için kapasiteyi yükseltmelerle 5.000.000’a çıkarır; Bey Otağı ek alan sağlar.',
     watchtowerDesc: 'Savunma gücünü ve erken uyarıyı artırır.',
     shelterDesc: 'Sürüye güvenli bir sığınak sağlar.',
     production: 'Üretim',
@@ -494,7 +495,8 @@ export const translations = {
     logTravel: 'Sürü yeni bir rotaya çıktı.',
     logArrived: 'Sürü yeni bölgeye ulaştı.',
     logClaimed: 'Görev ödülü alındı.',
-    resourceTip: 'Kaynaklar binalardan otomatik üretilir.',
+    resourceTip:
+      'Binalar yavaş pasif gelir sağlar. İhtiyacın olan kaynağı çalışarak topla; depoyu yükselterek daha fazlasını sakla.',
     buildingCount: 'yapı',
     projectVersion: 'WEB SÜRÜMÜ',
     recovery: 'Yedek kayıt geri yüklendi.',
@@ -877,7 +879,8 @@ export const translations = {
     wellDesc: 'The source of life on the steppe.',
     pastureDesc: 'Fertile land that feeds your herd.',
     healerDesc: 'Produces healing herbs for your herd.',
-    storageDesc: 'Increases your resource capacity.',
+    storageDesc:
+      'Upgrades raise capacity to 5,000,000 for each resource; the Chief’s Hall adds extra space.',
     watchtowerDesc: 'Strengthens defense and early warning.',
     shelterDesc: 'A safe refuge for your animals.',
     production: 'Production',
@@ -996,7 +999,8 @@ export const translations = {
     logTravel: 'The herd set out on a new route.',
     logArrived: 'The herd reached a new region.',
     logClaimed: 'A quest reward was claimed.',
-    resourceTip: 'Buildings produce resources automatically.',
+    resourceTip:
+      'Buildings provide slow passive income. Work for the resource you need and upgrade storage to hold more.',
     buildingCount: 'buildings',
     projectVersion: 'WEB EDITION',
     recovery: 'Backup save restored.',
@@ -1424,3 +1428,77 @@ const journalTranslations = {
 };
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], journalTranslations[language]);
+
+const activeEconomyTranslations = {
+  tr: {
+    passiveProduction: 'Pasif gelir',
+    storageExpansionTitle: 'Erzak Deposu · Kapasiteyi büyüt',
+    storageExpansionIntro:
+      'Bu sınır her kaynak için ayrıdır. Mevcut miktarın, saklayabileceğin miktar değildir; daha büyük depo için inşa et ve yükselt.',
+    storageCurrent: 'Şu an / kaynak',
+    storageNext: 'Sonraki aşama / kaynak',
+    storageMaximum: 'Depo 5. seviye / kaynak',
+    storageExpand: 'Depoyu genişlet',
+    storageBuild: 'Depo için yer seç',
+    storageExpansionNote:
+      'Genişletme yalnızca kapasite sağlar; kaynak vermez. Gösterilen sınırlara Bey Otağı’nın mevcut katkısı dahildir. Yükseltme için gösterilen malzemeler harcanır.',
+    storageShortcut: 'Depoyu yönet',
+    workTitle: 'Oba işleri',
+    workIntro:
+      'Binaların pasif geliri yavaştır. İhtiyacın olan işi seçip kaynak topla; savaşlar, görevler ve uzun seferlerle stoklarını destekle.',
+    workSharedCooldown: 'ortak yenilenme',
+    workChoose: 'Yapılacak işi seç',
+    workYield: 'Bu işin kazanımı',
+    workReady: 'Her toplama işlemini sen başlatırsın. İşler kendiliğinden tekrarlanmaz.',
+    workWaiting:
+      'Yenilenme tüm işler için ortaktır. İş değiştirmek veya sayfayı yenilemek süreyi kısaltmaz.',
+    workPartial: 'Depoda yer olan miktar eklenir',
+    workStorageFull:
+      'Bu işin kaynakları için depo dolu. Kaynak harca, depoyu genişlet veya başka iş seç.',
+    workInvalid: 'Geçerli bir toplama işi seç.',
+    workReadOnly: 'Salt okunur önizleme. İş seçimini inceleyebilirsin; kaynak kazanılmaz.',
+    workTask_mixed: 'Karma toplama',
+    workTask_wood: 'Odun kes',
+    workTask_stone: 'Taş çıkar',
+    workTask_water: 'Su taşı',
+    workTask_feed: 'Ot biç',
+    workTask_herbs: 'Şifalı ot topla',
+    storageNextDetail: 'Yükseltmeden sonra kapasite',
+  },
+  en: {
+    passiveProduction: 'Passive income',
+    storageExpansionTitle: 'Supply Store · Expand capacity',
+    storageExpansionIntro:
+      'This limit applies separately to each resource. Your current stock is not your storage limit; build and upgrade a store for more space.',
+    storageCurrent: 'Now / resource',
+    storageNext: 'Next stage / resource',
+    storageMaximum: 'Store level 5 / resource',
+    storageExpand: 'Expand storage',
+    storageBuild: 'Choose a storage site',
+    storageExpansionNote:
+      'Expansion adds capacity only, not resources. Limits include the Chief’s Hall’s current contribution. Upgrading spends the displayed material cost.',
+    storageShortcut: 'Manage storage',
+    workTitle: 'Camp work',
+    workIntro:
+      'Buildings provide slow passive income. Choose the work you need and gather resources; support your stocks with battles, quests and long journeys.',
+    workSharedCooldown: 'shared cooldown',
+    workChoose: 'Choose your work',
+    workYield: 'This work earns',
+    workReady: 'You start each collection yourself. Work does not repeat automatically.',
+    workWaiting: 'All work shares the cooldown. Changing work or reloading does not shorten it.',
+    workPartial: 'Only the amount that fits will be added',
+    workStorageFull:
+      'Storage is full for this work’s resources. Spend resources, expand storage or choose another job.',
+    workInvalid: 'Choose a valid gathering job.',
+    workReadOnly: 'Read-only preview. Explore the work choices; no resources are awarded.',
+    workTask_mixed: 'Mixed gathering',
+    workTask_wood: 'Chop wood',
+    workTask_stone: 'Quarry stone',
+    workTask_water: 'Carry water',
+    workTask_feed: 'Cut fodder',
+    workTask_herbs: 'Gather herbs',
+    storageNextDetail: 'Capacity after upgrade',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], activeEconomyTranslations[language]);

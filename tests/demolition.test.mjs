@@ -13,7 +13,12 @@ import {
   createGame as createLegacyGame,
   applyAction as legacyAction,
 } from '../shared/legacy-v1.mjs';
-import { BUILDINGS, demolitionQuote, demolishBuilding } from '../shared/settlement.mjs';
+import {
+  BUILDINGS,
+  demolitionQuote,
+  demolishBuilding,
+  STORAGE_CAPACITY_BONUSES,
+} from '../shared/settlement.mjs';
 
 const START = 1_000_000;
 const act = (state, action) => applyAction(state, action, state.updatedAt, () => 0);
@@ -85,7 +90,7 @@ test('every building at every level refunds exactly half of all resources actual
       );
       const capacityRemoved =
         definition.id === 'storage'
-          ? level * 250
+          ? STORAGE_CAPACITY_BONUSES[level]
           : definition.id === 'hall'
             ? (level - 1) * 100
             : 0;
@@ -146,7 +151,7 @@ test('only the selected producer is removed and its plot and building-count slot
   act(state, actionFor(state, selected.id));
   assert.deepEqual(state.buildings, retained);
   assert.equal(state.buildings[0], retained[0]);
-  assert.equal(getProduction(state).wood, rates.wood - 6);
+  assert.equal(getProduction(state).wood, rates.wood - 0.6);
   assert.equal(state.stats.builds, historicalBuilds);
   assert.deepEqual(state.firstWatch, chapter);
   assert.deepEqual(state.quests, quests);
@@ -178,8 +183,14 @@ test('storage reduction accepts the exact post-removal capacity boundary without
     state.resources[key] = quote.capacityAfter - (quote.refund[key] || 0);
   assert.equal(demolitionQuote(state, building.id).canDemolish, true);
   act(state, actionFor(state, building.id));
-  assert.equal(state.capacity, 900);
-  assert.deepEqual(state.resources, { water: 900, feed: 900, herbs: 900, wood: 900, stone: 900 });
+  assert.equal(state.capacity, 1400);
+  assert.deepEqual(state.resources, {
+    water: 1400,
+    feed: 1400,
+    herbs: 1400,
+    wood: 1400,
+    stone: 1400,
+  });
   assert.equal(validateGame(state), true);
 });
 

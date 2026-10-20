@@ -55,9 +55,9 @@ function freeze(value) {
 
 test('arrival projection retains credited fractions, zero items and participant XP without changing saves', () => {
   const game = createGame(NOW);
-  game.resources.wood = 499.5;
-  game.resources.stone = 500;
-  game.resources.herbs = 498;
+  game.resources.wood = game.capacity - 0.5;
+  game.resources.stone = game.capacity;
+  game.resources.herbs = game.capacity - 2;
   game.inventory.leather_vest = 10000;
   const tracker = createArrivalTracker();
   assert.deepEqual(tracker.update(ACCOUNT, game), { notice: null, unreadCount: 0 });

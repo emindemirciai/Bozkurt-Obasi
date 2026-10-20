@@ -1,4 +1,5 @@
 import { BUILDINGS } from '../shared/game.mjs';
+import { STORAGE_CAPACITY_BONUSES } from '../shared/settlement.mjs';
 import { buildingSiteLabel } from './settlement-labels.mjs';
 import { icon } from './art.mjs';
 import { resourceOutlook, constructionPlan } from './planning.mjs';
@@ -55,7 +56,7 @@ function resourceCard(resource, ctx) {
     <strong class="economy-stock" data-economy-stock>${escape(details.stock)}</strong>
     <span class="economy-capacity">${escape(t('capacity'))}</span>
     <div class="economy-fill" role="progressbar" aria-label="${escape(t(resource.key))}" aria-valuemin="0" aria-valuemax="${resource.capacity}" aria-valuenow="${Math.floor(resource.amount)}"><span style="width:${details.fill}%"></span></div>
-    <div class="economy-production"><span>${escape(t('production'))}</span><strong data-economy-rate>${escape(details.rate)}</strong></div>
+    <div class="economy-production"><span>${escape(t('passiveProduction'))}</span><strong data-economy-rate>${escape(details.rate)}</strong></div>
     <p class="economy-fill-status" data-economy-fill-status>${escape(details.status)}</p>
   </article>`;
 }
@@ -150,11 +151,60 @@ function buildingOption(option, selected, { escape }) {
   return `<option value="${escape(option.value)}" ${option.value === selected ? 'selected' : ''}>${escape(option.label)}</option>`;
 }
 
+function storageDetails(state, ctx) {
+  const { t, number } = ctx;
+  const storage = state.buildings.find((building) => building.type === 'storage');
+  const level = storage?.level || 0;
+  const base = state.capacity - STORAGE_CAPACITY_BONUSES[level];
+  const next = level < 5 ? base + STORAGE_CAPACITY_BONUSES[level + 1] : null;
+  const plan = constructionPlan(state, 'storage');
+  return {
+    level,
+    next,
+    plan,
+    capacity: number(state.capacity),
+    nextLabel: next === null ? t('maxLevel') : number(next),
+    maximum: number(base + STORAGE_CAPACITY_BONUSES[5]),
+    label: level ? t('storageExpand') : t('storageBuild'),
+  };
+}
+
+function storageExpansion(state, ctx) {
+  const { t, escape, number, busy = false } = ctx;
+  const details = storageDetails(state, ctx);
+  return `<section class="storage-expansion" id="storage-expansion" aria-labelledby="storage-expansion-title">
+    <div class="storage-expansion-heading"><div><h3 id="storage-expansion-title">${icon('storage', 20)}${escape(t('storageExpansionTitle'))}</h3><p>${escape(t('storageExpansionIntro'))}</p></div><span data-storage-level>${escape(t('level'))} ${number(details.level)} / 5</span></div>
+    <div class="storage-capacity-steps"><div><span>${escape(t('storageCurrent'))}</span><strong data-storage-capacity>${escape(details.capacity)}</strong></div><span class="storage-step-arrow" aria-hidden="true">→</span><div><span>${escape(t('storageNext'))}</span><strong data-storage-next-capacity>${escape(details.nextLabel)}</strong></div><div><span>${escape(t('storageMaximum'))}</span><strong data-storage-max-capacity>${escape(details.maximum)}</strong></div></div>
+    <div class="storage-expansion-action"><div><p data-storage-status>${escape(statusLabel(details.plan, ctx))}</p><small data-storage-upgrade-cost>${escape(executeCost(details.plan, ctx))}</small></div><button class="button primary" id="expand-storage-button" data-action="executePlan" data-plan-type="storage" data-plan-target="storage" ${ctx.readOnly || busy || details.plan.blocked || !details.plan.affordable ? 'disabled' : ''}>${escape(details.label)}${icon('arrow', 16)}</button></div>
+    <p class="storage-expansion-note">${escape(t('storageExpansionNote'))}</p>
+  </section>`;
+}
+
+function updateStorageExpansion(panel, state, ctx) {
+  const section = panel.querySelector('#storage-expansion');
+  if (!section) return;
+  const details = storageDetails(state, ctx);
+  section.querySelector('[data-storage-capacity]').textContent = details.capacity;
+  section.querySelector('[data-storage-next-capacity]').textContent = details.nextLabel;
+  section.querySelector('[data-storage-max-capacity]').textContent = details.maximum;
+  section.querySelector('[data-storage-level]').textContent =
+    `${ctx.t('level')} ${ctx.number(details.level)} / 5`;
+  section.querySelector('[data-storage-status]').textContent = statusLabel(details.plan, ctx);
+  section.querySelector('[data-storage-upgrade-cost]').textContent = executeCost(details.plan, ctx);
+  const button = section.querySelector('#expand-storage-button');
+  button.disabled = Boolean(
+    ctx.readOnly || ctx.busy || details.plan.blocked || !details.plan.affordable,
+  );
+  if (button.firstChild?.textContent !== details.label)
+    button.firstChild.textContent = details.label;
+}
+
 export function economyPanel(state, planType = 'quarry', ctx) {
   const { t, escape, busy = false } = ctx;
   const plan = constructionPlan(state, planType);
   return `<section class="economy-panel" id="economy-panel" aria-labelledby="economy-title">
     <div class="section-heading"><div><h2 id="economy-title">${escape(t('planningTitle'))}</h2><p>${escape(t('planningIntro'))}</p></div></div>
+    ${storageExpansion(state, ctx)}
     <div class="economy-resources">${resourceOutlook(state)
       .map((resource) => resourceCard(resource, ctx))
       .join('')}</div>
@@ -169,7 +219,7 @@ export function economyPanel(state, planType = 'quarry', ctx) {
           '',
         )}</select><p id="construction-plan-hint">${escape(t('planningChoiceHint'))}</p></div>
       <div class="economy-plan-detail"><div data-economy-plan-body>${planBody(plan, state.capacity, ctx)}</div>
-        <button class="button primary economy-execute" id="execute-construction-plan" data-action="executePlan" data-plan-type="${plan.type}" data-plan-target="${plan.target}" ${busy || plan.blocked || !plan.affordable ? 'disabled' : ''}><span data-economy-execute-label>${escape(executeLabel(plan, ctx))}</span><span class="economy-execute-cost" data-economy-execute-cost>${escape(executeCost(plan, ctx))}</span></button>
+        <button class="button primary economy-execute" id="execute-construction-plan" data-action="executePlan" data-plan-type="${plan.type}" data-plan-target="${plan.target}" ${ctx.readOnly || busy || plan.blocked || !plan.affordable ? 'disabled' : ''}><span data-economy-execute-label>${escape(executeLabel(plan, ctx))}</span><span class="economy-execute-cost" data-economy-execute-cost>${escape(executeCost(plan, ctx))}</span></button>
       </div>
     </div>
     <p class="economy-estimate-note">${escape(t('planningEstimateNote'))}</p>
@@ -179,6 +229,7 @@ export function economyPanel(state, planType = 'quarry', ctx) {
 export function updateEconomyPanel(root, state, planType = 'quarry', ctx) {
   const panel = root.querySelector('#economy-panel');
   if (!panel) return;
+  updateStorageExpansion(panel, state, ctx);
   for (const resource of resourceOutlook(state)) {
     const card = panel.querySelector(`[data-economy-resource="${resource.key}"]`);
     if (!card) continue;
@@ -197,7 +248,7 @@ export function updateEconomyPanel(root, state, planType = 'quarry', ctx) {
   const html = planBody(plan, state.capacity, ctx);
   if (body.innerHTML !== html) body.innerHTML = html;
   const button = panel.querySelector('#execute-construction-plan');
-  button.disabled = Boolean(ctx.busy || plan.blocked || !plan.affordable);
+  button.disabled = Boolean(ctx.readOnly || ctx.busy || plan.blocked || !plan.affordable);
   button.dataset.planType = plan.type;
   button.dataset.planTarget = plan.target;
   button.querySelector('[data-economy-execute-label]').textContent = executeLabel(plan, ctx);

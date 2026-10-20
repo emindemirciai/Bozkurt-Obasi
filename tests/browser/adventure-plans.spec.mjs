@@ -104,7 +104,7 @@ test('story stages follow server time, keep objectives locked and report actual 
 }) => {
   await signIn(page);
   const state = createGame(START);
-  state.resources.wood = 499.5;
+  state.resources.wood = state.capacity - 0.5;
   applyAction(
     state,
     {

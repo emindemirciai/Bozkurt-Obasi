@@ -82,7 +82,7 @@ test('supplies and capacity estimates update on ticks without remounting the foc
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p2' }, START);
   state.resources.water = 17.5;
   state.resources.feed = 23;
-  state.resources.wood = 483.8;
+  state.resources.wood = state.capacity - 16.2;
   const actions = await mockJourney(page, state);
   await page.goto('/#world');
   await expect(check(page, 'supplies')).toHaveAttribute('data-ok', 'false');
@@ -96,7 +96,7 @@ test('supplies and capacity estimates update on ticks without remounting the foc
       document.querySelector('[data-action="startAdventure"]'),
     ];
   });
-  await poll(page, 5000);
+  await poll(page, 50_000);
   await expect(check(page, 'supplies')).toHaveAttribute('data-ok', 'true');
   await expect(page.locator('[data-action="startAdventure"]')).toBeEnabled();
   await expect(page.locator('[data-adventure-warnings]')).toContainText(
@@ -130,7 +130,7 @@ test('preparation states explain party size, weak guardians, herd health and lim
   state.adventure.unlocked = ['homeland', 'spring'];
   state.wolves[1].hp = 19;
   state.herd.hp = 59;
-  state.resources.wood = 499;
+  state.resources.wood = state.capacity - 1;
   state.inventory.leather_vest = 10000;
   const actions = await mockJourney(page, state);
   await page.goto('/#world');

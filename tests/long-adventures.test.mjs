@@ -241,7 +241,7 @@ test('a twelve-hour offline return completes on schedule while passive productio
   act(state, { type: 'build', building: 'storage', plotId: 'p1' });
   // Mature storage keeps the production ceiling observable instead of filling first.
   state.buildings.find((building) => building.type === 'storage').level = 5;
-  state.capacity = 1750;
+  state.capacity = 5000000;
   state.resources.herbs = 0;
   state.adventure.unlocked = REGIONS.map((region) => region.id);
   assert.equal(validateGame(state), true);
@@ -256,7 +256,7 @@ test('a twelve-hour offline return completes on schedule while passive productio
   assert.equal(restored.adventure.history[0].completedAt, arrival);
   assert.equal(restored.firstWatch.milestones.explore, arrival);
   assert.equal(restored.adventure.history[0].reward.herbs, 36);
-  assert.equal(restored.resources.herbs, 1440 + 36);
+  assert.equal(restored.resources.herbs, 144 + 36);
   assert.equal(totalXp(restored.wolves[3]) - initialXp, 360);
   assert.equal(validateGame(restored), true);
   const paid = structuredClone(restored);
@@ -266,7 +266,7 @@ test('a twelve-hour offline return completes on schedule while passive productio
   assert.deepEqual(reloaded.wolves, paid.wolves);
   assert.deepEqual(reloaded.adventure.history, paid.adventure.history);
   resumeGame(reloaded, arrival + 60_000);
-  assert.deepEqual(reloaded.resources, { ...paid.resources, herbs: paid.resources.herbs + 3 });
+  assert.deepEqual(reloaded.resources, { ...paid.resources, herbs: paid.resources.herbs + 0.3 });
   assert.deepEqual(reloaded.wolves, paid.wolves);
   assert.deepEqual(reloaded.adventure.history, paid.adventure.history);
   assert.equal(validateGame(reloaded), true);
@@ -362,9 +362,9 @@ test('new receipts record actual fractional/capped materials and respect the exi
   const state = createGame(START);
   state.adventure.unlocked = REGIONS.map((region) => region.id);
   state.inventory.healer_satchel = 10_000;
-  state.resources.wood = 499.75;
-  state.resources.stone = 500;
-  state.resources.herbs = 500;
+  state.resources.wood = state.capacity - 0.25;
+  state.resources.stone = state.capacity;
+  state.resources.herbs = state.capacity;
   const selected = state.wolves.slice(0, 3);
   for (const wolf of selected) {
     wolf.level = 20;

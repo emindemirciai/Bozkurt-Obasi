@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+v2.15.0 depo paneli kapasitenin nasıl genişletildiğini gösterir: temel 1.000, depo seviyeleriyle 10.000/50.000/250.000/1.000.000/5.000.000 ve ayrıca Bey Otağı katkısı. **Depoyu genişlet**, maliyeti olan mevcut inşa/yükseltme planına yönlendirir. Toplama işini seçip açıkça başlat; bütün işler ortak 90 saniye bekler. Seçim otomatik kaynak vermez. [Güncel miktarlar](ECONOMY.md).
+
 Ana yurt ekranındaki **Oba planlaması** paneli beş kaynağın mevcut miktarını, depo sınırını, dakikalık üretimini ve deponun tahmini dolma süresini gösterir. Mevcut bölge bonusları hesaba katılır; örneğin Yayla'da taş üretimi 1,5 katına çıkar. Üretimi olmayan ve deposu dolu kaynaklar ayrı belirtilir.
 
 Dokuz yapı türünden birini seçerek yeni yapının veya mevcut yapının sonraki seviyesinin maliyetini inceleyebilirsin. Aynı türden birden fazla binan varsa parsel numarası ve seviyesinden istediğin kopyayı seç. Yeni bina hedefi ayrı gösterilir; ilk kopyanın son seviyede olması diğer kopyaların gelişimini engellemez. Tür sınırı dolduğunda veya o yapı türüne uygun boş yer kalmadığında yeni bina planı bunu açıklar. Gözcü kulesi planı yalnızca dört ayrılmış sur köşesini, diğer yapı planları yalnızca 36 normal parseli değerlendirir. Panel her kaynak için mevcut/gerekli miktarı, eksik miktarı ve mevcut üretimle bekleme süresini gösterir. Eksik kaynak üretilmiyorsa toplama veya üretici yapı önerilir. Maliyet depo sınırını aşıyorsa yalnızca beklemek yeterli değildir. Son seviyeye ulaşan yapı yükseltilemez.
@@ -41,6 +43,8 @@ npm run build:preview
 ```
 
 ## English
+
+The v2.15.0 storage panel explains expansion: base 1,000, storage levels 10,000/50,000/250,000/1,000,000/5,000,000 plus the hall bonus. **Expand storage** leads to the existing paid construction/upgrade plan. Choose and explicitly perform a gathering job; all jobs share a 90-second cooldown. Selecting a job never grants resources automatically. [Current quantities](ECONOMY.md).
 
 The homeland **Village planning** panel displays all five resource balances, storage limits, production per minute and estimated time until full. It includes current region bonuses, such as 1.5× stone production in the Highlands. Resources without production and full stores have separate statuses.
 

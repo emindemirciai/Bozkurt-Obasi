@@ -111,7 +111,7 @@ test('training becomes affordable without replacing focused buttons or spending 
     window.originalCard = document.querySelector('[data-wolf="wolf-alpha"]');
   });
   const polled = page.waitForResponse('**/api/state');
-  await page.clock.fastForward(1000);
+  await page.clock.fastForward(3100);
   await (await polled).finished();
   await expect(train).toBeEnabled();
   await expect(card).toBeFocused();

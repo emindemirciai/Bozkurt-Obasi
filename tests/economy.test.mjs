@@ -34,33 +34,39 @@ test('production is slower for every resource and still scales with buildings, l
     for (const key of Object.keys(state.resources)) state.resources[key] = state.capacity;
     act(state, { type: 'build', building: type, plotId: 'p' + index });
   }
-  assert.deepEqual(getProduction(state), { water: 7, feed: 6, herbs: 3, wood: 6, stone: 4.5 });
+  assert.deepEqual(getProduction(state), {
+    water: 0.7,
+    feed: 0.6,
+    herbs: 0.3,
+    wood: 0.6,
+    stone: 0.45,
+  });
   act(state, { type: 'upgrade', id: 'building-quarry' });
-  assert.equal(getProduction(state).stone, 9);
+  assert.equal(getProduction(state).stone, 0.9);
   state.location = 'highland';
-  assert.equal(getProduction(state).stone, 13.5);
+  assert.equal(getProduction(state).stone, 1.35);
   act(state, { type: 'build', building: 'lumber', plotId: 'p5' });
-  assert.equal(getProduction(state).wood, 12);
+  assert.equal(getProduction(state).wood, 1.2);
   assert.equal(validateGame(state), true);
 });
 
-test('gathering yields the smaller bundle at exactly 20 seconds and cannot be spammed', () => {
+test('gathering yields the smaller bundle at exactly 90 seconds and cannot be spammed', () => {
   const state = createGame(NOW);
   for (const key of Object.keys(state.resources)) state.resources[key] = 0;
   act(state, { type: 'collect' });
-  assert.deepEqual(state.resources, { water: 4, feed: 4, herbs: 0, wood: 7, stone: 4 });
-  assert.equal(state.collectReadyAt, NOW + 20_000);
-  for (const at of [NOW, NOW + 8000, NOW + 19_999])
+  assert.deepEqual(state.resources, { water: 2, feed: 2, herbs: 0, wood: 3, stone: 2 });
+  assert.equal(state.collectReadyAt, NOW + 90_000);
+  for (const at of [NOW, NOW + 8000, NOW + 89_999])
     assert.throws(() => act(state, { type: 'collect' }, at), { code: 'COLLECT_COOLDOWN' });
   assert.equal(state.stats.gathers, 1);
-  act(state, { type: 'collect' }, NOW + 20_000);
-  assert.deepEqual(state.resources, { water: 8, feed: 8, herbs: 0, wood: 14, stone: 8 });
+  act(state, { type: 'collect' }, NOW + 90_000);
+  assert.deepEqual(state.resources, { water: 4, feed: 4, herbs: 0, wood: 6, stone: 4 });
   assert.equal(state.stats.gathers, 2);
-  assert.equal(state.collectReadyAt, NOW + 40_000);
+  assert.equal(state.collectReadyAt, NOW + 180_000);
   assert.equal(validateGame(state), true);
 });
 
-test('a saved gathering timer remains intact and its next successful collection adopts 20 seconds', () => {
+test('a saved gathering timer remains intact and its next successful collection adopts 90 seconds', () => {
   const state = createGame(NOW);
   state.collectReadyAt = NOW + 8000;
   const before = structuredClone(state);
@@ -68,7 +74,7 @@ test('a saved gathering timer remains intact and its next successful collection 
   resumeGame(state, NOW + 7999);
   assert.throws(() => act(state, { type: 'collect' }), { code: 'COLLECT_COOLDOWN' });
   act(state, { type: 'collect' }, NOW + 8000);
-  assert.equal(state.collectReadyAt, NOW + 28_000);
+  assert.equal(state.collectReadyAt, NOW + 98_000);
 });
 
 test('battle victories give half the repeatable material loot while guardian XP remains unchanged', () => {
@@ -232,6 +238,6 @@ test('initial stocks and building recipes remain intact while offline production
   state.capacity = 1_000_000;
   const before = structuredClone(state.resources);
   advanceGame(state, NOW + 40 * 60 * 60_000);
-  assert.equal(state.resources.wood, before.wood + 6 * 8 * 60);
+  assert.equal(state.resources.wood, before.wood + 0.6 * 8 * 60);
   assert.equal(state.resources.stone, before.stone);
 });

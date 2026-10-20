@@ -100,7 +100,7 @@ test('real saved demolition asks for confirmation, refunds the upgraded selected
   expect(removed.state.buildings).toEqual([before.buildings[1]]);
   expect(removed.state.resources.wood).toBe(before.resources.wood + 89.5);
   expect(removed.state.resources.stone).toBeCloseTo(
-    before.resources.stone + ((removed.state.updatedAt - before.updatedAt) * 13.5) / 60000 + 38.5,
+    before.resources.stone + ((removed.state.updatedAt - before.updatedAt) * 1.35) / 60000 + 38.5,
     5,
   );
   await expect(dialog(page)).toHaveCount(0);
@@ -145,7 +145,7 @@ test('polling updates storage safety in the open dialog while retaining the focu
   await signIn(page);
   const state = buildVillage();
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p1' }, START);
-  state.resources.wood = 477.4;
+  state.resources.wood = state.capacity - 22.505;
   state.resources.stone = 100;
   const actions = await mockVillage(page, state);
   await page.goto('/#village');

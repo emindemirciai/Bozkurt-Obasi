@@ -220,6 +220,11 @@ test('resource and unequipped item gifts conserve assets and reject stale or alt
 test('gift failures roll back both accounts and receipts, including a failure on the second village write', (t) => {
   const { db, social, codes, befriend, snapshot } = fixture(t);
   befriend();
+  const recipient = createGame(NOW);
+  recipient.resources.wood = recipient.capacity - 50;
+  db.prepare("UPDATE email_accounts SET state_json=? WHERE sub='bob'").run(
+    JSON.stringify(recipient),
+  );
   const before = snapshot();
   for (const extra of [
     { amount: 0 },

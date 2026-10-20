@@ -155,8 +155,8 @@ test('claims enforce a completed ordered prefix, atomic rewards and exactly-once
 test('full storage keeps the entire claim pending and reveals exact required free capacity', () => {
   const state = fresh();
   act(state, { type: 'collect' });
-  state.resources.wood = 495.25;
-  state.resources.stone = 500;
+  state.resources.wood = state.capacity - 4.75;
+  state.resources.stone = state.capacity;
   const progress = firstWatchProgress(state).current;
   assert.equal(progress.completed, true);
   assert.equal(progress.claimable, false);
@@ -165,8 +165,8 @@ test('full storage keeps the entire claim pending and reveals exact required fre
   act(state, { type: 'build', building: 'well', plotId: 'p0' });
   assert.equal(firstWatchProgress(state).current.claimable, true);
   claim(state, 'gather');
-  assert.equal(state.resources.wood, 470.25);
-  assert.equal(state.resources.stone, 490);
+  assert.equal(state.resources.wood, state.capacity - 29.75);
+  assert.equal(state.resources.stone, state.capacity - 10);
   assert.equal(validateGame(state), true);
 });
 

@@ -20,7 +20,7 @@ Ana Yurt'ta kaldırmak istediğin binayı seç ve **Binayı kaldır** düğmesin
 ### Depo ve işlem korumaları
 
 - Aktif savaş veya yolculuk sırasında kaldırma yapılamaz.
-- Depo kaldırılırsa kapasite bina seviyesi başına **250** azalır.
+- Depo kaldırılırsa kendi seviyesinin kapasite katkısı kalkar: seviyeler 1–5 için **9.000 / 49.000 / 249.000 / 999.000 / 4.999.000**. Temel 1.000 ve kalan Bey Otağı katkısı korunur.
 - Bey otağı kaldırılırsa yükseltilmiş her seviye için kazanılan **100** kapasite kaldırılır; temel 500 kapasite korunur.
 - İade ve mevcut beş kaynak, işlem sonrası kapasiteye sığmalıdır. Sığmayan kaynak ve miktarı pencerede açıklanır. Önce yer aç veya kalan depo kapasitesini artır; kaynaklar otomatik silinmez veya iade eksiltilmez.
 - Başka bir oturum binayı değiştirir, taşır, kaldırır veya yeni inşaat yaparsa eski onay geçersizleşir. Pencereyi kapatıp güncel binayı tekrar seç.
@@ -54,7 +54,7 @@ Values follow construction/upgrade recipes; older saves do not retain a separate
 ### Capacity and transaction safeguards
 
 - Active combat or a journey blocks removal.
-- Removing storage loses **250** capacity per building level.
+- Removing storage removes its level contribution: **9,000 / 49,000 / 249,000 / 999,000 / 4,999,000** for levels 1–5. Base capacity 1,000 and the remaining hall bonus stay.
 - Removing the hall loses **100** capacity per upgraded level; base capacity remains 500.
 - All five current resource balances plus the refund must fit the resulting capacity. The dialog explains overflow by resource/amount. Make room or increase remaining capacity first; resources and refunds are never silently discarded.
 - Another session changing, moving or replacing the building, or constructing a new one, invalidates the old confirmation. Close the dialog and inspect the current building again.

@@ -1,59 +1,97 @@
-# Kaynak ve sefer dengesi / Resource and journey balance
+# Kaynak ve depo dengesi / Resource and storage balance
 
 ## Türkçe
 
-### v2.11.0 — Uzun seferler
+### v2.15.0 — Genişleyen depo, aktif toplama
 
-Yeni seferler 6/8/10/12 saat sürer; kolay/standart XP saat × 30, odun ×16, taş ×10, ot ×3. Zorluk 1/1,5/2 ve plan katsayıları uygulanır. İzcilik yalnızca erzak indirir. [Tam güncel tablo](LONG-JOURNEYS.md). Üretim, toplama ve savaşın aşağıdaki v2.8.0 ayarları korunur; başlamış seferler eski tarifeyle biter.
+Her kaynak için temel kapasite **1.000**. Tek depo binası beş seviyeye geliştirilir; aşağıdaki değerler Bey Otağı katkısı hariç toplam kapasitedir. Bey Otağı 1. seviyeden sonraki her seviyede +100 ekler; en yüksek kapasite **5.000.400** olur.
 
-### v2.8.0 — Önceki kaynak ayarı
+| Depo seviyesi | Toplam kapasite | Sonraki seviyenin odun / taş maliyeti |
+| --- | ---: | ---: |
+| Henüz kurulmadı | 1.000 | 80 / 55 |
+| 1 | 10.000 | 124 / 86 |
+| 2 | 50.000 | 193 / 133 |
+| 3 | 250.000 | 298 / 205 |
+| 4 | 1.000.000 | 462 / 318 |
+| 5 | 5.000.000 | Son seviye |
 
-Amaç, sürekli gelen kaynakları azaltarak inşaat ve sefer seçimlerini daha önemli hale getirmek. Bu ayar kullanıcı isteği üzerine yapılmıştır; gerçek oyuncu oturumlarıyla henüz ölçülmüş bir zorluk hedefi değildir.
+İnşa/yükseltme tarifeleri değişmez. Eski geçerli kapasite önce doğrulanır, sonra aynı binalarla yeni kapasite hesaplanır; eldeki malzemeler, seviyeler, köy düzeni ve görev kayıtları korunur. Depo kaldırılınca kapasite azalır; kalan kaynaklar ve %50 iade sığmıyorsa işlem engellenir, kaynak silinmez. [Kaldırma](DEMOLITION.md).
 
-| Tekrarlanan kaynak | Önce | v2.8.0 |
-| --- | --- | --- |
-| Oduncu, seviye başına / dakika | 12 odun | 6 odun |
-| Taş ocağı, seviye başına / dakika | 9 taş | 4,5 taş |
-| Su kuyusu, seviye başına / dakika | 14 su | 7 su |
-| Otlak, seviye başına / dakika | 12 yem | 6 yem |
-| Şifacı, seviye başına / dakika | 6 ot | 3 ot |
-| Kaynak topla | 14 odun + 9 taş + 8 su + 8 yem / 8 sn | 7 odun + 4 taş + 4 su + 4 yem / 20 sn |
-| Savaş zaferi | Eski dalga ödülü | Her malzemenin yarısı, aşağı yuvarlanır |
-| Yeni keşif / sevkiyat | Bölge × zorluk × plan malzemeleri | Aynı hesabın yarısı, aşağı yuvarlanır |
+Pasif üretim önceki sürüme göre **%90 daha yavaş**; aşağıdaki değerler tek bina seviyesi içindir. Birden çok üretici ve yükseltmeler katkıları toplar; bölge bonusları korunur.
 
-Üretim kesirli ilerler ve bölge bonusları geçerlidir. Örneğin Yüksek Otlak'ta 1. seviye taş ocağı 4,5 × 1,5 = **6,75 taş/dakika** üretir. Üçüncü dalga zaferi **37 odun + 24 taş + 6 ot + 10 yem** verir; her kurt hâlâ 50 XP alır. Yeni kolay Su Gözü standart keşfi **16 odun + 10 taş + 3 ot** ve katılan kurt başına 30 XP verir. Depoda yer yoksa mevcut taşma kuralları uygulanır; panel gerçek kazanımı gösterir.
+| Kaynak | Dakikada | Saatte |
+| --- | ---: | ---: |
+| Odun | 0,6 | 36 |
+| Taş | 0,45 | 27 |
+| Su | 0,7 | 42 |
+| Yem | 0,6 | 36 |
+| Şifalı ot | 0,3 | 18 |
 
-Mevcut malzemeler, başlangıç erzağı, inşaat/yükseltme tarifeleri, çevrimdışı üretim süresi sınırı, kurt XP'si, ekipman, görev süreleri ve erzak maliyetleri değişmez. İlk Nöbet ve önceki görevlerin tek seferlik ödülleri aynı kalır. Eski toplama bekleme zamanları dolana kadar korunur; sonraki toplama 20 saniyelik yeni beklemeyi başlatır.
+Toplama ücretsiz, açık oyuncu eylemidir. Sunucu yalnızca seçilen işin sabit kazanımını verir. Bütün seçenekler ortak **90 saniye** bekler; kaynak değiştirmek veya sayfayı yenilemek beklemeyi kaldırmaz. Eski kaydedilmiş bekleme önce dolar. Yeni işlemden sonra 90 saniye uygulanır. Otomatik tekrar veya arka planda toplama yoktur.
 
-Başlamış keşif/sevkiyatlar **önceden vaat edilen ödüllerle** biter. Eski dönüş raporları geçerliliğini korur. Sunucu yalnızca yeni görevleri yeni ekonomi işaretiyle kaydeder; istemci eski ödül kuralını seçemez. Köy sıfırlaması, SQL tablo değişikliği, yeni servis veya ENV gerekmez.
+| İş | Her başarılı işlemde kazanım |
+| --- | --- |
+| Karma toplama | 3 odun + 2 taş + 2 su + 2 yem |
+| Odun kes | 10 odun |
+| Taş çıkar | 7 taş |
+| Su taşı | 8 su |
+| Ot biç | 8 yem |
+| Şifalı ot topla | 2 şifalı ot |
 
-Bina kaldırmanın %50 iadesi gelir indirimi değildir: [inşaat ve tüm yükseltmelerin maliyet toplamından](DEMOLITION.md) hesaplanır. Alıp kaldırmak kâr oluşturmaz. [Köy planlaması](VILLAGE-PLANNING.md) · [Sefer örnekleri](ADVENTURE-PLANNING.md) · [Çevrimdışı index](../preview/index.html).
+Kazanım mevcut depo boşluğuyla sınırlıdır. İşin hiçbir kaynağına yer yoksa işlem bekleme veya görev ilerlemesi başlatmaz. Sıfır kaynakla bile ücretsiz toplama yapılarak yeniden ilerlenebilir. Temel stoklar 450 odun, 350 taş, 180 su, 180 yem ve 80 ottur; beş üretici ile depo kurulabilir. Aktif toplama, savaş, İlk Nöbet ve diğer tek seferlik görevler, keşif ve sevkiyat ilerlemeyi destekler. Ekranda pasif gelir ile oyuncunun başlattığı işler ayrı açıklanır.
+
+Çevrimdışı üretim hesabında en fazla **8 saat** korunur. Tek 1. seviye oduncu 8 saatte 288 odun üretir; altı 5. seviye oduncu 8 saatte 8.640 üretir. 5.000.000 kapasiteli boş depo bu süre içinde yalnızca bu üretimle dolmaz. Zorluk gerçek oyuncu verileriyle henüz ölçülmedi; bu sayılar kullanıcının daha yavaş ve aktif oyun isteği için belirlenmiştir.
+
+### Uzun seferler ve diğer ödüller
+
+Yeni seferler v2.11.0 kuralıyla **6/8/10/12 saat** sürer. Kolay/standart saat başına 30 XP, 16 odun, 10 taş ve 3 ot; zorluk 1/1,5/2 ve plan katsayıları uygulanır. İzcilik erzak indirir, süreyi değiştirmez. Su Gözü 6 saatlik kolay standart keşfi 180 XP, 96 odun, 60 taş ve 18 ot verir. Başlamış eski seferlerin süre ve ödül vaatleri korunur. [Uzun seferler](LONG-JOURNEYS.md).
+
+Savaş malzeme ödülleri v2.8.0 oranını korur: üçüncü dalga 37 odun, 24 taş, 6 ot, 10 yem; katılan her kurt 50 XP kazanır. İlk Nöbet ve önceki görev ödülleri bir kez alınır. Bu sürüm yeni ENV, servis, SQL tablo alanı veya kayıt sıfırlaması gerektirmez. [Köy planlaması](VILLAGE-PLANNING.md) · [Görsel önizleme](../preview/village.html).
 
 ## English
 
-### v2.11.0 — Long journeys
+### v2.15.0 — Expandable storage and active gathering
 
-New journeys take 6/8/10/12 hours. Easy/standard XP is hours ×30; wood ×16, stone ×10 and herbs ×3. Apply difficulty 1/1.5/2 and purpose multipliers. Scouting discounts supplies only. [Current full table](LONG-JOURNEYS.md). The v2.8.0 production/gathering/battle rules below remain; existing departures finish under their original rules.
+Base capacity is **1,000 per resource**. One storage building upgrades through five levels. Totals below exclude the hall bonus: each hall upgrade beyond level 1 adds 100, for a maximum **5,000,400** capacity.
 
-### v2.8.0 — Previous resource adjustment
+| Storage level | Total capacity | Next level wood / stone cost |
+| --- | ---: | ---: |
+| Not built | 1,000 | 80 / 55 |
+| 1 | 10,000 | 124 / 86 |
+| 2 | 50,000 | 193 / 133 |
+| 3 | 250,000 | 298 / 205 |
+| 4 | 1,000,000 | 462 / 318 |
+| 5 | 5,000,000 | Maximum |
 
-Repeatable materials are reduced so construction and journey choices carry more weight. This tuning follows the user's request; it has not yet been calibrated against observed player sessions.
+Construction and upgrade recipes remain unchanged. Migration first validates the previous capacity, then recalculates it from the same buildings; balances, levels, layout and journey records remain. Demolishing storage reduces capacity; if remaining resources and the 50% refund cannot fit, removal is blocked without discarding resources. [Demolition](DEMOLITION.md).
 
-| Repeatable source | Before | v2.8.0 |
-| --- | --- | --- |
-| Lumber camp, per level / minute | 12 wood | 6 wood |
-| Quarry, per level / minute | 9 stone | 4.5 stone |
-| Well, per level / minute | 14 water | 7 water |
-| Pasture, per level / minute | 12 feed | 6 feed |
-| Healer, per level / minute | 6 herbs | 3 herbs |
-| Gather resources | 14 wood + 9 stone + 8 water + 8 feed / 8s | 7 wood + 4 stone + 4 water + 4 feed / 20s |
-| Battle victory | Previous wave loot | Half of each material, rounded down |
-| New expedition / escort | Region × difficulty × plan materials | Half that calculation, rounded down |
+Passive output is **90% slower than the previous release**. The figures below are per building level; multiple producers and upgrades add their output, and region bonuses remain.
 
-Production retains fractional progress and region bonuses. A level-1 Highlands quarry produces 4.5 × 1.5 = **6.75 stone/minute**. A wave-3 victory grants **37 wood + 24 stone + 6 herbs + 10 feed**; each guardian still receives 50 XP. A new easy standard Wellspring expedition grants **16 wood + 10 stone + 3 herbs**, plus 30 XP per participant. Existing storage-overflow rules apply and reports show actual credits.
+| Resource | Per minute | Per hour |
+| --- | ---: | ---: |
+| Wood | 0.6 | 36 |
+| Stone | 0.45 | 27 |
+| Water | 0.7 | 42 |
+| Feed | 0.6 | 36 |
+| Herbs | 0.3 | 18 |
 
-Existing balances, starter resources, construction/upgrade recipes, offline-production time caps, guardian XP, equipment, journey duration and supply costs remain. First Watch and earlier one-time quest rewards remain. Saved gathering deadlines are honored; the next gather starts the new 20-second cooldown.
+Gathering is free and explicitly initiated by the player. The server grants only the selected job's fixed reward. Every option shares a **90-second** cooldown; changing jobs or reloading cannot bypass it. Saved older deadlines are honored before the next successful action starts 90 seconds. No automatic repetition or background collection runs.
 
-Ongoing expeditions/escorts complete with **their previously promised rewards**. Older arrival reports remain valid. Only new journeys receive the server-assigned current-economy marker; clients cannot choose old rewards. No village reset, SQL table migration, new service or environment variable is required.
+| Job | Reward per successful action |
+| --- | --- |
+| Mixed gathering | 3 wood + 2 stone + 2 water + 2 feed |
+| Logging | 10 wood |
+| Quarrying | 7 stone |
+| Water hauling | 8 water |
+| Feed gathering | 8 feed |
+| Herb foraging | 2 herbs |
 
-A building's 50% demolition refund is separate from income balancing: it uses [base construction plus all upgrade recipes](DEMOLITION.md). Buying and removing a structure cannot generate profit. [Village planning](VILLAGE-PLANNING.md) · [Journey examples](ADVENTURE-PLANNING.md) · [Offline index](../preview/index.html).
+Rewards respect available storage. If none of a job's rewards fit, it starts neither a cooldown nor quest progress. Free gathering allows recovery even from zero resources. Starter supplies remain 450 wood, 350 stone, 180 water, 180 feed and 80 herbs, sufficient for five producers and storage. Gathering, battles, one-time story quests, expeditions and escorts support active progression; the interface distinguishes passive income from player actions.
+
+Offline production remains capped at **8 hours**. One level-1 lumber camp produces 288 wood in eight hours; six level-5 camps produce 8,640, insufficient to fill an empty 5,000,000 store in that time. These numbers implement the requested slower, more active economy; they have not been calibrated against live player sessions.
+
+### Long journeys and other rewards
+
+New journeys retain the v2.11.0 **6/8/10/12-hour** rules. Easy/standard rewards per hour: 30 XP, 16 wood, 10 stone and 3 herbs, multiplied by difficulty 1/1.5/2 and purpose. Scouting discounts supplies without shortening time. A six-hour easy standard Wellspring expedition yields 180 XP, 96 wood, 60 stone and 18 herbs. Existing journeys keep their promised durations and rewards. [Long journeys](LONG-JOURNEYS.md).
+
+Battle loot retains its v2.8.0 rate: wave three gives 37 wood, 24 stone, 6 herbs and 10 feed; each guardian receives 50 XP. First Watch and earlier quest rewards remain one-time claims. No new environment variable, service, SQL column or village reset is required. [Village planning](VILLAGE-PLANNING.md) · [Visual preview](../preview/village.html).

@@ -1,14 +1,26 @@
 /** Settlement coordinates are authoritative save data, independent of presentation. */
 const RESOURCES = ['water', 'feed', 'herbs', 'wood', 'stone'];
 const PRODUCERS = ['lumber', 'quarry', 'well', 'pasture', 'healer'];
+export const BASE_CAPACITY = 1000;
+export const STORAGE_CAPACITY_BONUSES = Object.freeze([0, 9000, 49000, 249000, 999000, 4999000]);
+
+/** Capacity is derived from paid building levels, never supplied by a client action. */
+export function getStorageCapacity(state) {
+  const level = (type) => state.buildings.find((building) => building.type === type)?.level || 0;
+  return (
+    BASE_CAPACITY +
+    STORAGE_CAPACITY_BONUSES[level('storage')] +
+    Math.max(0, level('hall') - 1) * 100
+  );
+}
 export const BUILDINGS = Object.freeze(
   [
     { id: 'hall', cost: { wood: 120, stone: 90 }, production: {} },
-    { id: 'lumber', cost: { wood: 60, stone: 25 }, production: { wood: 6 } },
-    { id: 'quarry', cost: { wood: 70, stone: 30 }, production: { stone: 4.5 } },
-    { id: 'well', cost: { wood: 45, stone: 20 }, production: { water: 7 } },
-    { id: 'pasture', cost: { wood: 60, stone: 30 }, production: { feed: 6 } },
-    { id: 'healer', cost: { wood: 95, stone: 65 }, production: { herbs: 3 } },
+    { id: 'lumber', cost: { wood: 60, stone: 25 }, production: { wood: 0.6 } },
+    { id: 'quarry', cost: { wood: 70, stone: 30 }, production: { stone: 0.45 } },
+    { id: 'well', cost: { wood: 45, stone: 20 }, production: { water: 0.7 } },
+    { id: 'pasture', cost: { wood: 60, stone: 30 }, production: { feed: 0.6 } },
+    { id: 'healer', cost: { wood: 95, stone: 65 }, production: { herbs: 0.3 } },
     { id: 'storage', cost: { wood: 80, stone: 55 }, production: {} },
     { id: 'watchtower', cost: { wood: 100, stone: 70 }, production: {} },
     { id: 'shelter', cost: { wood: 85, stone: 60 }, production: {} },
@@ -141,13 +153,9 @@ export function demolitionQuote(state, id) {
   const refund = Object.fromEntries(
     Object.entries(investment).map(([key, amount]) => [key, amount / 2]),
   );
-  const capacityRemoved =
-    building.type === 'storage'
-      ? building.level * 250
-      : building.type === 'hall'
-        ? (building.level - 1) * 100
-        : 0;
-  const capacityAfter = state.capacity - capacityRemoved;
+  const capacityAfter = getStorageCapacity({
+    buildings: state.buildings.filter((entry) => entry.id !== id),
+  });
   const overflow = Object.fromEntries(
     RESOURCES.map((key) => [
       key,
@@ -238,7 +246,7 @@ export function placeBuilding(state, type, plotId) {
   const building = { id, type, level: 1, x: plot.x, y: plot.y };
   spend(state, definition.cost);
   state.buildings.push(building);
-  if (type === 'storage') state.capacity += 250;
+  state.capacity = getStorageCapacity(state);
   return building;
 }
 

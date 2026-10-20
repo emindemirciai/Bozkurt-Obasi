@@ -8,7 +8,7 @@
 
 [Gerçekçi savaş hayvanları ve tam istemler / Realistic battle animals and exact prompts](docs/BATTLE-ART.md) · [Çevrimdışı savaş görseli / Offline battlefield preview](preview/battle.html)
 
-**Güncel sürüm / Current version: v2.14.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
+**Güncel sürüm / Current version: v2.15.0** · [GitHub Releases](https://github.com/emindemirciai/Bozkurt-Obasi/releases/latest) · [Sürüm geçmişi / Changelog](CHANGELOG.md) · [Sürüm oluşturma / Releasing](docs/RELEASING.md)
 
 [Çevrimdışı görsel önizleme / Offline visual preview](preview/index.html) · [Dokploy rehberi / Deployment guide](docs/WEB-DEPLOYMENT.md) · [Hesap kaydı / Account registration](docs/ACCOUNT-SIGNIN.md) · [Görselli mail önizlemesi / Email preview](preview/mail.html) · [Şifre yenileme maili / Password reset email](preview/password-reset.html) · [Google girişi / Google sign-in](docs/GOOGLE-SIGNIN.md) · [Gizlilik / Privacy](public/privacy.html) · [Koşullar / Terms](public/terms.html) · [Doğrulama / Validation](docs/WEB-VALIDATION.md) · [Kaynak depo / Repository](https://github.com/emindemirciai/Bozkurt-Obasi)
 
@@ -34,7 +34,7 @@ npm start
 
 Ardından <http://127.0.0.1:3000> adresini açın. Görselli ana sayfa ve bilgi sayfaları herkese açıktır; **köye ve diğer oyun ekranlarına geçerli hesap oturumu olmadan girilemez**, doğrudan `#village` bağlantısıyla da açılamaz. Ana sayfadaki **Kayıt ol** ile e-posta/şifre hesabı oluşturabilir veya **Giriş yap** ile mevcut hesabınızı açabilirsiniz. Şifre 12–128 karakterdir. Google seçeneği için [Google istemcisini yapılandırın](docs/GOOGLE-SIGNIN.md). [Hesap rehberi](docs/ACCOUNT-SIGNIN.md). Mevcut eski misafir köyü, geçerli eski oturum çerezi varsa ilk Google girişinde hesaba bağlanabilir; tarayıcıdaki eski yerel kayıt otomatik aktarılmaz.
 
-Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hikâyeli dalga savaşları, 5 bölge, seçilen kurtlarla keşif/sevkiyat ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce destekler. Oyun içi ekranlar yalnızca koyu toprak teması kullanır; ana sayfa, yönetim ve analizde tema seçimi korunur. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v2.14.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında 15 dakika geçerli, altı haneli doğrulama kodu `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden görselli HTML e-postayla gider. Kod doğrulanmadan oyun ve oyuncu API'leri açılmaz; SMTP hatası bu kapıyı kaldırmaz. Google'ın doğruladığı hesaplar Google ile başlayabilir. Profilde ad soyad ve e-posta sabit, takma ad ve fotoğraf değiştirilebilir; özel fotoğraf Google fotoğrafından önceliklidir. Kalıcı oyuncu koduyla arkadaş isteği gönderilir, kabul edilmiş arkadaşlarla özel mesajlaşılır; depo kapasitesi dahilinde beş kaynak ve envanterdeki ekipmanlar hediye edilir. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. Giriş ekranındaki **Şifremi unuttum**, görselli e-postayla tek kullanımlık kod gönderir. Yeni şifre belirlenince tüm e-posta ve bağlı Google oturumları kapatılır; köy, profil ve arkadaşlar korunur. PvP ve ödeme henüz yoktur.
+Oyunda 9 yapı türü, kaynak üretimi, 5 eğitilebilir muhafız, hilal/yıldız formasyonları, savaş başında rastgele belirlenen 5 çakal taktiği, hikâyeli dalga savaşları, 5 bölge, seçilen kurtlarla keşif/sevkiyat ve görevler bulunur. Görselli ana sayfa, oyun, yönetim ve analiz arayüzleri Türkçe/İngilizce destekler. Oyun içi ekranlar yalnızca koyu toprak teması kullanır; ana sayfa, yönetim ve analizde tema seçimi korunur. Koyu tema sıcak kahverengi ve toprak yüzeyleri, krem metinleri, altın vurguları ve bozkır yeşili düğme/seçili alanları kullanır; açık tema korunur. Tema seçimi cihazda hatırlanır. Oyundaki **Sürüm geçmişi** v2.15.0 ve önceki değişiklikleri gösterir. E-posta kaydı Google anahtarları olmadan çalışır. SMTP yapılandırıldığında 15 dakika geçerli, altı haneli doğrulama kodu `Bozkurtobasi.com <info@bozkurtobasi.com>` göndereninden görselli HTML e-postayla gider. Kod doğrulanmadan oyun ve oyuncu API'leri açılmaz; SMTP hatası bu kapıyı kaldırmaz. Google'ın doğruladığı hesaplar Google ile başlayabilir. Profilde ad soyad ve e-posta sabit, takma ad ve fotoğraf değiştirilebilir; özel fotoğraf Google fotoğrafından önceliklidir. Kalıcı oyuncu koduyla arkadaş isteği gönderilir, kabul edilmiş arkadaşlarla özel mesajlaşılır; depo kapasitesi dahilinde beş kaynak ve envanterdeki ekipmanlar hediye edilir. Aynı e-postaya ait Google ve şifre girişleri sahiplik doğrulanınca tek hesaba ve köye açılır. Giriş ekranındaki **Şifremi unuttum**, görselli e-postayla tek kullanımlık kod gönderir. Yeni şifre belirlenince tüm e-posta ve bağlı Google oturumları kapatılır; köy, profil ve arkadaşlar korunur. PvP ve ödeme henüz yoktur.
 
 Köydeki **İlk adımlar** rehberi kaynak toplama, yeni yapı, ilk görev ödülü, iki eğitim ve ilk zaferi kayıtlı ilerlemeden izler. Düğmeler ilgili kontrole götürür; kendiliğinden kaynak harcamaz. Önceden tamamlanan adımlar tanınır. Yeni hilal ve bozkurt logosu masaüstü/mobil, açık/koyu tema ve favicon için SVG olarak kullanılır; [logo dosyaları ve kullanım](docs/BRAND.md).
 
@@ -48,11 +48,17 @@ Yeni obalar 36 boş köy parseli, yalnızca gözcü kulesine ayrılmış dört b
 
 Mevcut v1 köyleri ilk yüklemede v2 biçimine geçirilir; yapılar, kaynaklar, kurtlar ve eski yolculuklar korunur. Yeni yerleştirme komutları açık parsel, yeni sevkiyatlar seçilmiş muhafız ister. Dokploy'da dört servisi birlikte **Deploy** edin; mevcut kalıcı veri volume'larını koruyun.
 
-### Sur Nöbeti — v2.14.0
+### Depo ve aktif toplama — v2.15.0
+
+Başlangıç kapasitesi her kaynak için **1.000**. Depoyu kurup yükselttikçe kapasite **10.000 → 50.000 → 250.000 → 1.000.000 → 5.000.000** olur; Bey Otağı yükseltmeleri ayrıca toplam 400 kapasiteye kadar ekler. Ana Yurt paneli mevcut ve sonraki kapasiteyi, maliyeti ve **Depoyu genişlet** eylemini gösterir. Eski köylerin kaynakları eksilmeden kapasitesi yeni düzene taşınır.
+
+Pasif bina üretimi önceki sürümün %10'u: tek 1. seviye oduncu **36 odun/saat** üretir. Aktif toplamada odun kes, taş çıkar, su taşı, ot biç veya şifalı ot topla; kazanımı işlemden önce gör. Bütün işler ortak **90 saniye** bekler, otomatik tekrarlanmaz. Seçim değiştirmek beklemeyi kaldırmaz. Başlangıç erzağı, inşaat tarifeleri ve tek seferlik hikâye ödülleri korunur; 6–12 saatlik seferler ve savaş da aktif kazanım yollarıdır. [Güncel denge tablosu](docs/ECONOMY.md) · [Köy önizlemesi](preview/village.html).
+
+### Sur Nöbeti — v2.15.0
 
 Bey Otağı %28 daha büyük ana yapı olarak öne çıkar. Dört sur köşesi yalnızca gözcü kulesi kurulabilen sabit inşa noktalarıdır; yeni obalarda kuleler hazır gelmez. Köşedeki **+** ile **100 odun + 70 taş** karşılığında kule kurulur. Kule taşınamaz; kendi seviyesiyle yükselir ve onayla kaldırılınca inşaat/yükseltme malzemelerinin yarısı iade edilir. Boşalan köşeye yine yalnızca kule yapılabilir. Önceden ücretle kurulmuş kuleler kimlikleri, seviyeleri ve kaynaklar korunarak boş köşelere aktarılır; 36 normal arsa ve diğer binalar yerinde kalır. En yüksek kule seviyesi savunma desteğini belirler. Sur, kapı ve iki nöbetçi gerçekçi dokularla gösterilir. Dağ eteği üst kenarda sola uzanır; sağındaki şelaleden çıkan ırmak köyün dışından akar. Hava görseldir; üretimi etkilemez. Kamera fare tekerleği ve ekrandaki/klavyedeki +/− ile yakınlaşır; Ctrl gerekmez. [Kule, kapı ve hava rehberi](docs/VILLAGE-DEFENSE.md) · [Çevrimdışı köy](preview/village.html).
 
-### Görselli sefer seçimi ve koyu oyun — v2.14.0
+### Görselli sefer seçimi ve koyu oyun — v2.15.0
 
 Her rotanın manzarası, süresi ve seçili durumu aynı kartta görünür. Amaç kartını ve muhafızları işaretlediğinde maliyet/XP/ödül öngörüleri güncellenir; kaynak yalnızca açık yola çıkış onayıyla harcanır. Oyunda tek koyu tema ve daha belirgin sekme/panel sınırları kullanılır. Ana sayfanın açık/koyu tercihi korunur. [Bölge görselleri ve üretim istemleri](docs/REGION-ART.md) · [Sefer önizlemesi](preview/adventure.html).
 
@@ -82,7 +88,7 @@ Harita kaydırma çubuğu oluşturmadan bütün arsaları gösterir. +/− ile 1
 
 ### Kaynak dengesi ve anlaşılır bina bilgileri — v2.8.0
 
-Tekrar kazanılan malzemeler azaltıldı: bina üretimi %50, toplama 7 odun + 4 taş + 4 su + 4 yem / 20 saniye; savaş ile yeni keşif/sevkiyat kaynakları yarıya inip aşağı yuvarlanır. Mevcut birikimler, başlangıç erzağı, XP, ekipman ve tek seferlik görev ödülleri korunur. Başlamış seferler eski ödülleriyle tamamlanır. Köy yapılarında **Seviye 1 · Arsa 32** binanın gelişimini ve konumunu belirtir; 32 bir maliyet değildir. Maliyetlerde kaynak adı görünür; üzerine gelince veya klavyeyle odaklanınca mevcut/gerekli miktar açıklanır. [Denge tablosu](docs/ECONOMY.md).
+Bu tarihsel v2.8.0 ayarı v2.11.0 seferleri ve v2.15.0 üretim/toplamasıyla güncellendi. O sürümde tekrar kazanılan malzemeler azaltıldı: bina üretimi %50, toplama 7 odun + 4 taş + 4 su + 4 yem / 20 saniye; savaş ile yeni keşif/sevkiyat kaynakları yarıya inip aşağı yuvarlanır. Mevcut birikimler, başlangıç erzağı, XP, ekipman ve tek seferlik görev ödülleri korunur. Başlamış seferler eski ödülleriyle tamamlanır. Köy yapılarında **Seviye 1 · Arsa 32** binanın gelişimini ve konumunu belirtir; 32 bir maliyet değildir. Maliyetlerde kaynak adı görünür; üzerine gelince veya klavyeyle odaklanınca mevcut/gerekli miktar açıklanır. [Denge tablosu](docs/ECONOMY.md).
 
 ### Sefer Kadrosu — v2.7.0
 
@@ -179,7 +185,7 @@ Battlefield wolves, jackals, sheep and cows use realistic transparent cutouts. T
 
 Download and open [`preview/index.html`](preview/index.html) in a browser for a self-contained **visual homepage preview**. It does not open the game. GitHub file preview cannot run its interactive content. For the SQLite-backed local server, install Node.js 24, then run `npm ci`, `npm run build`, and `npm start`. Open <http://127.0.0.1:3000>, and register/sign in with email and password from the homepage, then confirm the emailed code. SMTP is required for new email accounts; Google can also verify ownership. A password must contain 12–128 characters. Alternatively, [configure Google OAuth](docs/GOOGLE-SIGNIN.md) to use Google. See the [account guide](docs/ACCOUNT-SIGNIN.md). The homepage and information pages are public; **the village and every other game screen require a valid account session**, including direct `#village` visits. An earlier server guest village can be claimed at first sign-in if its existing cookie remains valid. Earlier browser-local saves are not uploaded automatically.
 
-The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, five regions, and quests. All interfaces support Turkish/English. The game uses the dark earth palette; the homepage, admin and analytics retain light/dark choices. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v2.14.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a six-digit, 15-minute verification code from `Bozkurtobasi.com <info@bozkurtobasi.com>` in illustrated HTML email. Game and player APIs stay locked until confirmation, including during SMTP failure. Google-verified accounts can start through Google. Profile email and full name are immutable; nickname and photo are editable, with custom uploads taking priority over Google pictures. Permanent player codes support accepted friendships, private messages and atomic gifts of all five materials and inventory equipment. Google and password sign-in for the same email open one account and village after ownership is confirmed. **Forgot password** sends a single-use code in illustrated email. Resetting revokes all email and linked Google sessions while preserving the village, profile and friends. PvP and payments are not yet included.
+The playable release includes nine building types, resource production, five trainable guardians, crescent/star formations, five jackal tactics chosen randomly when combat begins, animated battles, five regions, and quests. All interfaces support Turkish/English. The game uses the dark earth palette; the homepage, admin and analytics retain light/dark choices. Dark mode uses warm brown and earth surfaces, cream text, gold highlights and steppe green buttons/selected areas; light mode is preserved. The theme preference is remembered on the device. The in-game **Release history** shows v2.15.0 and earlier updates. Email registration works without Google credentials. With SMTP configured, registration sends a six-digit, 15-minute verification code from `Bozkurtobasi.com <info@bozkurtobasi.com>` in illustrated HTML email. Game and player APIs stay locked until confirmation, including during SMTP failure. Google-verified accounts can start through Google. Profile email and full name are immutable; nickname and photo are editable, with custom uploads taking priority over Google pictures. Permanent player codes support accepted friendships, private messages and atomic gifts of all five materials and inventory equipment. Google and password sign-in for the same email open one account and village after ownership is confirmed. **Forgot password** sends a single-use code in illustrated email. Resetting revokes all email and linked Google sessions while preserving the village, profile and friends. PvP and payments are not yet included.
 
 The village **First steps** guide follows gathering, construction, the first quest reward, two training actions and the first victory from saved progress. Buttons lead to the relevant control without spending resources. Previously completed steps are recognized. The new crescent-and-wolf SVG identity supports desktop/mobile, light/dark themes and the favicon; see [logo files and usage](docs/BRAND.md).
 
@@ -193,11 +199,17 @@ The separate battlefield follows a march, ambush, crescent/star deployment and c
 
 Redeploy all four Dokploy services together and retain existing persistent data volumes. No extra environment configuration is needed.
 
-### Wall Watch — v2.14.0
+### Storage and active gathering — v2.15.0
+
+Each resource starts with **1,000** capacity. Construct and upgrade storage to reach **10,000 → 50,000 → 250,000 → 1,000,000 → 5,000,000**; hall upgrades add up to another 400. The homeland panel shows current/next capacity, cost and an **Expand storage** action. Existing villages keep their resource balances when capacity migrates.
+
+Passive building production is 10% of the previous release: one level-1 lumber camp provides **36 wood/hour**. Choose logging, quarrying, water hauling, feed gathering or herb foraging and inspect the reward before acting. All choices share a **90-second** cooldown; none repeats automatically and switching jobs cannot bypass it. Starter supplies, construction recipes and one-time story rewards remain; 6–12-hour journeys and battles also reward active participation. [Current balance table](docs/ECONOMY.md) · [Village preview](preview/village.html).
+
+### Wall Watch — v2.15.0
 
 The Chief’s Hall stands out as a 28% larger landmark. Four fixed wall-corner sites accept only watchtowers; new villages start without towers. Select a corner **+** to build for **100 wood + 70 stone**. Towers cannot move, upgrade according to their own levels and refund half their construction/upgrade investment after confirmed demolition. The freed corner still accepts only a watchtower. Previously purchased towers move into free corners with IDs, levels and resources preserved; all 36 normal plots and other buildings remain in place. The highest tower level determines defense support. Walls, the gate and two sentries use realistic textures. Rocky foothills extend left across the upper edge, with a waterfall feeding the river outside the village. Weather is visual and does not affect production. Zoom with the mouse wheel or on-screen/keyboard +/−; Ctrl is unnecessary. [Towers, gate and weather](docs/VILLAGE-DEFENSE.md) · [Offline village](preview/village.html).
 
-### Illustrated selection and dark game — v2.14.0
+### Illustrated selection and dark game — v2.15.0
 
 Each route card combines its landscape, duration and selected state. Purpose and guardian choices update costs, XP and rewards without spending resources; only explicit departure submits the mission. The game uses one dark theme with clearer tabs and panel boundaries. The homepage retains its light/dark preference. [Regional images and exact prompts](docs/REGION-ART.md) · [Journey preview](preview/adventure.html).
 
@@ -227,7 +239,7 @@ The map fits all plots without internal scrollbars. Zoom from 1× to 2.5× with 
 
 ### Resource balance and clearer structure information — v2.8.0
 
-Repeatable material income is reduced: building production by 50%; gathering gives 7 wood + 4 stone + 4 water + 4 feed every 20 seconds; battle and new expedition/escort materials are halved and rounded down. Existing balances, starter supplies, XP, equipment and one-time objective rewards remain. Ongoing journeys retain their old rewards. **Level 1 · Plot 32** identifies development and location; 32 is not a cost. Costs show resource names, with available/required quantities on hover or keyboard focus. [Balance table](docs/ECONOMY.md).
+These historical v2.8.0 settings were updated by v2.11.0 journeys and v2.15.0 production/gathering. At that release, repeatable material income was reduced: building production by 50%; gathering gives 7 wood + 4 stone + 4 water + 4 feed every 20 seconds; battle and new expedition/escort materials are halved and rounded down. Existing balances, starter supplies, XP, equipment and one-time objective rewards remain. Ongoing journeys retain their old rewards. **Level 1 · Plot 32** identifies development and location; 32 is not a cost. Costs show resource names, with available/required quantities on hover or keyboard focus. [Balance table](docs/ECONOMY.md).
 
 ### Journey Party — v2.7.0
 
@@ -323,15 +335,15 @@ Open [`preview/admin.html`](preview/admin.html) for a standalone, responsive TR/
 <!-- metrics:start -->
 | Kapsam / Scope | Dosya / Files | Satır / Lines |
 | --- | ---: | ---: |
-| Web istemci / Web client | 49 | 16126 |
+| Web istemci / Web client | 50 | 16640 |
 | Web sunucu / Web server | 14 | 3879 |
 | Dağıtım servisleri / Deployment services | 33 | 6367 |
-| Paylaşılan oyun / Shared game | 9 | 2795 |
-| Web test ve araçlar / Web tests and tools | 106 | 25249 |
+| Paylaşılan oyun / Shared game | 10 | 2837 |
+| Web test ve araçlar / Web tests and tools | 108 | 25984 |
 | Korunan Unity kaynakları / Preserved Unity sources | 75 | 10198 |
-| **Toplam / Total** | **286** | **64614** |
+| **Toplam / Total** | **290** | **65905** |
 
-Aktif web kaynakları / Active web source: **54416** satır / lines.
+Aktif web kaynakları / Active web source: **55707** satır / lines.
 Fiziksel kaynak satırları; boş satırlar ve yorumlar dahil, üretilen önizleme, bağımlılıklar ve kilit dosyaları hariç. / Physical source lines include comments and blank lines; generated preview, dependencies, and lockfiles are excluded.
 <!-- metrics:end -->
 

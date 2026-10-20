@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+**v2.15.0:** Depo yükseltmeleri 5.000.000, Bey Otağı ile 5.000.400 kapasiteye ulaşır. Pasif üretim %90 azaltıldı; ortak 90 saniyelik beklemeyle altı toplama işi seçilir. Mevcut kaynaklar korunur; başlangıç erzağı, görevler ve 6–12 saatlik seferler aynı kalır. Ana Yurt mevcut/sonraki depo kapasitesini, genişletme maliyetini ve aktif toplama kazanımını açıklar. [Güncel denge](ECONOMY.md).
+
 **v2.14.0:** Sur köşeleri oyuncunun inşa ettiği gözcü kulelerine ayrıldı. Dört yer sabittir, başlangıçta boştur ve başka bina kabul etmez. Kuleler taşınamaz; kendi seviyelerine göre yükseltilebilir veya %50 malzeme iadesiyle kaldırılabilir. Önceki ücretli kuleler kimlik/seviyeleri korunarak boş köşelere aktarılır; 36 normal parsel korunur. [Güncel köy rehberi](VILLAGE-DEFENSE.md).
 
 **v2.13.0:** Gerçekçi ahşap/taş/kale surları, kapı ve nöbetçiler; sola uzanan dağ eteğinden doğan doğal ırmak. Fare tekerleği ve +/− kontrolleriyle sabit alanda yakınlaştırma eklendi. Bu sürümdeki hazır dekoratif köşe kuleleri v2.14.0 ile isteğe bağlı gerçek binalara dönüştü.
@@ -48,6 +50,8 @@ Sıradaki doğrulama: gerçek oyuncularda İlk Nöbet, kaynak dengesi ve sefer k
 Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek test sonuçları, kaynak satır sayısı, tek dosyalık görsel önizleme ve temiz kaynak ZIP'i ile bütün yerel dosyaları içeren doğrulanmış Drive ZIP'i. Canlı sunucu yedekleri ayrı tutulur. İlk hedef küçük, geri bildirim alınabilen bir web oyunu; eski Unity WP-00–WP-11 kapsamının tamamını tek sürümde taşımak değildir.
 
 ## English
+
+**v2.15.0:** Storage upgrades reach 5,000,000 capacity, or 5,000,400 with the hall. Passive output is reduced 90%; six gathering jobs share a 90-second cooldown. Existing balances, starter resources, quests and 6–12-hour journey promises remain. The homeland explains current/next storage capacity, expansion costs and active gathering rewards. [Current balance](ECONOMY.md).
 
 **v2.14.0:** Wall corners are reserved for player-built watchtowers. The four sites are fixed, initially empty and cannot accept other buildings. Towers cannot move, but can be upgraded by their own level or demolished with a 50% material refund. Earlier paid towers move into free corners while retaining IDs and levels; all 36 ordinary plots remain. [Current village guide](VILLAGE-DEFENSE.md).
 

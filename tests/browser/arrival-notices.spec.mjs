@@ -12,7 +12,7 @@ const notice = (page) => page.locator('#arrival-notice');
 function departing({ legacy = false, capped = false } = {}) {
   const state = createGame(START);
   if (capped) {
-    state.resources.wood = 499.5;
+    state.resources.wood = state.capacity - 0.5;
     state.resources.stone = state.capacity;
     state.resources.herbs = state.capacity;
     state.inventory.leather_vest = 10000;

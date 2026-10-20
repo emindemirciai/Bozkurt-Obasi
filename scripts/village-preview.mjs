@@ -3,11 +3,17 @@ import '../web/v2.css';
 import '../web/village-camera.css';
 import { mountVillageCamera, villageCameraControls } from '../web/village-camera.mjs';
 import { wolfPortrait, settlementControls } from '../web/v2-view.mjs';
-import { BUILDINGS, TOWER_PLOTS, demolitionQuote } from '../shared/settlement.mjs';
+import {
+  BUILDINGS,
+  TOWER_PLOTS,
+  demolitionQuote,
+  getStorageCapacity,
+} from '../shared/settlement.mjs';
 import { demolitionDialog } from '../web/demolition-panel.mjs';
 import { createGame } from '../shared/game.mjs';
 import { translations } from '../web/i18n.mjs';
 import { economyPanel, updateEconomyPanel } from '../web/economy-panel.mjs';
+import { resourceWorkPanel, updateResourceWorkPanel } from '../web/resource-work.mjs';
 import { herdPanel, updateHerdPanel } from '../web/herd-panel.mjs';
 import { scene } from '../web/art.mjs';
 import { brandMark, brandName } from '../web/logo.mjs';
@@ -37,18 +43,7 @@ const cornerTowers = (level) =>
 state.buildings = [...villageBuildings];
 state.stats.builds = state.buildings.length;
 function updateCapacity() {
-  state.capacity =
-    500 +
-    state.buildings.reduce(
-      (total, building) =>
-        total +
-        (building.type === 'storage'
-          ? 250 * building.level
-          : building.type === 'hall'
-            ? 100 * (building.level - 1)
-            : 0),
-      0,
-    );
+  state.capacity = getStorageCapacity(state);
 }
 updateCapacity();
 state.walls.level = 3;
@@ -58,6 +53,7 @@ state.resources.stone = 12;
 let language = 'tr',
   theme = 'light',
   plannedBuilding = 'quarry',
+  collectionResource = 'mixed',
   towerLevel = 1,
   replenishAmount = 1,
   demolitionOpen = false;
@@ -105,7 +101,7 @@ const escape = (value) =>
     /[&<>"']/g,
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
-const context = () => ({ t, number, escape, language });
+const context = () => ({ t, number, escape, language, readOnly: true });
 const recoveryContext = () => ({ ...context(), busy: false, readOnly: true });
 function lock() {
   const button = document.querySelector('#execute-construction-plan');
@@ -148,7 +144,7 @@ function render() {
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${labels[language].title}</h1></div></section>
       <section class="map-card"><div class="map-top"><span class="map-title">${t('homeland')}</span><span class="map-chip">${state.buildings.length} ${t('buildingCount')}</span></div>
         <div class="scene-wrap">${scene(state, { battle: false, selected: 'building-hall', t })}${villageCameraControls({ t })}</div></section>
-      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1" ${state.walls.level === 1 ? 'selected' : ''}>1</option><option value="3" ${state.walls.level === 3 ? 'selected' : ''}>3</option><option value="5" ${state.walls.level === 5 ? 'selected' : ''}>5</option></select></label><label class="preview-tier">${labels[language].corners} <select id="preview-corners"><option value="built" ${state.buildings.some((building) => building.type === 'watchtower') ? 'selected' : ''}>${labels[language].towersBuilt}</option><option value="empty" ${state.buildings.some((building) => building.type === 'watchtower') ? '' : 'selected'}>${labels[language].towersEmpty}</option></select></label><label class="preview-tier">${labels[language].towerTier} <select id="preview-tower-tier"><option value="1" ${towerLevel === 1 ? 'selected' : ''}>1</option><option value="3" ${towerLevel === 3 ? 'selected' : ''}>3</option><option value="5" ${towerLevel === 5 ? 'selected' : ''}>5</option></select></label><p class="village-preview-notice">${labels[language].towerNotice}</p><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
+      ${settlementControls(state, { t, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1" ${state.walls.level === 1 ? 'selected' : ''}>1</option><option value="3" ${state.walls.level === 3 ? 'selected' : ''}>3</option><option value="5" ${state.walls.level === 5 ? 'selected' : ''}>5</option></select></label><label class="preview-tier">${labels[language].corners} <select id="preview-corners"><option value="built" ${state.buildings.some((building) => building.type === 'watchtower') ? 'selected' : ''}>${labels[language].towersBuilt}</option><option value="empty" ${state.buildings.some((building) => building.type === 'watchtower') ? '' : 'selected'}>${labels[language].towersEmpty}</option></select></label><label class="preview-tier">${labels[language].towerTier} <select id="preview-tower-tier"><option value="1" ${towerLevel === 1 ? 'selected' : ''}>1</option><option value="3" ${towerLevel === 3 ? 'selected' : ''}>3</option><option value="5" ${towerLevel === 5 ? 'selected' : ''}>5</option></select></label><p class="village-preview-notice">${labels[language].towerNotice}</p><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${resourceWorkPanel(state, collectionResource, context())}${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
   camera = mountVillageCamera(root.querySelector('.scene-wrap'), {
     saved: cameraState,
     t,
@@ -187,6 +183,11 @@ root.addEventListener('click', async (event) => {
   }
 });
 root.addEventListener('change', (event) => {
+  if (event.target.id === 'collection-resource') {
+    collectionResource = event.target.value;
+    updateResourceWorkPanel(root, state, collectionResource, context());
+    return;
+  }
   if (event.target.id === 'preview-corners') {
     state.buildings = state.buildings.filter((building) => building.type !== 'watchtower');
     if (event.target.value === 'built') state.buildings.push(...cornerTowers(towerLevel));

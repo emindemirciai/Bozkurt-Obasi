@@ -8,6 +8,9 @@ import {
   upgradeWall,
   getUpgradeCost,
   demolishBuilding,
+  BASE_CAPACITY,
+  STORAGE_CAPACITY_BONUSES,
+  getStorageCapacity,
 } from './settlement.mjs';
 import {
   initializeAdventureState,
@@ -23,6 +26,7 @@ import {
   grantWolfXp,
 } from './adventures.mjs';
 import { replenishHerd } from './herd.mjs';
+import { COLLECTION_TASKS, COLLECT_COOLDOWN_MS } from './economy.mjs';
 import { applyRecovery } from './recovery.mjs';
 import {
   applyBattleCommand,
@@ -141,7 +145,7 @@ export function createGame(now = Date.now()) {
     updatedAt: now,
     collectReadyAt: now,
     resources: { water: 180, feed: 180, herbs: 80, wood: 450, stone: 350 },
-    capacity: 500,
+    capacity: BASE_CAPACITY,
     ...initializeSettlement(),
     wolves: WOLF_ROLES.map((name, index) => ({
       id: `wolf-${name}`,
@@ -178,12 +182,14 @@ export function migrateGame(state) {
           allowLegacyFirstWatch: true,
           allowLegacyBattleCommands: true,
           allowLegacyTowerPlots: true,
+          allowLegacyCapacity: true,
         })
       : !validateLegacyGame(state)
   )
     fail('INVALID_SAVE');
   const migrated = structuredClone(state);
   migrateSettlement(migrated);
+  migrated.capacity = getStorageCapacity(migrated);
   if (migrated.version !== 2) {
     migrateAdventureState(migrated);
     migrated.version = 2;
@@ -203,7 +209,7 @@ export function getProduction(state) {
   if (state.location === 'spring') rates.water *= 1.5;
   if (state.location === 'meadow') rates.feed *= 1.5;
   if (state.location === 'highland') rates.stone *= 1.5;
-  return rates;
+  return Object.fromEntries(RESOURCE_KEYS.map((key) => [key, round(rates[key])]));
 }
 
 function finishBattle(state, won, at) {
@@ -488,19 +494,26 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       if (building.level >= 5) fail('MAX_LEVEL');
       spend(state, getUpgradeCost(building));
       building.level += 1;
-      if (building.type === 'storage') state.capacity += 250;
-      if (building.type === 'hall') state.capacity += 100;
+      state.capacity = getStorageCapacity(state);
       log(state, 'buildingUpgraded', at);
       break;
     }
-    case 'collect':
+    case 'collect': {
+      const task = COLLECTION_TASKS.find(
+        (entry) => entry.id === (Object.hasOwn(action, 'resource') ? action.resource : 'mixed'),
+      );
+      if (!task) fail('INVALID_COLLECTION');
       if (at < state.collectReadyAt) fail('COLLECT_COOLDOWN');
-      addResources(state, { wood: 7, stone: 4, water: 4, feed: 4 });
-      state.collectReadyAt = at + 20000;
+      if (at > MAX_TIME - COLLECT_COOLDOWN_MS) fail('INVALID_CLOCK');
+      if (Object.keys(task.reward).every((key) => state.resources[key] >= state.capacity))
+        fail('COLLECT_STORAGE_FULL');
+      addResources(state, task.reward);
+      state.collectReadyAt = at + COLLECT_COOLDOWN_MS;
       state.stats.gathers += 1;
       log(state, 'resourcesCollected', at);
       recordFirstWatch(state, 'gather', at);
       break;
+    }
     case 'formation':
       requirePeace(state);
       if (!['wolf', 'herd'].includes(action.unit) || !FORMATIONS.includes(action.value))
@@ -622,6 +635,7 @@ export function validateGame(
     allowLegacyFirstWatch = false,
     allowLegacyBattleCommands = false,
     allowLegacyTowerPlots = false,
+    allowLegacyCapacity = false,
   } = {},
 ) {
   try {
@@ -653,7 +667,11 @@ export function validateGame(
       state.version !== 2 ||
       !time(state.updatedAt) ||
       !time(state.collectReadyAt) ||
-      !integer(state.capacity, 500, 2150)
+      !integer(
+        state.capacity,
+        allowLegacyCapacity ? 500 : BASE_CAPACITY,
+        BASE_CAPACITY + STORAGE_CAPACITY_BONUSES[5] + 400,
+      )
     )
       return false;
     if (
@@ -664,8 +682,12 @@ export function validateGame(
     if (!validateSettlement(state, { allowLegacyTowerPlots }) || !validateAdventureState(state))
       return false;
     if (
-      state.capacity !==
-      500 + Math.max(0, levelOf(state, 'hall') - 1) * 100 + levelOf(state, 'storage') * 250
+      state.capacity !== getStorageCapacity(state) &&
+      !(
+        allowLegacyCapacity &&
+        state.capacity ===
+          500 + Math.max(0, levelOf(state, 'hall') - 1) * 100 + levelOf(state, 'storage') * 250
+      )
     )
       return false;
     if (!Array.isArray(state.wolves) || state.wolves.length !== 5) return false;

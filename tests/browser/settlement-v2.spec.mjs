@@ -75,7 +75,7 @@ test('chosen plots, duplicate producers and free relocation persist through the 
   expect(moved.state.buildings[0]).toMatchObject({ id: 'building-quarry', x: 0, y: 2 });
   expect(moved.state.resources.wood).toBe(before.resources.wood);
   expect(moved.state.resources.stone).toBeCloseTo(
-    before.resources.stone + ((moved.state.updatedAt - before.updatedAt) * 9) / 60_000,
+    before.resources.stone + ((moved.state.updatedAt - before.updatedAt) * 0.9) / 60_000,
     5,
   );
   await expect(page.locator('[data-plot="p0"]')).toBeVisible();
@@ -288,7 +288,7 @@ test('wall upgrade becomes available when passive production crosses its own cos
   await page.goto('/#village');
   const upgrade = page.locator('[data-action="upgradeWall"]');
   await expect(upgrade).toBeDisabled();
-  await pollVillage(page, 1_000);
+  await pollVillage(page, 11_000);
   await expect(upgrade).toBeEnabled();
   expect(state.resources.wood).toBeGreaterThan(140);
   const response = page.waitForResponse('**/api/action');
@@ -315,7 +315,7 @@ test('expedition start becomes available at its route and difficulty price witho
   await page.locator('[name="adventure-wolf"][value="wolf-hunter"]').check();
   const start = page.locator('[data-action="startAdventure"]');
   await expect(start).toBeDisabled();
-  await pollVillage(page, 1_000);
+  await pollVillage(page, 11_000);
   await expect(start).toBeEnabled();
   expect(state.resources.water).toBeGreaterThan(37);
   const response = page.waitForResponse('**/api/action');
@@ -344,7 +344,7 @@ test('placement choices refresh affordability while an open dialog retains its f
   const close = dialog.locator('[data-action="close"]');
   await expect(choice).toBeDisabled();
   await close.focus();
-  await pollVillage(page, 1_000);
+  await pollVillage(page, 11_000);
   await expect(choice).toBeEnabled();
   await expect(close).toBeFocused();
   await expect(dialog).toBeVisible();

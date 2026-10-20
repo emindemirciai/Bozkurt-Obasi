@@ -101,7 +101,13 @@ test('all main producers support six independent buildings with summed productio
   }
   assert.equal(state.buildings.length, 30);
   assert.equal(new Set(state.buildings.map((b) => b.id)).size, 30);
-  assert.deepEqual(getProduction(state), { water: 42, feed: 36, herbs: 18, wood: 36, stone: 27 });
+  assert.deepEqual(getProduction(state), {
+    water: 4.2,
+    feed: 3.6,
+    herbs: 1.8,
+    wood: 3.6,
+    stone: 2.7,
+  });
   refill(state);
   act(state, { type: 'build', building: 'hall', plotId: 'p34' });
   unchangedFailure(state, { type: 'build', building: 'hall', plotId: 'p35' }, 'BUILDING_EXISTS');
@@ -151,7 +157,7 @@ test('walls spend their exact upgrade cost, retain valid state and stop at the c
   unchangedFailure(poor, { type: 'upgradeWall' }, 'INSUFFICIENT_RESOURCES');
 });
 
-test('strict v1 migration preserves every old field and rejects damaged saves', () => {
+test('strict v1 migration preserves gameplay, expands capacity and rejects damaged saves', () => {
   const legacy = createLegacyGame(START);
   applyLegacyAction(legacy, { type: 'build', building: 'quarry' }, START);
   applyLegacyAction(legacy, { type: 'train', id: 'wolf-alpha', path: 'guardian' }, START);
@@ -161,7 +167,7 @@ test('strict v1 migration preserves every old field and rejects damaged saves', 
   assert.deepEqual(legacy, before);
   assert.equal(migrated.version, 2);
   for (const key of Object.keys(legacy).filter(
-    (key) => !['version', 'wolves', 'battle'].includes(key),
+    (key) => !['version', 'wolves', 'battle', 'capacity'].includes(key),
   ))
     assert.deepEqual(migrated[key], legacy[key], key);
   assert.deepEqual((({ commands, ...battle }) => battle)(migrated.battle), legacy.battle);
@@ -306,7 +312,7 @@ test('caravan arrival changes location and keeps production, XP and rewards inde
   for (let now = start + 60_137; now < end + 30_000; now += 60_137) advanceGame(frequent, now);
   advanceGame(frequent, end + 30_000);
   assert.equal(state.location, 'spring');
-  assert.equal(getProduction(state).water, 10.5);
+  assert.equal(getProduction(state).water, 1.05);
   assert.equal(totalXp(state.wolves[0]), 270);
   assert.equal(totalXp(state.wolves[1]), 270);
   assert.equal(totalXp(state.wolves[3]), 180);

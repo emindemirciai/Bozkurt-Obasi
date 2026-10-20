@@ -125,7 +125,7 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   );
   expect(upgraded.state.resources.stone).toBeCloseTo(
     built.state.resources.stone +
-      ((upgraded.state.updatedAt - built.state.updatedAt) * 4.5) / 60_000 -
+      ((upgraded.state.updatedAt - built.state.updatedAt) * 0.45) / 60_000 -
       47,
     6,
   );
@@ -167,8 +167,8 @@ test('server production counts down and unlocks a focused plan without replacing
   const choice = page.locator('#construction-plan');
   const execute = page.locator('#execute-construction-plan');
   const status = page.locator('[data-economy-plan-status]');
-  await expect(resource(page, 'wood').locator('[data-economy-stock]')).toHaveText('69 / 500');
-  await expect(resource(page, 'wood').locator('[data-economy-rate]')).toContainText('+6');
+  await expect(resource(page, 'wood').locator('[data-economy-stock]')).toHaveText('69 / 1.000');
+  await expect(resource(page, 'wood').locator('[data-economy-rate]')).toContainText('+0,6');
   await expect(resource(page, 'stone').locator('[data-economy-fill-status]')).toContainText(
     'Üretim yok',
   );
@@ -177,7 +177,7 @@ test('server production counts down and unlocks a focused plan without replacing
   );
   await expect(deficit(page, 'wood').locator('.economy-deficit-missing')).toHaveText('1');
   await expect(deficit(page, 'stone').locator('.economy-deficit-missing')).toHaveText('0');
-  await expect(status).toContainText('10 sn');
+  await expect(status).toContainText('1 dk 40 sn');
   await expect(execute).toBeDisabled();
   await choice.selectOption('lumber');
   await choice.selectOption('quarry');
@@ -185,10 +185,10 @@ test('server production counts down and unlocks a focused plan without replacing
   const originalExecute = await execute.elementHandle();
   await choice.focus();
   await pollVillage(page, 2100);
-  await expect(status).toContainText('8 sn');
+  await expect(status).toContainText('1 dk 38 sn');
   await expect(choice).toBeFocused();
   await expect(execute).toBeDisabled();
-  await pollVillage(page, 8000);
+  await pollVillage(page, 98_000);
   await expect(execute).toBeEnabled();
   await expect(status).toContainText('Kaynakların hazır');
   await expect(deficit(page, 'wood').locator('.economy-deficit-missing')).toHaveText('0');
@@ -227,7 +227,9 @@ test('offline village preview keeps every plan read-only with bilingual themes a
   await expect(page.locator('#offline-banner')).toContainText('Salt okunur');
   await expect(page.locator('.map-chip')).toHaveText('8 yapı');
   await expect(page.locator('[data-economy-resource]')).toHaveCount(RESOURCE_KEYS.length);
-  const stock = await page.locator('[data-economy-stock]').allTextContents();
+  const stock = (await page.locator('[data-economy-stock]').allTextContents()).map((text) =>
+    text.replace(/[.,]/g, ''),
+  );
   const choice = page.locator('#construction-plan');
   const execute = page.locator('#execute-construction-plan');
   for (const language of ['tr', 'en']) {
@@ -240,7 +242,11 @@ test('offline village preview keeps every plan read-only with bilingual themes a
       await choice.selectOption(building.id);
       await expect(choice).toHaveValue(building.id);
       await expect(execute).toBeDisabled();
-      expect(await page.locator('[data-economy-stock]').allTextContents()).toEqual(stock);
+      expect(
+        (await page.locator('[data-economy-stock]').allTextContents()).map((text) =>
+          text.replace(/[.,]/g, ''),
+        ),
+      ).toEqual(stock);
     }
     for (const theme of ['light', 'dark']) {
       if ((await page.locator('html').getAttribute('data-theme')) !== theme)
