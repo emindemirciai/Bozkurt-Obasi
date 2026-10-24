@@ -4,6 +4,22 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.17.0 — 2026-10-24
+
+**TR**
+
+- Oba Hedefi seçilen inşa veya yükseltme adımını sabitler; kaynak ilerlemesi ve eksikler oyuncu koduna göre bu cihazda hatırlanır.
+- Hedeflenen seviye veya adet tamamlandığında hedef sabit kalır; kaldırılmış ve değişmiş yapılar açıklanır. Kaynak yönlendirmesi yalnız toplama seçeneğini hazırlar.
+- 1/4/8/12/24 saatlik üretim öngörüsü tek dönüşte sekiz saat sınırını, depoya sığan miktarı ve taşacak üretimi gösterir; uzun bekleme tahminleri kesintisiz üretim süresi olarak adlandırılır.
+- TR/EN mobil hedef kartı ve çevrimdışı köy örnekleri eklendi. Hedefler yerel tercihtir; mevcut maliyetler, kazançlar ve sunucu kayıtları korunur.
+
+**EN**
+
+- Village Goal pins the selected construction or upgrade step; resource progress and shortages are remembered on this device for the public player code.
+- Target level or count stays fixed after completion; missing and changed buildings are explained. Resource guidance only prepares the gathering selection.
+- 1/4/8/12/24-hour production forecasts show the eight-hour limit per return, stored income and overflow; long waits are identified as continuous production time.
+- The goal card and offline village examples support TR/EN and mobile. Goals are local preferences; existing prices, income and server saves are preserved.
+
 ## v2.16.0 — 2026-10-24
 
 **TR**

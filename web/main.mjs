@@ -55,7 +55,8 @@ import {
   firstWatchJournalPanel,
   updateFirstWatchJournalPanel,
 } from './first-watch-journal-panel.mjs';
-import { constructionPlan } from './planning.mjs';
+import { constructionPlan, PRODUCTION_FORECAST_HOURS } from './planning.mjs';
+import { createConstructionGoalTracker, constructionGoalStatus } from './construction-goal.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { resourceWorkPanel, updateResourceWorkPanel } from './resource-work.mjs';
 import { COLLECTION_TASKS, getBattleCost } from '../shared/economy.mjs';
@@ -110,6 +111,9 @@ const write = (key, value) => {
   }
 };
 const arrivalTracker = createArrivalTracker({ storage: { getItem: read, setItem: write } });
+const constructionGoalTracker = createConstructionGoalTracker({
+  storage: { getItem: read, setItem: write },
+});
 let arrivals = { notice: null, unreadCount: 0 };
 let language = read('bozkurt.language') === 'en' ? 'en' : 'tr';
 let theme = read('bozkurt.theme') === 'dark' ? 'dark' : 'light';
@@ -130,6 +134,7 @@ let villageCamera = null,
   villageCameraState = {};
 let plannedBuilding = 'quarry';
 let collectionResource = 'mixed';
+let forecastHours = 8;
 let herdAmount = 1;
 let selectedPlot = '',
   movingId = '';
@@ -147,7 +152,15 @@ let conversation = { userCode: '', messages: [], nextBefore: null },
   conversationRequest = 0,
   conversationPending = 0,
   conversationPollAt = 0;
-const economyContext = () => ({ t, number, escape, language, busy });
+const economyContext = () => ({
+  t,
+  number,
+  escape,
+  language,
+  busy,
+  constructionGoal: constructionGoalTracker.get(),
+  forecastHours,
+});
 let notice = '',
   noticeUntil = 0;
 let profileDraft = {},
@@ -402,6 +415,8 @@ function denyGameAccess() {
   villageCameraState = {};
   analytics.reset();
   arrivalTracker.clear();
+  constructionGoalTracker.activate(null);
+  forecastHours = 8;
   arrivals = { notice: null, unreadCount: 0 };
   sessionGeneration++;
   polling = null;
@@ -1363,6 +1378,12 @@ root.addEventListener('change', async (event) => {
     render(event.target.id);
     return;
   }
+  if (event.target.id === 'goal-absence-hours') {
+    const hours = Number(event.target.value);
+    if (PRODUCTION_FORECAST_HOURS.includes(hours)) forecastHours = hours;
+    updateEconomyPanel(root, state, plannedBuilding, economyContext());
+    return;
+  }
   if (event.target.id === 'construction-plan') {
     plannedBuilding = constructionPlan(state, event.target.value).target;
     updateEconomyPanel(root, state, plannedBuilding, economyContext());
@@ -1461,7 +1482,14 @@ async function api(path, body, generation = sessionGeneration) {
     }
     state = payload.state;
     revision = payload.revision;
-    if (auth.authenticated) arrivals = arrivalTracker.update(auth.user?.userCode || '', state);
+    if (auth.authenticated) {
+      arrivals = arrivalTracker.update(auth.user?.userCode || '', state);
+      const goal = constructionGoalTracker.activate(auth.user?.userCode || '');
+      if (path === 'session') {
+        const plan = constructionGoalStatus(state, goal)?.plan;
+        if (plan) plannedBuilding = plan.target;
+      }
+    }
     if (auth.authenticated)
       void analytics.progress(state, auth.user?.userCode || auth.user?.email || '');
   }
@@ -1728,6 +1756,48 @@ root.addEventListener('click', async (event) => {
     return;
   }
   const a = target.dataset.action;
+  if (
+    [
+      'pinConstructionGoal',
+      'clearConstructionGoal',
+      'reviewConstructionGoal',
+      'goalGather',
+    ].includes(a)
+  ) {
+    if (busy || !auth.authenticated || mode !== 'online') return;
+    if (a === 'pinConstructionGoal') {
+      if (!constructionGoalTracker.pin(state, plannedBuilding)) return;
+      updateEconomyPanel(root, state, plannedBuilding, economyContext());
+      const heading = root.querySelector('#construction-goal-title');
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    } else if (a === 'clearConstructionGoal') {
+      constructionGoalTracker.clear();
+      updateEconomyPanel(root, state, plannedBuilding, economyContext());
+      root.querySelector('#construction-plan')?.focus({ preventScroll: true });
+    } else {
+      const status = constructionGoalStatus(state, constructionGoalTracker.get());
+      if (!status?.plan) return;
+      if (a === 'reviewConstructionGoal') {
+        plannedBuilding = status.plan.target;
+        updateEconomyPanel(root, state, plannedBuilding, economyContext());
+        const select = root.querySelector('#construction-plan');
+        select?.focus({ preventScroll: true });
+        select?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      } else {
+        const resource = target.dataset.resource;
+        if (!status.plan.deficits.some((entry) => entry.key === resource && entry.missing > 0))
+          return;
+        if (!COLLECTION_TASKS.some((task) => task.id === resource)) return;
+        collectionResource = resource;
+        updateResourceWorkPanel(root, state, collectionResource, economyContext());
+        const select = root.querySelector('#collection-resource');
+        select?.focus({ preventScroll: true });
+        select?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      }
+    }
+    return;
+  }
   if (a === 'openArrivalReport' || a === 'dismissArrival') {
     if (busy || !arrivals.notice || !auth.authenticated || mode !== 'online') return;
     const reportId = arrivals.notice.id;

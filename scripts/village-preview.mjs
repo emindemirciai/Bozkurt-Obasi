@@ -13,6 +13,7 @@ import { demolitionDialog } from '../web/demolition-panel.mjs';
 import { createGame } from '../shared/game.mjs';
 import { translations } from '../web/i18n.mjs';
 import { economyPanel, updateEconomyPanel } from '../web/economy-panel.mjs';
+import { createConstructionGoal } from '../web/construction-goal.mjs';
 import { resourceWorkPanel, updateResourceWorkPanel } from '../web/resource-work.mjs';
 import { herdPanel, updateHerdPanel } from '../web/herd-panel.mjs';
 import { scene } from '../web/art.mjs';
@@ -57,6 +58,8 @@ let language = 'tr',
   theme = 'light',
   plannedBuilding = 'quarry',
   collectionResource = 'mixed',
+  forecastHours = 8,
+  goalScenario = 'planned',
   towerLevel = 1,
   replenishAmount = 1,
   demolitionOpen = false;
@@ -66,6 +69,11 @@ let camera = null,
 const labels = {
   tr: {
     title: 'Oba planlaması',
+    goalScenario: 'Örnek oba hedefi',
+    goalPlanned: 'Kaynak biriktirilen hedef',
+    goalCompleted: 'Tamamlanan hedef',
+    goalMissing: 'Kaldırılan hedef yapı',
+    goalEmpty: 'Henüz hedef yok',
     tier: 'Mimari aşama',
     corners: 'Ayrılmış kule yerleri',
     towersBuilt: 'Dört köşe kulesi inşa edilmiş',
@@ -82,6 +90,11 @@ const labels = {
   },
   en: {
     title: 'Village planning',
+    goalScenario: 'Example village goal',
+    goalPlanned: 'Saving materials for a goal',
+    goalCompleted: 'Completed goal',
+    goalMissing: 'Target building removed',
+    goalEmpty: 'No goal yet',
     tier: 'Architecture tier',
     corners: 'Reserved tower sites',
     towersBuilt: 'Four corner towers built',
@@ -104,7 +117,31 @@ const escape = (value) =>
     /[&<>"']/g,
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
-const context = () => ({ t, number, escape, language, readOnly: true });
+function exampleGoal() {
+  if (goalScenario === 'empty') return null;
+  if (goalScenario === 'completed')
+    return createConstructionGoal(
+      { ...state, buildings: state.buildings.filter((building) => building.type !== 'quarry') },
+      'quarry',
+    );
+  if (goalScenario === 'missing') {
+    const example = structuredClone(state);
+    const quarry = example.buildings.find((building) => building.type === 'quarry');
+    quarry.id = 'building-quarry-6';
+    quarry.level = 1;
+    return createConstructionGoal(example, 'building:building-quarry-6');
+  }
+  return createConstructionGoal(state, 'storage') || createConstructionGoal(state, 'new:quarry');
+}
+const context = () => ({
+  t,
+  number,
+  escape,
+  language,
+  readOnly: true,
+  constructionGoal: exampleGoal(),
+  forecastHours,
+});
 const recoveryContext = () => ({ ...context(), busy: false, readOnly: true });
 function lock() {
   const button = document.querySelector('#execute-construction-plan');
@@ -147,7 +184,19 @@ function render() {
     <main><section class="page-heading"><div><div class="eyebrow">${t('subtitle')}</div><h1>${labels[language].title}</h1></div></section>
       <section class="map-card"><div class="map-top"><span class="map-title">${t('homeland')}</span><span class="map-chip">${state.buildings.length} ${t('buildingCount')}</span></div>
         <div class="scene-wrap">${scene(state, { battle: false, selected: 'building-hall', t })}${villageCameraControls({ t })}</div></section>
-      ${settlementControls(state, { t, language, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1" ${state.walls.level === 1 ? 'selected' : ''}>1</option><option value="3" ${state.walls.level === 3 ? 'selected' : ''}>3</option><option value="5" ${state.walls.level === 5 ? 'selected' : ''}>5</option></select></label><label class="preview-tier">${labels[language].corners} <select id="preview-corners"><option value="built" ${state.buildings.some((building) => building.type === 'watchtower') ? 'selected' : ''}>${labels[language].towersBuilt}</option><option value="empty" ${state.buildings.some((building) => building.type === 'watchtower') ? '' : 'selected'}>${labels[language].towersEmpty}</option></select></label><label class="preview-tier">${labels[language].towerTier} <select id="preview-tower-tier"><option value="1" ${towerLevel === 1 ? 'selected' : ''}>1</option><option value="3" ${towerLevel === 3 ? 'selected' : ''}>3</option><option value="5" ${towerLevel === 5 ? 'selected' : ''}>5</option></select></label><p class="village-preview-notice">${labels[language].towerNotice}</p><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${resourceWorkPanel(state, collectionResource, context())}${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
+      ${settlementControls(state, { t, language, busy: true })}<label class="preview-tier">${labels[language].tier} <select id="preview-tier"><option value="1" ${state.walls.level === 1 ? 'selected' : ''}>1</option><option value="3" ${state.walls.level === 3 ? 'selected' : ''}>3</option><option value="5" ${state.walls.level === 5 ? 'selected' : ''}>5</option></select></label><label class="preview-tier">${labels[language].corners} <select id="preview-corners"><option value="built" ${state.buildings.some((building) => building.type === 'watchtower') ? 'selected' : ''}>${labels[language].towersBuilt}</option><option value="empty" ${state.buildings.some((building) => building.type === 'watchtower') ? '' : 'selected'}>${labels[language].towersEmpty}</option></select></label><label class="preview-tier">${labels[language].towerTier} <select id="preview-tower-tier"><option value="1" ${towerLevel === 1 ? 'selected' : ''}>1</option><option value="3" ${towerLevel === 3 ? 'selected' : ''}>3</option><option value="5" ${towerLevel === 5 ? 'selected' : ''}>5</option></select></label><p class="village-preview-notice">${labels[language].towerNotice}</p><section class="preview-guardians"><h2>${labels[language].guardians}</h2><div>${state.wolves.map((w) => `<article>${wolfPortrait(w)}<h3>${t(w.name === 'healer' ? 'healerPath' : w.name)}</h3></article>`).join('')}</div></section>${resourceWorkPanel(state, collectionResource, context())}<label class="preview-tier">${labels[language].goalScenario}<select id="preview-goal-scenario">${[
+        ['planned', 'goalPlanned'],
+        ['completed', 'goalCompleted'],
+        ['missing', 'goalMissing'],
+        ['empty', 'goalEmpty'],
+      ]
+        .map(
+          ([value, label]) =>
+            `<option value="${value}" ${goalScenario === value ? 'selected' : ''}>${labels[language][label]}</option>`,
+        )
+        .join(
+          '',
+        )}</select></label>${economyPanel(state, plannedBuilding, context())}${herdPanel(state, replenishAmount, recoveryContext())}<section class="detail-card demolition-preview"><h2>${t('demolitionPreviewTitle')}</h2><p>${t('demolitionIntro')}</p><button id="preview-demolition-open" class="button outline">${t('demolitionPreviewOpen')}</button></section></main></div>${demolitionOpen ? exampleRemoval() : ''}`;
   camera = mountVillageCamera(root.querySelector('.scene-wrap'), {
     saved: cameraState,
     t,
@@ -186,6 +235,19 @@ root.addEventListener('click', async (event) => {
   }
 });
 root.addEventListener('change', (event) => {
+  if (event.target.id === 'goal-absence-hours') {
+    const hours = Number(event.target.value);
+    if ([1, 4, 8, 12, 24].includes(hours)) forecastHours = hours;
+    updateEconomyPanel(root, state, plannedBuilding, context());
+    return;
+  }
+  if (event.target.id === 'preview-goal-scenario') {
+    if (!['planned', 'completed', 'missing', 'empty'].includes(event.target.value)) return;
+    goalScenario = event.target.value;
+    updateEconomyPanel(root, state, plannedBuilding, context());
+    lock();
+    return;
+  }
   if (event.target.id === 'collection-resource') {
     collectionResource = event.target.value;
     updateResourceWorkPanel(root, state, collectionResource, context());

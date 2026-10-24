@@ -1,6 +1,24 @@
 {
-  "version": "2.16.0",
+  "version": "2.17.0",
   "releases": [
+    {
+      "version": "2.17.0",
+      "date": "2026-10-24",
+      "changes": {
+        "tr": [
+          "Oba Hedefi seçilen inşa veya yükseltme adımını sabitler; kaynak ilerlemesi ve eksikler oyuncu koduna göre bu cihazda hatırlanır.",
+          "Hedeflenen seviye veya adet tamamlandığında hedef sabit kalır; kaldırılmış ve değişmiş yapılar açıklanır. Kaynak yönlendirmesi yalnız toplama seçeneğini hazırlar.",
+          "1/4/8/12/24 saatlik üretim öngörüsü tek dönüşte sekiz saat sınırını, depoya sığan miktarı ve taşacak üretimi gösterir; uzun bekleme tahminleri kesintisiz üretim süresi olarak adlandırılır.",
+          "TR/EN mobil hedef kartı ve çevrimdışı köy örnekleri eklendi. Hedefler yerel tercihtir; mevcut maliyetler, kazançlar ve sunucu kayıtları korunur."
+        ],
+        "en": [
+          "Village Goal pins the selected construction or upgrade step; resource progress and shortages are remembered on this device for the public player code.",
+          "Target level or count stays fixed after completion; missing and changed buildings are explained. Resource guidance only prepares the gathering selection.",
+          "1/4/8/12/24-hour production forecasts show the eight-hour limit per return, stored income and overflow; long waits are identified as continuous production time.",
+          "The goal card and offline village examples support TR/EN and mobile. Goals are local preferences; existing prices, income and server saves are preserved."
+        ]
+      }
+    },
     {
       "version": "2.16.0",
       "date": "2026-10-24",

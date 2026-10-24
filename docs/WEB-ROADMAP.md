@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+**v2.17.0:** Oba Hedefi seçili inşa/yükseltme seviyesini veya kopya adedini bu cihazda oyuncuya göre sabitler; eksik kaynak yönlendirmesi, tamamlandı/kaldırıldı durumları ve sekiz saatle sınırlı yokluk öngörüsü sunar. [Hedef rehberi](VILLAGE-GOALS.md).
+
 **v2.16.0:** Bütün gelişim giderleri kademeli uzun vadeli tarifeye geçti: depo, yapı kopyası/seviyesi, sur, eğitim, savaş, bakım, sürü ve sefer. Tarihsel yatırımlar v3 kaydında korunur; %50 yıkım iadesinin fazlası bekleyen iadeye geçer. [Maliyet tablosu](ECONOMY.md).
 
 **v2.15.0:** Depo yükseltmeleri 5.000.000, Bey Otağı ile 5.000.400 kapasiteye ulaşır. Pasif üretim %90 azaltıldı; ortak 90 saniyelik beklemeyle altı toplama işi seçilir. Mevcut kaynaklar korunur; başlangıç erzağı, görevler ve 6–12 saatlik seferler aynı kalır. Ana Yurt mevcut/sonraki depo kapasitesini, genişletme maliyetini ve aktif toplama kazanımını açıklar. [Güncel denge](ECONOMY.md).
@@ -52,6 +54,8 @@ Sıradaki doğrulama: gerçek oyuncularda İlk Nöbet, kaynak dengesi ve sefer k
 Her aşamanın teslimi: çalışan yerel sürüm, güncel TR/EN README, gerçek test sonuçları, kaynak satır sayısı, tek dosyalık görsel önizleme ve temiz kaynak ZIP'i ile bütün yerel dosyaları içeren doğrulanmış Drive ZIP'i. Canlı sunucu yedekleri ayrı tutulur. İlk hedef küçük, geri bildirim alınabilen bir web oyunu; eski Unity WP-00–WP-11 kapsamının tamamını tek sürümde taşımak değildir.
 
 ## English
+
+**v2.17.0:** Village Goal pins a construction/upgrade level or copy count per player on this device, with material guidance, completed/missing states and an eight-hour-capped absence forecast. [Goal guide](VILLAGE-GOALS.md).
 
 **v2.16.0:** Progressive long-term prices cover storage, building copies/levels, walls, training, combat, care, herd replacement and journeys. Save v3 preserves historical investment and reserves overflow from 50% demolition refunds. [Price table](ECONOMY.md).
 

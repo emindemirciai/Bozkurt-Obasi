@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+**v2.17.0 Oba Hedefi:** Seçili inşa/yükseltme adımını bu cihazda oyuncuya göre sabitle; eksik malzemeleri ve 8 saat sınırına uyan yokluk öngörüsünü izle. Hedef tamamlandığında aynı seviye/adette kalır. [Hedef rehberi](VILLAGE-GOALS.md).
+
 v2.16.0 bütün gelişim maliyetlerini kademelendirdi. Ek yapı kopyaları pahalanır; planlayıcı güncel inşa sırasını, gerçek bedeli ve kapasite engelini kullanır. Yıkımdan depoya sığmayan pay bekleyen iadede saklanır; **Bekleyen iadeyi al** ile boşluk kadarını aktar. [Tüm maliyetler](ECONOMY.md).
 
 v2.15.0 depo paneli kapasitenin nasıl genişletildiğini gösterir: temel 1.000, depo seviyeleriyle 10.000/50.000/250.000/1.000.000/5.000.000 ve ayrıca Bey Otağı katkısı. **Depoyu genişlet**, maliyeti olan mevcut inşa/yükseltme planına yönlendirir. Toplama işini seçip açıkça başlat; bütün işler ortak 90 saniye bekler. Seçim otomatik kaynak vermez. [Güncel miktarlar](ECONOMY.md).
@@ -45,6 +47,8 @@ npm run build:preview
 ```
 
 ## English
+
+**v2.17.0 Village Goal:** Pin the selected construction/upgrade step per player on this device and inspect shortages plus an eight-hour-capped absence forecast. Completion keeps the same target level/count. [Goal guide](VILLAGE-GOALS.md).
 
 v2.16.0 adds progressive development costs. Additional building copies cost more; the planner uses the current copy count, real price and capacity constraints. Demolition overflow stays in a refund reserve; **Claim pending refund** transfers what fits. [All prices](ECONOMY.md).
 

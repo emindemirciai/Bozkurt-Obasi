@@ -3,6 +3,8 @@ import { STORAGE_CAPACITY_BONUSES, refundPlan } from '../shared/settlement.mjs';
 import { buildingSiteLabel } from './settlement-labels.mjs';
 import { icon } from './art.mjs';
 import { resourceOutlook, constructionPlan } from './planning.mjs';
+import { createConstructionGoal } from './construction-goal.mjs';
+import { constructionGoalPanel, updateConstructionGoalPanel } from './construction-goal-panel.mjs';
 
 const sourceBuildings = {
   water: 'well',
@@ -242,6 +244,7 @@ export function economyPanel(state, planType = 'quarry', ctx) {
   const plan = constructionPlan(state, planType);
   return `<section class="economy-panel" id="economy-panel" aria-labelledby="economy-title">
     <div class="section-heading"><div><h2 id="economy-title">${escape(t('planningTitle'))}</h2><p>${escape(t('planningIntro'))}</p></div></div>
+    ${constructionGoalPanel(state, ctx.constructionGoal || null, ctx)}
     ${storageExpansion(state, ctx)}
     <div class="economy-resources">${resourceOutlook(state)
       .map((resource) => resourceCard(resource, ctx))
@@ -260,6 +263,7 @@ export function economyPanel(state, planType = 'quarry', ctx) {
         <button class="button primary economy-execute" id="execute-construction-plan" data-action="executePlan" data-plan-type="${plan.type}" data-plan-target="${plan.target}" ${ctx.readOnly || busy || plan.blocked || !plan.affordable ? 'disabled' : ''}><span data-economy-execute-label>${escape(executeLabel(plan, ctx))}</span><span class="economy-execute-cost" data-economy-execute-cost>${escape(executeCost(plan, ctx))}</span></button>
       </div>
     </div>
+    <button class="button outline" id="pin-construction-goal" data-action="pinConstructionGoal" ${ctx.readOnly || busy || !createConstructionGoal(state, plan.target) ? 'disabled' : ''}>${escape(t('goalPin'))}</button>
     <p class="economy-estimate-note">${escape(t('planningEstimateNote'))}</p>
   </section>`;
 }
@@ -267,6 +271,7 @@ export function economyPanel(state, planType = 'quarry', ctx) {
 export function updateEconomyPanel(root, state, planType = 'quarry', ctx) {
   const panel = root.querySelector('#economy-panel');
   if (!panel) return;
+  updateConstructionGoalPanel(panel, state, ctx.constructionGoal || null, ctx);
   updateStorageExpansion(panel, state, ctx);
   for (const resource of resourceOutlook(state)) {
     const card = panel.querySelector(`[data-economy-resource="${resource.key}"]`);
@@ -282,6 +287,8 @@ export function updateEconomyPanel(root, state, planType = 'quarry', ctx) {
     fill.firstElementChild.style.width = `${details.fill}%`;
   }
   const plan = constructionPlan(state, planType);
+  const pin = panel.querySelector('#pin-construction-goal');
+  pin.disabled = Boolean(ctx.readOnly || ctx.busy || !createConstructionGoal(state, plan.target));
   const body = panel.querySelector('[data-economy-plan-body]');
   const html = planBody(plan, state.capacity, ctx);
   if (body.innerHTML !== html) body.innerHTML = html;

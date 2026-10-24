@@ -1,4 +1,10 @@
-import { BUILDINGS, RESOURCE_KEYS, getProduction, getUpgradeCost } from '../shared/game.mjs';
+import {
+  BUILDINGS,
+  RESOURCE_KEYS,
+  getProduction,
+  getUpgradeCost,
+  MAX_OFFLINE_MS,
+} from '../shared/game.mjs';
 import { PLOTS, TOWER_PLOTS, getConstructionCost } from '../shared/settlement.mjs';
 
 // Estimates keep current production fixed; they never advance or change the authoritative save.
@@ -109,5 +115,34 @@ export function constructionPlan(state, selection = 'quarry') {
     affordable: shortages.length === 0 && blocked === null,
     waitSeconds,
     blocked,
+  };
+}
+
+export const PRODUCTION_FORECAST_HOURS = Object.freeze([1, 4, 8, 12, 24]);
+
+/** A read-only, fixed-rate estimate; journeys, rewards and future spending are excluded. */
+export function productionForecast(state, hours = 8) {
+  const requestedSeconds = (PRODUCTION_FORECAST_HOURS.includes(hours) ? hours : 8) * 3600;
+  const creditedSeconds = Math.min(requestedSeconds, MAX_OFFLINE_MS / 1000);
+  const production = getProduction(state);
+  return {
+    requestedSeconds,
+    creditedSeconds,
+    capped: creditedSeconds < requestedSeconds,
+    resources: RESOURCE_KEYS.map((key) => {
+      const amount = state.resources[key];
+      const produced = (production[key] * creditedSeconds) / 60;
+      const credited = Math.min(produced, Math.max(0, state.capacity - amount));
+      return {
+        key,
+        rate: production[key],
+        amount,
+        capacity: state.capacity,
+        produced,
+        credited,
+        overflow: Math.max(0, produced - credited),
+        projected: amount + credited,
+      };
+    }),
   };
 }

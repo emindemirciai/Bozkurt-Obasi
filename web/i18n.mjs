@@ -340,9 +340,9 @@ export const translations = {
     planningEnough: 'Yeterli',
     planningExceedsCapacity: 'Gereken miktar depo kapasitesini aşıyor.',
     planningGatherOrBuild: 'Kaynak topla veya bu yapıyı kur:',
-    planningEstimatedWait: 'Tahmini bekleme:',
+    planningEstimatedWait: 'Kesintisiz üretim:',
     planningReady: 'Kaynakların hazır. Bu adımı şimdi uygulayabilirsin.',
-    planningReadyIn: 'Tahmini kaynak tamamlama süresi:',
+    planningReadyIn: 'Gerekli kesintisiz üretim süresi:',
     planningBattleBlocked: 'İnşa veya geliştirme için devam eden savunmanın bitmesini bekle.',
     planningMaxLevel: 'Bu yapı en yüksek seviyeye ulaştı.',
     planningCapacityBlocked: 'Maliyet depo kapasitesini aşıyor. Önce Erzak Deposu’nu büyüt.',
@@ -353,7 +353,7 @@ export const translations = {
     planningHours: 'sa',
     planningMinutes: 'dk',
     planningEstimateNote:
-      'Süreler mevcut üretim hızına ve bölge bonusuna göre yaklaşık hesaplanır. Sonraki savaşları, göçle değişen üretimi, kaynak toplamayı ve harcamaları içermez.',
+      'Süreler mevcut hızla kesintisiz üretim varsayımıdır. Tek çevrimdışı dönüşte en fazla 8 saat hesaplanır; uzun yokluk bu sınırı artırmaz. Sonraki savaşları, seferle değişen üretimi, toplamayı ve harcamaları içermez.',
     buildings: 'Köy yapıları',
     buildingDesc: 'Küçük bir obadan, güçlü bir yurda.',
     build: 'İnşa et',
@@ -844,9 +844,9 @@ export const translations = {
     planningEnough: 'Enough',
     planningExceedsCapacity: 'The required amount exceeds storage capacity.',
     planningGatherOrBuild: 'Gather resources or build:',
-    planningEstimatedWait: 'Estimated wait:',
+    planningEstimatedWait: 'Continuous production:',
     planningReady: 'Your resources are ready. You can take this step now.',
-    planningReadyIn: 'Estimated time until resources are ready:',
+    planningReadyIn: 'Required continuous production time:',
     planningBattleBlocked: 'Wait for the current defense to finish before building or upgrading.',
     planningMaxLevel: 'This building has reached its maximum level.',
     planningCapacityBlocked: 'The cost exceeds storage capacity. Expand your Storehouse first.',
@@ -857,7 +857,7 @@ export const translations = {
     planningHours: 'hr',
     planningMinutes: 'min',
     planningEstimateNote:
-      'Times are estimates at the current production rate, including your regional bonus. They exclude future battles, production changes during migration, gathering and spending.',
+      'Times assume continuous production at your current rate. Each offline return counts at most 8 hours; a longer absence does not raise that limit. Future battles, journey-related production changes, gathering and spending are excluded.',
     buildings: 'Village buildings',
     buildingDesc: 'From a small camp to a thriving home.',
     build: 'Build',
@@ -1563,3 +1563,88 @@ const progressiveEconomyTranslations = {
 };
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], progressiveEconomyTranslations[language]);
+
+const constructionGoalTranslations = {
+  tr: {
+    goalEyebrow: 'Uzun vadeli gelişim',
+    goalTitle: 'Oba Hedefi',
+    goalEmptyTitle: 'Henüz sabitlenmiş hedef yok',
+    goalEmptyHint:
+      'Planlayıcıdan bir bina veya geliştirme seç, ardından Hedefi sabitle ile ilerlemesini burada izle.',
+    goalPin: 'Hedefi sabitle',
+    goalPinned: 'Oba hedefi bu oyuncu için bu cihazda saklandı.',
+    goalCleared: 'Oba hedefi kaldırıldı.',
+    goalUnavailable: 'Bu plan sabitlenemiyor. Planlayıcıdan uygun bir hedef seç.',
+    goalNoAccount: 'Hedefini saklamak için hesabınla giriş yap.',
+    goalBuildTarget: '{type} · Toplam {count} yapı',
+    goalUpgradeTarget: '{type} · Hedef seviye {level}',
+    goalReview: 'Hedefi incele',
+    goalClear: 'Hedefi kaldır',
+    goalGather: '{resource} işini seç',
+    goalProgressHint:
+      'Eksik malzemeleri biriktir. Hedefi inceleyerek mevcut inşa veya geliştirme kontrolüne geçebilirsin.',
+    goalReadyHint: 'Hedefin kaynakları hazır. Hedefi incele; inşa veya geliştirmeyi ayrıca onayla.',
+    goalCompletedHint:
+      'Bu hedef tamamlandı. Sonraki aşamayı izlemek için planlayıcıdan yeni bir hedef sabitle.',
+    goalMissingHint: 'Hedefteki bina artık bulunamıyor. Planlayıcıdan yeni bir hedef seç.',
+    goalChangedHint: 'Bu hedefin yapı düzeni değişti. Planlayıcıdan güncel bir hedef seç.',
+    goalStockHint:
+      'İlerleme depodaki mevcut malzemeyi gösterir; kaynak ayırmaz. Bekleyen bina iadeleri depoya alınana kadar dahil edilmez.',
+    goalSavedDevice:
+      'Bu hedef bu oyuncu için yalnızca bu tarayıcıda saklanır. Hedef seçmek veya işi değiştirmek kaynak harcamaz.',
+    offlineForecastTitle: 'Dönüşteki üretim öngörüsü',
+    offlineForecastIntro: 'Mevcut binalarının bu yokluk süresinde üretebileceği kaynakları incele.',
+    offlineForecastAbsence: 'Planlanan yokluk',
+    offlineForecastHours: '{hours} saat',
+    offlineForecastCreditedTime: 'Hesaplanan üretim süresi',
+    offlineForecastCap: '{requested} saatlik yoklukta en fazla {credited} saat üretim hesaplanır.',
+    offlineForecastAdded: 'Depoya sığacak üretim',
+    offlineForecastProjected: 'Öngörülen toplam stok',
+    offlineForecastOverflow: 'Depoya sığmayacak üretim: {amount}',
+    offlineForecastAssumption:
+      'Öngörüdür; ödül veya hesap hareketi değildir. Mevcut üretim hızı ve depo boşluğunu kullanır. Sefer ödülleri, varışla değişen üretim, savaşlar, hediyeler ve harcamalar dahil değildir.',
+  },
+  en: {
+    goalEyebrow: 'Long-term development',
+    goalTitle: 'Homeland Goal',
+    goalEmptyTitle: 'No goal is pinned yet',
+    goalEmptyHint:
+      'Choose a building or upgrade in the planner, then Pin goal to track its progress here.',
+    goalPin: 'Pin goal',
+    goalPinned: 'The homeland goal was saved for this player on this device.',
+    goalCleared: 'The homeland goal was removed.',
+    goalUnavailable: 'This plan cannot be pinned. Choose an available target in the planner.',
+    goalNoAccount: 'Sign in to save your goal.',
+    goalBuildTarget: '{type} · Target count {count}',
+    goalUpgradeTarget: '{type} · Target level {level}',
+    goalReview: 'Review goal',
+    goalClear: 'Remove goal',
+    goalGather: 'Choose {resource} work',
+    goalProgressHint:
+      'Save the missing materials. Review the goal to reach the existing construction or upgrade control.',
+    goalReadyHint:
+      'The goal’s resources are ready. Review the goal, then confirm construction or upgrading separately.',
+    goalCompletedHint:
+      'This goal is complete. Pin a new goal in the planner to follow the next stage.',
+    goalMissingHint: 'The goal’s building no longer exists. Choose a new goal in the planner.',
+    goalChangedHint:
+      'The building layout for this goal has changed. Choose a current target in the planner.',
+    goalStockHint:
+      'Progress shows materials currently in storage; none are reserved. Pending building refunds count after they enter storage.',
+    goalSavedDevice:
+      'This goal is saved for this player in this browser only. Choosing a goal or changing work spends no resources.',
+    offlineForecastTitle: 'Production forecast for your return',
+    offlineForecastIntro: 'Inspect what your current buildings could produce during this absence.',
+    offlineForecastAbsence: 'Planned absence',
+    offlineForecastHours: '{hours} hours',
+    offlineForecastCreditedTime: 'Production time counted',
+    offlineForecastCap: 'A {requested}-hour absence counts at most {credited} hours of production.',
+    offlineForecastAdded: 'Production fitting in storage',
+    offlineForecastProjected: 'Projected total stock',
+    offlineForecastOverflow: 'Production exceeding storage: {amount}',
+    offlineForecastAssumption:
+      'This is a forecast, not a reward or account transaction. It uses current production rates and storage room. Journey rewards, arrival-related rate changes, battles, gifts and spending are excluded.',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], constructionGoalTranslations[language]);

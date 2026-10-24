@@ -58,7 +58,7 @@ export const TACTICS = Object.freeze(['direct', 'left', 'right', 'double', 'rush
 export const FORMATIONS = Object.freeze(['tight', 'balanced', 'wide']);
 export const LOCATIONS = Object.freeze(['homeland', 'spring', 'meadow', 'highland', 'ruins']);
 
-const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000;
+export const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000;
 const MAX_TIME = 8_640_000_000_000_000;
 const PATHS = ['guardian', 'hunter', 'leader', 'healer'];
 const WOLF_ROLES = ['alpha', 'guardian', 'hunter', 'scout', 'healer'];
