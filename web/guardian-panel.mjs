@@ -72,7 +72,15 @@ export function guardianPanel(state, selectedId, ctx) {
  <div data-guardian-live="stats"><dl class="guardian-stat-grid">${statKeys.map((key) => `<div><dt>${escape(t('guardianStat_' + key))}</dt><dd data-guardian-stat="${key}">${statValue(key, stats[key], ctx)}</dd></div>`).join('')}</dl><p class="guardian-stats-hint">${escape(t('guardianStatsHint'))}</p><div class="training-points"><span>${escape(t('points'))}</span><b>${wolf.points}</b></div></div>
  <div class="guardian-training">${TRAINING_PATHS.map((path) => {
    const plan = trainingPlan(state, wolf.id, path);
-   return `<article class="training-row"><div data-guardian-live="train-${path}"><h3>${escape(roleName(path, t))} <small>${plan.rank} / 5</small></h3><p class="guardian-effect">${escape(t('guardianEffect_' + path))}</p>${comparison(plan.before, plan.after, ctx)}<p class="guardian-action-cost">${escape(t('guardianTrainingCost'))}</p><div id="guardian-training-reason-${path}">${planReason(plan, ctx)}</div></div><button class="button outline" id="guardian-train-${path}" data-action="train" data-id="${wolf.id}" data-path="${path}" aria-describedby="guardian-training-reason-${path}" ${busy || readOnly || !plan.ready ? 'disabled' : ''}>${escape(t('train'))} ${icon('plus', 14)}</button></article>`;
+   return `<article class="training-row"><div data-guardian-live="train-${path}"><h3>${escape(roleName(path, t))} <small>${plan.rank} / 5</small></h3><p class="guardian-effect">${escape(t('guardianEffect_' + path))}</p>${comparison(plan.before, plan.after, ctx)}<p class="guardian-action-cost">${
+     plan.rank >= 5
+       ? escape(t('maxLevel'))
+       : escape(
+           `${t('guardianTrainingPointCost')} · ${Object.entries(plan.cost)
+             .map(([key, value]) => `${format(value, ctx)} ${t(key)}`)
+             .join(' · ')}`,
+         )
+   }</p><div id="guardian-training-reason-${path}">${planReason(plan, ctx)}</div></div><button class="button outline" id="guardian-train-${path}" data-action="train" data-id="${wolf.id}" data-path="${path}" aria-describedby="guardian-training-reason-${path}" ${busy || readOnly || !plan.ready ? 'disabled' : ''}>${escape(t('train'))} ${icon('plus', 14)}</button></article>`;
  }).join('')}</div>
  <section class="equipment-panel"><h3>${escape(t('equipment'))}</h3><p data-guardian-live="equipment-current">${escape(t('guardianCurrentEquipment'))}: <strong>${escape(t(wolf.equipment || 'noEquipment'))}</strong>${isWolfBusy(state, wolf.id) ? ' · ' + escape(t('away')) : ''}</p><p class="guardian-equipment-hint">${escape(t('guardianEquipmentHint'))}</p>
  <div class="equipment-options">${ITEM_DEFINITIONS.map((item) => {

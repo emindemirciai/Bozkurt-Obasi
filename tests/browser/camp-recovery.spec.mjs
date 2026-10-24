@@ -114,7 +114,7 @@ for (const [scenario, kind, reasonKey] of [
   test(`${scenario} explains unavailable ${kind} without sending an action`, async ({ page }) => {
     const state = scenario === 'healthy' ? createGame(START) : injuredCamp();
     if (scenario === 'no herbs') state.resources.herbs = 0;
-    if (scenario === 'short water') state.resources.water = 24.9;
+    if (scenario === 'short water') state.resources.water = 99.9;
     if (scenario === 'away')
       applyAction(
         state,
@@ -148,8 +148,8 @@ test('passive production enables rest while preserving selected guardian, contro
 }) => {
   const state = injuredCamp();
   applyAction(state, { type: 'build', building: 'well', plotId: 'p0' }, START);
-  state.resources.water = 24.99;
-  state.resources.feed = 30;
+  state.resources.water = 99.99;
+  state.resources.feed = 125;
   const actions = await mockCamp(page, state);
   const rest = control(page, 'rest');
   await expect(rest).toBeDisabled();

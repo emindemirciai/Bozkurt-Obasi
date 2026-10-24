@@ -10,6 +10,7 @@ import {
 } from '../../shared/game.mjs';
 import { translations } from '../../web/i18n.mjs';
 import { signIn } from './sign-in.mjs';
+import { previousSave } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 19, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
@@ -19,6 +20,8 @@ const row = (page, id) => journal(page).locator('[data-journal-step="' + id + '"
 
 function recordedChapter() {
   const state = createGame(START);
+  // This recorded late-chapter fixture has supplies for training, battle and camp care.
+  state.resources.water = state.resources.feed = 500;
   const act = (action, elapsed) => applyAction(state, action, START + elapsed, () => 0);
   // Build and training precede gathering: saved objectives need not follow reward order.
   act({ type: 'build', building: 'quarry', plotId: 'p0' }, 60_000);
@@ -185,7 +188,7 @@ test('polling refreshes elapsed wall time while preserving the journal and its f
 test('migrated returning villages show achievement status without inventing historical durations', async ({
   page,
 }) => {
-  const old = recordedChapter();
+  const old = previousSave(recordedChapter());
   delete old.firstWatch;
   const state = migrateGame(old);
   expect(state.firstWatch.cohort).toBe('returning');

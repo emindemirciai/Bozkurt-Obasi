@@ -13,6 +13,7 @@ import {
 } from '../shared/game.mjs';
 import { BASE_CAPACITY, STORAGE_CAPACITY_BONUSES } from '../shared/settlement.mjs';
 import { establishedGame, establishedJourney } from './established-game.mjs';
+import { fundStorage, fillResources } from './economy-fixtures.mjs';
 
 const START = 1_000_000;
 const clone = (state) => JSON.parse(JSON.stringify(state));
@@ -80,25 +81,27 @@ test('long offline periods credit only the most recent eight hours', () => {
 });
 
 test('building and upgrading spend once, expose scaling costs, and increase production', () => {
-  const state = fresh();
+  const state = fundStorage(fresh(), 1);
+  const previousBuilds = state.stats.builds;
   command(state, { type: 'build', building: 'quarry', plotId: 'p7' });
-  assert.equal(state.resources.wood, 140);
-  assert.equal(state.resources.stone, 120);
-  assert.equal(state.stats.builds, 1);
+  assert.equal(state.resources.wood, 9780);
+  assert.equal(state.resources.stone, 9880);
+  assert.equal(state.stats.builds, previousBuilds + 1);
   assert.equal(getProduction(state).stone, 0.45);
   assert.equal(state.quests.find((quest) => quest.id === 'first_build').progress, 1);
   assert.throws(
     () => command(state, { type: 'build', building: 'quarry', plotId: 'p7' }),
     code('PLOT_OCCUPIED'),
   );
-  assert.equal(state.resources.wood, 140);
+  assert.equal(state.resources.wood, 9780);
   const quarry = state.buildings.find((building) => building.type === 'quarry');
-  assert.deepEqual(getUpgradeCost(quarry), { wood: 109, stone: 47 });
+  assert.deepEqual(getUpgradeCost(quarry), { wood: 1320, stone: 720 });
   command(state, { type: 'upgrade', id: quarry.id });
   assert.equal(quarry.level, 2);
   assert.equal(getProduction(state).stone, 0.9);
-  assert.equal(state.resources.wood, 31);
+  assert.equal(state.resources.wood, 8460);
   assert.equal(validateGame(state), true);
+  state.resources.stone = 0;
   const before = clone(state);
   assert.throws(
     () => command(state, { type: 'upgrade', id: quarry.id }),
@@ -109,6 +112,7 @@ test('building and upgrading spend once, expose scaling costs, and increase prod
 
 test('storage capacity follows constructed levels and levels stop at five', () => {
   const state = fresh();
+  fillResources(state);
   command(state, { type: 'build', building: 'storage', plotId: 'p31' });
   assert.equal(state.capacity, 10000);
   const storage = state.buildings.find((building) => building.type === 'storage');
@@ -156,7 +160,7 @@ test('training consumes points, affects ranks, advances the quest, and cannot ov
   assert.equal(wolf.ranks.hunter, 1);
   assert.equal(wolf.maxHp, 146);
   assert.equal(wolf.hp, 146);
-  assert.equal(state.resources.herbs, 64);
+  assert.equal(state.resources.herbs, 0);
   assert.equal(state.quests.find((quest) => quest.id === 'pack_training').progress, 2);
   assert.throws(
     () => command(state, { type: 'train', id: wolf.id, path: 'leader' }),
@@ -248,12 +252,13 @@ test('defeat preserves wolves, costs herd members, and retries the same wave', (
   assert.equal(validateGame(state), true);
   command(state, { type: 'newBattle' });
   assert.equal(state.battle.wave, 1);
+  fillResources(state);
   command(state, { type: 'rest' });
   assert.ok(state.wolves.every((wolf) => wolf.hp === wolf.maxHp));
   const herbs = state.resources.herbs;
   const water = state.resources.water;
   command(state, { type: 'healHerd' });
-  assert.equal(state.resources.herbs, herbs - 1);
+  assert.equal(state.resources.herbs, herbs - 15);
   assert.equal(state.resources.water, water);
   assert.equal(validateGame(state), true);
 });

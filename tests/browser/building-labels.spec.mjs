@@ -42,7 +42,7 @@ test('building costs name resources on touch screens and expose current and requ
     const wood = card.locator('[data-cost-resource="wood"]');
     await expect(wood.locator('.cost-resource-name')).toBeVisible();
     await expect(wood.locator('.cost-resource-name')).toHaveText(copy.wood);
-    await expect(wood).toHaveAccessibleName(new RegExp(copy.buildingCostRequired + ': 45'));
+    await expect(wood).toHaveAccessibleName(new RegExp(copy.buildingCostRequired + ': 320'));
     await wood.hover();
     await expect(wood.getByRole('tooltip')).toBeVisible();
     await expect(wood.getByRole('tooltip')).toContainText(copy.buildingCostAvailable);

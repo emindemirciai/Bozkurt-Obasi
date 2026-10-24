@@ -4592,3 +4592,111 @@ footer > span:first-child {
     font-size: 11px;
   }
 }
+
+/* Shared progression prices and lossless pending demolition refunds. */
+.building-economy-hint,
+.placement-price-hint {
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--muted, #71806a);
+}
+.battle-entry-cost {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line, #897052);
+  border-radius: 8px;
+}
+.battle-entry-cost h3 {
+  margin: 0 0 9px;
+  font-size: 13px;
+}
+.battle-entry-cost .cost {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.battle-entry-cost p {
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 10px 0 0;
+}
+.battle-entry-shortage {
+  color: #e4b479;
+}
+.refund-reserve {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--economy-border);
+}
+.refund-reserve h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.refund-reserve > p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.refund-reserve dl {
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.refund-reserve dl > div {
+  min-width: 0;
+  padding: 10px;
+  background: var(--economy-surface);
+  border-radius: 6px;
+}
+.refund-reserve dt {
+  font-size: 10px;
+  color: var(--economy-muted);
+}
+.refund-reserve dd {
+  margin: 7px 0 0;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.refund-reserve .button {
+  white-space: normal;
+  min-height: 44px;
+}
+.demolition-refund-split {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #897052);
+}
+.demolition-refund-split p {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.demolition-refund-split strong {
+  overflow-wrap: anywhere;
+}
+.demolition-refund-split small {
+  display: block;
+  line-height: 1.7;
+}
+.placement-choice [data-placement-capacity] {
+  white-space: normal;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #cd9c65;
+}
+.placement-choice [data-placement-capacity][hidden] {
+  display: none;
+}
+@media (max-width: 600px) {
+  .refund-reserve dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .refund-reserve .button {
+    width: 100%;
+  }
+}

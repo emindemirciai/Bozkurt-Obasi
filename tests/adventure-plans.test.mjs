@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { fundStorage } from './economy-fixtures.mjs';
 import {
   createGame,
   applyAction,
@@ -25,8 +26,8 @@ const totalXp = (wolf) => (45 * wolf.level * (wolf.level - 1)) / 2 + wolf.xp;
 const finish = (state) => advanceGame(state, state.adventure.active.endsAt);
 const expected = {
   standard: {
-    water: 18,
-    feed: 23,
+    water: 83,
+    feed: 111,
     seconds: 21600,
     xp: 180,
     wood: 96,
@@ -35,8 +36,8 @@ const expected = {
     fatigue: 5,
   },
   survey: {
-    water: 23,
-    feed: 29,
+    water: 104,
+    feed: 138,
     seconds: 21600,
     xp: 270,
     wood: 72,
@@ -45,8 +46,8 @@ const expected = {
     fatigue: 7,
   },
   supply: {
-    water: 23,
-    feed: 29,
+    water: 104,
+    feed: 138,
     seconds: 21600,
     xp: 135,
     wood: 144,
@@ -166,9 +167,12 @@ test('scout equipment discounts departure supplies with one final rounding and c
   for (const id of ['wolf-scout', 'wolf-alpha', 'wolf-guardian'])
     applyAction(state, { type: 'equip', id, item: 'scout_charm' }, NOW);
   assert.equal(adventureQuote(state, choice()).seconds, 21600);
-  assert.deepEqual(adventureQuote(state, choice()).cost, { water: 16, feed: 20 });
+  assert.deepEqual(adventureQuote(state, choice()).cost, { water: 71, feed: 94 });
   assert.equal(adventureQuote(state, choice({ plan: 'survey' })).seconds, 21600);
-  assert.deepEqual(adventureQuote(state, choice({ plan: 'survey' })).cost, { water: 20, feed: 25 });
+  assert.deepEqual(adventureQuote(state, choice({ plan: 'survey' })).cost, {
+    water: 88,
+    feed: 118,
+  });
   assert.equal(adventureQuote(state, choice({ plan: 'supply' })).seconds, 21600);
   // The combined 45% scouting discount remains capped at 30%, with one final rounding.
   const squad = choice({
@@ -177,7 +181,8 @@ test('scout equipment discounts departure supplies with one final rounding and c
     wolfIds: ['wolf-scout', 'wolf-alpha', 'wolf-guardian'],
   });
   assert.equal(adventureQuote(state, squad).seconds, 21600);
-  assert.deepEqual(adventureQuote(state, squad).cost, { water: 25, feed: 33 });
+  assert.deepEqual(adventureQuote(state, squad).cost, { water: 203, feed: 271 });
+  state.resources.water = state.resources.feed = state.capacity;
   act(state, squad);
   const before = structuredClone(state);
   assert.throws(() => applyAction(state, { type: 'unequip', id: 'wolf-scout' }, NOW), {
@@ -245,6 +250,7 @@ test('legacy active and history records retain their original timing, payouts an
   assert.equal(legacy.wolves[3].hp, 105);
   assert.equal(validateGame(legacy), true);
   const oldReceipt = structuredClone(legacy.adventure.history[0]);
+  legacy.resources.water = legacy.resources.feed = legacy.capacity;
   act(legacy, choice({ plan: 'survey' }));
   finish(legacy);
   assert.deepEqual(legacy.adventure.history[1], oldReceipt);
@@ -321,7 +327,7 @@ test('legacy save validation rejects invalid plan fields, changed active timing 
 
 test('legacy planned missions validate up to 563 seconds without widening their original duration cap', () => {
   for (const plan of ADVENTURE_PLANS) {
-    const state = createGame(NOW);
+    const state = fundStorage(createGame(NOW), 1);
     state.adventure.unlocked = REGIONS.slice(0, -1).map((r) => r.id);
     const squad = choice({
       plan,
@@ -329,6 +335,7 @@ test('legacy planned missions validate up to 563 seconds without widening their 
       difficulty: 'hard',
       wolfIds: ['wolf-alpha', 'wolf-guardian', 'wolf-hunter'],
     });
+    state.resources.water = state.resources.feed = state.capacity;
     act(state, squad);
     state.adventure.active.economyVersion = 2;
     state.adventure.active.endsAt =
@@ -373,8 +380,8 @@ test('resource and item storage caps apply to enhanced supply receipts without d
 
 test('readiness shows authoritative plan fatigue, costs and extra storage pressure without mutation', () => {
   const state = createGame(NOW);
-  state.resources.water = 18;
-  state.resources.feed = 23;
+  state.resources.water = 83;
+  state.resources.feed = 111;
   state.resources.wood = state.capacity - 20;
   const before = structuredClone(state);
   assert.equal(adventureReadiness(state, choice()).ready, true);
@@ -383,8 +390,8 @@ test('readiness shows authoritative plan fatigue, costs and extra storage pressu
     assert.equal(readiness.ready, false);
     assert.equal(readiness.fatigue, expected[plan].fatigue);
     assert.deepEqual(readiness.shortages, [
-      { resource: 'water', amount: 5 },
-      { resource: 'feed', amount: 6 },
+      { resource: 'water', amount: 21 },
+      { resource: 'feed', amount: 27 },
     ]);
     assert.deepEqual(readiness.overflow, [
       { resource: 'wood', amount: plan === 'supply' ? 124 : 52 },

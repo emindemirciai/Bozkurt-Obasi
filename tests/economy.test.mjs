@@ -10,6 +10,7 @@ import {
   resumeGame,
   validateGame,
 } from '../shared/game.mjs';
+import { fundStorage } from './economy-fixtures.mjs';
 import { ADVENTURE_PLANS, REGIONS, adventureQuote, outingQuote } from '../shared/adventures.mjs';
 
 const NOW = Date.UTC(2026, 9, 19, 12);
@@ -29,7 +30,7 @@ const emptyMaterials = (state) => {
 };
 
 test('production is slower for every resource and still scales with buildings, levels and regions', () => {
-  const state = createGame(NOW);
+  const state = fundStorage(createGame(NOW), 1);
   for (const [index, type] of ['lumber', 'quarry', 'well', 'pasture', 'healer'].entries()) {
     for (const key of Object.keys(state.resources)) state.resources[key] = state.capacity;
     act(state, { type: 'build', building: type, plotId: 'p' + index });
@@ -84,8 +85,8 @@ test('battle victories give half the repeatable material loot while guardian XP 
   advanceGame(state, NOW + 90_000);
   assert.equal(state.battle.status, 'won');
   assert.deepEqual(state.resources, {
-    water: before.resources.water - 12,
-    feed: before.resources.feed - 16 + 10,
+    water: before.resources.water - 60,
+    feed: before.resources.feed - 80 + 10,
     herbs: before.resources.herbs + 6,
     wood: before.resources.wood + 27,
     stone: before.resources.stone + 16,
@@ -122,13 +123,13 @@ test('persisted version-two routes halve legacy materials and preserve their ori
 });
 
 test('new departures always persist the current economy and client legacy markers cannot increase payouts', () => {
-  for (const economyVersion of [1, null, undefined, '1', 2]) {
+  for (const economyVersion of [1, null, undefined, '1', 2, 3]) {
     const state = createGame(NOW);
     const choice = selection({ economyVersion });
     const quote = adventureQuote(state, choice);
     assert.deepEqual(quote.reward, { wood: 96, stone: 60, herbs: 18 });
     depart(state, choice);
-    assert.equal(state.adventure.active.economyVersion, 3);
+    assert.equal(state.adventure.active.economyVersion, 4);
     emptyMaterials(state);
     advanceGame(state, state.adventure.active.endsAt);
     assert.deepEqual(state.adventure.history[0].reward, {
@@ -138,7 +139,7 @@ test('new departures always persist the current economy and client legacy marker
       wood: 96,
       stone: 60,
     });
-    assert.equal(state.adventure.history[0].economyVersion, 3);
+    assert.equal(state.adventure.history[0].economyVersion, 4);
     assert.equal(validateGame(state), true);
   }
 });
@@ -193,6 +194,7 @@ test('legacy full-value receipts remain valid beside new long-journey receipts w
   const original = structuredClone(state);
   const restored = migrateGame(JSON.parse(JSON.stringify(state)));
   assert.deepEqual(restored, original);
+  restored.resources.water = restored.resources.feed = restored.capacity;
   depart(restored, selection({ plan: 'supply' }));
   advanceGame(restored, restored.adventure.active.endsAt);
   assert.deepEqual(restored.adventure.history[1], oldReceipt);
@@ -203,14 +205,14 @@ test('legacy full-value receipts remain valid beside new long-journey receipts w
     wood: 144,
     stone: 90,
   });
-  assert.equal(restored.adventure.history[0].economyVersion, 3);
+  assert.equal(restored.adventure.history[0].economyVersion, 4);
   assert.equal(validateGame(restored), true);
 });
 
 test('invalid persisted economy markers and oversized current receipts fail strict save validation', () => {
   const state = createGame(NOW);
   depart(state, selection());
-  for (const marker of [1, 2, 0, 4, null, undefined, '2', false, {}]) {
+  for (const marker of [1, 2, 0, 5, null, undefined, '2', false, {}]) {
     const forged = structuredClone(state);
     forged.adventure.active.economyVersion = marker;
     assert.equal(validateGame(forged), false);
@@ -227,15 +229,16 @@ test('invalid persisted economy markers and oversized current receipts fail stri
   assert.equal(validateGame(forged), false);
 });
 
-test('initial stocks and building recipes remain intact while offline production keeps its eight-hour ceiling', () => {
+test('initial stocks remain intact while revised construction costs and offline production keep their boundaries', () => {
   const state = createGame(NOW);
   assert.deepEqual(state.resources, { water: 180, feed: 180, herbs: 80, wood: 450, stone: 350 });
-  assert.deepEqual(getUpgradeCost({ type: 'quarry', level: 1 }), { wood: 109, stone: 47 });
+  assert.deepEqual(getUpgradeCost({ type: 'quarry', level: 1 }), { wood: 1320, stone: 720 });
   act(state, { type: 'build', building: 'lumber', plotId: 'p0' });
-  assert.equal(state.resources.wood, 390);
-  assert.equal(state.resources.stone, 325);
-  // Test-only capacity isolates elapsed-time capping from the storage ceiling.
-  state.capacity = 1_000_000;
+  assert.equal(state.resources.wood, 270);
+  assert.equal(state.resources.stone, 250);
+  // Paid storage isolates elapsed-time capping from the storage ceiling.
+  fundStorage(state, 1);
+  state.resources.wood = 0;
   const before = structuredClone(state.resources);
   advanceGame(state, NOW + 40 * 60 * 60_000);
   assert.equal(state.resources.wood, before.wood + 0.6 * 8 * 60);

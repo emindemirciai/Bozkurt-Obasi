@@ -20,6 +20,7 @@ import {
   CORNER_PLOT_IDS,
   STORAGE_CAPACITY_BONUSES,
   getWallUpgradeCost,
+  getConstructionCost,
   demolitionQuote,
 } from '../shared/settlement.mjs';
 import { demolitionDialog, demolitionStatus, updateDemolitionDialog } from './demolition-panel.mjs';
@@ -57,7 +58,10 @@ import {
 import { constructionPlan } from './planning.mjs';
 import { economyPanel, updateEconomyPanel } from './economy-panel.mjs';
 import { resourceWorkPanel, updateResourceWorkPanel } from './resource-work.mjs';
-import { COLLECTION_TASKS } from '../shared/economy.mjs';
+import { COLLECTION_TASKS, getBattleCost } from '../shared/economy.mjs';
+import { trainingPlan, TRAINING_PATHS } from '../shared/guardian-planning.mjs';
+import { recoveryPlan } from '../shared/recovery.mjs';
+import { herdRecoveryPlan } from '../shared/herd.mjs';
 import { herdPanel, updateHerdPanel } from './herd-panel.mjs';
 import { guardianPanel, updateGuardianPanel } from './guardian-panel.mjs';
 import { recoveryPanel, updateRecoveryPanel, recommendedRecovery } from './recovery-panel.mjs';
@@ -174,6 +178,7 @@ const logLabels = {
   buildingUpgraded: 'logUpgraded',
   buildingDemolished: 'logDemolished',
   resourcesCollected: 'logGathered',
+  refundClaimed: 'logRefundClaimed',
   battleStarted: 'logBattle',
   battleWon: 'logWon',
   battleLost: 'logLost',
@@ -259,14 +264,15 @@ function progress(value, max, cls = '') {
 function interfaceSignature() {
   const { resources, updatedAt, ...visibleState } = state;
   const costs = [
-    ...BUILDINGS.map((building) => building.cost),
+    ...BUILDINGS.map((building) => getConstructionCost(state, building.id)),
     ...state.buildings.map(getUpgradeCost),
     getWallUpgradeCost(state.walls) || {},
     adventureQuote(state, adventureSelection).cost,
-    { herbs: 1 },
-    { water: 25, feed: 30 },
-    { herbs: 8, feed: 12 },
-    { water: 20, feed: 20 },
+    recoveryPlan(state, 'healHerd').cost,
+    recoveryPlan(state, 'rest').cost,
+    herdRecoveryPlan(state, herdAmount).cost,
+    ...TRAINING_PATHS.map((path) => trainingPlan(state, selectedWolf, path).cost),
+    getBattleCost(state),
   ];
   return JSON.stringify([
     visibleState,
@@ -611,7 +617,7 @@ function closeDialog() {
 
 function playView() {
   const isBattle = view === 'battle';
-  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}${isBattle ? battleCommandBadge(state, { t }) : ''}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div>${isBattle ? `<div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div>` : villageCameraControls({ t })}<div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || busy) : `<span class="map-work-label">${t('workTitle')}</span>`}</div>${isBattle ? battleCommandQuickbar(state, { t, busy }) : resourceWorkPanel(state, collectionResource, economyContext())}</section>
+  return `${isBattle ? narrativePanel(state, { t }) : settlementControls(state, { t, language, busy, movingId })}<div class="play-layout"><section class="map-card"><div class="map-top"><span class="map-title"><i class="status-dot live"></i>${isBattle ? t('defense') : t('homeland')}<span class="map-chip">${isBattle ? `${t('wave')} ${state.battle.wave}` : `${state.buildings.length} ${t('buildingCount')}`}</span></span><span class="map-coordinates">${isBattle ? '04 · 12' : '38 · 42'}</span></div><div class="scene-wrap" id="scene-wrap">${scene(state, { battle: isBattle, zoom, selected, t })}${isBattle ? battleCommandBadge(state, { t }) : ''}<div class="map-location">${icon(isBattle ? 'battle' : 'flag', 14)} ${t(isBattle ? (state.battle.status === 'preparing' ? 'prepare' : state.battle.status) : state.location)}</div>${isBattle ? `<div class="zoom-controls">${button(icon('plus', 17), 'zoomIn', 'icon-button', zoom >= 1.5, `aria-label="${t('zoomIn')}"`)}${button(icon('minus', 17), 'zoomOut', 'icon-button', zoom <= 0.8, `aria-label="${t('zoomOut')}"`)}<span></span>${button(icon('target', 17), 'resetZoom', 'icon-button', false, `aria-label="${t('resetView')}"`)}${button(icon('expand', 17), 'fullscreen', 'icon-button', false, `aria-label="${t('expand')}"`)}</div>` : villageCameraControls({ t })}<div class="map-bottom-note">${icon(isBattle ? 'wolves' : 'village', 14)} ${isBattle ? t('formation') : t('villageDesc')}</div></div><div class="map-toolbar"><span>${icon(isBattle ? 'heart' : 'feed', 18)}${isBattle ? `${t('herd')}: ${Math.ceil(state.herd.hp)}/${state.herd.maxHp}` : `${state.herd.count} ${t('herd')} · ${state.wolves.length} ${t('wolfCount')}`}</span>${isBattle ? button(icon('battle', 17) + t(state.battle.status === 'preparing' ? 'startBattle' : state.battle.status === 'active' ? 'active' : 'newBattle'), state.battle.status === 'preparing' ? 'startBattle' : 'newBattle', 'button primary', state.battle.status === 'active' || Boolean(state.adventure.active) || Boolean(state.journey) || (state.battle.status === 'preparing' && !affordable(getBattleCost(state))) || busy) : `<span class="map-work-label">${t('workTitle')}</span>`}</div>${isBattle ? battleCommandQuickbar(state, { t, busy }) : resourceWorkPanel(state, collectionResource, economyContext())}</section>
     <aside class="overview">${isBattle ? battlePanel() : villagePanel()}</aside></div>
     ${isBattle ? battleCommandPanel(state, { t, busy }) + battleRecovery() : buildingList() + battleRecovery() + economyPanel(state, plannedBuilding, economyContext())}`;
 }
@@ -642,8 +648,23 @@ function followFirstWatch(id) {
     equip: ['wolves', '[data-action="equip"]:not(:disabled)'],
     escort: ['world', '#adventure-difficulty'],
   };
-  if (id === 'train')
-    selectedWolf = state.wolves.find((wolf) => wolf.points > 0)?.id || selectedWolf;
+  if (id === 'train') {
+    const options = state.wolves
+      .flatMap((wolf) =>
+        TRAINING_PATHS.map((path) => ({ wolf, path, plan: trainingPlan(state, wolf.id, path) })),
+      )
+      .filter(({ plan }) => plan.rank < 5);
+    options.sort(
+      (a, b) =>
+        Number(b.plan.ready) - Number(a.plan.ready) ||
+        a.plan.rank - b.plan.rank ||
+        Object.values(a.plan.cost).reduce((n, x) => n + x, 0) -
+          Object.values(b.plan.cost).reduce((n, x) => n + x, 0),
+    );
+    const choice = options.find(({ wolf }) => wolf.points > 0);
+    selectedWolf = choice?.wolf.id || selectedWolf;
+    if (choice) targets.train[1] = `#guardian-train-${choice.path}`;
+  }
   if ((id === 'explore' || id === 'escort') && !state.adventure.active)
     adventureSelection.kind = id === 'escort' ? 'caravan' : 'expedition';
   const [destination, selector] = targets[id];
@@ -674,7 +695,7 @@ function villagePanel() {
       )
       .join('') ||
     `<div><span>${t('capacity')}</span><strong>${number(state.capacity)}</strong></div>${b.type === 'storage' && b.level < 5 ? `<div><span>${t('storageNextDetail')}</span><strong>${number(state.capacity - STORAGE_CAPACITY_BONUSES[b.level] + STORAGE_CAPACITY_BONUSES[b.level + 1])}</strong></div>` : ''}`
-  }</div>${b.level < 5 ? `<div class="upgrade-row">${costView(cost)}${button(t('upgrade') + icon('arrow', 15), 'upgrade', 'button outline', !affordable(cost) || busy, `data-id="${b.id}"`)}</div>` : `<div class="completed">${icon('check', 16)}${t('maxLevel')}</div>`}</section>
+  }</div>${b.level < 5 ? `<div class="upgrade-row">${costView(cost)}${button(t('upgrade') + icon('arrow', 15), 'upgrade', 'button outline', !affordable(cost) || busy, `data-id="${b.id}"`)}</div>${Object.values(cost).some((amount) => amount > state.capacity) ? `<p class="building-economy-hint">${t('planningCapacityBlocked')}</p>` : ''}` : `<div class="completed">${icon('check', 16)}${t('maxLevel')}</div>`}</section>
     <div class="building-layout-actions">${b.type === 'watchtower' ? `<p class="tower-fixed-hint">${t('towerFixedHint')}</p>` : button(t('moveBuilding'), 'moveBuilding', 'button outline move-building', busy || state.battle.status === 'active', `data-id="${b.id}"`)}${button(t('removeBuilding'), 'openDemolition', 'button outline remove-building', busy, `id="demolish-building-button" data-id="${b.id}"`)}</div>${firstStepsView()}
     <section class="activity-card"><h3>${t('activity')}<span class="pulse"></span></h3>${state.log
       .slice(-3)
@@ -687,10 +708,11 @@ function villagePanel() {
 }
 
 function buildingList() {
-  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p><p class="building-plot-hint">${t('buildingPlotHint')}</p></div><span class="subtle-count">${state.buildings.filter((b) => b.type !== 'watchtower').length} / ${PLOTS.length} ${t('plot')} · ${state.buildings.filter((b) => b.type === 'watchtower').length} / 4 ${t('watchtower')}</span></div><div class="buildings-grid">${BUILDINGS.map(
+  return `<section class="buildings-section"><div class="section-heading"><div><h2>${t('buildings')}</h2><p>${t('producerLimit')} · ${t('choosePlot')}</p><p class="building-economy-hint">${t('constructionEconomyHint')}</p><p class="building-plot-hint">${t('buildingPlotHint')}</p></div><span class="subtle-count">${state.buildings.filter((b) => b.type !== 'watchtower').length} / ${PLOTS.length} ${t('plot')} · ${state.buildings.filter((b) => b.type === 'watchtower').length} / 4 ${t('watchtower')}</span></div><div class="buildings-grid">${BUILDINGS.map(
     (def) => {
       const owned = state.buildings.filter((b) => b.type === def.id);
-      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)}</h3><p class="building-owned-count">${t('buildingOwnedCount')}: ${owned.length} / ${def.maxCount}</p><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + buildingSiteLabel(b, t), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom"><div class="building-cost-group"><span class="building-cost-caption">${t('buildingConstructionCost')}</span>${costView(def.cost)}</div>${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active', `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
+      const cost = getConstructionCost(state, def.id);
+      return `<article class="build-card"><div class="build-art">${miniBuilding(def.id, owned[0]?.level || 1)}</div><h3>${t(def.id)}</h3><p class="building-owned-count">${t('buildingOwnedCount')}: ${owned.length} / ${def.maxCount}</p><p>${t(def.id + 'Desc')}</p><div class="placed-building-list">${owned.map((b) => button(t('level') + ' ' + b.level + ' · ' + buildingSiteLabel(b, t), 'selectBuilding', 'button outline', busy, `data-id="${b.id}"`)).join('')}</div><div class="build-card-bottom"><div class="building-cost-group"><span class="building-cost-caption">${t('buildingConstructionCost')}</span>${costView(cost)}${Object.values(cost).some((amount) => amount > state.capacity) ? `<p class="building-economy-hint">${t('planningCapacityBlocked')}</p>` : ''}</div>${button(icon('plus', 17), 'build', 'small-button', owned.length >= def.maxCount || busy || state.battle.status === 'active' || !affordable(cost), `data-building-type="${def.id}" aria-label="${t('chooseSite')} · ${t(def.id)}"`)}</div></article>`;
     },
   ).join('')}</div></section>`;
 }
@@ -699,7 +721,12 @@ function battlePanel() {
   const status = state.battle.status;
   const active = status === 'active';
   const tacticKnown = status !== 'preparing';
-  return `<section class="detail-card battle-settings"><div class="section-label">${t('prepare')}${icon('battle', 17)}</div><div class="battle-status"><span>${t(status === 'preparing' ? 'battleReady' : status)}</span>${active ? `<strong class="battle-elapsed" aria-hidden="true">${state.battle.tick} ${t('seconds')}</strong>` : ''}</div><h3>${t('tactic')}</h3><div class="tactic-reveal ${tacticKnown ? 'revealed' : 'concealed'}" aria-live="polite">${icon(tacticKnown ? 'battle' : 'help', 19)}<strong>${t(tacticKnown ? state.battle.tactic : 'tacticUnknown')}</strong></div><h3>${t('formation')}</h3>${['wolf', 'herd'].map((unit) => `<label class="formation-label">${t(unit === 'wolf' ? 'wolfFormation' : 'herdFormation')}</label><div class="segmented">${FORMATIONS.map((formation) => button(t(formation), 'formation', state.formation[unit] === formation ? 'chosen' : '', active || busy, `data-unit="${unit}" data-value="${formation}" aria-pressed="${state.formation[unit] === formation}"`)).join('')}</div>`).join('')}<p class="battle-help">${t('battleReward')}</p></section><section class="detail-card battle-count"><span>${t('enemies')}</span><strong>${state.battle.enemies.filter((enemy) => enemy.hp > 0).length}<small> / ${state.battle.enemies.length}</small></strong>${progress(state.herd.hp, state.herd.maxHp)}<p>${t('panic')} <b>${Math.round(state.herd.panic)}%</b></p></section>`;
+  const entryCost = getBattleCost(state);
+  const entrySection =
+    status === 'preparing'
+      ? `<section class="battle-entry-cost" id="battle-entry-cost"><h3>${t('battleEntryCost')}</h3><div data-battle-cost>${costView(entryCost)}</div><p>${t('battleEntryHint')}</p>${affordable(entryCost) ? '' : `<p class="battle-entry-shortage">${t(Object.values(entryCost).some((value) => value > state.capacity) ? 'planningCapacityBlocked' : 'battleEntryShortage')}</p>`}</section>`
+      : '';
+  return `<section class="detail-card battle-settings"><div class="section-label">${t('prepare')}${icon('battle', 17)}</div><div class="battle-status"><span>${t(status === 'preparing' ? 'battleReady' : status)}</span>${active ? `<strong class="battle-elapsed" aria-hidden="true">${state.battle.tick} ${t('seconds')}</strong>` : ''}</div>${entrySection}<h3>${t('tactic')}</h3><div class="tactic-reveal ${tacticKnown ? 'revealed' : 'concealed'}" aria-live="polite">${icon(tacticKnown ? 'battle' : 'help', 19)}<strong>${t(tacticKnown ? state.battle.tactic : 'tacticUnknown')}</strong></div><h3>${t('formation')}</h3>${['wolf', 'herd'].map((unit) => `<label class="formation-label">${t(unit === 'wolf' ? 'wolfFormation' : 'herdFormation')}</label><div class="segmented">${FORMATIONS.map((formation) => button(t(formation), 'formation', state.formation[unit] === formation ? 'chosen' : '', active || busy, `data-unit="${unit}" data-value="${formation}" aria-pressed="${state.formation[unit] === formation}"`)).join('')}</div>`).join('')}<p class="battle-help">${t('battleReward')}</p></section><section class="detail-card battle-count"><span>${t('enemies')}</span><strong>${state.battle.enemies.filter((enemy) => enemy.hp > 0).length}<small> / ${state.battle.enemies.length}</small></strong>${progress(state.herd.hp, state.herd.maxHp)}<p>${t('panic')} <b>${Math.round(state.herd.panic)}%</b></p></section>`;
 }
 
 function refreshBattleView() {
@@ -857,7 +884,8 @@ function modalView() {
   if (!modal) return '';
   if (modal === 'demolition' && demolitionSelection)
     return demolitionDialog(state, demolitionSelection, demolitionContext());
-  if (modal === 'placement') return placementDialog(state, { plotId: selectedPlot, t, busy });
+  if (modal === 'placement')
+    return placementDialog(state, { plotId: selectedPlot, t, language, busy });
   if (['login', 'register', 'password'].includes(modal)) return accountFormView();
   if (modal === 'recovery')
     return recoveryDialog({
@@ -1513,6 +1541,9 @@ function reportError(error) {
     COLLECT_COOLDOWN: 'cooldownError',
     COLLECT_STORAGE_FULL: 'workStorageFull',
     INVALID_COLLECTION: 'workInvalid',
+    REFUND_EMPTY: 'refundEmpty',
+    REFUND_STORAGE_FULL: 'refundStorageFull',
+    REFUND_RESERVE_FULL: 'refundLimit',
     ALREADY_HEALTHY: 'nothingError',
     NO_SKILL_POINTS: 'pointsError',
     STALE_REVISION: 'staleError',
@@ -1574,6 +1605,7 @@ async function command(action) {
           INVALID_BUILDING: 'demolitionInvalid',
           INVALID_DEMOLITION_TARGET: 'demolitionChanged',
           DEMOLITION_STORAGE_FULL: 'demolition_DEMOLITION_STORAGE_FULL',
+          REFUND_RESERVE_FULL: 'refundLimit',
           BATTLE_ACTIVE: 'demolition_BATTLE_ACTIVE',
           JOURNEY_ACTIVE: 'demolition_JOURNEY_ACTIVE',
         }[code] || 'demolitionFailed';
@@ -2049,6 +2081,7 @@ root.addEventListener('click', async (event) => {
     equip: { type: 'equip', id: target.dataset.id, item: target.dataset.item },
     unequip: { type: 'unequip', id: target.dataset.id },
     collect: { type: 'collect', resource: collectionResource },
+    claimRefund: { type: 'claimRefund' },
     upgrade: { type: 'upgrade', id: target.dataset.id },
     formation: { type: 'formation', unit: target.dataset.unit, value: target.dataset.value },
     battleCommand: { type: 'battleCommand', id: target.dataset.command },
@@ -2143,6 +2176,15 @@ setInterval(async () => {
     for (const choice of root.querySelectorAll('[data-action="placeBuilding"]')) {
       const definition = BUILDINGS.find((building) => building.id === choice.dataset.buildingType);
       const plot = ALL_PLOTS.find((entry) => entry.id === choice.dataset.plotId);
+      const cost = definition ? getConstructionCost(state, definition.id) : {};
+      const label = choice.querySelector('[data-placement-cost]');
+      if (label)
+        label.textContent = Object.entries(cost)
+          .map(([key, amount]) => `${number(amount)} ${t(key)}`)
+          .join(' · ');
+      const capacityHint = choice.querySelector('[data-placement-capacity]');
+      if (capacityHint)
+        capacityHint.hidden = !Object.values(cost).some((amount) => amount > state.capacity);
       choice.disabled =
         busy ||
         state.battle.status === 'active' ||
@@ -2151,7 +2193,7 @@ setInterval(async () => {
         state.buildings.some((building) => building.x === plot.x && building.y === plot.y) ||
         state.buildings.filter((building) => building.type === definition.id).length >=
           definition.maxCount ||
-        !affordable(definition.cost);
+        !affordable(cost);
     }
   }
   updateResourceWorkPanel(root, state, collectionResource, economyContext());

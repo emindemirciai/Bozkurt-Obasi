@@ -2,6 +2,8 @@
 
 ## Türkçe
 
+v2.16.0 bütün gelişim maliyetlerini kademelendirdi. Ek yapı kopyaları pahalanır; planlayıcı güncel inşa sırasını, gerçek bedeli ve kapasite engelini kullanır. Yıkımdan depoya sığmayan pay bekleyen iadede saklanır; **Bekleyen iadeyi al** ile boşluk kadarını aktar. [Tüm maliyetler](ECONOMY.md).
+
 v2.15.0 depo paneli kapasitenin nasıl genişletildiğini gösterir: temel 1.000, depo seviyeleriyle 10.000/50.000/250.000/1.000.000/5.000.000 ve ayrıca Bey Otağı katkısı. **Depoyu genişlet**, maliyeti olan mevcut inşa/yükseltme planına yönlendirir. Toplama işini seçip açıkça başlat; bütün işler ortak 90 saniye bekler. Seçim otomatik kaynak vermez. [Güncel miktarlar](ECONOMY.md).
 
 Ana yurt ekranındaki **Oba planlaması** paneli beş kaynağın mevcut miktarını, depo sınırını, dakikalık üretimini ve deponun tahmini dolma süresini gösterir. Mevcut bölge bonusları hesaba katılır; örneğin Yayla'da taş üretimi 1,5 katına çıkar. Üretimi olmayan ve deposu dolu kaynaklar ayrı belirtilir.
@@ -10,7 +12,7 @@ Dokuz yapı türünden birini seçerek yeni yapının veya mevcut yapının sonr
 
 Hedef seçmek kaynak harcamaz. **Yer seç** haritada hedef yapıya uygun boş bir yere odaklanır: kule için ayrılmış köşe, diğer yapılar için normal parsel. Bir **+** alanı ve ardından bina seçildiğinde yapı tam o konuma kurulur. **Yükselt** mevcut binayı geliştirir. Aktif savaş, kaynak eksikliği ve son seviye durumlarında düğme kapalıdır; sunucu kaynakları ve kayıt revizyonunu ayrıca doğrular. Kaynaklar güncellenirken seçim ve klavye odağı korunur. Hesaptan çıkıldığında plan seçimi sıfırlanır.
 
-Süreler mevcut üretimin sabit kalacağını varsayan tahminlerdir. Toplama, harcama, savaş ödülleri, yeni yapılar ve yolculukta bölge değişimi bu süreleri değiştirebilir. Otomatik inşaat kuyruğu veya yapım süresi eklenmez; eski köy kayıtları kayıpsız v2 biçimine taşınır.
+Süreler mevcut üretimin sabit kalacağını varsayan tahminlerdir. Toplama, harcama, savaş ödülleri, yeni yapılar ve yolculukta bölge değişimi bu süreleri değiştirebilir. Otomatik inşaat kuyruğu veya yapım süresi eklenmez; eski v1/v2 köy kayıtları kayıpsız v3 biçimine taşınır.
 
 ### Sabit Ana Yurt haritası
 
@@ -28,11 +30,11 @@ Seçili bina, %50 inşaat/yükseltme malzemesi iadesi gösteren açık onay penc
 
 ### Yenilgi sonrası sürü takviyesi
 
-**Sürü takviyesi** paneli mevcut hayvan sayısını, 24 hayvan sınırını, eksik sayıyı ve seçtiğin miktarın kaynak maliyetini gösterir. Kurulu en az bir **Otlak** gerekir; seviyesi maliyeti değiştirmez. Bir seferde 1–5 hayvan alınabilir ve miktar eksik hayvan sayısını aşamaz. Her hayvan **6 su + 12 yem** ister. Miktarı değiştirmek kaynak harcamaz; takviye düğmesi açık onaydır.
+**Sürü takviyesi** paneli mevcut hayvan sayısını, 24 hayvan sınırını, eksik sayıyı ve seçtiğin miktarın kaynak maliyetini gösterir. Kurulu en az bir **Otlak** gerekir; seviyesi maliyeti değiştirmez. Bir seferde 1–5 hayvan alınabilir ve miktar eksik hayvan sayısını aşamaz. Her hayvan **30 su + 60 yem** ister. Miktarı değiştirmek kaynak harcamaz; takviye düğmesi açık onaydır.
 
 Aktif savaş veya devam eden keşif/sevkiyat sırasında takviye kapalıdır. Eski kayıtlardan taşınmış bir yolculuğun da bitmesi gerekir. Otlağın yoksa, sürü zaten 24 ise veya kaynak yetersizse panel nedeni gösterir. Sunucu tüm koşulları yeniden doğrular; başarısız istekte takviye için kaynak kesilmez ve hayvan eklenmez. Yeni hayvan başına hem mevcut hem azami can 10 artar; önceki yaralar ve panik aynı kalır. Muhafız canı, XP, eğitim puanları ve ekipmanı değişmez. Kalan hayvanların yaraları için mevcut tedavi/dinlenme seçenekleri kullanılır.
 
-Bu özellik v2 kayıt biçimini korur; yeni veri alanı, ortam değişkeni veya servis gerektirmez.
+Sürü takviyesi ek veri alanı gerektirmez; v2.16.0 genel kayıt geçişi v3 biçimini kullanır. [Geçiş rehberi](ECONOMY.md). Yeni ortam değişkeni veya servis gerekmez.
 
 ### Çevrimdışı görsel test
 
@@ -44,6 +46,8 @@ npm run build:preview
 
 ## English
 
+v2.16.0 adds progressive development costs. Additional building copies cost more; the planner uses the current copy count, real price and capacity constraints. Demolition overflow stays in a refund reserve; **Claim pending refund** transfers what fits. [All prices](ECONOMY.md).
+
 The v2.15.0 storage panel explains expansion: base 1,000, storage levels 10,000/50,000/250,000/1,000,000/5,000,000 plus the hall bonus. **Expand storage** leads to the existing paid construction/upgrade plan. Choose and explicitly perform a gathering job; all jobs share a 90-second cooldown. Selecting a job never grants resources automatically. [Current quantities](ECONOMY.md).
 
 The homeland **Village planning** panel displays all five resource balances, storage limits, production per minute and estimated time until full. It includes current region bonuses, such as 1.5× stone production in the Highlands. Resources without production and full stores have separate statuses.
@@ -52,7 +56,7 @@ Choose one of nine building types to inspect new construction or the next level 
 
 Choosing a target spends nothing. **Choose plot** focuses a suitable empty site on the map: a reserved corner for a watchtower or an ordinary plot for other buildings. Select a **+** plot, then a building to construct at that exact location; **Upgrade** improves the existing building. Active battles, shortages and maximum level disable the button; the server independently checks balances and save revisions. Resource updates preserve the selected target and keyboard focus. Signing out resets the selection.
 
-Estimates assume current production stays fixed. Gathering, spending, battle rewards, new buildings and region changes during travel can alter them. There is no automatic construction queue or new construction duration, and old saves migrate to the v2 schema without resetting progress.
+Estimates assume current production stays fixed. Gathering, spending, battle rewards, new buildings and region changes during travel can alter them. There is no automatic construction queue or new construction duration, and old v1/v2 saves migrate to schema v3 without resetting progress.
 
 ### Fixed Homeland map
 
@@ -70,11 +74,11 @@ Remove the selected building through explicit confirmation showing a 50% constru
 
 ### Herd replenishment after defeat
 
-The **Herd replenishment** panel shows the current animal count, the 24-animal limit, missing animals and the selected quantity's cost. At least one built **Pasture** is required; its level does not change the price. A batch contains 1–5 animals and cannot exceed the missing count. Each animal costs **6 water + 12 feed**. Changing the quantity spends nothing; the replenish button explicitly confirms the action.
+The **Herd replenishment** panel shows the current animal count, the 24-animal limit, missing animals and the selected quantity's cost. At least one built **Pasture** is required; its level does not change the price. A batch contains 1–5 animals and cannot exceed the missing count. Each animal costs **30 water + 60 feed**. Changing the quantity spends nothing; the replenish button explicitly confirms the action.
 
 Active battles, expeditions and escorts block replenishment. A journey migrated from an older save must also finish first. The panel explains missing pastures, a full herd and resource shortages. The server rechecks every condition; rejected replenishment requests neither deduct supplies for the purchase nor add animals. Each new animal adds 10 current and maximum health, retaining existing wounds and panic. Guardian health, XP, training points and equipment stay unchanged. Existing healing/rest options treat the remaining animals' injuries.
 
-The feature retains save schema v2 and requires no new fields, environment variables or services.
+Herd replenishment needs no additional save fields; the overall v2.16.0 migration uses schema v3. See the [migration guide](ECONOMY.md). No new environment variables or services are required.
 
 ### Offline visual test
 

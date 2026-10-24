@@ -1,97 +1,163 @@
-# Kaynak ve depo dengesi / Resource and storage balance
+# Oyun ekonomisi / Game economy — v2.16.0
 
 ## Türkçe
 
-### v2.15.0 — Genişleyen depo, aktif toplama
+### İlerleme hedefi
 
-Her kaynak için temel kapasite **1.000**. Tek depo binası beş seviyeye geliştirilir; aşağıdaki değerler Bey Otağı katkısı hariç toplam kapasitedir. Bey Otağı 1. seviyeden sonraki her seviyede +100 ekler; en yüksek kapasite **5.000.400** olur.
+İlk üreticiler başlangıç erzağıyla kurulabilir; ikinci kopyalar, yükseltmeler ve gelişmiş surlar aynı oturumda arka arkaya tamamlanacak fiyatlarda değildir. Başlangıç stokları **450 odun / 350 taş / 180 su / 180 yem / 80 ot** kalır. İlk oduncu ve taş ocağı toplam 400 odun / 220 taş ister. İlk yapı ve görevlerin tek seferlik ödülleri, 90 saniyede bir ücretsiz toplama ve mevcut pasif üretim korunur. Sıfır stoktan geri dönüş mümkündür; maliyet yükseltmek ücretsiz toplama, taşıma, formasyon veya ekipman yönetimini kilitlemez.
 
-| Depo seviyesi | Toplam kapasite | Sonraki seviyenin odun / taş maliyeti |
+### Depo genişletme
+
+Her kaynak için temel kapasite **1.000**. Aşağıdaki bedel, belirtilen hedef seviyeye geçerken bir kez ödenir; kapasiteye Bey Otağı'nın en fazla 400 katkısı ayrıca eklenir. Her depo aşaması önceki kapasiteye sığar; yükseltmek için henüz sahip olunmayan kapasiteye ihtiyaç duyulmaz.
+
+| Hedef depo seviyesi | Sonraki toplam kapasite | Odun | Taş |
+| --- | ---: | ---: | ---: |
+| 1 — İnşa | 10.000 | 900 | 750 |
+| 2 | 50.000 | 8.000 | 6.000 |
+| 3 | 250.000 | 40.000 | 30.000 |
+| 4 | 1.000.000 | 200.000 | 150.000 |
+| 5 | 5.000.000 | 800.000 | 650.000 |
+
+Son depo seviyesinin toplam yatırımı **1.048.900 odun + 836.750 taş** olur. Önceki sürümde toplam 1.157 / 797 idi. Üretimi değiştirmeden kapasiteyi en üst seviyeye çıkarmak artık uzun vadeli bir hedef olur.
+
+### Yapılar ve surlar
+
+| Yapı | İlk kopya odun / taş |
+| --- | ---: |
+| Bey Otağı | 600 / 450 |
+| Oduncu | 180 / 100 |
+| Taş Ocağı | 220 / 120 |
+| Su Kuyusu | 160 / 90 |
+| Otlak | 200 / 120 |
+| Şifa Otağı | 320 / 240 |
+| Depo | 900 / 750 |
+| Gözcü Kulesi | 500 / 400 |
+| Sürü Barınağı | 420 / 300 |
+
+Aynı türden mevcut yapı sayısına göre yeni kopyaların katsayısı **1 / 2 / 3 / 5 / 8 / 12** olur. Örneğin altıncı oduncu 2.160 odun / 1.200 taş ister. Gözcü kulesinin dört köşesi için ilk dört katsayı uygulanır. Bir yapı kaldırılırsa sıradaki inşanın fiyatı o anda kalan yapı sayısından hesaplanır; eski binanın iadesi yeniden fiyatlandırılmaz.
+
+Depo dışındaki yapıların hedef **2 / 3 / 4 / 5** seviyelerine geçiş maliyeti ilk kopyanın temel bedelinin **6 / 30 / 150 / 750** katıdır. Kopya katsayısı yükseltmeye uygulanmaz. Örneğin bir oduncunun yükseltmeleri 1.080/600, 5.400/3.000, 27.000/15.000 ve 135.000/75.000 odun/taş ister. Yerleştirme, yapı kartı, maliyet ipucu ve planlayıcı sunucunun aynı tarifesini gösterir.
+
+| Hedef sur seviyesi | Odun | Taş |
 | --- | ---: | ---: |
-| Henüz kurulmadı | 1.000 | 80 / 55 |
-| 1 | 10.000 | 124 / 86 |
-| 2 | 50.000 | 193 / 133 |
-| 3 | 250.000 | 298 / 205 |
-| 4 | 1.000.000 | 462 / 318 |
-| 5 | 5.000.000 | Son seviye |
+| 2 | 1.800 | 1.200 |
+| 3 | 12.000 | 15.000 |
+| 4 | 100.000 | 120.000 |
+| 5 | 1.200.000 | 1.500.000 |
 
-İnşa/yükseltme tarifeleri değişmez. Eski geçerli kapasite önce doğrulanır, sonra aynı binalarla yeni kapasite hesaplanır; eldeki malzemeler, seviyeler, köy düzeni ve görev kayıtları korunur. Depo kaldırılınca kapasite azalır; kalan kaynaklar ve %50 iade sığmıyorsa işlem engellenir, kaynak silinmez. [Kaldırma](DEMOLITION.md).
+Son sur beşinci depo seviyesini gerektirir. Üst seviyeler için kaynak planlayıcısı eksik malzemeyi ve kapasite engelini açıklar; depoya sığmayan bedel bir düğmeyle aşılamaz.
 
-Pasif üretim önceki sürüme göre **%90 daha yavaş**; aşağıdaki değerler tek bina seviyesi içindir. Birden çok üretici ve yükseltmeler katkıları toplar; bölge bonusları korunur.
+### Muhafızlar, savaş ve bakım
 
-| Kaynak | Dakikada | Saatte |
+| Hedef eğitim rütbesi | Şifalı ot | Yem |
 | --- | ---: | ---: |
-| Odun | 0,6 | 36 |
-| Taş | 0,45 | 27 |
-| Su | 0,7 | 42 |
-| Yem | 0,6 | 36 |
-| Şifalı ot | 0,3 | 18 |
+| 1 | 40 | 80 |
+| 2 | 140 | 280 |
+| 3 | 450 | 900 |
+| 4 | 1.400 | 2.800 |
+| 5 | 4.200 | 8.400 |
 
-Toplama ücretsiz, açık oyuncu eylemidir. Sunucu yalnızca seçilen işin sabit kazanımını verir. Bütün seçenekler ortak **90 saniye** bekler; kaynak değiştirmek veya sayfayı yenilemek beklemeyi kaldırmaz. Eski kaydedilmiş bekleme önce dolar. Yeni işlemden sonra 90 saniye uygulanır. Otomatik tekrar veya arka planda toplama yoktur.
+Eğitim ayrıca bir yetenek puanı ister; rütbesi sıfır olan bir yolun ilk eğitimi başlangıç stoklarına sığar. Eğitim puanı birikmesi üst rütbeyi bedelsiz yapmaz.
 
-| İş | Her başarılı işlemde kazanım |
-| --- | --- |
-| Karma toplama | 3 odun + 2 taş + 2 su + 2 yem |
-| Odun kes | 10 odun |
-| Taş çıkar | 7 taş |
-| Su taşı | 8 su |
-| Ot biç | 8 yem |
-| Şifalı ot topla | 2 şifalı ot |
+- Savaş erzağı: **60 + 12 × (dalga − 1) su**, **80 + 16 × (dalga − 1) yem**.
+- Kampta dinlenme: **100 su + 125 yem**; mevcut iyileştirme etkileri korunur.
+- Sürü tedavisi: **15 şifalı ot**.
+- Sürü tamamlama: hayvan başına **30 su + 60 yem**, işlem başına 1–5 ve toplam 24 hayvan sınırı; otlak gerekir.
+- Savaş emirleri, ekipman takıp çıkarma, formasyon seçimi, bina taşıma ve arkadaşlara mesaj ücretsiz kalır. Hediyelerde gönderilen miktar gönderenden düşer; sistem yeni kaynak üretmez.
 
-Kazanım mevcut depo boşluğuyla sınırlıdır. İşin hiçbir kaynağına yer yoksa işlem bekleme veya görev ilerlemesi başlatmaz. Sıfır kaynakla bile ücretsiz toplama yapılarak yeniden ilerlenebilir. Temel stoklar 450 odun, 350 taş, 180 su, 180 yem ve 80 ottur; beş üretici ile depo kurulabilir. Aktif toplama, savaş, İlk Nöbet ve diğer tek seferlik görevler, keşif ve sevkiyat ilerlemeyi destekler. Ekranda pasif gelir ile oyuncunun başlattığı işler ayrı açıklanır.
+### Sefer hazırlığı
 
-Çevrimdışı üretim hesabında en fazla **8 saat** korunur. Tek 1. seviye oduncu 8 saatte 288 odun üretir; altı 5. seviye oduncu 8 saatte 8.640 üretir. 5.000.000 kapasiteli boş depo bu süre içinde yalnızca bu üretimle dolmaz. Zorluk gerçek oyuncu verileriyle henüz ölçülmedi; bu sayılar kullanıcının daha yavaş ve aktif oyun isteği için belirlenmiştir.
+Yeni keşif/sevkiyatlar 6/8/10/12 saat sürer. Su/yem hazırlığı ayrı ayrı aşağıdaki formülle hesaplanıp son aşamada yukarı yuvarlanır:
 
-### Uzun seferler ve diğer ödüller
+**saat × (12 su veya 16 yem) × (1 + bölge sırası × 0,15) × zorluk × amaç × kadro × izcilik**
 
-Yeni seferler v2.11.0 kuralıyla **6/8/10/12 saat** sürer. Kolay/standart saat başına 30 XP, 16 odun, 10 taş ve 3 ot; zorluk 1/1,5/2 ve plan katsayıları uygulanır. İzcilik erzak indirir, süreyi değiştirmez. Su Gözü 6 saatlik kolay standart keşfi 180 XP, 96 odun, 60 taş ve 18 ot verir. Başlamış eski seferlerin süre ve ödül vaatleri korunur. [Uzun seferler](LONG-JOURNEYS.md).
+Bölge sırası Ana Yurt 0, Su Gözü 1, Çayır 2, Yüksek Otlak 3, Kalıntılar 4; zorluk 1/1,5/2; standart amaç 1, iz sürme/ikmal 1,25; kadro 1 + 0,2 × (kurt sayısı − 1). İzcilik indirimi önceki gibi en fazla %30'dur. Süre, XP, malzeme ve ekipman ödülleri değişmez.
 
-Savaş malzeme ödülleri v2.8.0 oranını korur: üçüncü dalga 37 odun, 24 taş, 6 ot, 10 yem; katılan her kurt 50 XP kazanır. İlk Nöbet ve önceki görev ödülleri bir kez alınır. Bu sürüm yeni ENV, servis, SQL tablo alanı veya kayıt sıfırlaması gerektirmez. [Köy planlaması](VILLAGE-PLANNING.md) · [Görsel önizleme](../preview/village.html).
+Tek kurtla kolay standart Su Gözü: **83 su + 111 yem**, 6 saat, 180 XP, 96 odun + 60 taş + 18 ot. Aynı göreve beş kurt 150 su + 199 yem ister. Kadro ve amaç seçimi yalnızca önizlemedir; açık yola çıkışla ücret alınır. Yeni sefer ekonomi sürümü 4'tür; başlamış 1/2/3 sürümlü seferler ve geçmiş raporların vaatleri korunur.
+
+### Kazanım ve süre varsayımları
+
+Tek bina seviyesi saatte 36 odun, 27 taş, 42 su, 36 yem veya 18 ot üretir. Çevrimdışı hesap en fazla **8 saat** işler. Aktif işlerin ortak **90 saniye** beklemesi vardır: karma 3 odun + 2 taş + 2 su + 2 yem; odun 10; taş 7; su 8; yem 8; ot 2. Otomatik toplama yoktur; tüm kazanımlar depo boşluğuyla sınırlanır.
+
+Altı son seviye taş ocağının toplamı 810 taş/saat eder. Son surun 1.500.000 taşını yalnız bu üretimle biriktirmek yaklaşık **1.852 üretim saati** gerektirir; günde tek sekiz saatlik çevrimdışı pencereyle yaklaşık **232 gün**. Aktif işler ve ödüller bu süreyi kısaltır; diğer harcamalar uzatır. Bu bir matematiksel üst aşama örneğidir, oyuncu seansı ölçümü veya ilerleme süresi garantisi değildir. Erken üretici ve orta seviyeler çok daha küçük bütçeler kullanır.
+
+### Eski kayıtlar ve iadeler
+
+Kayıt biçimi v3, her yapının eski tarife kapsamındaki seviyelerini ve ilk inşa sırasını saklar. Eski v1/v2 köyleri tam doğrulama sonrası aktarılır; mevcut stoklar, seviyeler, köy düzeni, kurtlar, görevler ve seferler sıfırlanmaz. Eski ucuz seviyelere yeni tarife üzerinden geriye dönük borç veya yüksek iade uygulanmaz.
+
+Kaldırma **gerçekte ödenmiş toplam yatırımın tam %50'sini** verir. Mevcut stoklar küçülen kapasiteye sığmalıdır. İadenin sığan kısmı depoya, fazlası kalıcı **bekleyen iadeye** geçer; malzeme silinmez. **Bekleyen iadeyi al**, yalnız depoda boşluk kadarını taşır; kalanı sonraki işlem için korur. Bu pay depoyu yükseltmeden pahalı bir bedel ödemek için kullanılamaz. İşlemler sunucu revizyonu ile bir kez uygulanır. [Kaldırma rehberi](DEMOLITION.md).
+
+Yeni ENV, servis veya SQL tablo alanı gerekmez; kayıt JSON'u otomatik göç eder. Dokploy'da web/API'yi aynı sürümle dağıtın ve veri volume'larını koruyun. [Önizleme](../preview/village.html).
 
 ## English
 
-### v2.15.0 — Expandable storage and active gathering
+### Progression and storage
 
-Base capacity is **1,000 per resource**. One storage building upgrades through five levels. Totals below exclude the hall bonus: each hall upgrade beyond level 1 adds 100, for a maximum **5,000,400** capacity.
+Starter supplies remain **450 wood / 350 stone / 180 water / 180 feed / 80 herbs**. The first lumber camp plus quarry cost 400 wood / 220 stone; free gathering, initial quests and passive output remain available even after resources reach zero. Later copies and levels require saving and planning.
 
-| Storage level | Total capacity | Next level wood / stone cost |
+| Target storage level | Capacity after purchase | Wood | Stone |
+| --- | ---: | ---: | ---: |
+| 1 — Build | 10,000 | 900 | 750 |
+| 2 | 50,000 | 8,000 | 6,000 |
+| 3 | 250,000 | 40,000 | 30,000 |
+| 4 | 1,000,000 | 200,000 | 150,000 |
+| 5 | 5,000,000 | 800,000 | 650,000 |
+
+Base capacity is 1,000; the hall adds up to 400. Each storage purchase fits the previous capacity. Total investment to level 5 is **1,048,900 wood + 836,750 stone**, compared with 1,157 / 797 previously.
+
+### Buildings and walls
+
+| Building | First copy wood / stone |
+| --- | ---: |
+| Hall | 600 / 450 |
+| Lumber camp | 180 / 100 |
+| Quarry | 220 / 120 |
+| Well | 160 / 90 |
+| Pasture | 200 / 120 |
+| Healer lodge | 320 / 240 |
+| Storage | 900 / 750 |
+| Watchtower | 500 / 400 |
+| Shelter | 420 / 300 |
+
+Additional copies use multipliers **1 / 2 / 3 / 5 / 8 / 12** based on the current owned count. Towers use the first four multipliers. Removing a building changes the next construction quote; its historical refund is never repriced. Non-storage upgrades to levels **2 / 3 / 4 / 5** cost the first-copy base recipe multiplied by **6 / 30 / 150 / 750**, without the copy multiplier. Lumber upgrades therefore cost 1,080/600, 5,400/3,000, 27,000/15,000 and 135,000/75,000 wood/stone.
+
+| Target wall level | Wood | Stone |
 | --- | ---: | ---: |
-| Not built | 1,000 | 80 / 55 |
-| 1 | 10,000 | 124 / 86 |
-| 2 | 50,000 | 193 / 133 |
-| 3 | 250,000 | 298 / 205 |
-| 4 | 1,000,000 | 462 / 318 |
-| 5 | 5,000,000 | Maximum |
+| 2 | 1,800 | 1,200 |
+| 3 | 12,000 | 15,000 |
+| 4 | 100,000 | 120,000 |
+| 5 | 1,200,000 | 1,500,000 |
 
-Construction and upgrade recipes remain unchanged. Migration first validates the previous capacity, then recalculates it from the same buildings; balances, levels, layout and journey records remain. Demolishing storage reduces capacity; if remaining resources and the 50% refund cannot fit, removal is blocked without discarding resources. [Demolition](DEMOLITION.md).
+The final wall tier requires level-5 storage. Shared authoritative recipes drive the placement picker, building cards, tooltips and planner; capacity shortages are visible.
 
-Passive output is **90% slower than the previous release**. The figures below are per building level; multiple producers and upgrades add their output, and region bonuses remain.
+### Guardians, combat and care
 
-| Resource | Per minute | Per hour |
+| Target training rank | Herbs | Feed |
 | --- | ---: | ---: |
-| Wood | 0.6 | 36 |
-| Stone | 0.45 | 27 |
-| Water | 0.7 | 42 |
-| Feed | 0.6 | 36 |
-| Herbs | 0.3 | 18 |
+| 1 | 40 | 80 |
+| 2 | 140 | 280 |
+| 3 | 450 | 900 |
+| 4 | 1,400 | 2,800 |
+| 5 | 4,200 | 8,400 |
 
-Gathering is free and explicitly initiated by the player. The server grants only the selected job's fixed reward. Every option shares a **90-second** cooldown; changing jobs or reloading cannot bypass it. Saved older deadlines are honored before the next successful action starts 90 seconds. No automatic repetition or background collection runs.
+Training still consumes one skill point; the first rank of an untrained path fits starter supplies. Battle supplies cost **60 + 12 × (wave − 1) water** and **80 + 16 × (wave − 1) feed**. Camp rest costs **100 water + 125 feed**; herd treatment costs **15 herbs**; replacements cost **30 water + 60 feed per animal**, with the existing pasture, batch and herd limits. Care effects remain unchanged. Tactical orders, moving buildings, formations, equipment management and messaging remain free; gifts transfer the sender's existing resources/items.
 
-| Job | Reward per successful action |
-| --- | --- |
-| Mixed gathering | 3 wood + 2 stone + 2 water + 2 feed |
-| Logging | 10 wood |
-| Quarrying | 7 stone |
-| Water hauling | 8 water |
-| Feed gathering | 8 feed |
-| Herb foraging | 2 herbs |
+### Journeys
 
-Rewards respect available storage. If none of a job's rewards fit, it starts neither a cooldown nor quest progress. Free gathering allows recovery even from zero resources. Starter supplies remain 450 wood, 350 stone, 180 water, 180 feed and 80 herbs, sufficient for five producers and storage. Gathering, battles, one-time story quests, expeditions and escorts support active progression; the interface distinguishes passive income from player actions.
+New journeys preserve their 6/8/10/12-hour duration and XP/material/item rewards. Supplies are rounded up once from **hours × (12 water or 16 feed) × (1 + region rank × 0.15) × difficulty × purpose × party × scouting**. Region ranks are 0–4; difficulty is 1/1.5/2; purpose is 1 for standard or 1.25 for survey/supply; party is 1 + 0.2 × (wolf count − 1); scouting discounts at most 30%.
 
-Offline production remains capped at **8 hours**. One level-1 lumber camp produces 288 wood in eight hours; six level-5 camps produce 8,640, insufficient to fill an empty 5,000,000 store in that time. These numbers implement the requested slower, more active economy; they have not been calibrated against live player sessions.
+One wolf on an easy standard Wellspring journey costs **83 water + 111 feed**, taking six hours for 180 XP, 96 wood, 60 stone and 18 herbs. Five wolves cost 150 water + 199 feed. Selection is a preview; explicit departure spends the supplies. New outings use economy version 4, while historical versions 1/2/3 retain their promises and reports.
 
-### Long journeys and other rewards
+### Income and pacing assumptions
 
-New journeys retain the v2.11.0 **6/8/10/12-hour** rules. Easy/standard rewards per hour: 30 XP, 16 wood, 10 stone and 3 herbs, multiplied by difficulty 1/1.5/2 and purpose. Scouting discounts supplies without shortening time. A six-hour easy standard Wellspring expedition yields 180 XP, 96 wood, 60 stone and 18 herbs. Existing journeys keep their promised durations and rewards. [Long journeys](LONG-JOURNEYS.md).
+Per building level, hourly production remains 36 wood, 27 stone, 42 water, 36 feed or 18 herbs. Offline progress is capped at eight hours. Explicit gathering shares a 90-second cooldown: mixed 3 wood + 2 stone + 2 water + 2 feed; focused wood 10, stone 7, water 8, feed 8 or herbs 2. Storage room caps incoming materials; nothing gathers automatically.
 
-Battle loot retains its v2.8.0 rate: wave three gives 37 wood, 24 stone, 6 herbs and 10 feed; each guardian receives 50 XP. First Watch and earlier quest rewards remain one-time claims. No new environment variable, service, SQL column or village reset is required. [Village planning](VILLAGE-PLANNING.md) · [Visual preview](../preview/village.html).
+Six level-5 quarries produce 810 stone/hour. The final wall's 1,500,000 stone takes about **1,852 production hours** from that source alone, or **232 days** with one eight-hour offline window per day. Active work/rewards shorten this; other spending extends it. This is a mathematical late-game example, not measured player pacing or a guarantee. Early producers and middle tiers use much smaller budgets.
+
+### Migration and refunds
+
+Save format v3 records each building's historical price levels and construction ordinal. Fully validated v1/v2 saves migrate without resetting resources, buildings, layout, wolves, objectives or outings. Old purchases are neither charged retroactively nor refunded at inflated new prices.
+
+Demolition refunds **exactly 50% of actual investment**. Existing balances must fit reduced capacity. The refund is split into available storage and a persistent **refund reserve**; no credit is discarded. **Claim pending refund** moves only what currently fits and leaves the remainder. Reserved credits cannot bypass storage to pay an otherwise unaffordable price. Revision checks protect once-only processing. [Demolition](DEMOLITION.md).
+
+No new ENV variable, service or SQL column is needed; persisted JSON migrates automatically. Deploy matching web/API versions and keep existing data volumes. [Village preview](../preview/village.html).

@@ -156,6 +156,8 @@ test('first battle-to-recovery duration remains separate from a later first vict
   assert.equal(state.battle.status, 'lost');
   const firstBattleAt = state.firstWatch.milestones.battle;
   advanceGame(state, state.updatedAt + 12_000);
+  state.resources.water = 500;
+  state.resources.feed = 500;
   act({ type: 'rest' });
   const recoveryAt = state.firstWatch.milestones.recover;
   assert.equal(firstWatchJournal(state).firstWin.recorded, false);

@@ -1,7 +1,7 @@
 /** Existing camp care, shared by forecasts and authoritative commands. No save fields. */
 const RECOVERY_COSTS = Object.freeze({
-  healHerd: Object.freeze({ herbs: 1 }),
-  rest: Object.freeze({ water: 25, feed: 30 }),
+  healHerd: Object.freeze({ herbs: 15 }),
+  rest: Object.freeze({ water: 100, feed: 125 }),
 });
 
 /** Forecast care without advancing time, spending supplies or changing the village. */

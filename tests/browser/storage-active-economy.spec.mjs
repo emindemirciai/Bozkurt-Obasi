@@ -4,7 +4,8 @@ import { pathToFileURL } from 'node:url';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
 import { getStorageCapacity } from '../../shared/settlement.mjs';
 import { translations } from '../../web/i18n.mjs';
-import { signIn } from './sign-in.mjs';
+import { signIn, seedGame } from './sign-in.mjs';
+import { fundStorage, fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 20, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
@@ -117,6 +118,7 @@ test('storage expansion uses real construction and upgrades and preserves expand
   page,
 }) => {
   await signIn(page);
+  await seedGame(page, fillResources);
   const now = new Date();
   await page.clock.install({ time: new Date(now.getTime() - 1000) });
   await page.clock.pauseAt(now);
@@ -138,13 +140,24 @@ test('storage expansion uses real construction and upgrades and preserves expand
   );
   expect(built.state.capacity).toBe(10000);
   await expect(store(page).locator('[data-storage-next-capacity]')).toContainText('50.000');
+  await seedGame(page, fillResources);
+  await page.reload();
   const upgraded = await command(page, expand(page));
   expect(upgraded.state.capacity).toBe(50000);
   await expect(store(page).locator('[data-storage-next-capacity]')).toContainText('250.000');
+  await seedGame(page, fillResources);
+  await page.reload();
   const mature = await command(page, expand(page));
   expect(mature.state.capacity).toBe(250000);
   expect(mature.state.buildings).toEqual([
-    { id: 'building-storage', type: 'storage', level: 3, x: 0, y: 0 },
+    {
+      id: 'building-storage',
+      type: 'storage',
+      level: 3,
+      x: 0,
+      y: 0,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+    },
   ]);
   expect(actions).toEqual([
     { type: 'build', building: 'storage', plotId: 'p0' },
@@ -210,7 +223,7 @@ test('million-scale maximum storage and active work remain readable in TR and EN
   page,
 }) => {
   const state = createGame(START);
-  applyAction(state, { type: 'build', building: 'storage', plotId: 'p0' }, START);
+  fundStorage(state, 5, 'p0');
   applyAction(state, { type: 'build', building: 'hall', plotId: 'p1' }, START);
   for (const building of state.buildings) building.level = 5;
   state.capacity = getStorageCapacity(state);
@@ -256,15 +269,15 @@ test('million-scale maximum storage and active work remain readable in TR and EN
       for (const stock of stocks) expect(stock.scroll).toBeLessThanOrEqual(stock.content);
       if (width !== 320) {
         await store(page).screenshot({
-          path: `artifacts/storage-${language}-${width}-v2.15.0.png`,
+          path: `artifacts/storage-${language}-${width}-v2.16.0.png`,
           animations: 'disabled',
         });
         await page.locator('.resource-bar').screenshot({
-          path: `artifacts/resource-header-${language}-${width}-v2.15.0.png`,
+          path: `artifacts/resource-header-${language}-${width}-v2.16.0.png`,
           animations: 'disabled',
         });
         await work(page).screenshot({
-          path: `artifacts/resource-work-${language}-${width}-v2.15.0.png`,
+          path: `artifacts/resource-work-${language}-${width}-v2.16.0.png`,
           animations: 'disabled',
         });
       }

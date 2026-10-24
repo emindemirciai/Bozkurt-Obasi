@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { createGame, applyAction, advanceGame } from '../../shared/game.mjs';
 import { signIn } from './sign-in.mjs';
+import { fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 15, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
@@ -40,14 +41,14 @@ async function mockVillage(page, state) {
 test('replenishment quotes spend nothing, explicit confirmation preserves wounds and persists', async ({
   page,
 }) => {
-  const state = injuredHerd();
+  const state = fillResources(injuredHerd());
   const actions = await mockVillage(page, state);
   const panel = page.locator('#herd-recovery-panel');
   await expect(panel.locator('[data-herd-count]')).toHaveText('20 / 24');
   const before = structuredClone(state);
   await panel.locator('select').selectOption('4');
-  await expect(panel).toContainText('Maliyet: 24');
-  await expect(panel).toContainText('Maliyet: 48');
+  await expect(panel).toContainText('Maliyet: 120');
+  await expect(panel).toContainText('Maliyet: 240');
   expect(actions).toEqual([]);
   expect(state).toEqual(before);
   const response = page.waitForResponse('**/api/action');
@@ -55,8 +56,8 @@ test('replenishment quotes spend nothing, explicit confirmation preserves wounds
   await (await response).finished();
   expect(actions).toEqual([{ type: 'replenishHerd', amount: 4 }]);
   expect(state.herd).toEqual({ count: 24, maxHp: 240, hp: 190, panic: 30 });
-  expect(state.resources.water).toBe(before.resources.water - 24);
-  expect(state.resources.feed).toBe(before.resources.feed - 48);
+  expect(state.resources.water).toBe(before.resources.water - 120);
+  expect(state.resources.feed).toBe(before.resources.feed - 240);
   expect(state.wolves).toEqual(before.wolves);
   await expect(panel).toContainText('Sürün tam');
   await expect(panel.locator('#herd-replenish-button')).toBeDisabled();
@@ -100,8 +101,8 @@ test('passive production enables the quote while preserving selection and focuse
 }) => {
   const state = injuredHerd();
   applyAction(state, { type: 'build', building: 'well', plotId: 'p1' }, START);
-  state.resources.water = 11.9;
-  state.resources.feed = 24;
+  state.resources.water = 59.9;
+  state.resources.feed = 120;
   const actions = await mockVillage(page, state);
   const select = page.locator('#herd-replenish-amount');
   const button = page.locator('#herd-replenish-button');
@@ -138,7 +139,7 @@ test('offline recovery preview is read-only, bilingual and fits desktop and smal
   const panel = page.locator('#herd-recovery-panel');
   await expect(panel).toContainText('20 / 24');
   await panel.locator('select').selectOption('4');
-  await expect(panel).toContainText('Maliyet: 48');
+  await expect(panel).toContainText('Maliyet: 240');
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     for (const theme of ['light', 'dark']) {

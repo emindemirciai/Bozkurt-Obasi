@@ -20,6 +20,8 @@ import {
   STORAGE_CAPACITY_BONUSES,
 } from '../shared/settlement.mjs';
 
+import { fundedGame } from './economy-fixtures.mjs';
+
 const START = 1_000_000;
 const act = (state, action) => applyAction(state, action, state.updatedAt, () => 0);
 const refill = (state) => {
@@ -48,7 +50,18 @@ const buildToLevel = (state, type, level, plotId) => {
 };
 const supported = (type = 'quarry', level = 1) => {
   const state = createGame(START);
-  buildToLevel(state, type === 'storage' ? 'hall' : 'storage', 5, 'p35');
+  if (type === 'storage') {
+    // A retained, previously paid hall supplies capacity without adding a second store.
+    state.buildings.push({
+      id: 'building-hall',
+      type: 'hall',
+      level: 5,
+      x: 5,
+      y: 5,
+      costBasis: { legacyLevels: 5, constructionOrdinal: 1 },
+    });
+    state.capacity = 1400;
+  } else buildToLevel(state, 'storage', 5, 'p35');
   const result = buildToLevel(state, type, level, type === 'watchtower' ? 't0' : 'p0');
   clearResources(state);
   assert.equal(validateGame(state), true);
@@ -82,8 +95,8 @@ test('every building at every level refunds exactly half of all resources actual
       assert.equal(quote.canDemolish, true);
       const beforeCapacity = state.capacity;
       act(state, actionFor(state, building.id));
-      assert.equal(state.resources.wood, paid.wood / 2);
-      assert.equal(state.resources.stone, paid.stone / 2);
+      assert.equal(state.resources.wood + state.refundReserve.wood, paid.wood / 2);
+      assert.equal(state.resources.stone + state.refundReserve.stone, paid.stone / 2);
       assert.equal(
         state.buildings.some((entry) => entry.id === building.id),
         false,
@@ -102,16 +115,16 @@ test('every building at every level refunds exactly half of all resources actual
 
 test('known upgrade recipes accumulate once and retain fractional half refunds', () => {
   const { state, building } = supported('quarry', 3);
-  assert.deepEqual(getUpgradeCost({ type: 'quarry', level: 1 }), { wood: 109, stone: 47 });
-  assert.deepEqual(demolitionQuote(state, building.id).investment, { wood: 348, stone: 150 });
+  assert.deepEqual(getUpgradeCost({ type: 'quarry', level: 1 }), { wood: 1320, stone: 720 });
+  assert.deepEqual(demolitionQuote(state, building.id).investment, { wood: 8140, stone: 4440 });
   act(state, actionFor(state, building.id));
-  assert.equal(state.resources.wood, 174);
-  assert.equal(state.resources.stone, 75);
+  assert.equal(state.resources.wood, 4070);
+  assert.equal(state.resources.stone, 2220);
   const well = supported('well', 1);
   well.state.resources.wood = 0.123456789;
   act(well.state, actionFor(well.state, well.building.id));
-  assert.equal(well.state.resources.wood, 22.623456789);
-  assert.equal(well.state.resources.stone, 10);
+  assert.equal(well.state.resources.wood, 80.123456789);
+  assert.equal(well.state.resources.stone, 45);
 });
 
 test('a quote is pure on frozen state and returns independent building and snapshot copies', () => {
@@ -136,13 +149,13 @@ test('a quote is pure on frozen state and returns independent building and snaps
 });
 
 test('only the selected producer is removed and its plot and building-count slot become reusable', () => {
-  const state = createGame(START);
+  const state = fundedGame(START, 1);
   for (let index = 0; index < 6; index += 1) {
     refill(state);
     act(state, { type: 'build', building: 'lumber', plotId: 'p' + index });
   }
   clearResources(state);
-  const selected = state.buildings[2];
+  const selected = state.buildings.filter((building) => building.type === 'lumber')[2];
   const retained = state.buildings.filter((entry) => entry.id !== selected.id);
   const historicalBuilds = state.stats.builds;
   const chapter = structuredClone(state.firstWatch);
@@ -158,7 +171,7 @@ test('only the selected producer is removed and its plot and building-count slot
   assert.equal(state.log.at(-1).key, 'buildingDemolished');
   refill(state);
   act(state, { type: 'build', building: 'lumber', plotId: 'p2' });
-  assert.equal(state.buildings.length, 6);
+  assert.equal(state.buildings.length, 7);
   assert.equal(state.buildings.at(-1).id, selected.id);
   assert.equal(state.stats.builds, historicalBuilds + 1);
   assert.equal(validateGame(state), true);
@@ -168,7 +181,7 @@ test('demolition rejects overflow atomically for each of the five stored resourc
   for (const key of ['water', 'feed', 'herbs', 'wood', 'stone']) {
     const { state, building } = supported('storage', 1);
     const quote = demolitionQuote(state, building.id);
-    state.resources[key] = quote.capacityAfter - (quote.refund[key] || 0) + 1;
+    state.resources[key] = quote.capacityAfter + 1;
     const blocked = demolitionQuote(state, building.id);
     assert.equal(blocked.reason, 'DEMOLITION_STORAGE_FULL');
     assert.deepEqual(blocked.overflow, { [key]: 1 });
@@ -197,18 +210,21 @@ test('storage reduction accepts the exact post-removal capacity boundary without
 test('sub-micro resource overflow is rejected instead of rounded away or silently discarded', () => {
   const { state, building } = supported('storage', 1);
   const quote = demolitionQuote(state, building.id);
-  state.resources.wood = quote.capacityAfter - quote.refund.wood + 0.00000001;
+  state.resources.wood = quote.capacityAfter + 0.00000001;
   assert.equal(demolitionQuote(state, building.id).overflow.wood > 0, true);
   unchangedFailure(state, actionFor(state, building.id), 'DEMOLITION_STORAGE_FULL');
 });
 
-test('a normal building also blocks when its refund would exceed unchanged storage capacity', () => {
+test('a normal building queues the refund instead of blocking when unchanged storage is full', () => {
   const { state, building } = supported('well', 1);
   state.resources.wood = state.capacity;
   const quote = demolitionQuote(state, building.id);
   assert.equal(quote.capacityBefore, quote.capacityAfter);
-  assert.equal(quote.overflow.wood, 22.5);
-  unchangedFailure(state, actionFor(state, building.id), 'DEMOLITION_STORAGE_FULL');
+  assert.deepEqual(quote.overflow, {});
+  assert.equal(quote.pending.wood, 80);
+  act(state, actionFor(state, building.id));
+  assert.equal(state.resources.wood, state.capacity);
+  assert.equal(state.refundReserve.wood, 80);
 });
 
 test('confirmation snapshots reject moves, upgrades, different targets and intervening construction', () => {
@@ -239,7 +255,7 @@ test('a confirmed building can be demolished once and cannot remove a later same
   assert.equal(state.buildings.at(-1).id, confirmed.id);
   unchangedFailure(state, confirmed, 'BUILDING_CHANGED');
   act(state, actionFor(state, confirmed.id));
-  assert.equal(state.resources.wood, 35);
+  assert.equal(state.resources.wood, 110);
 });
 
 test('client-provided refunds, extra fields and malformed snapshots are rejected atomically', () => {
@@ -331,12 +347,13 @@ test('legacy villages retain their assets and journey lock without requiring a s
 
 test('repeat building and demolition always consumes half the recipe and never rewinds progress', () => {
   const state = createGame(START);
+  refill(state);
   const original = { ...state.resources };
   for (let cycle = 1; cycle <= 5; cycle += 1) {
     act(state, { type: 'build', building: 'quarry', plotId: 'p0' });
     act(state, actionFor(state, 'building-quarry'));
-    assert.equal(state.resources.wood, original.wood - cycle * 35);
-    assert.equal(state.resources.stone, original.stone - cycle * 15);
+    assert.equal(state.resources.wood, original.wood - cycle * 110);
+    assert.equal(state.resources.stone, original.stone - cycle * 60);
     assert.equal(state.stats.builds, cycle);
     assert.equal(state.quests.find((quest) => quest.id === 'first_build').progress, 1);
     assert.equal(validateGame(state), true);

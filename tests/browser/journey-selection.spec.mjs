@@ -12,6 +12,7 @@ const guardian = (page, value) => page.locator('#adventure-' + value);
 
 async function journey(page, { open = true } = {}) {
   const state = createGame(START);
+  state.resources.water = state.resources.feed = state.capacity;
   state.adventure.unlocked = ['homeland', 'spring', 'meadow', 'highland', 'ruins'];
   state.wolves[3].equipment = 'scout_charm';
   expect(validateGame(state)).toBe(true);

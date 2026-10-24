@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, applyAction } from '../shared/game.mjs';
 import { scene, miniBuilding, wolfArt } from '../web/art.mjs';
+import { fillResources } from './economy-fixtures.mjs';
 
 const t = (key) => key;
 
@@ -10,6 +11,7 @@ test('village rendering follows saved plot coordinates for duplicate producers a
   assert.equal((scene(state, { t }).match(/data-plot="p/g) || []).length, 36);
   assert.equal((scene(state, { t }).match(/data-plot="t/g) || []).length, 4);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p0' }, 1_000);
+  fillResources(state);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p5' }, 1_000);
   let artwork = scene(state, { t });
   assert.equal((artwork.match(/data-plot="p/g) || []).length, 34);

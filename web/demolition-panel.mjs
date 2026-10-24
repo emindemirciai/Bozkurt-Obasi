@@ -7,7 +7,7 @@ const escape = (value) =>
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
 const amount = (value, language) =>
-  value.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', { maximumFractionDigits: 3 });
+  value.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', { maximumFractionDigits: 6 });
 
 /** The opened target stays fixed even if another browser reuses its building ID. */
 export function demolitionStatus(state, selection) {
@@ -28,6 +28,10 @@ export function demolitionStatus(state, selection) {
 function quoteContent(status, selection, { t, language }) {
   const { quote, changed } = status;
   const plot = buildingSiteLabel(selection.expected, t);
+  const refundAmounts = (values) =>
+    Object.entries(values)
+      .map(([key, value]) => `${amount(value, language)} ${t(key)}`)
+      .join(' · ');
   return `<div class="demolition-building"><strong>${escape(t(selection.expected.type))}</strong><span>${t('level')} ${selection.expected.level} · ${escape(plot)}</span></div>
     <section class="demolition-refund" aria-labelledby="demolition-refund-title"><h3 id="demolition-refund-title">${t('demolitionRefund')}</h3><dl data-demolition-refund>${Object.entries(
       quote.refund,
@@ -37,7 +41,9 @@ function quoteContent(status, selection, { t, language }) {
         ([key, value]) =>
           `<div><dt>${escape(t(key))}</dt><dd data-demolition-resource="${key}">+${amount(value, language)}</dd></div>`,
       )
-      .join('')}</dl><small>${t('demolitionRefundExact')}</small></section>
+      .join(
+        '',
+      )}</dl><small>${t('demolitionRefundExact')}</small><div class="demolition-refund-split"><p><span>${t('refundCreditable')}</span><strong data-demolition-credited>${escape(refundAmounts(quote.credited))}</strong></p><p><span>${t('demolitionPendingRefund')}</span><strong data-demolition-pending>${escape(refundAmounts(quote.pending))}</strong></p><small>${t('demolitionPendingHint')}</small></div></section>
     <p class="demolition-capacity" data-demolition-capacity>${t('capacity')}: <strong>${amount(quote.capacityBefore, language)} → ${amount(quote.capacityAfter, language)}</strong></p>
     <p class="demolition-rule">${t('demolitionPermanent')}</p>
     <div class="demolition-blocked" data-demolition-reason role="status" ${!changed && !quote.reason ? 'hidden' : ''}>${changed ? t('demolitionChanged') : quote.reason ? t('demolition_' + quote.reason) : ''}${

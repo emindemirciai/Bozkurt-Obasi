@@ -196,6 +196,8 @@ test('older history stays in reports while only the latest receipt is announced'
   await signIn(page);
   const state = completed();
   const secondStart = state.updatedAt + 1000;
+  // Supply this history fixture explicitly before starting another six-hour journey.
+  state.resources.water = state.resources.feed = state.capacity;
   applyAction(
     state,
     {

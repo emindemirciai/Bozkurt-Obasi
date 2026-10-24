@@ -2,7 +2,16 @@ import { createServer } from 'node:http';
 import { createApp } from '../server/web/app.mjs';
 import { createAdminGateway } from './admin-gateway.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
-import { generateKeyPairSync, sign } from 'node:crypto';
+import { generateKeyPairSync, sign, createHash } from 'node:crypto';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve, sep } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import { validateGame } from '../shared/game.mjs';
+
+const fixtureDirectory = await mkdtemp(join(tmpdir(), 'bozkurt-browser-fixture-'));
+const dbPath = join(fixtureDirectory, 'game.sqlite');
+let fixtureDatabase;
 
 const clientId = '1234567890.apps.googleusercontent.com';
 const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -48,7 +57,50 @@ async function googleFetch(url, options) {
   );
 }
 const messages = new Map();
-const inbox = createServer((request, response) => {
+const inbox = createServer(async (request, response) => {
+  // This loopback-only fixture API is compiled only by the test runner. The live app
+  // has no save upload endpoint; each real-account test explicitly requests a grant.
+  if (request.url === '/fixture/state') {
+    const reply = (status, payload) => {
+      response.writeHead(status, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(payload));
+    };
+    if (
+      request.method !== 'POST' ||
+      request.headers['x-bozkurt-test-fixture'] !== 'explicit-e2e-fixture' ||
+      request.headers.origin ||
+      request.socket.remoteAddress !== '127.0.0.1'
+    )
+      return reply(403, { error: 'fixture_forbidden' });
+    try {
+      const token = /(?:^|;\s*)bozkurt_session=([^;]+)/.exec(request.headers.cookie || '')?.[1];
+      const session =
+        token &&
+        fixtureDatabase
+          .prepare('SELECT account_sub, account_provider FROM sessions WHERE token_hash=?')
+          .get(createHash('sha256').update(token).digest('hex'));
+      if (!session || session.account_provider !== 'google')
+        return reply(401, { error: 'fixture_session_required' });
+      let body = '';
+      for await (const chunk of request) {
+        body += chunk;
+        if (Buffer.byteLength(body) > 1_000_000) return reply(413, { error: 'fixture_too_large' });
+      }
+      const { state } = JSON.parse(body);
+      if (!validateGame(state)) return reply(400, { error: 'invalid_fixture' });
+      fixtureDatabase
+        .prepare(
+          'UPDATE google_accounts SET state_json=?, revision=revision+1, updated_at=? WHERE sub=?',
+        )
+        .run(JSON.stringify(state), state.updatedAt, session.account_sub);
+      const account = fixtureDatabase
+        .prepare('SELECT revision FROM google_accounts WHERE sub=?')
+        .get(session.account_sub);
+      return reply(200, { state, revision: account.revision });
+    } catch {
+      return reply(400, { error: 'invalid_fixture' });
+    }
+  }
   const email = new URL(request.url, 'http://localhost').searchParams.get('email');
   const message = messages.get(email);
   response.writeHead(message ? 200 : 404, { 'Content-Type': 'application/json' });
@@ -60,7 +112,7 @@ const inbox = createServer((request, response) => {
 });
 await new Promise((resolve) => inbox.listen(4174, '127.0.0.1', resolve));
 const app = createApp({
-  dbPath: ':memory:',
+  dbPath,
   adminEmail: 'admin@example.com',
   adminPassword: 'e2e-admin-password-2026',
   mailProvider: 'smtp',
@@ -82,6 +134,7 @@ const app = createApp({
   googleRedirectUris: 'http://127.0.0.1:4173/api/auth/google/callback',
   googleFetch,
 });
+fixtureDatabase = new DatabaseSync(dbPath);
 await app.listen(4173);
 const adminGateway = await createAdminGateway(4173, 4175);
 for (const signal of ['SIGINT', 'SIGTERM'])
@@ -89,5 +142,13 @@ for (const signal of ['SIGINT', 'SIGTERM'])
     inbox.close();
     await adminGateway.close();
     await app.close();
+    fixtureDatabase.close();
+    const cleanupTarget = resolve(fixtureDirectory);
+    const tempRoot = resolve(tmpdir()) + sep;
+    if (
+      cleanupTarget.startsWith(tempRoot) &&
+      cleanupTarget.slice(tempRoot.length).startsWith('bozkurt-browser-fixture-')
+    )
+      await rm(cleanupTarget, { recursive: true, force: true });
     process.exit(0);
   });

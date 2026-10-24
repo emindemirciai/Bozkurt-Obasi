@@ -10,6 +10,7 @@ import {
   CORNER_PLOT_IDS,
   visualTier,
   getWallUpgradeCost,
+  getConstructionCost,
 } from '../shared/settlement.mjs';
 import {
   REGIONS,
@@ -40,9 +41,12 @@ const escape = (value) =>
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
-const costs = (cost, t) =>
+const costs = (cost, t, language = 'tr') =>
   Object.entries(cost || {})
-    .map(([key, n]) => `${Math.ceil(n)} ${escape(t(key))}`)
+    .map(
+      ([key, n]) =>
+        `${Math.ceil(n).toLocaleString(language === 'en' ? 'en-US' : 'tr-TR')} ${escape(t(key))}`,
+    )
     .join(' · ');
 export function buildingImage(type, level = 1) {
   const col = BUILDINGS.findIndex((d) => d.id === type),
@@ -92,29 +96,29 @@ export function settlementScene(state, { t, zoom = 1, selected = '' }) {
 
   return `<svg class="landscape settlement-scene" viewBox="0 0 1440 980" role="group" aria-label="${escape(t('village'))}"><image class="village-world-backdrop" href="${terrainUrl}" width="1440" height="980" preserveAspectRatio="xMidYMid slice"/><defs><linearGradient id="village-terrain-edge-x"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="village-terrain-edge-y" x2="0" y2="1"><stop stop-color="white" stop-opacity="0"/><stop offset=".025" stop-color="white"/><stop offset=".975" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><mask id="village-terrain-feather-x" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-x)"/></mask><mask id="village-terrain-feather-y" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="980"><rect width="1440" height="980" fill="url(#village-terrain-edge-y)"/></mask></defs><g mask="url(#village-terrain-feather-x)"><image mask="url(#village-terrain-feather-y)" class="village-terrain-detail" data-river-source="mountain-foothills" href="${riverTerrainUrl}" width="1440" height="980" preserveAspectRatio="none" pointer-events="none"/></g>${villageAtmosphere()}${villageFortifications(state)}${plots}${buildings}${villageCornerSites(state, { t, selected })}</svg>`;
 }
-export function settlementControls(state, { t, busy, movingId }) {
+export function settlementControls(state, { t, language = 'tr', busy, movingId }) {
   const cost = getWallUpgradeCost(state.walls);
   const towers = state.buildings.filter((building) => building.type === 'watchtower').length;
   const towerLimit = BUILDINGS.find((building) => building.id === 'watchtower').maxCount;
   const count = t('cornerTowerCount').replace('{count}', towers).replace('{max}', towerLimit);
-  return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}<div class="fortification-overview"><h4>${t('cornerFortificationsTitle')}</h4><p>${t('cornerFortificationsHint')}</p><p>${escape(count)}</p><p>${t('cornerTowerBonusHint')}</p><p>${t('villageGateHint')}</p></div></section>`;
+  return `<section class="settlement-controls detail-card"><div><span class="eyebrow">${t('wall')} · ${t('level')} ${state.walls.level}</span><h3>${t('wall' + state.walls.level)}</h3><p>${t('architecture')}</p></div><div><span>${costs(cost, t, language)}</span><button class="button outline" data-action="upgradeWall" ${!cost || busy || state.battle.status === 'active' || Object.entries(cost || {}).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}>${t(cost ? 'wallUpgrade' : 'maxLevel')}</button></div>${movingId ? `<p role="status">${t('movingBuilding')} <button class="button outline" data-action="cancelMove">${t('cancelMove')}</button></p>` : ''}<div class="fortification-overview"><h4>${t('cornerFortificationsTitle')}</h4><p>${t('cornerFortificationsHint')}</p><p>${escape(count)}</p><p>${t('cornerTowerBonusHint')}</p><p>${t('villageGateHint')}</p></div></section>`;
 }
-export function placementDialog(state, { plotId, t, busy }) {
+export function placementDialog(state, { plotId, t, language = 'tr', busy }) {
   const plot = ALL_PLOTS.find((p) => p.id === plotId);
   if (!plot) return '';
   const corner = CORNER_PLOT_IDS.includes(plotId);
   const towerLimit = BUILDINGS.find((building) => building.id === 'watchtower').maxCount;
   const towers = state.buildings.filter((building) => building.type === 'watchtower').length;
   const count = t('cornerTowerCount').replace('{count}', towers).replace('{max}', towerLimit);
-  return `<div class="modal-backdrop"><section class="modal placement-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">×</button><span class="eyebrow">${escape(buildingSiteLabel(plot, t))}</span><h2 id="modal-title">${t('placeTitle')}</h2>${corner ? '' : `<p>${t('producerLimit')}</p>`}${corner ? `<p class="corner-placement-hint" data-corner-placement>${t('cornerPlacementHint')} · ${escape(count)}${towers >= towerLimit ? ' · ' + t('cornerTowerLimitHint') : ''}</p>` : ''}<div class="placement-grid">${BUILDINGS.filter(
+  return `<div class="modal-backdrop"><section class="modal placement-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close icon-button" data-action="close" aria-label="${t('close')}">×</button><span class="eyebrow">${escape(buildingSiteLabel(plot, t))}</span><h2 id="modal-title">${t('placeTitle')}</h2>${corner ? '' : `<p>${t('producerLimit')}</p>`}${corner ? `<p class="corner-placement-hint" data-corner-placement>${t('cornerPlacementHint')} · ${escape(count)}${towers >= towerLimit ? ' · ' + t('cornerTowerLimitHint') : ''}</p>` : ''}<p class="placement-price-hint">${t('constructionEconomyHint')}</p><div class="placement-grid">${BUILDINGS.filter(
     (d) =>
       (corner ? d.id === 'watchtower' : d.id !== 'watchtower') &&
       state.buildings.filter((b) => b.type === d.id).length < d.maxCount,
   )
-    .map(
-      (d) =>
-        `<button class="placement-choice ${corner && d.id === 'watchtower' ? 'is-corner-recommended' : ''}" data-action="placeBuilding" data-building-type="${d.id}" data-plot-id="${plotId}" ${busy || state.battle.status === 'active' || Object.entries(d.cost).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}><svg viewBox="-82 -122 164 180">${buildingImage(d.id)}</svg><strong>${t(d.id)}</strong>${corner && d.id === 'watchtower' ? `<em class="corner-recommendation">${t('cornerTowerRecommended')}</em>` : ''}<small>${costs(d.cost, t)}</small><span>${t('placeHere')}</span></button>`,
-    )
+    .map((d) => {
+      const cost = getConstructionCost(state, d.id);
+      return `<button class="placement-choice ${corner && d.id === 'watchtower' ? 'is-corner-recommended' : ''}" data-action="placeBuilding" data-building-type="${d.id}" data-plot-id="${plotId}" ${busy || state.battle.status === 'active' || Object.entries(cost).some(([k, v]) => state.resources[k] < v) ? 'disabled' : ''}><svg viewBox="-82 -122 164 180">${buildingImage(d.id)}</svg><strong>${t(d.id)}</strong>${corner && d.id === 'watchtower' ? `<em class="corner-recommendation">${t('cornerTowerRecommended')}</em>` : ''}<small data-placement-cost>${costs(cost, t, language)}</small><em data-placement-capacity ${Object.values(cost).some((amount) => amount > state.capacity) ? '' : 'hidden'}>${t('planningCapacityBlocked')}</em><span>${t('placeHere')}</span></button>`;
+    })
     .join('')}</div></section></div>`;
 }
 export const battlePhase = (state) =>
@@ -146,7 +150,7 @@ const phrase = (t, key, values = {}) =>
     ),
   );
 
-function readinessContent(readiness, t) {
+function readinessContent(readiness, t, language = 'tr') {
   const failureKeys = new Set([
     'battleReadyCheck',
     'journeyReadyCheck',
@@ -155,11 +159,11 @@ function readinessContent(readiness, t) {
     'herdReadyCheck',
     'suppliesReadyCheck',
   ]);
-  return `<div class="preparation-heading"><h3>${t('preparationTitle')}</h3><span class="preparation-status ${readiness.ready ? 'ready' : 'waiting'}">${t(readiness.ready ? 'preparationReady' : 'preparationNeeded')}</span></div><ul class="preparation-checks">${readiness.checks.map((check) => `<li data-ready-check="${check.id}" data-ok="${check.ok}"><span class="check-mark" aria-hidden="true">${check.ok ? '✓' : '!'}</span><span>${phrase(t, !check.ok && failureKeys.has(check.key) ? check.key + 'Blocked' : check.key, { minHP: check.id === 'herd' ? 60 : 20, ...check.values })}${!check.ok && check.key === 'suppliesReadyCheck' ? `<small>${t('suppliesMissing')}: ${costs(Object.fromEntries(readiness.shortages.map(({ resource, amount }) => [resource, amount])), t)}</small>` : ''}</span></li>`).join('')}</ul>`;
+  return `<div class="preparation-heading"><h3>${t('preparationTitle')}</h3><span class="preparation-status ${readiness.ready ? 'ready' : 'waiting'}">${t(readiness.ready ? 'preparationReady' : 'preparationNeeded')}</span></div><ul class="preparation-checks">${readiness.checks.map((check) => `<li data-ready-check="${check.id}" data-ok="${check.ok}"><span class="check-mark" aria-hidden="true">${check.ok ? '✓' : '!'}</span><span>${phrase(t, !check.ok && failureKeys.has(check.key) ? check.key + 'Blocked' : check.key, { minHP: check.id === 'herd' ? 60 : 20, ...check.values })}${!check.ok && check.key === 'suppliesReadyCheck' ? `<small>${t('suppliesMissing')}: ${costs(Object.fromEntries(readiness.shortages.map(({ resource, amount }) => [resource, amount])), t, language)}</small>` : ''}</span></li>`).join('')}</ul>`;
 }
 
-function preparationWarnings(readiness, t) {
-  return `<p class="fatigue-note">${phrase(t, 'journeyFatigue', { amount: readiness.fatigue })}</p>${readiness.overflow.length || readiness.itemFull ? `<div class="reward-warning"><strong>${t('storagePlanningTitle')}</strong>${readiness.overflow.length ? `<p>${t('storagePlanningOverflow')}: <b>${costs(Object.fromEntries(readiness.overflow.map(({ resource, amount }) => [resource, amount])), t)}</b></p>` : ''}${readiness.itemFull ? `<p>${t('inventoryPlanningFull')}</p>` : ''}<small>${t('storagePlanningNote')}</small></div>` : `<p class="storage-planning-note">${t('storagePlanningFits')}</p>`}`;
+function preparationWarnings(readiness, t, language = 'tr') {
+  return `<p class="fatigue-note">${phrase(t, 'journeyFatigue', { amount: readiness.fatigue })}</p>${readiness.overflow.length || readiness.itemFull ? `<div class="reward-warning"><strong>${t('storagePlanningTitle')}</strong>${readiness.overflow.length ? `<p>${t('storagePlanningOverflow')}: <b>${costs(Object.fromEntries(readiness.overflow.map(({ resource, amount }) => [resource, amount])), t, language)}</b></p>` : ''}${readiness.itemFull ? `<p>${t('inventoryPlanningFull')}</p>` : ''}<small>${t('storagePlanningNote')}</small></div>` : `<p class="storage-planning-note">${t('storagePlanningFits')}</p>`}`;
 }
 
 function routeCards(state, selection, { t, busy, lock, language = 'tr' }) {
@@ -194,13 +198,13 @@ export function updateAdventurePlanning(root, state, { t, busy, selection, langu
     const node = root.querySelector(selector);
     if (node && node.innerHTML !== content) node.innerHTML = content;
   };
-  set('[data-adventure-readiness]', readinessContent(readiness, t));
+  set('[data-adventure-readiness]', readinessContent(readiness, t, language));
   const panel = root.querySelector('[data-adventure-readiness]');
   if (panel) panel.dataset.ready = String(readiness.ready);
-  set('[data-adventure-warnings]', preparationWarnings(readiness, t));
+  set('[data-adventure-warnings]', preparationWarnings(readiness, t, language));
   set(
     '[data-adventure-cost]',
-    `${costs(readiness.quote.cost, t)} · ${formatJourneyDuration(readiness.quote.seconds, { t, language })}`,
+    `${costs(readiness.quote.cost, t, language)} · ${formatJourneyDuration(readiness.quote.seconds, { t, language })}`,
   );
   updateAdventurePartyPanel(root, state, selection, { t, busy, language, outing });
   for (const card of root.querySelectorAll('[data-mission-plan]')) {
@@ -209,8 +213,8 @@ export function updateAdventurePlanning(root, state, { t, busy, selection, langu
       : adventureQuote(state, { ...selection, plan: card.dataset.missionPlan });
     const quantities = {
       '[data-plan-seconds]': formatJourneyDuration(quote.seconds, { t, language }),
-      '[data-plan-cost]': costs(quote.cost, t),
-      '[data-plan-reward]': costs(quote.reward, t),
+      '[data-plan-cost]': costs(quote.cost, t, language),
+      '[data-plan-reward]': costs(quote.reward, t, language),
       '[data-plan-xp]': '+' + quote.xp,
       '[data-plan-fatigue]': '−' + quote.fatigue + ' ' + t('missionHp'),
     };
@@ -259,5 +263,5 @@ export function adventureView(state, { t, busy, selection, language = 'tr', now 
     )
     .join(
       '',
-    )}</select></label><label>${t('difficulty')}<select id="adventure-difficulty" ${lock || busy ? 'disabled' : ''}>${DIFFICULTIES.map((d) => `<option value="${d}" ${s.difficulty === d ? 'selected' : ''}>${t(d)}</option>`).join('')}</select></label></div><p class="adventure-selection-note">${t('adventureSelectionLocalHint')}</p>${missionPlanPicker(state, s, { t, language, disabled: lock || busy, active: Boolean(a), outing: a })}${adventurePartySuggestionsPanel(state, s, { t, busy, language })}${guardianChoiceCards(state, s, { t, lock, busy, quote })}${adventurePartyForecastPanel(state, s, { t, language, outing: a })}<p class="adventure-cost" data-adventure-cost>${costs(quote.cost, t)} · ${formatJourneyDuration(quote.seconds, { t, language })}</p><section class="preparation-summary" id="adventure-readiness" data-adventure-readiness data-ready="${readiness.ready}" aria-live="polite" aria-atomic="true">${readinessContent(readiness, t)}</section><button class="button primary adventure-depart" data-action="startAdventure" aria-describedby="adventure-readiness" ${busy || !readiness.ready ? 'disabled' : ''}>${t('depart')}<span aria-hidden="true">→</span></button></section><aside class="detail-card adventure-brief">${missionBrief(s, { t })}<h3>${t('expectedReward')}</h3><p data-adventure-reward>${costs(quote.reward, t)}</p>${a && (a.economyVersion ?? 1) < 3 ? `<p class="muted" data-active-economy="legacy">${t('missionLegacyReward')}</p>` : ''}<p>+${quote.xp} ${t('xp')} / ${t('wolfCount')} · ${t(quote.item)}</p><div data-adventure-warnings>${preparationWarnings(readiness, t)}</div><p class="muted">${t('expeditionNote')}</p><h3>${t('inventory')}</h3>${ITEM_DEFINITIONS.map((i) => `<div class="inventory-row"><span>${t(i.id)}</span><b>${state.inventory[i.id]}</b></div>`).join('')}</aside></div><section class="adventure-reports"><h2>${t('report')}</h2>${state.adventure.history.length ? state.adventure.history.map((r) => missionReport(r, { t, language })).join('') : `<p>${t('noReports')}</p>`}</section>`;
+    )}</select></label><label>${t('difficulty')}<select id="adventure-difficulty" ${lock || busy ? 'disabled' : ''}>${DIFFICULTIES.map((d) => `<option value="${d}" ${s.difficulty === d ? 'selected' : ''}>${t(d)}</option>`).join('')}</select></label></div><p class="adventure-selection-note">${t('adventureSelectionLocalHint')}</p>${missionPlanPicker(state, s, { t, language, disabled: lock || busy, active: Boolean(a), outing: a })}${adventurePartySuggestionsPanel(state, s, { t, busy, language })}${guardianChoiceCards(state, s, { t, lock, busy, quote })}${adventurePartyForecastPanel(state, s, { t, language, outing: a })}<p class="adventure-cost" data-adventure-cost>${costs(quote.cost, t, language)} · ${formatJourneyDuration(quote.seconds, { t, language })}</p><section class="preparation-summary" id="adventure-readiness" data-adventure-readiness data-ready="${readiness.ready}" aria-live="polite" aria-atomic="true">${readinessContent(readiness, t, language)}</section><button class="button primary adventure-depart" data-action="startAdventure" aria-describedby="adventure-readiness" ${busy || !readiness.ready ? 'disabled' : ''}>${t('depart')}<span aria-hidden="true">→</span></button></section><aside class="detail-card adventure-brief">${missionBrief(s, { t })}<h3>${t('expectedReward')}</h3><p data-adventure-reward>${costs(quote.reward, t, language)}</p>${a && (a.economyVersion ?? 1) < 4 ? `<p class="muted" data-active-economy="legacy">${t('missionLegacyReward')}</p>` : ''}<p>+${quote.xp} ${t('xp')} / ${t('wolfCount')} · ${t(quote.item)}</p><div data-adventure-warnings>${preparationWarnings(readiness, t, language)}</div><p class="muted">${t('expeditionNote')}</p><h3>${t('inventory')}</h3>${ITEM_DEFINITIONS.map((i) => `<div class="inventory-row"><span>${t(i.id)}</span><b>${state.inventory[i.id]}</b></div>`).join('')}</aside></div><section class="adventure-reports"><h2>${t('report')}</h2>${state.adventure.history.length ? state.adventure.history.map((r) => missionReport(r, { t, language })).join('') : `<p>${t('noReports')}</p>`}</section>`;
 }

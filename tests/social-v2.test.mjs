@@ -285,7 +285,7 @@ test('gifts migrate legacy saves and resolve linked Google villages without muta
     NOW,
   );
   assert.equal(result.revision, 8);
-  assert.equal(result.state.version, 2);
+  assert.equal(result.state.version, 3);
   assert.equal(result.state.buildings.length, legacy.buildings.length);
   assert.deepEqual(
     JSON.parse(
@@ -296,7 +296,7 @@ test('gifts migrate legacy saves and resolve linked Google villages without muta
   const bob = JSON.parse(
     db.prepare("SELECT state_json FROM email_accounts WHERE sub='bob'").get().state_json,
   );
-  assert.equal(bob.version, 2);
+  assert.equal(bob.version, 3);
   assert.equal(bob.resources.stone, legacy.resources.stone + 25);
   assert.ok(validateGame(bob));
 });

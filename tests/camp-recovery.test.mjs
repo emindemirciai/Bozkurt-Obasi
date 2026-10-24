@@ -9,6 +9,7 @@ import {
 } from '../shared/game.mjs';
 import { recoveryPlan, applyRecovery } from '../shared/recovery.mjs';
 import { establishedJourney } from './established-game.mjs';
+import { fillResources } from './economy-fixtures.mjs';
 
 const START = 1_000_000;
 const fresh = () => createGame(START);
@@ -47,14 +48,14 @@ function depart(state, kind) {
 
 test('care forecasts work on frozen saves, expose fractional shortages and own their returned objects', () => {
   const state = wounded();
-  state.resources.water = 24.5;
-  state.resources.feed = 27.25;
-  state.resources.herbs = 0.75;
+  state.resources.water = 99.5;
+  state.resources.feed = 122.25;
+  state.resources.herbs = 14.75;
   const before = structuredClone(state);
   freeze(state);
   const rest = recoveryPlan(state, 'rest');
   const heal = recoveryPlan(state, 'healHerd');
-  assert.deepEqual(rest.cost, { water: 25, feed: 30 });
+  assert.deepEqual(rest.cost, { water: 100, feed: 125 });
   assert.deepEqual(rest.shortages, [
     { resource: 'water', amount: 0.5 },
     { resource: 'feed', amount: 2.75 },
@@ -66,17 +67,17 @@ test('care forecasts work on frozen saves, expose fractional shortages and own t
   rest.cost.water = 0;
   rest.wolves[0].after = 1;
   rest.herd.after = 1;
-  assert.deepEqual(recoveryPlan(state, 'rest').cost, { water: 25, feed: 30 });
+  assert.deepEqual(recoveryPlan(state, 'rest').cost, { water: 100, feed: 125 });
   assert.equal(recoveryPlan(state, 'rest').wolves[0].after, 140);
   assert.equal(recoveryPlan(state, 'rest').herd.after, 164.25);
 });
 
-test('herd treatment forecasts and applies the existing one-herb partial recovery without touching wolves', () => {
+test('herd treatment forecasts and applies the fifteen-herb partial recovery without touching wolves', () => {
   const state = wounded();
   const wolves = structuredClone(state.wolves);
   const plan = recoveryPlan(state, 'healHerd');
   assert.equal(plan.ready, true);
-  assert.deepEqual(plan.cost, { herbs: 1 });
+  assert.deepEqual(plan.cost, { herbs: 15 });
   assert.deepEqual(plan.herd, {
     before: 139.25,
     after: 214.25,
@@ -89,7 +90,7 @@ test('herd treatment forecasts and applies the existing one-herb partial recover
   assert.ok(plan.wolves.every((wolf) => wolf.gain === 0));
   const resources = structuredClone(state.resources);
   assert.equal(applyRecovery(state, 'healHerd'), state);
-  assert.deepEqual(state.resources, { ...resources, herbs: resources.herbs - 1 });
+  assert.deepEqual(state.resources, { ...resources, herbs: resources.herbs - 15 });
   assert.deepEqual(state.wolves, wolves);
   assert.deepEqual(state.herd, { count: 24, hp: 214.25, maxHp: 240, panic: 16.5 });
   assert.equal(validateGame(state), true);
@@ -109,8 +110,8 @@ test('camp rest restores each guardian fully while retaining the smaller herd ef
   applyRecovery(state, 'rest');
   assert.deepEqual(state.resources, {
     ...resources,
-    water: resources.water - 25,
-    feed: resources.feed - 30,
+    water: resources.water - 100,
+    feed: resources.feed - 125,
   });
   assert.ok(state.wolves.every((wolf) => wolf.hp === wolf.maxHp));
   assert.deepEqual(state.herd, { count: 24, hp: 164.25, maxHp: 240, panic: 11.5 });
@@ -140,8 +141,8 @@ test('healthy saves reject care before resource checks while wolf-only wounds pe
   state.wolves[0].hp -= 1;
   rejected(state, 'healHerd', 'ALREADY_HEALTHY');
   rejected(state, 'rest', 'INSUFFICIENT_RESOURCES');
-  state.resources.water = 25;
-  state.resources.feed = 30;
+  state.resources.water = 100;
+  state.resources.feed = 125;
   assert.equal(recoveryPlan(state, 'rest').ready, true);
   applyAction(state, { type: 'rest' }, START);
   assert.equal(state.wolves[0].hp, 140);
@@ -206,19 +207,19 @@ test('expeditions, caravans and legacy journeys block rest but retain herd treat
 
 test('resource boundaries remain exact and failed care never spends another available supply', () => {
   const heal = wounded();
-  heal.resources.herbs = 0.999;
+  heal.resources.herbs = 14.999;
   rejected(heal, 'healHerd', 'INSUFFICIENT_RESOURCES');
-  heal.resources.herbs = 1;
+  heal.resources.herbs = 15;
   applyAction(heal, { type: 'healHerd' }, START);
   assert.equal(heal.resources.herbs, 0);
   const rest = wounded();
-  rest.resources.water = 25;
-  rest.resources.feed = 29.999;
+  rest.resources.water = 100;
+  rest.resources.feed = 124.999;
   rejected(rest, 'rest', 'INSUFFICIENT_RESOURCES');
-  rest.resources.feed = 30;
-  rest.resources.water = 24.999;
+  rest.resources.feed = 125;
+  rest.resources.water = 99.999;
   rejected(rest, 'rest', 'INSUFFICIENT_RESOURCES');
-  rest.resources.water = 25;
+  rest.resources.water = 100;
   applyAction(rest, { type: 'rest' }, START);
   assert.equal(rest.resources.water, 0);
   assert.equal(rest.resources.feed, 0);
@@ -229,6 +230,7 @@ test('care logs, partial post-battle First Watch recovery and saved progress ret
   state.wolves[0].hp -= 10;
   applyAction(state, { type: 'rest' }, START);
   assert.equal(state.firstWatch.milestones.recover, null);
+  fillResources(state);
   applyAction(state, { type: 'startBattle' }, START);
   state.herd.hp = 1;
   advanceGame(state, START + 90_000);

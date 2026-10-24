@@ -15,6 +15,7 @@ import {
 } from '../shared/legacy-v1.mjs';
 import { PLOTS, BUILDINGS, visualTier, getWallUpgradeCost } from '../shared/settlement.mjs';
 import { adventureQuote, ITEM_DEFINITIONS, REGIONS } from '../shared/adventures.mjs';
+import { fundStorage, fundedGame } from './economy-fixtures.mjs';
 
 const START = 1_000_000;
 const fresh = () => createGame(START);
@@ -66,17 +67,19 @@ test('building uses exactly the requested plot and never silently falls back to 
   assert.deepEqual(state.buildings[0], {
     id: 'building-quarry',
     type: 'quarry',
+    costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
     level: 1,
     x: 5,
     y: 5,
   });
-  assert.equal(state.resources.wood, 380);
-  assert.equal(state.resources.stone, 320);
+  assert.equal(state.resources.wood, 230);
+  assert.equal(state.resources.stone, 230);
   unchangedFailure(state, { type: 'build', building: 'lumber', plotId: 'p35' }, 'PLOT_OCCUPIED');
   act(state, { type: 'build', building: 'lumber', plotId: 'p0' });
   assert.deepEqual(state.buildings[1], {
     id: 'building-lumber',
     type: 'lumber',
+    costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
     level: 1,
     x: 0,
     y: 0,
@@ -85,7 +88,7 @@ test('building uses exactly the requested plot and never silently falls back to 
 });
 
 test('all main producers support six independent buildings with summed production', () => {
-  const state = fresh();
+  const state = fundedGame(START);
   let plot = 0;
   for (const definition of BUILDINGS.filter((b) => b.maxCount === 6)) {
     for (let n = 0; n < 6; n++) {
@@ -95,12 +98,12 @@ test('all main producers support six independent buildings with summed productio
     }
     unchangedFailure(
       state,
-      { type: 'build', building: definition.id, plotId: 'p35' },
+      { type: 'build', building: definition.id, plotId: 'p33' },
       'BUILDING_LIMIT',
     );
   }
-  assert.equal(state.buildings.length, 30);
-  assert.equal(new Set(state.buildings.map((b) => b.id)).size, 30);
+  assert.equal(state.buildings.length, 31);
+  assert.equal(new Set(state.buildings.map((b) => b.id)).size, 31);
   assert.deepEqual(getProduction(state), {
     water: 4.2,
     feed: 3.6,
@@ -110,23 +113,27 @@ test('all main producers support six independent buildings with summed productio
   });
   refill(state);
   act(state, { type: 'build', building: 'hall', plotId: 'p34' });
-  unchangedFailure(state, { type: 'build', building: 'hall', plotId: 'p35' }, 'BUILDING_EXISTS');
+  unchangedFailure(state, { type: 'build', building: 'hall', plotId: 'p33' }, 'BUILDING_EXISTS');
 });
 
 test('moving keeps building identity, upgrade level and resources and rejects occupied plots', () => {
-  const state = fresh();
+  const state = fundStorage(fresh(), 1, 'p34');
   act(state, { type: 'build', building: 'quarry', plotId: 'p0' });
   act(state, { type: 'upgrade', id: 'building-quarry' });
   act(state, { type: 'build', building: 'well', plotId: 'p35' });
   const resources = structuredClone(state.resources);
   act(state, { type: 'moveBuilding', id: 'building-quarry', plotId: 'p30' });
-  assert.deepEqual(state.buildings[0], {
-    id: 'building-quarry',
-    type: 'quarry',
-    level: 2,
-    x: 0,
-    y: 5,
-  });
+  assert.deepEqual(
+    state.buildings.find((building) => building.id === 'building-quarry'),
+    {
+      id: 'building-quarry',
+      type: 'quarry',
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+      level: 2,
+      x: 0,
+      y: 5,
+    },
+  );
   assert.deepEqual(state.resources, resources);
   unchangedFailure(
     state,
@@ -139,7 +146,7 @@ test('moving keeps building identity, upgrade level and resources and rejects oc
 });
 
 test('walls spend their exact upgrade cost, retain valid state and stop at the castle tier', () => {
-  const state = fresh();
+  const state = fundedGame(START);
   assert.deepEqual([1, 2, 3, 4, 5].map(visualTier), [1, 1, 2, 2, 3]);
   for (let level = 1; level < 5; level++) {
     refill(state);
@@ -165,11 +172,18 @@ test('strict v1 migration preserves gameplay, expands capacity and rejects damag
   const before = structuredClone(legacy);
   const migrated = migrateGame(legacy);
   assert.deepEqual(legacy, before);
-  assert.equal(migrated.version, 2);
+  assert.equal(migrated.version, 3);
   for (const key of Object.keys(legacy).filter(
-    (key) => !['version', 'wolves', 'battle', 'capacity'].includes(key),
+    (key) => !['version', 'wolves', 'battle', 'capacity', 'buildings'].includes(key),
   ))
     assert.deepEqual(migrated[key], legacy[key], key);
+  assert.deepEqual(
+    migrated.buildings.map(({ costBasis, ...building }) => building),
+    legacy.buildings,
+  );
+  assert.ok(
+    migrated.buildings.every((building) => building.costBasis.legacyLevels === building.level),
+  );
   assert.deepEqual((({ commands, ...battle }) => battle)(migrated.battle), legacy.battle);
   assert.deepEqual(migrated.battle.commands, []);
   assert.deepEqual(
@@ -262,6 +276,7 @@ test('party, difficulty, health and concurrent mission failures spend no resourc
     'JOURNEY_ACTIVE',
   );
   unchangedFailure(state, { type: 'train', id: 'wolf-scout', path: 'guardian' }, 'WOLF_BUSY');
+  refill(state);
   act(state, { type: 'train', id: 'wolf-alpha', path: 'guardian' });
   assert.equal(validateGame(state), true);
 });
@@ -299,6 +314,7 @@ test('caravan arrival changes location and keeps production, XP and rewards inde
   act(state, { type: 'build', building: 'well', plotId: 'p0' });
   expedition(state);
   finish(state);
+  refill(state);
   act(state, {
     type: 'caravan',
     region: 'spring',
@@ -333,8 +349,8 @@ test('equipment swaps conserve inventory, discount supplies and cannot change wh
   assert.equal(state.inventory.scout_charm, 0);
   assert.equal(adventureQuote(state, { wolfIds: ['wolf-scout'] }).seconds, 21600);
   assert.deepEqual(adventureQuote(state, { wolfIds: ['wolf-scout'] }).cost, {
-    water: 16,
-    feed: 20,
+    water: 71,
+    feed: 94,
   });
   act(state, action);
   assert.equal(state.inventory.scout_charm, 0);

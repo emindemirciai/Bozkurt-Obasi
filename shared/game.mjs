@@ -11,6 +11,7 @@ import {
   BASE_CAPACITY,
   STORAGE_CAPACITY_BONUSES,
   getStorageCapacity,
+  claimRefund as claimReservedRefund,
 } from './settlement.mjs';
 import {
   initializeAdventureState,
@@ -26,7 +27,13 @@ import {
   grantWolfXp,
 } from './adventures.mjs';
 import { replenishHerd } from './herd.mjs';
-import { COLLECTION_TASKS, COLLECT_COOLDOWN_MS } from './economy.mjs';
+import {
+  COLLECTION_TASKS,
+  COLLECT_COOLDOWN_MS,
+  REFUND_RESERVE_LIMIT,
+  getTrainingCost,
+  getBattleCost,
+} from './economy.mjs';
 import { applyRecovery } from './recovery.mjs';
 import {
   applyBattleCommand,
@@ -44,6 +51,7 @@ import {
 } from './first-watch.mjs';
 import { validateGame as validateLegacyGame } from './legacy-v1.mjs';
 export { BUILDINGS, getUpgradeCost };
+export { refundPlan } from './settlement.mjs';
 /** Shared, deterministic simulation. All rates are per minute; all clocks are UTC ms. */
 export const RESOURCE_KEYS = Object.freeze(['water', 'feed', 'herbs', 'wood', 'stone']);
 export const TACTICS = Object.freeze(['direct', 'left', 'right', 'double', 'rush']);
@@ -141,11 +149,12 @@ function makeBattle(wave = 1, tactic = 'direct') {
 export function createGame(now = Date.now()) {
   checkClock(now);
   const state = {
-    version: 2,
+    version: 3,
     updatedAt: now,
     collectReadyAt: now,
     resources: { water: 180, feed: 180, herbs: 80, wood: 450, stone: 350 },
     capacity: BASE_CAPACITY,
+    refundReserve: { wood: 0, stone: 0 },
     ...initializeSettlement(),
     wolves: WOLF_ROLES.map((name, index) => ({
       id: `wolf-${name}`,
@@ -183,6 +192,7 @@ export function migrateGame(state) {
           allowLegacyBattleCommands: true,
           allowLegacyTowerPlots: true,
           allowLegacyCapacity: true,
+          allowLegacyVersion: true,
         })
       : !validateLegacyGame(state)
   )
@@ -192,8 +202,9 @@ export function migrateGame(state) {
   migrated.capacity = getStorageCapacity(migrated);
   if (migrated.version !== 2) {
     migrateAdventureState(migrated);
-    migrated.version = 2;
   }
+  migrated.version = 3;
+  migrated.refundReserve = { wood: 0, stone: 0 };
   migrateFirstWatch(migrated);
   migrateBattleCommands(migrated);
   if (!validateGame(migrated)) fail('INVALID_SAVE');
@@ -462,6 +473,10 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       demolishBuilding(state, action);
       log(state, 'buildingDemolished', at);
       break;
+    case 'claimRefund':
+      claimReservedRefund(state, action);
+      log(state, 'refundClaimed', at);
+      break;
     case 'moveBuilding':
       relocateBuilding(state, action.id, action.plotId);
       log(state, 'buildingMoved', at);
@@ -533,7 +548,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
         fail('PACK_EXHAUSTED');
       const draw = random();
       if (!Number.isFinite(draw) || draw < 0 || draw >= 1) fail('INVALID_RANDOM');
-      spend(state, { water: 12, feed: 16 });
+      spend(state, getBattleCost(state));
       state.battle.tactic = TACTICS[Math.floor(draw * TACTICS.length)];
       state.battle.status = 'active';
       state.battle.startedAt = at;
@@ -575,7 +590,7 @@ export function applyAction(state, action, now = Date.now(), random = Math.rando
       if (isWolfBusy(state, wolf.id)) fail('WOLF_BUSY');
       if (wolf.points <= 0) fail('NO_SKILL_POINTS');
       if (wolf.ranks[action.path] >= 5) fail('MAX_LEVEL');
-      spend(state, { herbs: 8, feed: 12 });
+      spend(state, getTrainingCost(wolf, action.path));
       wolf.points -= 1;
       wolf.ranks[action.path] += 1;
       const health = action.path === 'guardian' ? 4 : 2;
@@ -636,6 +651,7 @@ export function validateGame(
     allowLegacyBattleCommands = false,
     allowLegacyTowerPlots = false,
     allowLegacyCapacity = false,
+    allowLegacyVersion = false,
   } = {},
 ) {
   try {
@@ -646,6 +662,7 @@ export function validateGame(
         'collectReadyAt',
         'resources',
         'capacity',
+        ...(allowLegacyVersion && state.version === 2 ? [] : ['refundReserve']),
         'buildings',
         'wolves',
         'herd',
@@ -664,7 +681,7 @@ export function validateGame(
     )
       return false;
     if (
-      state.version !== 2 ||
+      (state.version !== 3 && !(allowLegacyVersion && state.version === 2)) ||
       !time(state.updatedAt) ||
       !time(state.collectReadyAt) ||
       !integer(
@@ -679,7 +696,22 @@ export function validateGame(
       !RESOURCE_KEYS.every((key) => number(state.resources[key], 0, state.capacity))
     )
       return false;
-    if (!validateSettlement(state, { allowLegacyTowerPlots }) || !validateAdventureState(state))
+    if (
+      !(allowLegacyVersion && state.version === 2) &&
+      (!exactKeys(state.refundReserve, ['wood', 'stone']) ||
+        !['wood', 'stone'].every((key) =>
+          number(state.refundReserve[key], 0, REFUND_RESERVE_LIMIT),
+        ) ||
+        state.refundReserve.wood + state.refundReserve.stone > REFUND_RESERVE_LIMIT)
+    )
+      return false;
+    if (
+      !validateSettlement(state, {
+        allowLegacyTowerPlots,
+        allowLegacyCostBasis: allowLegacyVersion && state.version === 2,
+      }) ||
+      !validateAdventureState(state)
+    )
       return false;
     if (
       state.capacity !== getStorageCapacity(state) &&

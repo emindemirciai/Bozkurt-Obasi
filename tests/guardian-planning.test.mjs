@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createGame, applyAction, validateGame } from '../shared/game.mjs';
 import { ITEM_DEFINITIONS } from '../shared/adventures.mjs';
 import { establishedJourney } from './established-game.mjs';
+import { fillResources } from './economy-fixtures.mjs';
 import {
   TRAINING_PATHS,
   TRAINING_COST,
@@ -61,6 +62,7 @@ test('individual guardian stats expose actual attack, nonlinear mitigation, heal
 test('every training preview matches the real command while preserving wounds, equipment and XP', () => {
   for (const path of TRAINING_PATHS) {
     const state = createGame(START);
+    fillResources(state);
     const wolf = state.wolves[0];
     wolf.hp -= 37;
     wolf.xp = 24;
@@ -88,8 +90,8 @@ test('every training preview matches the real command while preserving wounds, e
 
 test('training shortages handle fractional production and exact affordability without advancing time', () => {
   const state = createGame(START);
-  state.resources.herbs = 7.75;
-  state.resources.feed = 11.5;
+  state.resources.herbs = 39.75;
+  state.resources.feed = 79.5;
   const plan = trainingPlan(state, 'wolf-alpha', 'guardian');
   assert.deepEqual(plan.shortages, [
     { resource: 'herbs', amount: 0.25 },
@@ -101,8 +103,8 @@ test('training shortages handle fractional production and exact affordability wi
     { type: 'train', id: 'wolf-alpha', path: 'guardian' },
     'INSUFFICIENT_RESOURCES',
   );
-  state.resources.herbs = 8;
-  state.resources.feed = 12;
+  state.resources.herbs = 40;
+  state.resources.feed = 80;
   assert.equal(trainingPlan(state, 'wolf-alpha', 'guardian').ready, true);
   act(state, { type: 'train', id: 'wolf-alpha', path: 'guardian' });
   assert.equal(state.resources.herbs, 0);
@@ -159,6 +161,7 @@ test('training and equipment lock only expedition participants and retain legacy
   const state = createGame(START);
   state.inventory.leather_vest = 1;
   expedition(state);
+  fillResources(state);
   assert.equal(trainingPlan(state, 'wolf-alpha', 'guardian').ready, true);
   assert.equal(equipmentPlan(state, 'wolf-alpha', 'leather_vest').ready, true);
   act(state, { type: 'train', id: 'wolf-alpha', path: 'guardian' });
@@ -306,7 +309,7 @@ test('returned plans contain no mutable aliases into state, definitions or later
   equipment.after.attack = 999;
   equipment.delta.attack = 999;
   assert.deepEqual(state, original);
-  assert.equal(trainingPlan(state, 'wolf-alpha', 'hunter').cost.herbs, 8);
+  assert.equal(trainingPlan(state, 'wolf-alpha', 'hunter').cost.herbs, 40);
   assert.equal(trainingPlan(state, 'wolf-alpha', 'hunter').before.attack, 5.1);
   assert.equal(equipmentPlan(state, 'wolf-alpha', 'iron_guard').after.attack, 7.1);
 });

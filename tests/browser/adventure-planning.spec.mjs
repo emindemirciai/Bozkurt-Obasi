@@ -79,9 +79,10 @@ test('supplies and capacity estimates update on ticks without remounting the foc
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'well', plotId: 'p0' }, START);
   applyAction(state, { type: 'build', building: 'pasture', plotId: 'p1' }, START);
+  state.resources.wood = state.resources.stone = state.capacity;
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p2' }, START);
-  state.resources.water = 17.5;
-  state.resources.feed = 23;
+  state.resources.water = 82.5;
+  state.resources.feed = 111;
   state.resources.wood = state.capacity - 16.2;
   const actions = await mockJourney(page, state);
   await page.goto('/#world');

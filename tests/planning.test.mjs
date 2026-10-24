@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BUILDINGS, RESOURCE_KEYS, applyAction } from '../shared/game.mjs';
+import { fillResources, fundStorage } from './economy-fixtures.mjs';
 import { establishedGame, establishedJourney } from './established-game.mjs';
 import { constructionPlan, resourceOutlook } from '../web/planning.mjs';
 
@@ -49,7 +50,7 @@ test('full stores have a zero ETA even without passive production and fractional
 });
 
 test('resource outlook includes the existing regional production bonuses', () => {
-  const state = fresh();
+  const state = fillResources(fresh());
   act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   for (const [location, key, rate] of [
     ['spring', 'water', 1.05],
@@ -68,30 +69,31 @@ test('resource outlook includes the existing regional production bonuses', () =>
 
 test('affordable new buildings include satisfied cost rows and agree with the construction command', () => {
   const state = fresh();
+  state.resources.wood = 220;
   assert.deepEqual(constructionPlan(state), {
     target: 'quarry',
     type: 'quarry',
     mode: 'build',
     buildingId: null,
     level: 1,
-    cost: { wood: 70, stone: 30 },
+    cost: { wood: 220, stone: 120 },
     deficits: [
-      { key: 'wood', required: 70, available: 210, missing: 0, seconds: 0 },
-      { key: 'stone', required: 30, available: 150, missing: 0, seconds: 0 },
+      { key: 'wood', required: 220, available: 220, missing: 0, seconds: 0 },
+      { key: 'stone', required: 120, available: 150, missing: 0, seconds: 0 },
     ],
     affordable: true,
     waitSeconds: 0,
     blocked: null,
   });
   act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
-  assert.equal(state.resources.wood, 140);
-  assert.equal(state.resources.stone, 120);
+  assert.equal(state.resources.wood, 0);
+  assert.equal(state.resources.stone, 30);
 });
 
 test('missing passive production reports an unobtainable cost while preserving obtainable shortages', () => {
   const state = fresh();
-  state.resources.wood = 69.9;
-  state.resources.stone = 29;
+  state.resources.wood = 219.9;
+  state.resources.stone = 119;
   const plan = constructionPlan(state);
   assert.equal(plan.affordable, false);
   assert.equal(plan.blocked, 'production');
@@ -99,35 +101,35 @@ test('missing passive production reports an unobtainable cost while preserving o
   assert.equal(row(plan, 'wood').seconds, 10);
   assert.deepEqual(row(plan, 'stone'), {
     key: 'stone',
-    required: 30,
-    available: 29,
+    required: 120,
+    available: 119,
     missing: 1,
     seconds: null,
   });
 });
 
 test('upgrade estimates use the target level, scaling cost, region bonus and slowest shortage', () => {
-  const state = fresh();
+  const state = fundStorage(fresh(), 1);
   act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   state.location = 'highland';
-  state.resources.wood = 108;
-  state.resources.stone = 40;
+  state.resources.wood = 1319;
+  state.resources.stone = 713;
   const plan = constructionPlan(state, 'quarry');
   assert.equal(plan.mode, 'upgrade');
   assert.equal(plan.buildingId, 'building-quarry');
   assert.equal(plan.level, 2);
-  assert.deepEqual(plan.cost, { wood: 109, stone: 47 });
+  assert.deepEqual(plan.cost, { wood: 1320, stone: 720 });
   assert.deepEqual(row(plan, 'wood'), {
     key: 'wood',
-    required: 109,
-    available: 108,
+    required: 1320,
+    available: 1319,
     missing: 1,
     seconds: 100,
   });
   assert.deepEqual(row(plan, 'stone'), {
     key: 'stone',
-    required: 47,
-    available: 40,
+    required: 720,
+    available: 713,
     missing: 7,
     seconds: 623,
   });
@@ -140,22 +142,20 @@ test('upgrade estimates use the target level, scaling cost, region bonus and slo
 
 test('a cost above storage capacity is unobtainable despite production and takes blocker priority', () => {
   const state = fresh();
-  // Synthetic reduced capacity keeps the future-recipe guard observable.
-  state.capacity = 500;
-  state.buildings.find((building) => building.type === 'hall').level = 4;
+  // The next real hall upgrade requires purchasing a warehouse first.
   state.resources.wood = state.capacity;
   state.resources.stone = 0;
   const plan = constructionPlan(state, 'hall');
-  assert.equal(plan.level, 5);
-  assert.deepEqual(plan.cost, { wood: 693, stone: 520 });
+  assert.equal(plan.level, 2);
+  assert.deepEqual(plan.cost, { wood: 3600, stone: 2700 });
   assert.equal(plan.blocked, 'capacity');
   assert.equal(plan.waitSeconds, null);
   assert.equal(plan.affordable, false);
   assert.deepEqual(row(plan, 'wood'), {
     key: 'wood',
-    required: 693,
-    available: 500,
-    missing: 193,
+    required: 3600,
+    available: 1000,
+    missing: 2600,
     seconds: null,
   });
   assert.equal(row(plan, 'stone').seconds, null);
@@ -163,17 +163,19 @@ test('a cost above storage capacity is unobtainable despite production and takes
 
 test('a cost exactly at capacity remains reachable through passive production', () => {
   const state = fresh();
-  state.capacity = 70;
-  state.resources.wood = 58;
-  state.resources.stone = 30;
-  const plan = constructionPlan(state);
+  fillResources(state);
+  act(state, { type: 'build', building: 'watchtower', plotId: 't0' });
+  state.resources.wood = 988;
+  state.resources.stone = 800;
+  const plan = constructionPlan(state, 'new:watchtower');
+  assert.equal(plan.cost.wood, state.capacity);
   assert.equal(row(plan, 'wood').seconds, 1200);
   assert.equal(plan.waitSeconds, 1200);
   assert.equal(plan.blocked, null);
 });
 
 test('active battles prevent otherwise affordable construction and upgrading', () => {
-  const state = fresh();
+  const state = fundStorage(fresh(), 1);
   act(state, { type: 'startBattle' });
   for (const type of ['quarry', 'lumber']) {
     const plan = constructionPlan(state, type);
@@ -204,11 +206,11 @@ test('battle blockers retain the resource ETA and override production and capaci
 });
 
 test('journeys allow construction and keep estimates at the current location production', () => {
-  const state = establishedJourney(START, 'highland');
+  const state = fundStorage(establishedJourney(START, 'highland'), 1);
   assert.ok(state.journey);
   assert.equal(constructionPlan(state).affordable, true);
   act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
-  state.resources.stone = 40;
+  state.resources.stone = 713;
   const plan = constructionPlan(state);
   assert.equal(plan.blocked, null);
   assert.equal(row(plan, 'stone').seconds, 934);
@@ -251,14 +253,14 @@ test('planning accepts frozen saves and changing returned rows cannot modify sta
   build.deficits[0].available = 0;
   upgrade.cost.wood = 0;
   assert.equal(JSON.stringify(state), snapshot);
-  assert.equal(BUILDINGS.find((building) => building.id === 'quarry').cost.wood, 70);
-  assert.equal(constructionPlan(state).cost.wood, 70);
-  assert.equal(constructionPlan(state, 'lumber').cost.wood, 93);
+  assert.equal(BUILDINGS.find((building) => building.id === 'quarry').cost.wood, 220);
+  assert.equal(constructionPlan(state).cost.wood, 220);
+  assert.equal(constructionPlan(state, 'lumber').cost.wood, 1080);
   assert.equal(resourceOutlook(state)[0].amount, 180);
 });
 
 test('explicit duplicate targets plan and upgrade the chosen building independently', () => {
-  const state = fresh();
+  const state = fundStorage(fresh(), 1, 'p34');
   act(state, { type: 'build', building: 'quarry', plotId: 'p7' });
   act(state, { type: 'build', building: 'quarry', plotId: 'p35' });
   state.buildings.find((entry) => entry.id === 'building-quarry').level = 5;
@@ -279,8 +281,8 @@ test('explicit duplicate targets plan and upgrade the chosen building independen
   assert.equal(state.resources.stone, state.capacity - plan.cost.stone);
 });
 
-test('new copy planning uses base cost, remains a new copy after construction and obeys limits', () => {
-  const state = fresh();
+test('new copy planning uses rising paid ordinals, remains a new copy after construction and obeys limits', () => {
+  const state = fundStorage(fresh(), 1);
   let plan;
   for (let n = 0; n < 6; n++) {
     for (const key of RESOURCE_KEYS) state.resources[key] = state.capacity;
@@ -290,7 +292,8 @@ test('new copy planning uses base cost, remains a new copy after construction an
     assert.equal(plan.mode, 'build');
     assert.equal(plan.buildingId, null);
     assert.equal(plan.level, 1);
-    assert.deepEqual(plan.cost, { wood: 70, stone: 30 });
+    const multiplier = [1, 2, 3, 5, 8, 12][n];
+    assert.deepEqual(plan.cost, { wood: 220 * multiplier, stone: 120 * multiplier });
     assert.equal(plan.affordable, true);
     assert.equal(JSON.stringify(state), snapshot);
     act(state, { type: 'build', building: plan.type, plotId: `p${24 + n}` });
@@ -323,7 +326,7 @@ test('new copy planning rejects a full grid and stale instance targets never upg
 });
 
 test('construction availability keeps corner tower slots separate from the normal village grid', () => {
-  const state = fresh();
+  const state = fillResources(fresh());
   // A full synthetic grid exercises future capacity without altering the current per-type caps.
   state.buildings = Array.from({ length: 36 }, (_, index) => ({
     id: `occupied-${index}`,

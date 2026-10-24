@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
+import { adventureQuote } from '../../shared/adventures.mjs';
+import { getWallUpgradeCost, getConstructionCost } from '../../shared/settlement.mjs';
 import { translations } from '../../web/i18n.mjs';
-import { signIn } from './sign-in.mjs';
+import { signIn, seedGame } from './sign-in.mjs';
+import { fundStorage, fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 14, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
@@ -51,14 +54,29 @@ test('chosen plots, duplicate producers and free relocation persist through the 
   page,
 }) => {
   await signIn(page);
+  await seedGame(page, fillResources);
   await page.goto('/#village');
   await expect(page.locator('.empty-plot')).toHaveCount(36);
   const first = await buildAt(page, 'p0');
   const second = await buildAt(page, 'p35');
   expect(first.state.buildings[0]).toMatchObject({ id: 'building-quarry', x: 0, y: 0 });
   expect(second.state.buildings).toEqual([
-    { id: 'building-quarry', type: 'quarry', level: 1, x: 0, y: 0 },
-    { id: 'building-quarry-2', type: 'quarry', level: 1, x: 5, y: 5 },
+    {
+      id: 'building-quarry',
+      type: 'quarry',
+      level: 1,
+      x: 0,
+      y: 0,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+    },
+    {
+      id: 'building-quarry-2',
+      type: 'quarry',
+      level: 1,
+      x: 5,
+      y: 5,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 2 },
+    },
   ]);
   await expect(page.locator('.empty-plot')).toHaveCount(34);
   await expect(page.locator('.map-chip')).toHaveText('2 yapı');
@@ -96,6 +114,7 @@ test('wooden walls upgrade to stone through real saved actions and unavailable u
   page,
 }) => {
   await signIn(page);
+  await seedGame(page, (state) => fundStorage(state, 2));
   await page.goto('/#village');
   const walls = page.locator('.settlement-controls');
   const upgrade = walls.locator('[data-action="upgradeWall"]');
@@ -104,14 +123,14 @@ test('wooden walls upgrade to stone through real saved actions and unavailable u
   await upgrade.click();
   const first = await (await firstResponse).json();
   expect(first.state.walls.level).toBe(2);
-  expect(first.state.resources.wood).toBe(340);
-  expect(first.state.resources.stone).toBe(320);
+  expect(first.state.resources.wood).toBe(48200);
+  expect(first.state.resources.stone).toBe(48800);
   const secondResponse = page.waitForResponse('**/api/action');
   await upgrade.click();
   const second = await (await secondResponse).json();
   expect(second.state.walls.level).toBe(3);
-  expect(second.state.resources.wood).toBe(200);
-  expect(second.state.resources.stone).toBe(190);
+  expect(second.state.resources.wood).toBe(36200);
+  expect(second.state.resources.stone).toBe(33800);
   await expect(walls).toContainText(translations.tr.wall3);
   await expect(upgrade).toBeDisabled();
   await expect(page.locator('.settlement-scene .village-wall')).toHaveAttribute(
@@ -131,13 +150,13 @@ test('three building tiers and role portraits load, with the mobile village cont
   page,
 }) => {
   await signIn(page);
-  const state = createGame(START);
+  const state = fundStorage(createGame(START));
   applyAction(state, { type: 'build', building: 'hall', plotId: 'p0' }, START);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p5' }, START);
   await mockVillage(page, state);
   const tiers = [];
   for (const level of [1, 3, 5]) {
-    while (state.buildings[0].level < level) {
+    while (state.buildings.find((building) => building.type === 'hall').level < level) {
       for (const key of Object.keys(state.resources)) state.resources[key] = state.capacity;
       applyAction(state, { type: 'upgrade', id: 'building-hall' }, START);
     }
@@ -199,6 +218,8 @@ test('selected expedition and escort parties receive story progress, experience,
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const state = createGame(START);
+  // This two-journey fixture has gathered the provisions for both confirmed departures.
+  state.resources.water = state.resources.feed = state.capacity;
   const actions = await mockVillage(page, state);
   await page.goto('/#world');
   await page.locator('#adventure-difficulty').selectOption('normal');
@@ -278,19 +299,20 @@ test('wall upgrade becomes available when passive production crosses its own cos
   page,
 }) => {
   await signIn(page);
-  const state = createGame(START);
+  const state = fundStorage(createGame(START), 2);
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p0' }, START);
   applyAction(state, { type: 'build', building: 'quarry', plotId: 'p1' }, START);
   applyAction(state, { type: 'upgradeWall' }, START);
-  state.resources.wood = 139.95;
-  state.resources.stone = 130;
+  const nextWallCost = getWallUpgradeCost(state.walls);
+  state.resources.wood = nextWallCost.wood - 0.05;
+  state.resources.stone = nextWallCost.stone;
   await mockVillage(page, state);
   await page.goto('/#village');
   const upgrade = page.locator('[data-action="upgradeWall"]');
   await expect(upgrade).toBeDisabled();
   await pollVillage(page, 11_000);
   await expect(upgrade).toBeEnabled();
-  expect(state.resources.wood).toBeGreaterThan(140);
+  expect(state.resources.wood).toBeGreaterThan(nextWallCost.wood);
   const response = page.waitForResponse('**/api/action');
   await upgrade.click();
   await (await response).finished();
@@ -305,8 +327,13 @@ test('expedition start becomes available at its route and difficulty price witho
   applyAction(state, { type: 'build', building: 'well', plotId: 'p0' }, START);
   applyAction(state, { type: 'build', building: 'pasture', plotId: 'p1' }, START);
   state.adventure.unlocked = ['homeland', 'spring', 'meadow', 'highland'];
-  state.resources.water = 36.9;
-  state.resources.feed = 49;
+  const routeCost = adventureQuote(state, {
+    region: 'ruins',
+    difficulty: 'hard',
+    wolfIds: ['wolf-alpha', 'wolf-guardian', 'wolf-hunter'],
+  }).cost;
+  state.resources.water = routeCost.water - 0.1;
+  state.resources.feed = routeCost.feed;
   await mockVillage(page, state);
   await page.goto('/#world');
   await page.locator('#adventure-region').selectOption('ruins');
@@ -317,7 +344,7 @@ test('expedition start becomes available at its route and difficulty price witho
   await expect(start).toBeDisabled();
   await pollVillage(page, 11_000);
   await expect(start).toBeEnabled();
-  expect(state.resources.water).toBeGreaterThan(37);
+  expect(state.resources.water).toBeGreaterThan(routeCost.water);
   const response = page.waitForResponse('**/api/action');
   await start.click();
   await (await response).finished();
@@ -334,8 +361,9 @@ test('placement choices refresh affordability while an open dialog retains its f
   await signIn(page);
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p0' }, START);
-  state.resources.wood = 59.9;
-  state.resources.stone = 25;
+  const copyCost = getConstructionCost(state, 'lumber');
+  state.resources.wood = copyCost.wood - 0.1;
+  state.resources.stone = copyCost.stone;
   await mockVillage(page, state);
   await page.goto('/#village');
   await page.locator('[data-plot="p1"]').click();

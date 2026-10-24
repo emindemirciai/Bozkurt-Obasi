@@ -61,7 +61,7 @@ export const v2Translations = {
     demolition_BATTLE_ACTIVE: 'Savaş devam ederken bina kaldırılamaz.',
     demolition_JOURNEY_ACTIVE: 'Devam eden keşif veya sevkiyat bitmeden bina kaldırılamaz.',
     demolition_DEMOLITION_STORAGE_FULL:
-      'Mevcut kaynaklar ve iade, kaldırma sonrası kapasiteye sığmıyor. Önce kaynak harca veya başka bir arsada kapasiteyi artır.',
+      'Mevcut kaynakların kaldırma sonrası kapasiteye sığmıyor. Önce kaynak harca veya kapasiteyi artır. İadenin sığmayan kısmı ayrıca sandıkta korunur.',
     demolitionStale:
       'Oba güncellendi. Aşağıdaki iade ve kapasiteyi yeniden kontrol et; kabul ediyorsan tekrar onayla.',
     demolitionFailed: 'Bina kaldırılamadı. Bağlantıyı ve oba durumunu kontrol edip tekrar dene.',
@@ -464,7 +464,7 @@ export const v2Translations = {
     demolition_JOURNEY_ACTIVE:
       'Wait for the current expedition or caravan to finish before removing a building.',
     demolition_DEMOLITION_STORAGE_FULL:
-      'Your current resources and refund would exceed capacity after removal. Spend resources first or increase capacity on another plot.',
+      'Your current resources would exceed capacity after removal. Spend resources or increase capacity first. Any refund that does not fit is kept separately in reserve.',
     demolitionStale:
       'The village was updated. Check the refund and capacity below, then confirm again if you accept.',
     demolitionFailed:

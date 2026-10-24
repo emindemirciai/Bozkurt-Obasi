@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../shared/game.mjs';
-import { STORAGE_CAPACITY_BONUSES } from '../shared/settlement.mjs';
+import { STORAGE_CAPACITY_BONUSES, refundPlan } from '../shared/settlement.mjs';
 import { buildingSiteLabel } from './settlement-labels.mjs';
 import { icon } from './art.mjs';
 import { resourceOutlook, constructionPlan } from './planning.mjs';
@@ -169,6 +169,43 @@ function storageDetails(state, ctx) {
   };
 }
 
+function refundAmounts(values, { t, language = 'tr' }) {
+  return Object.entries(values)
+    .map(
+      ([key, value]) =>
+        `${new Intl.NumberFormat(language === 'en' ? 'en-US' : 'tr-TR', { maximumFractionDigits: 6 }).format(value)} ${t(key)}`,
+    )
+    .join(' · ');
+}
+
+function refundReserve(state, ctx) {
+  const plan = refundPlan(state);
+  const { t, escape, busy = false, readOnly = false } = ctx;
+  return `<section class="refund-reserve" id="refund-reserve-panel" aria-labelledby="refund-reserve-title"><h4 id="refund-reserve-title">${escape(t('refundReserveTitle'))}</h4><p>${escape(t('refundReserveHint'))}</p><dl><div><dt>${escape(t('refundReserved'))}</dt><dd data-refund-reserve>${escape(refundAmounts(plan.reserve, ctx))}</dd></div><div><dt>${escape(t('refundCreditable'))}</dt><dd data-refund-credit>${escape(refundAmounts(plan.credited, ctx))}</dd></div><div><dt>${escape(t('refundRemaining'))}</dt><dd data-refund-remaining>${escape(refundAmounts(plan.remaining, ctx))}</dd></div></dl><p class="refund-reserve-status" data-refund-status>${escape(t(plan.reason === 'REFUND_EMPTY' ? 'refundEmpty' : plan.reason === 'REFUND_STORAGE_FULL' ? 'refundStorageFull' : 'refundReady'))}</p><button class="button outline" id="claim-refund-button" data-action="claimRefund" ${readOnly || busy || !plan.canClaim ? 'disabled' : ''}>${escape(t('claimRefund'))}</button></section>`;
+}
+
+function updateRefundReserve(section, state, ctx) {
+  const panel = section.querySelector('#refund-reserve-panel');
+  if (!panel) return;
+  const plan = refundPlan(state);
+  for (const [selector, values] of [
+    ['[data-refund-reserve]', plan.reserve],
+    ['[data-refund-credit]', plan.credited],
+    ['[data-refund-remaining]', plan.remaining],
+  ])
+    panel.querySelector(selector).textContent = refundAmounts(values, ctx);
+  panel.querySelector('[data-refund-status]').textContent = ctx.t(
+    plan.reason === 'REFUND_EMPTY'
+      ? 'refundEmpty'
+      : plan.reason === 'REFUND_STORAGE_FULL'
+        ? 'refundStorageFull'
+        : 'refundReady',
+  );
+  panel.querySelector('#claim-refund-button').disabled = Boolean(
+    ctx.readOnly || ctx.busy || !plan.canClaim,
+  );
+}
+
 function storageExpansion(state, ctx) {
   const { t, escape, number, busy = false } = ctx;
   const details = storageDetails(state, ctx);
@@ -176,13 +213,14 @@ function storageExpansion(state, ctx) {
     <div class="storage-expansion-heading"><div><h3 id="storage-expansion-title">${icon('storage', 20)}${escape(t('storageExpansionTitle'))}</h3><p>${escape(t('storageExpansionIntro'))}</p></div><span data-storage-level>${escape(t('level'))} ${number(details.level)} / 5</span></div>
     <div class="storage-capacity-steps"><div><span>${escape(t('storageCurrent'))}</span><strong data-storage-capacity>${escape(details.capacity)}</strong></div><span class="storage-step-arrow" aria-hidden="true">→</span><div><span>${escape(t('storageNext'))}</span><strong data-storage-next-capacity>${escape(details.nextLabel)}</strong></div><div><span>${escape(t('storageMaximum'))}</span><strong data-storage-max-capacity>${escape(details.maximum)}</strong></div></div>
     <div class="storage-expansion-action"><div><p data-storage-status>${escape(statusLabel(details.plan, ctx))}</p><small data-storage-upgrade-cost>${escape(executeCost(details.plan, ctx))}</small></div><button class="button primary" id="expand-storage-button" data-action="executePlan" data-plan-type="storage" data-plan-target="storage" ${ctx.readOnly || busy || details.plan.blocked || !details.plan.affordable ? 'disabled' : ''}>${escape(details.label)}${icon('arrow', 16)}</button></div>
-    <p class="storage-expansion-note">${escape(t('storageExpansionNote'))}</p>
+    <p class="storage-expansion-note">${escape(t('storageExpansionNote'))}</p>${refundReserve(state, ctx)}
   </section>`;
 }
 
 function updateStorageExpansion(panel, state, ctx) {
   const section = panel.querySelector('#storage-expansion');
   if (!section) return;
+  updateRefundReserve(section, state, ctx);
   const details = storageDetails(state, ctx);
   section.querySelector('[data-storage-capacity]').textContent = details.capacity;
   section.querySelector('[data-storage-next-capacity]').textContent = details.nextLabel;

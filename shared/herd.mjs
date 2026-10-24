@@ -1,7 +1,7 @@
 /** Resource-backed recovery for animals lost in battle; no new save fields. */
 export const HERD_LIMIT = 24;
 export const REPLENISH_BATCH_LIMIT = 5;
-export const HERD_REPLENISH_COST = Object.freeze({ water: 6, feed: 12 });
+export const HERD_REPLENISH_COST = Object.freeze({ water: 30, feed: 60 });
 
 const validAmount = (amount) =>
   Number.isSafeInteger(amount) && amount >= 1 && amount <= REPLENISH_BATCH_LIMIT;

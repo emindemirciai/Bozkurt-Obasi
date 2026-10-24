@@ -1,7 +1,9 @@
 import { equipmentBonuses, isWolfBusy, ITEM_DEFINITIONS } from './adventures.mjs';
+import { getTrainingCost } from './economy.mjs';
 
 export const TRAINING_PATHS = Object.freeze(['guardian', 'hunter', 'leader', 'healer']);
-export const TRAINING_COST = Object.freeze({ herbs: 8, feed: 12 });
+// Kept as the entry-rank reference for existing consumers; forecasts use the selected rank.
+export const TRAINING_COST = Object.freeze({ herbs: 40, feed: 80 });
 
 /** Individual contributions, excluding buildings, formations and other guardians. */
 export function guardianStats(wolf) {
@@ -19,7 +21,7 @@ export function guardianStats(wolf) {
 export function trainingPlan(state, id, path) {
   const wolf = state.wolves.find((entry) => entry.id === id);
   const valid = Boolean(wolf && TRAINING_PATHS.includes(path));
-  const cost = { ...TRAINING_COST };
+  const cost = getTrainingCost(wolf, path);
   const shortages = Object.entries(cost)
     .filter(([resource, amount]) => state.resources[resource] < amount)
     .map(([resource, amount]) => ({ resource, amount: amount - state.resources[resource] }));

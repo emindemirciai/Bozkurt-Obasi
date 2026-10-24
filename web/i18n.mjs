@@ -47,7 +47,7 @@ export const translations = {
     guardianEffect_leader:
       'Saldırı katkısını 0,3 ve mevcut/azami canı 2 artırır. Takımın panik artışını yavaşlatır.',
     guardianEffect_healer: 'Takımın şifa katkısını 3 ve mevcut/azami canı 2 artırır.',
-    guardianTrainingCost: '1 eğitim puanı · 8 şifalı ot · 12 yem',
+    guardianTrainingCost: 'Eğitim bedeli seçilen yolun sonraki rütbesine göre artar.',
     guardianCurrentEquipment: 'Kuşanılan eşya',
     guardianEquipmentHint:
       'Değerler mevcut ekipmana göre karşılaştırılır. Kuşanınca eski eşya çantaya döner. Her kurt bir eşya taşır.',
@@ -61,7 +61,7 @@ export const translations = {
       'Kaybettiğin hayvanların yerine otlağına yeni hayvanlar kat. Sürünün üst sınırı 24 hayvandır.',
     herdAmount: 'Eklenecek hayvan sayısı',
     herdSelectionHint:
-      'Her hayvan için 6 su ve 12 yem gerekir. Bir işlemde en fazla 5 hayvan ekleyebilirsin. Miktar seçmek kaynak harcamaz.',
+      'Her hayvan için su ve yem gerekir; seçtiğin miktarın tam bedeli aşağıda gösterilir. Bir işlemde en fazla 5 hayvan ekleyebilirsin. Miktar seçmek kaynak harcamaz.',
     herdCost: 'Maliyet',
     herdAvailable: 'Mevcut',
     herdShortage: 'Eksik',
@@ -171,7 +171,7 @@ export const translations = {
       'Taş üretimi için bir taş ocağı kur. Başka bir yeni yapı da bu adımı tamamlar.',
     guide_rewardDesc: 'İlk yapın hazır. Görevlerden “Yurdun ilk adımı” ödülünü al.',
     guide_trainDesc:
-      'Muhafızlarını iki kez eğit. Her eğitim 8 ot, 12 yem ve bir eğitim puanı kullanır.',
+      'Muhafızlarını iki kez eğit. Önce düşük rütbeli bir yol seç; her eğitimin puan ve malzeme bedeli panelde gösterilir.',
     guide_winDesc:
       'Savunma düzenini seç ve ilk çakal saldırısını karşıla. Yaralı sürünü tedavi edip kurtlarını kampta dinlendirebilirsin.',
     guide_exploreDesc:
@@ -549,7 +549,7 @@ export const translations = {
     guardianEffect_leader:
       'Adds 0.3 attack contribution and 2 current and maximum health. Slows the pack’s panic gain.',
     guardianEffect_healer: 'Adds 3 team healing contribution and 2 current and maximum health.',
-    guardianTrainingCost: '1 training point · 8 herbs · 12 feed',
+    guardianTrainingCost: 'The training cost rises with the selected path’s next rank.',
     guardianCurrentEquipment: 'Equipped item',
     guardianEquipmentHint:
       'Values compare with current equipment. The old item returns to your bag when swapped. Each wolf carries one item.',
@@ -563,7 +563,7 @@ export const translations = {
       'Replace animals lost in battle with new arrivals at your pasture. Your herd can hold up to 24 animals.',
     herdAmount: 'Animals to add',
     herdSelectionHint:
-      'Each animal costs 6 water and 12 feed. Add up to 5 at a time. Choosing an amount spends nothing.',
+      'Each animal costs water and feed; the exact cost for your selected amount is shown below. Add up to 5 at a time. Choosing an amount spends nothing.',
     herdCost: 'Cost',
     herdAvailable: 'Available',
     herdShortage: 'Missing',
@@ -674,7 +674,7 @@ export const translations = {
       'Build a quarry to produce stone. Any other new structure also completes this step.',
     guide_rewardDesc: 'Your first structure is ready. Claim “A homeland’s first step” in Quests.',
     guide_trainDesc:
-      'Train your guardians twice. Each training uses 8 herbs, 12 feed and one training point.',
+      'Train your guardians twice. Start with a low-rank path; each training’s point and material cost is shown in the panel.',
     guide_winDesc:
       'Choose your formation and face the first jackal attack. Treat your wounded herd and rest your wolves at camp when needed.',
     guide_exploreDesc:
@@ -1293,7 +1293,7 @@ const careTranslations = {
     careRecommendRest:
       'Önerilen: Birlikte dinlen. Muhafızların canı tam olur; sürünün kazanımları aşağıda gösterilir.',
     careRecommendHerd:
-      'Önerilen: Sürüyü tedavi et. Sürünün yaraları veya paniği için 1 şifalı ot kullanır.',
+      'Önerilen: Sürüyü tedavi et. Sürünün yaraları veya paniği için 15 şifalı ot kullanır.',
     careChooseWhenReady:
       'Bakım gerekiyor. Her seçeneğin altında hazırlık koşulunu ve eksik kaynakları incele.',
     careAllHealthy: 'Oba hazır: tüm muhafızlar ve sürü tam canlı, sürü sakin.',
@@ -1328,7 +1328,7 @@ const careTranslations = {
     careHerdHealthy: 'The herd is at full health and calm. Treatment is unnecessary.',
     careRecommendRest:
       'Suggested: Rest together. Guardians finish at full health; the herd’s gains are shown below.',
-    careRecommendHerd: 'Suggested: Treat the herd. Spend 1 herb to tend herd wounds or panic.',
+    careRecommendHerd: 'Suggested: Treat the herd. Spend 15 herbs to tend herd wounds or panic.',
     careChooseWhenReady:
       'Care is needed. Check each option’s requirements and missing supplies below.',
     careAllHealthy:
@@ -1502,3 +1502,64 @@ const activeEconomyTranslations = {
 };
 for (const language of ['tr', 'en'])
   Object.assign(translations[language], activeEconomyTranslations[language]);
+
+const progressiveEconomyTranslations = {
+  tr: {
+    constructionEconomyHint:
+      'Aynı türden her yeni yapı daha fazla malzeme ister. Üst seviyeler depo genişletmesi gerektirir.',
+    guardianTrainingPointCost: '1 eğitim puanı',
+    battleEntryCost: 'Savaş hazırlığı bedeli',
+    battleEntryHint:
+      'Bu dalgaya çıkışta gösterilen su ve yem harcanır. Bedel ilerleyen dalgalarda artar.',
+    battleEntryShortage: 'Bu savaşın erzağı eksik. Oba işlerinden su ve yem topla.',
+    refundReserveTitle: 'Bekleyen bina iadeleri',
+    refundReserveHint:
+      'Kaldırılan binaların depoya sığmayan iadeleri burada saklanır. Depoda yer açınca aktar; kalan malzemeler beklemeye devam eder.',
+    refundReserved: 'Sandıkta bekleyen',
+    refundCreditable: 'Şimdi depoya aktarılacak',
+    refundRemaining: 'Aktarımdan sonra bekleyecek',
+    refundEmpty: 'Bekleyen iaden yok.',
+    refundStorageFull:
+      'İadenin kaynakları için depoda yer yok. Önce kaynak harca veya depoyu genişlet.',
+    refundReady: 'Yalnızca depoya sığan miktar aktarılır; kalan iade kaybolmaz.',
+    claimRefund: 'Bekleyen iadeyi al',
+    refundLimit: 'Bekleyen iade sınırına ulaşıldı. Önce sandıktaki malzemeleri depoya aktar.',
+    logRefundClaimed: 'Bekleyen iadenin depoya sığan kısmı aktarıldı.',
+    demolitionPendingRefund: 'İade sandığında bekleyecek',
+    demolitionPendingHint:
+      'Toplam iade değişmez. Depoya sığmayan kısmı Oba planlaması → Bekleyen bina iadeleri bölümünden yer açtıktan sonra alabilirsin.',
+    demolition_REFUND_RESERVE_FULL:
+      'Bekleyen iade sınırına ulaşıldı. Önce sandıktaki malzemeleri depoya aktar.',
+  },
+  en: {
+    constructionEconomyHint:
+      'Each additional building of the same type costs more materials. Higher levels require storage expansion.',
+    guardianTrainingPointCost: '1 training point',
+    battleEntryCost: 'Battle preparation cost',
+    battleEntryHint:
+      'Departing for this wave spends the displayed water and feed. Later waves cost more.',
+    battleEntryShortage:
+      'Supplies are missing for this battle. Gather water and feed through camp work.',
+    refundReserveTitle: 'Pending building refunds',
+    refundReserveHint:
+      'Refunds from removed buildings that do not fit in storage are kept here. Transfer them after making room; the remainder stays pending.',
+    refundReserved: 'Held in reserve',
+    refundCreditable: 'Transferred to storage now',
+    refundRemaining: 'Still pending after transfer',
+    refundEmpty: 'You have no pending refund.',
+    refundStorageFull:
+      'There is no storage space for this refund’s resources. Spend resources or expand storage first.',
+    refundReady: 'Only the amount that fits is transferred; the remaining refund is preserved.',
+    claimRefund: 'Claim pending refund',
+    refundLimit:
+      'The pending refund limit is reached. Transfer reserved materials to storage first.',
+    logRefundClaimed: 'The part of the pending refund that fits was transferred to storage.',
+    demolitionPendingRefund: 'Held in refund reserve',
+    demolitionPendingHint:
+      'The total refund is unchanged. After making room, claim the remainder from Village planning → Pending building refunds.',
+    demolition_REFUND_RESERVE_FULL:
+      'The pending refund limit is reached. Transfer reserved materials to storage first.',
+  },
+};
+for (const language of ['tr', 'en'])
+  Object.assign(translations[language], progressiveEconomyTranslations[language]);

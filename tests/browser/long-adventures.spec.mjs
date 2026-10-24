@@ -99,6 +99,7 @@ test('a twelve-hour escort retains its countdown through reload and awards selec
 }) => {
   const state = createGame(START);
   state.adventure.unlocked = ['homeland', 'spring', 'meadow', 'highland', 'ruins'];
+  state.resources.water = state.resources.feed = state.capacity;
   for (const resource of ['wood', 'stone', 'herbs']) state.resources[resource] = 0;
   const before = structuredClone(state);
   const actions = await mockJourney(page, state);
@@ -111,7 +112,7 @@ test('a twelve-hour escort retains its countdown through reload and awards selec
   await expect(active(page)).toBeVisible();
   await expect(countdown(page)).toHaveText('12 sa');
   expect(state.adventure.active.endsAt).toBe(START + 12 * HOUR);
-  expect(state.adventure.active.economyVersion).toBe(3);
+  expect(state.adventure.active.economyVersion).toBe(4);
   await poll(page, 6 * HOUR);
   await expect(countdown(page)).toHaveText('6 sa');
   await expect(active(page)).toHaveAttribute('data-mission-stage', 'middle');

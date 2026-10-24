@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { fundStorage } from './economy-fixtures.mjs';
 import { createGame, applyAction, advanceGame, validateGame } from '../shared/game.mjs';
 import { ADVENTURE_PLANS, DIFFICULTIES, REGIONS } from '../shared/adventures.mjs';
 import { adventurePartySuggestions, adventurePartyForecast } from '../web/adventure-party.mjs';
@@ -49,7 +50,7 @@ test('scouting chooses equipped guardians and quotes discounted supplies with th
   assert.deepEqual(best.wolfIds, ['wolf-scout']);
   assert.equal(best.scouting, 15);
   assert.equal(best.quote.seconds, 21600);
-  assert.deepEqual(best.quote.cost, { water: 16, feed: 20 });
+  assert.deepEqual(best.quote.cost, { water: 71, feed: 94 });
   assert.equal(best.ready, true);
   state.wolves[0].equipment = 'scout_charm';
   state.wolves[1].equipment = 'scout_charm';
@@ -61,7 +62,7 @@ test('scouting chooses equipped guardians and quotes discounted supplies with th
   assert.equal(hard.quote.seconds, 21600);
   assert.deepEqual(
     hard.quote.cost,
-    { water: 20, feed: 26 },
+    { water: 163, feed: 217 },
     'supplies retain the authoritative 30% scouting discount cap',
   );
 });
@@ -217,7 +218,7 @@ test('arrival forecast matches actual authoritative missions for every plan, dif
   for (const plan of ADVENTURE_PLANS)
     for (const difficulty of DIFFICULTIES)
       for (const kind of ['expedition', 'caravan']) {
-        const state = createGame(NOW);
+        const state = fundStorage(createGame(NOW), 1);
         state.adventure.unlocked = REGIONS.map((region) => region.id);
         state.wolves[0].xp = 44;
         state.wolves[0].hp = 20;

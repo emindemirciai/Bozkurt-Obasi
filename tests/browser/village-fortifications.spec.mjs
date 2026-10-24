@@ -4,7 +4,8 @@ import { test, expect } from '@playwright/test';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
 import { getStorageCapacity } from '../../shared/settlement.mjs';
 import { translations } from '../../web/i18n.mjs';
-import { signIn } from './sign-in.mjs';
+import { signIn, seedGame } from './sign-in.mjs';
+import { fundStorage, fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 20, 12);
 const corners = ['t0', 't1', 't2', 't3'];
@@ -60,9 +61,8 @@ async function fortificationArtwork(page) {
 
 async function establishedVillage(page, { hall = false } = {}) {
   const state = createGame(START);
-  applyAction(state, { type: 'build', building: 'storage', plotId: 'p14' }, START);
-  // A valid mature storage snapshot funds the placement and architectural upgrade paths.
-  state.buildings[0].level = 5;
+  fundStorage(state, 5, 'p14');
+  // Explicit paid-tier fixture funds architectural upgrade paths.
   state.capacity = getStorageCapacity(state);
   for (const resource of Object.keys(state.resources)) state.resources[resource] = state.capacity;
   if (hall) {
@@ -150,13 +150,41 @@ test('four purchased watchtowers occupy only their reserved corners and persist 
     await placeTower(page, id);
   }
   expect(state.buildings.filter((building) => building.type === 'watchtower')).toEqual([
-    { id: 'building-watchtower', type: 'watchtower', level: 1, x: 6, y: 0 },
-    { id: 'building-watchtower-2', type: 'watchtower', level: 1, x: 6, y: 1 },
-    { id: 'building-watchtower-3', type: 'watchtower', level: 1, x: 6, y: 2 },
-    { id: 'building-watchtower-4', type: 'watchtower', level: 1, x: 6, y: 3 },
+    {
+      id: 'building-watchtower',
+      type: 'watchtower',
+      level: 1,
+      x: 6,
+      y: 0,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+    },
+    {
+      id: 'building-watchtower-2',
+      type: 'watchtower',
+      level: 1,
+      x: 6,
+      y: 1,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 2 },
+    },
+    {
+      id: 'building-watchtower-3',
+      type: 'watchtower',
+      level: 1,
+      x: 6,
+      y: 2,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 3 },
+    },
+    {
+      id: 'building-watchtower-4',
+      type: 'watchtower',
+      level: 1,
+      x: 6,
+      y: 3,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 4 },
+    },
   ]);
-  expect(state.resources.wood).toBe(resources.wood - 400);
-  expect(state.resources.stone).toBe(resources.stone - 280);
+  expect(state.resources.wood).toBe(resources.wood - 5500);
+  expect(state.resources.stone).toBe(resources.stone - 4400);
   await cornerTowers(page);
   await cornerPlots(page, []);
   await expect(scene(page).locator('.empty-plot')).toHaveCount(35);
@@ -222,6 +250,7 @@ test('real API persists corner purchases and rejects other buildings or relocati
   page,
 }) => {
   await signIn(page);
+  await seedGame(page, fillResources);
   const now = new Date();
   await page.clock.install({ time: new Date(now.getTime() - 1000) });
   await page.clock.pauseAt(now);
@@ -231,7 +260,14 @@ test('real API persists corner purchases and rejects other buildings or relocati
   await placeTower(page, 't0');
   const built = await (await builtResponse).json();
   expect(built.state.buildings).toEqual([
-    { id: 'building-watchtower', type: 'watchtower', level: 1, x: 6, y: 0 },
+    {
+      id: 'building-watchtower',
+      type: 'watchtower',
+      level: 1,
+      x: 6,
+      y: 0,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+    },
   ]);
   await page.reload();
   await cornerTowers(page, 1);
@@ -337,8 +373,8 @@ test('corner demolition confirms the exact half-cost refund and restores a tower
   const dialog = page.locator('#demolition-dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText(/(?:50%|%50)/);
-  await expect(dialog.locator('[data-demolition-refund]')).toContainText(/127[.,]5/);
-  await expect(dialog.locator('[data-demolition-refund]')).toContainText(/89[.,]5/);
+  await expect(dialog.locator('[data-demolition-refund]')).toContainText(/1[.,]750/);
+  await expect(dialog.locator('[data-demolition-refund]')).toContainText(/1[.,]400/);
   await page.locator('#demolition-cancel').click();
   expect(state).toEqual(before);
   expect(actions).toHaveLength(2);
@@ -347,8 +383,8 @@ test('corner demolition confirms the exact half-cost refund and restores a tower
   await expect(dialog).toHaveCount(0);
   await cornerTowers(page, 0);
   await cornerPlots(page);
-  expect(state.resources.wood).toBe(before.resources.wood + 127.5);
-  expect(state.resources.stone).toBe(before.resources.stone + 89.5);
+  expect(state.resources.wood).toBe(before.resources.wood + 1750);
+  expect(state.resources.stone).toBe(before.resources.stone + 1400);
   expect(state.buildings).toEqual(
     before.buildings.filter((building) => building.type !== 'watchtower'),
   );

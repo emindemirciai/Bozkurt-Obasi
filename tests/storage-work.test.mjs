@@ -15,6 +15,8 @@ import {
 } from '../shared/settlement.mjs';
 import { COLLECTION_TASKS, COLLECT_COOLDOWN_MS } from '../shared/economy.mjs';
 
+import { previousSave } from './economy-fixtures.mjs';
+
 const NOW = Date.UTC(2026, 9, 20, 12);
 const act = (state, action, at = state.updatedAt) => applyAction(state, action, at, () => 0);
 const fill = (state) => {
@@ -64,9 +66,17 @@ test('paid storage levels expand each resource through 10,000, 50,000, 250,000, 
 test('every old hall/storage capacity migrates once while all existing balances and gameplay remain exact', () => {
   for (let hall = 0; hall <= 5; hall++) {
     for (let storage = 0; storage <= 5; storage++) {
-      const state = createGame(NOW);
-      buildLevel(state, 'hall', hall, 'p0');
-      buildLevel(state, 'storage', storage, 'p1');
+      const state = previousSave(createGame(NOW));
+      if (hall)
+        state.buildings.push({ id: 'building-hall', type: 'hall', level: hall, x: 0, y: 0 });
+      if (storage)
+        state.buildings.push({
+          id: 'building-storage',
+          type: 'storage',
+          level: storage,
+          x: 1,
+          y: 0,
+        });
       state.capacity = 500 + Math.max(0, hall - 1) * 100 + storage * 250;
       fill(state);
       state.resources.wood -= 0.125;
@@ -75,7 +85,10 @@ test('every old hall/storage capacity migrates once while all existing balances 
       const before = structuredClone(state);
       const migrated = migrateGame(JSON.parse(JSON.stringify(state)));
       assert.deepEqual(state, before);
-      assert.deepEqual(migrated, { ...before, capacity: getStorageCapacity(state) });
+      assert.deepEqual(previousSave(migrated), { ...before, capacity: getStorageCapacity(state) });
+      assert.ok(
+        migrated.buildings.every((building) => building.costBasis.legacyLevels === building.level),
+      );
       assert.equal(validateGame(migrated), true);
       assert.equal(migrateGame(migrated), migrated);
       assert.deepEqual(migrateGame(JSON.parse(JSON.stringify(migrated))), migrated);
@@ -121,7 +134,15 @@ test('capacity migration rejects forged bounds, overfilled legacy saves and malf
 test('expanded storage demolition refuses every overflowing resource and removes only its own level contribution', () => {
   for (let level = 1; level <= 5; level++) {
     const state = createGame(NOW);
-    buildLevel(state, 'hall', 5, 'p1');
+    state.buildings.push({
+      id: 'building-hall',
+      type: 'hall',
+      level: 5,
+      x: 1,
+      y: 0,
+      costBasis: { legacyLevels: 5, constructionOrdinal: 1 },
+    });
+    state.capacity = 1400;
     buildLevel(state, 'storage', level, 'p0');
     empty(state);
     const quote = demolitionQuote(state, 'building-storage');
@@ -129,7 +150,7 @@ test('expanded storage demolition refuses every overflowing resource and removes
     assert.equal(quote.capacityAfter, 1400);
     for (const key of Object.keys(state.resources)) {
       const crowded = structuredClone(state);
-      crowded.resources[key] = quote.capacityAfter - (quote.refund[key] || 0) + 0.125;
+      crowded.resources[key] = quote.capacityAfter + 0.125;
       unchangedFailure(
         crowded,
         { type: 'demolishBuilding', id: 'building-storage', expected: quote.expected },
@@ -138,8 +159,8 @@ test('expanded storage demolition refuses every overflowing resource and removes
     }
     act(state, { type: 'demolishBuilding', id: 'building-storage', expected: quote.expected });
     assert.equal(state.capacity, 1400);
-    assert.equal(state.resources.wood, quote.refund.wood);
-    assert.equal(state.resources.stone, quote.refund.stone);
+    assert.equal(state.resources.wood + state.refundReserve.wood, quote.refund.wood);
+    assert.equal(state.resources.stone + state.refundReserve.stone, quote.refund.stone);
     assert.equal(validateGame(state), true);
   }
 });
@@ -226,13 +247,13 @@ test('partly full work credits only remaining capacity and starts the cooldown o
 test('a village with no buildings or supplies can earn the first producer through free focused work', () => {
   const state = createGame(NOW);
   empty(state);
-  for (const resource of [...Array(6).fill('wood'), ...Array(4).fill('stone')])
+  for (const resource of [...Array(18).fill('wood'), ...Array(15).fill('stone')])
     act(state, { type: 'collect', resource }, state.collectReadyAt);
-  assert.equal(state.resources.wood, 60);
-  assert.equal(state.resources.stone, 28);
+  assert.equal(state.resources.wood, 180);
+  assert.equal(state.resources.stone, 105);
   act(state, { type: 'build', building: 'lumber', plotId: 'p0' });
   assert.equal(state.resources.wood, 0);
-  assert.equal(state.resources.stone, 3);
+  assert.equal(state.resources.stone, 5);
   const before = state.updatedAt;
   advanceGame(state, before + 60_000);
   assert.equal(state.resources.wood, 0.6);

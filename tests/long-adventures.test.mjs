@@ -17,6 +17,8 @@ import {
   outingQuote,
 } from '../shared/adventures.mjs';
 
+import { fundStorage } from './economy-fixtures.mjs';
+
 const START = Date.UTC(2026, 9, 19, 12);
 const choice = (extra = {}) => ({
   kind: 'expedition',
@@ -124,7 +126,8 @@ test('long-journey XP and materials scale moderately with hours, difficulty and 
   const old = adventureQuote(state, choice(), { economyVersion: 2 });
   const current = adventureQuote(state, choice());
   assert.ok(current.reward.wood < old.reward.wood * (current.seconds / old.seconds));
-  assert.deepEqual(current.cost, old.cost);
+  assert.deepEqual(current.cost, { water: 83, feed: 111 });
+  assert.deepEqual(old.cost, { water: 18, feed: 23 });
   assert.equal(current.fatigue, old.fatigue);
 });
 
@@ -134,7 +137,7 @@ test('scouting discounts only departure water and feed, rounds once and remains 
   const base = adventureQuote(state, selection);
   state.wolves[3].equipment = 'scout_charm';
   const oneScout = adventureQuote(state, selection);
-  assert.deepEqual(oneScout.cost, { water: 20, feed: 25 });
+  assert.deepEqual(oneScout.cost, { water: 88, feed: 118 });
   assert.deepEqual(oneScout, { ...base, cost: oneScout.cost });
   for (const wolf of state.wolves) wolf.equipment = 'scout_charm';
   const three = adventureQuote(
@@ -149,8 +152,9 @@ test('scouting discounts only departure water and feed, rounds once and remains 
     state,
     choice({ plan: 'survey', difficulty: 'hard', wolfIds: state.wolves.map((w) => w.id) }),
   );
-  assert.deepEqual(three, five);
-  assert.deepEqual(three.cost, { water: 25, feed: 33 });
+  assert.deepEqual(three, { ...five, cost: three.cost });
+  assert.deepEqual(three.cost, { water: 203, feed: 271 });
+  assert.deepEqual(five.cost, { water: 261, feed: 348 });
   assert.equal(three.seconds, 21_600);
   assert.equal(three.xp, 540);
   assert.deepEqual(three.reward, { wood: 144, stone: 90, herbs: 27 });
@@ -178,18 +182,25 @@ test('representative legacy tier, plan and scout promises retain their exact his
     ...old,
     reward: { wood: 126, stone: 87, herbs: 24 },
   });
+  assert.deepEqual(adventureQuote(state, selection, { economyVersion: 3 }), {
+    ...old,
+    cost: { water: 30, feed: 40 },
+    seconds: 36_000,
+    xp: 450,
+    reward: { wood: 480, stone: 300, herbs: 90 },
+  });
 });
 
-test('new server departures always record version three and clients cannot choose a faster economy', () => {
-  for (const marker of [undefined, 1, 2, 3, null, '2', false]) {
+test('new server departures always record version four and clients cannot choose a faster economy', () => {
+  for (const marker of [undefined, 1, 2, 3, 4, null, '2', false]) {
     const state = createGame(START);
     const before = structuredClone(state);
     const selection = choice({ economyVersion: marker, seconds: 1 });
     depart(state, selection);
-    assert.equal(state.adventure.active.economyVersion, 3);
+    assert.equal(state.adventure.active.economyVersion, 4);
     assert.equal(state.adventure.active.endsAt - state.adventure.active.startedAt, 21_600_000);
-    assert.equal(state.resources.water, before.resources.water - 18);
-    assert.equal(state.resources.feed, before.resources.feed - 23);
+    assert.equal(state.resources.water, before.resources.water - 83);
+    assert.equal(state.resources.feed, before.resources.feed - 111);
     assert.equal(Object.hasOwn(state.adventure.active, 'seconds'), false);
     assert.equal(validateGame(state), true);
   }
@@ -211,7 +222,7 @@ test('a six-hour expedition awards nothing before arrival and credits its select
   assert.deepEqual(restored, state);
   advanceGame(restored, end);
   assert.equal(restored.adventure.active, null);
-  assert.equal(restored.adventure.history[0].economyVersion, 3);
+  assert.equal(restored.adventure.history[0].economyVersion, 4);
   assert.equal(restored.adventure.history[0].completedAt, end);
   assert.deepEqual(restored.adventure.history[0].reward, {
     water: 0,
@@ -238,10 +249,8 @@ test('a six-hour expedition awards nothing before arrival and credits its select
 test('a twelve-hour offline return completes on schedule while passive production retains its eight-hour ceiling', () => {
   const state = createGame(START);
   act(state, { type: 'build', building: 'healer', plotId: 'p0' });
-  act(state, { type: 'build', building: 'storage', plotId: 'p1' });
-  // Mature storage keeps the production ceiling observable instead of filling first.
-  state.buildings.find((building) => building.type === 'storage').level = 5;
-  state.capacity = 5000000;
+  // Paid mature storage keeps the production ceiling observable instead of filling first.
+  fundStorage(state, 5, 'p1');
   state.resources.herbs = 0;
   state.adventure.unlocked = REGIONS.map((region) => region.id);
   assert.equal(validateGame(state), true);
@@ -290,6 +299,7 @@ test('escorts to every discovered region, including the six-hour return home, us
     state.adventure.unlocked = REGIONS.map((entry) => entry.id);
     state.location = region.id === 'homeland' ? 'spring' : 'homeland';
     emptyMaterials(state);
+    state.resources.water = state.resources.feed = state.capacity;
     depart(state, choice({ kind: 'caravan', region: region.id }));
     const end = START + ADVENTURE_HOURS[region.id] * 3_600_000;
     assert.equal(state.adventure.active.endsAt, end);
@@ -302,8 +312,8 @@ test('escorts to every discovered region, including the six-hour return home, us
   }
 });
 
-test('legacy missing, version-one and version-two promises survive reload alongside new hour-long records', () => {
-  for (const marker of [undefined, 1, 2]) {
+test('legacy missing, version-one, version-two and version-three promises survive reload alongside new hour-long records', () => {
+  for (const marker of [undefined, 1, 2, 3]) {
     for (const kind of ['expedition', 'caravan']) {
       for (const plan of [undefined, ...ADVENTURE_PLANS]) {
         const state = createGame(START);
@@ -327,9 +337,10 @@ test('legacy missing, version-one and version-two promises survive reload alongs
         assert.equal(receipt.economyVersion, marker);
         assert.equal(Object.hasOwn(receipt, 'economyVersion'), marker !== undefined);
         assert.equal(validateGame(restored), true);
+        restored.resources.water = restored.resources.feed = restored.capacity;
         depart(restored);
         advanceGame(restored, restored.adventure.active.endsAt);
-        assert.equal(restored.adventure.history[0].economyVersion, 3);
+        assert.equal(restored.adventure.history[0].economyVersion, 4);
         assert.deepEqual(restored.adventure.history[1], receipt);
         assert.equal(validateGame(restored), true);
       }
@@ -359,8 +370,9 @@ test('legacy scouting still shortens old promises and changing equipment after a
 });
 
 test('new receipts record actual fractional/capped materials and respect the existing level-twenty limit', () => {
-  const state = createGame(START);
+  const state = fundStorage(createGame(START), 1);
   state.adventure.unlocked = REGIONS.map((region) => region.id);
+  state.resources.water = state.resources.feed = state.capacity;
   state.inventory.healer_satchel = 10_000;
   state.resources.wood = state.capacity - 0.25;
   state.resources.stone = state.capacity;
@@ -393,7 +405,7 @@ test('new receipts record actual fractional/capped materials and respect the exi
   assert.equal(validateGame(state), true);
 });
 
-test('strict validation rejects forged short/long version-three clocks and unknown economy markers', () => {
+test('strict validation rejects forged short/long version-four clocks and unknown economy markers', () => {
   const state = createGame(START);
   depart(state);
   for (const seconds of [60, 21_599, 21_601, 43_200]) {
@@ -402,7 +414,7 @@ test('strict validation rejects forged short/long version-three clocks and unkno
     assert.equal(validateGame(forged), false);
     assert.throws(() => migrateGame(forged), { code: 'INVALID_SAVE' });
   }
-  for (const marker of [0, 4, null, undefined, '3', false, {}]) {
+  for (const marker of [0, 5, null, undefined, '3', false, {}]) {
     const forged = structuredClone(state);
     forged.adventure.active.economyVersion = marker;
     assert.equal(validateGame(forged), false);

@@ -133,14 +133,14 @@ test('server production unlocks construction without navigating or clicking', as
   await page.clock.install({ time: new Date(START) });
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p1' }, START);
-  state.resources.wood = 69;
-  state.resources.stone = 30;
+  state.resources.wood = 219;
+  state.resources.stone = 120;
   await mockVillage(page, state);
   await page.goto('/#village');
   const quarry = page
     .locator('.buildings-grid')
     .getByRole('button', { name: 'Yer seç · Taş Ocağı', exact: true });
-  await quarry.click();
+  await expect(quarry).toBeDisabled();
   await page.locator('[data-plot="p0"]').click();
   const choice = page.locator('.placement-dialog [data-building-type="quarry"]');
   await expect(choice).toBeDisabled();

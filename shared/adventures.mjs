@@ -84,9 +84,9 @@ export function grantWolfXp(wolf, amount) {
   }
   if (wolf.level === 20) wolf.xp = Math.min(wolf.xp, 899);
 }
-/** New departures use fixed-hour version 3; persisted versions retain their promises. */
-export function adventureQuote(state, selection, { economyVersion = 3 } = {}) {
-  if (![1, 2, 3].includes(economyVersion)) fail('INVALID_EXPEDITION');
+/** New departures use version 4 supplies; persisted versions retain their promises. */
+export function adventureQuote(state, selection, { economyVersion = 4 } = {}) {
+  if (![1, 2, 3, 4].includes(economyVersion)) fail('INVALID_EXPEDITION');
   const { kind = 'expedition', region = 'spring', difficulty = 'easy', wolfIds = [] } = selection;
   // Missing plan is the pre-v2.6 contract; malformed explicit values must never become standard.
   const plan = Object.hasOwn(selection, 'plan') ? selection.plan : 'standard';
@@ -102,7 +102,7 @@ export function adventureQuote(state, selection, { economyVersion = 3 } = {}) {
   const rewardFactor =
     (plan === 'survey' ? 0.75 : plan === 'supply' ? 1.5 : 1) * (economyVersion === 2 ? 0.5 : 1);
   const xpFactor = plan === 'survey' ? 1.5 : plan === 'supply' ? 0.75 : 1;
-  const longJourney = economyVersion === 3;
+  const longJourney = economyVersion >= 3;
   const hours = ADVENTURE_HOURS[region];
   const difficultyFactor = [1, 1.5, 2][tier - 1];
   // Scouting reduces departure supplies only. Rewards remain independent of mutable
@@ -110,10 +110,28 @@ export function adventureQuote(state, selection, { economyVersion = 3 } = {}) {
   const costFactor = suppliesFactor * (longJourney ? factor : 1);
   return {
     plan,
-    cost: {
-      water: Math.ceil((10 + tier * 5 + route.rank * 3) * costFactor),
-      feed: Math.ceil((12 + tier * 7 + route.rank * 4) * costFactor),
-    },
+    cost:
+      economyVersion === 4
+        ? Object.fromEntries(
+            [
+              ['water', 12],
+              ['feed', 16],
+            ].map(([key, amount]) => [
+              key,
+              Math.ceil(
+                hours *
+                  amount *
+                  (1 + route.rank * 0.15) *
+                  difficultyFactor *
+                  costFactor *
+                  (1 + 0.2 * Math.max(0, wolfIds.length - 1)),
+              ),
+            ]),
+          )
+        : {
+            water: Math.ceil((10 + tier * 5 + route.rank * 3) * costFactor),
+            feed: Math.ceil((12 + tier * 7 + route.rank * 4) * costFactor),
+          },
     seconds: longJourney
       ? hours * 3600
       : Math.ceil(route.duration * tier * factor * suppliesFactor),
@@ -189,7 +207,7 @@ function start(state, action, now, kind) {
     region: action.region,
     difficulty: action.difficulty,
     plan: quote.plan,
-    economyVersion: 3,
+    economyVersion: 4,
     wolfIds: [...ids],
     startedAt: now,
     endsAt: now + quote.seconds * 1000,
@@ -283,7 +301,7 @@ export function validateAdventureState(state) {
         ...extra,
       ]) &&
       (!hasPlan || ADVENTURE_PLANS.includes(o.plan)) &&
-      (!hasEconomyVersion || [1, 2, 3].includes(o.economyVersion))
+      (!hasEconomyVersion || [1, 2, 3, 4].includes(o.economyVersion))
     );
   }
   function outing(o) {
@@ -295,7 +313,7 @@ export function validateAdventureState(state) {
       Number(o.id.slice(7)) <= a.sequence &&
       int(o.startedAt, 0, state.updatedAt) &&
       int(o.endsAt, o.startedAt + 1, 8_640_000_000_000_000) &&
-      (o.economyVersion === 3
+      (o.economyVersion >= 3
         ? o.endsAt - o.startedAt === ADVENTURE_HOURS[o.region] * 3_600_000
         : o.endsAt - o.startedAt <= (o.plan && o.plan !== 'standard' ? 563000 : 450000)) &&
       Array.isArray(o.wolfIds) &&

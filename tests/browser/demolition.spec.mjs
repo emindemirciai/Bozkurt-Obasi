@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
-import { signIn } from './sign-in.mjs';
+import { signIn, seedGame } from './sign-in.mjs';
+import { fundStorage, fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 19, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
@@ -13,6 +14,7 @@ const cancel = (page) => page.locator('#demolition-cancel');
 
 function buildVillage() {
   const state = createGame(START);
+  fillResources(state);
   applyAction(state, { type: 'build', building: 'well', plotId: 'p0' }, START);
   return state;
 }
@@ -64,6 +66,7 @@ test('real saved demolition asks for confirmation, refunds the upgraded selected
   page,
 }) => {
   await signIn(page);
+  await seedGame(page, (state) => fundStorage(state, 1, 'p34'));
   const actions = [];
   page.on('request', (request) => {
     if (request.url().endsWith('/api/action') && request.method() === 'POST')
@@ -80,12 +83,12 @@ test('real saved demolition asks for confirmation, refunds the upgraded selected
   await open(page).click();
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page)).toContainText(/(?:50%|%50)/);
-  await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/89[.,]5/);
-  await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/38[.,]5/);
+  await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/770/);
+  await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/420/);
   await expect(cancel(page)).toBeFocused();
   await dialog(page).screenshot({ path: 'artifacts/demolition-1440-v2.8.0.png' });
   expect(actions).toHaveLength(3);
-  await expect(page.locator('.empty-plot')).toHaveCount(34);
+  await expect(page.locator('.empty-plot')).toHaveCount(33);
   const removedResponse = page.waitForResponse('**/api/action');
   await confirm(page).click();
   const result = await removedResponse;
@@ -95,12 +98,14 @@ test('real saved demolition asks for confirmation, refunds the upgraded selected
   expect(actions.at(-1)).toEqual({
     type: 'demolishBuilding',
     id: 'building-quarry',
-    expected: { type: 'quarry', level: 2, x: 0, y: 0, builds: 2 },
+    expected: { type: 'quarry', level: 2, x: 0, y: 0, builds: 3 },
   });
-  expect(removed.state.buildings).toEqual([before.buildings[1]]);
-  expect(removed.state.resources.wood).toBe(before.resources.wood + 89.5);
+  expect(removed.state.buildings).toEqual(
+    before.buildings.filter((building) => building.id !== 'building-quarry'),
+  );
+  expect(removed.state.resources.wood).toBe(before.resources.wood + 770);
   expect(removed.state.resources.stone).toBeCloseTo(
-    before.resources.stone + ((removed.state.updatedAt - before.updatedAt) * 1.35) / 60000 + 38.5,
+    before.resources.stone + ((removed.state.updatedAt - before.updatedAt) * 1.35) / 60000 + 420,
     5,
   );
   await expect(dialog(page)).toHaveCount(0);
@@ -108,7 +113,7 @@ test('real saved demolition asks for confirmation, refunds the upgraded selected
   await expect(page.locator('[data-building="building-quarry-2"]')).toHaveCount(1);
   await page.reload();
   await expect(page.locator('[data-plot="p0"]')).toBeVisible();
-  await expect(page.locator('.empty-plot')).toHaveCount(35);
+  await expect(page.locator('.empty-plot')).toHaveCount(34);
   await expect(page.locator('[data-building="building-quarry-2"]')).toHaveCount(1);
   await buildAt(page, 'p0', 'well');
   await expect(page.locator('[data-plot="p0"]')).toHaveCount(0);
@@ -126,7 +131,7 @@ test('cancel, close, Escape and backdrop preserve all buildings and restore the 
     await open(page).click();
     await expect(dialog(page)).toBeVisible();
     await expect(cancel(page)).toBeFocused();
-    await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/22[.,]5/);
+    await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/80/);
     if (method === 'cancel') await cancel(page).click();
     if (method === 'close') await dialog(page).locator('.modal-close').click();
     if (method === 'escape') await page.keyboard.press('Escape');
@@ -139,13 +144,13 @@ test('cancel, close, Escape and backdrop preserve all buildings and restore the 
   }
 });
 
-test('polling updates storage safety in the open dialog while retaining the focused cancel button', async ({
+test('polling updates pending refunds in the open dialog while retaining the focused cancel button', async ({
   page,
 }) => {
   await signIn(page);
   const state = buildVillage();
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p1' }, START);
-  state.resources.wood = state.capacity - 22.505;
+  state.resources.wood = state.capacity - 80.005;
   state.resources.stone = 100;
   const actions = await mockVillage(page, state);
   await page.goto('/#village');
@@ -155,8 +160,8 @@ test('polling updates storage safety in the open dialog while retaining the focu
   await expect(cancel(page)).toBeFocused();
   const originalCancel = await cancel(page).elementHandle();
   await pollVillage(page);
-  await expect(confirm(page)).toBeDisabled();
-  await expect(dialog(page).locator('[data-demolition-reason]')).not.toBeEmpty();
+  await expect(confirm(page)).toBeEnabled();
+  await expect(dialog(page).locator('[data-demolition-pending]')).not.toHaveText('0 Odun · 0 Taş');
   await expect(cancel(page)).toBeFocused();
   expect(
     await originalCancel.evaluate(
@@ -178,9 +183,10 @@ for (const change of ['upgraded', 'rebuilt']) {
       await page.goto('/#village');
       await open(page).click();
       await expect(confirm(page)).toBeEnabled();
-      if (change === 'upgraded')
+      if (change === 'upgraded') {
+        fillResources(state);
         applyAction(state, { type: 'upgrade', id: 'building-well' }, START);
-      else {
+      } else {
         applyAction(
           state,
           {
@@ -229,7 +235,7 @@ test('the demolition confirmation remains legible at 320 and 390 pixels in TR/EN
         await expect(dialog(page)).toBeVisible();
         await expect(confirm(page)).toBeVisible();
         await expect(cancel(page)).toBeVisible();
-        await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/22[.,]5/);
+        await expect(dialog(page).locator('[data-demolition-refund]')).toContainText(/80/);
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
           width,
         );
@@ -287,6 +293,7 @@ test('a stale server response keeps confirmation open with an explanation and ne
   let posts = 0;
   await page.route('**/api/action', async (route) => {
     posts += 1;
+    fillResources(state);
     applyAction(state, { type: 'upgrade', id: 'building-well' }, START);
     await route.fulfill({ status: 409, ...json({ error: 'stale_revision', state, revision: 99 }) });
   });

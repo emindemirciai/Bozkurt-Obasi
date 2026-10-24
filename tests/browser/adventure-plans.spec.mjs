@@ -45,6 +45,7 @@ test('mission plans compare real consequences, preserve focus and submit the sel
 }) => {
   await signIn(page);
   const state = createGame(START);
+  state.resources.water = state.resources.feed = state.capacity;
   const actions = await mockJourney(page, state);
   await page.goto('/#world');
   const selection = {
@@ -67,7 +68,7 @@ test('mission plans compare real consequences, preserve focus and submit the sel
   await page.keyboard.press('ArrowRight');
   await expect(plan(page, 'survey')).toBeChecked();
   await expect(plan(page, 'survey')).toBeFocused();
-  await expect(page.locator('[data-adventure-cost]')).toContainText('23 ' + translations.tr.water);
+  await expect(page.locator('[data-adventure-cost]')).toContainText('104 ' + translations.tr.water);
   await expect(page.locator('.fatigue-note')).toContainText('7');
   await page.evaluate(() => {
     window.planRadio = document.querySelector('#adventure-plan-survey');

@@ -1,3 +1,4 @@
+import { previousSave } from './economy-fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -218,7 +219,7 @@ test('v1 and all valid additive v2 field combinations migrate without replacing 
   assert.equal(validateGame(migratedLegacy), true);
   for (const removeFirstWatch of [false, true]) {
     for (const removeCommands of [false, true]) {
-      const old = prepare();
+      const old = previousSave(prepare());
       if (removeFirstWatch) delete old.firstWatch;
       if (removeCommands) delete old.battle.commands;
       const before = structuredClone(old);
@@ -226,7 +227,7 @@ test('v1 and all valid additive v2 field combinations migrate without replacing 
       assert.deepEqual(old, before);
       assert.equal(validateGame(migrated), true);
       assert.deepEqual(migrated.battle, { ...before.battle, commands: [] });
-      const comparable = structuredClone(migrated);
+      const comparable = previousSave(migrated);
       if (removeFirstWatch) delete comparable.firstWatch;
       if (removeCommands) delete comparable.battle.commands;
       assert.deepEqual(comparable, before);

@@ -53,6 +53,9 @@ const t = (key) => translations[language][key] || key;
 function setScenario(value) {
   scenario = value;
   state = createGame(now - 48 * 60 * 60 * 1000);
+  // Fund fictional ready/ongoing examples; live starter supplies remain unchanged.
+  state.resources.water = state.capacity;
+  state.resources.feed = state.capacity;
   state.adventure.unlocked = ['homeland', 'spring', 'meadow'];
   state.inventory.leather_vest = 2;
   state.inventory.scout_charm = 1;

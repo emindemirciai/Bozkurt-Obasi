@@ -8,6 +8,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { createApp } from '../server/web/app.mjs';
 import { analyticsConfig } from '../server/web/analytics.mjs';
 import { createGame, applyAction, advanceGame, validateGame } from '../shared/game.mjs';
+import { fillResources, fundStorage, fundedGame, previousSave } from './economy-fixtures.mjs';
 import { recoveryPlan } from '../shared/recovery.mjs';
 import { adventureQuote } from '../shared/adventures.mjs';
 import {
@@ -50,12 +51,12 @@ async function fixture(t, options = {}) {
           : { body: typeof body === 'string' ? body : JSON.stringify(body) }),
       });
     },
-    async session(cookie) {
+    async session(cookie, initialize = createGame) {
       if (!cookie) {
         const token = randomBytes(32).toString('base64url');
         const sub = `api-test-${++accounts}`;
         const now = settings.clock();
-        const state = JSON.stringify(createGame(now));
+        const state = JSON.stringify(initialize(now));
         const database = new DatabaseSync(settings.dbPath);
         database
           .prepare(
@@ -199,9 +200,16 @@ test('Google account session persists across restart and remains isolated from o
   const changed = await action.json();
   assert.equal(changed.revision, 1);
   assert.notDeepEqual(changed.state, first.data.state);
-  assert.equal(changed.state.version, 2);
+  assert.equal(changed.state.version, 3);
   assert.deepEqual(changed.state.buildings, [
-    { id: 'building-quarry', type: 'quarry', level: 1, x: 5, y: 5 },
+    {
+      id: 'building-quarry',
+      type: 'quarry',
+      level: 1,
+      x: 5,
+      y: 5,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+    },
   ]);
 
   const otherState = await api.request('/api/state', { cookie: second.cookie });
@@ -280,9 +288,15 @@ test('a v1 account migrates once on read and retains its buildings and resources
   const migratedResponse = await api.request('/api/state', { cookie: session.cookie });
   assert.equal(migratedResponse.status, 200);
   const migrated = await migratedResponse.json();
-  assert.equal(migrated.state.version, 2);
+  assert.equal(migrated.state.version, 3);
   assert.equal(validateGame(migrated.state), true);
-  assert.deepEqual(migrated.state.buildings, legacy.buildings);
+  assert.deepEqual(
+    migrated.state.buildings,
+    legacy.buildings.map((b) => ({
+      ...b,
+      costBasis: { legacyLevels: b.level, constructionOrdinal: 1 },
+    })),
+  );
   assert.deepEqual(migrated.state.resources, legacy.resources);
   assert.equal(migrated.revision, 8);
   await api.restart();
@@ -464,7 +478,14 @@ async function herdAccount(api, { count = 20, pasture = true, resources = {} } =
   const state = structuredClone(session.data.state);
   state.herd = { count, hp: count * 10 - 60, maxHp: count * 10, panic: 35 };
   if (pasture)
-    state.buildings.push({ id: 'building-pasture', type: 'pasture', level: 1, x: 0, y: 0 });
+    state.buildings.push({
+      id: 'building-pasture',
+      type: 'pasture',
+      level: 1,
+      x: 0,
+      y: 0,
+      costBasis: { legacyLevels: 1, constructionOrdinal: 1 },
+    });
   Object.assign(state.resources, resources);
   assert.equal(validateGame(state), true);
   const token = session.cookie.slice('bozkurt_session='.length);
@@ -484,7 +505,7 @@ async function herdAccount(api, { count = 20, pasture = true, resources = {} } =
 
 test('herd replenishment spends exactly the selected price, preserves injuries, and survives restart', async (t) => {
   const api = await fixture(t);
-  const account = await herdAccount(api, { count: 19, resources: { water: 30, feed: 60 } });
+  const account = await herdAccount(api, { count: 19, resources: { water: 150, feed: 300 } });
   const other = await api.session();
   const response = await api.request('/api/action', {
     method: 'POST',
@@ -552,7 +573,7 @@ test('herd replenishment requires a pasture and enforces the saved herd capacity
 
 test('herd replenishment never partially spends when the second resource is insufficient', async (t) => {
   const api = await fixture(t);
-  const account = await herdAccount(api, { resources: { water: 100, feed: 23 } });
+  const account = await herdAccount(api, { resources: { water: 100, feed: 119.999 } });
   const response = await api.request('/api/action', {
     method: 'POST',
     cookie: account.cookie,
@@ -577,8 +598,8 @@ test('concurrent herd replenishment and stale replay cannot spend or replenish t
   assert.deepEqual(responses.map((response) => response.status).sort(), [200, 409]);
   const saved = await responses.find((response) => response.status === 200).json();
   assert.equal(saved.state.herd.count, 22);
-  assert.equal(saved.state.resources.water, account.state.resources.water - 12);
-  assert.equal(saved.state.resources.feed, account.state.resources.feed - 24);
+  assert.equal(saved.state.resources.water, account.state.resources.water - 60);
+  assert.equal(saved.state.resources.feed, account.state.resources.feed - 120);
   assert.equal(saved.revision, account.revision + 1);
   assert.deepEqual(await responses.find((response) => response.status === 409).json(), {
     error: 'stale_revision',
@@ -614,7 +635,7 @@ test('herd replenishment rejects missing and forged sessions without changing a 
 test('v2.4 upgrades a v2 account once without changing village, old quests or balances', async (t) => {
   const api = await fixture(t);
   const session = await api.session();
-  const previous = structuredClone(session.data.state);
+  const previous = previousSave(session.data.state);
   delete previous.firstWatch;
   previous.stats.gathers = 3;
   previous.quests.find((q) => q.id === 'gatherer').progress = 3;
@@ -627,7 +648,7 @@ test('v2.4 upgrades a v2 account once without changing village, old quests or ba
   const response = await api.request('/api/state', { cookie: session.cookie });
   assert.equal(response.status, 200);
   const migrated = await response.json();
-  const { firstWatch, ...preserved } = migrated.state;
+  const { firstWatch, ...preserved } = previousSave(migrated.state);
   assert.deepEqual(preserved, previous);
   assert.equal(firstWatch.cohort, 'returning');
   assert.equal(firstWatch.milestones.gather, previous.updatedAt);
@@ -825,7 +846,7 @@ test('battle order API rejects forged sessions, client effect overrides and inva
 test('v2.4 battle saves gain only command history, once, while malformed history is never silently reset', async (t) => {
   const api = await fixture(t);
   const player = await api.session();
-  const previous = structuredClone(player.data.state);
+  const previous = previousSave(player.data.state);
   delete previous.battle.commands;
   const database = new DatabaseSync(api.dbPath);
   database
@@ -835,7 +856,11 @@ test('v2.4 battle saves gain only command history, once, while malformed history
   const migratedResponse = await api.request('/api/state', { cookie: player.cookie });
   assert.equal(migratedResponse.status, 200);
   const migrated = await migratedResponse.json();
-  assert.deepEqual(migrated.state, { ...previous, battle: { ...previous.battle, commands: [] } });
+  assert.deepEqual(previousSave(migrated.state), {
+    ...previous,
+    battle: { ...previous.battle, commands: [] },
+  });
+  assert.deepEqual(migrated.state.refundReserve, { wood: 0, stone: 0 });
   assert.equal(migrated.revision, 8);
   await api.restart();
   assert.deepEqual(
@@ -880,10 +905,10 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
   assert.equal(response.status, 200);
   const started = await response.json();
   assert.equal(started.state.adventure.active.plan, 'survey');
-  assert.equal(started.state.adventure.active.economyVersion, 3);
+  assert.equal(started.state.adventure.active.economyVersion, 4);
   assert.equal(started.state.adventure.active.endsAt, now + 6 * 60 * 60_000);
-  assert.equal(started.state.resources.water, player.data.state.resources.water - 23);
-  assert.equal(started.state.resources.feed, player.data.state.resources.feed - 29);
+  assert.equal(started.state.resources.water, player.data.state.resources.water - 104);
+  assert.equal(started.state.resources.feed, player.data.state.resources.feed - 138);
 
   await api.restart();
   const resumed = await api.session(player.cookie);
@@ -928,7 +953,12 @@ test('survey expeditions retain their plan and selected-wolf rewards through API
 test('supply caravans persist their destination, capped receipt and fatigue once on arrival', async (t) => {
   let now = 100_000;
   const api = await fixture(t, { clock: () => now });
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => {
+    const state = createGame(now);
+    state.resources.water = 1000;
+    state.resources.feed = 1000;
+    return state;
+  });
   const send = async (action, revision) => {
     const response = await api.request('/api/action', {
       method: 'POST',
@@ -958,8 +988,8 @@ test('supply caravans persist their destination, capped receipt and fatigue once
   );
   assert.equal(started.state.adventure.active.plan, 'supply');
   assert.equal(started.state.adventure.active.endsAt, now + 6 * 60 * 60_000);
-  assert.equal(started.state.resources.water, unlocked.state.resources.water - 23);
-  assert.equal(started.state.resources.feed, unlocked.state.resources.feed - 29);
+  assert.equal(started.state.resources.water, unlocked.state.resources.water - 104);
+  assert.equal(started.state.resources.feed, unlocked.state.resources.feed - 138);
   assert.equal(started.state.location, 'homeland');
 
   await api.restart();
@@ -1044,8 +1074,8 @@ test('competing plans charge only once and stale commands cannot duplicate an ar
   const conflict = responses.find((response) => response.status === 409).data;
   assert.deepEqual(conflict, { error: 'stale_revision', ...accepted });
   assert.equal(accepted.revision, player.data.revision + 1);
-  assert.equal(accepted.state.resources.water, player.data.state.resources.water - 23);
-  assert.equal(accepted.state.resources.feed, player.data.state.resources.feed - 29);
+  assert.equal(accepted.state.resources.water, player.data.state.resources.water - 104);
+  assert.equal(accepted.state.resources.feed, player.data.state.resources.feed - 138);
   assert.equal(accepted.state.adventure.sequence, 1);
 
   now = accepted.state.adventure.active.endsAt;
@@ -1069,7 +1099,12 @@ test('competing plans charge only once and stale commands cannot duplicate an ar
 test('legacy outings without a plan retain their original timing and rewards through restart', async (t) => {
   let now = 100_000;
   const api = await fixture(t, { clock: () => now });
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => {
+    const state = createGame(now);
+    state.resources.water = 1000;
+    state.resources.feed = 1000;
+    return state;
+  });
   const legacy = structuredClone(player.data.state);
   const departLegacy = () => {
     applyAction(
@@ -1152,15 +1187,15 @@ for (const kind of ['healHerd', 'rest']) {
     const before = structuredClone(player.data.state);
     before.herd = { count: 20, hp: 140, maxHp: 200, panic: 35 };
     before.wolves[0].hp = 40;
-    before.resources.herbs = 1;
-    before.resources.water = 25;
-    before.resources.feed = 30;
+    before.resources.herbs = 15;
+    before.resources.water = 100;
+    before.resources.feed = 125;
     // A saved completed encounter can precede preparation for the next battle.
     before.firstWatch.milestones.battle = before.updatedAt;
     await saveAccountState(api, player, before);
     const quote = recoveryPlan(before, kind);
     assert.equal(quote.ready, true);
-    assert.deepEqual(quote.cost, kind === 'healHerd' ? { herbs: 1 } : { water: 25, feed: 30 });
+    assert.deepEqual(quote.cost, kind === 'healHerd' ? { herbs: 15 } : { water: 100, feed: 125 });
     assert.equal(quote.herd.after, kind === 'healHerd' ? 200 : 165);
     assert.equal(quote.herd.panicAfter, kind === 'healHerd' ? 10 : 5);
     const body = { action: { type: kind }, revision: player.data.revision };
@@ -1292,7 +1327,7 @@ test('herd treatment remains available during either kind of saved journey', asy
     assert.equal(response.status, 200);
     const saved = await response.json();
     assert.deepEqual(saved.state.herd, { ...before.herd, hp: before.herd.maxHp, panic: 0 });
-    assert.equal(saved.state.resources.herbs, before.resources.herbs - 1);
+    assert.equal(saved.state.resources.herbs, before.resources.herbs - 15);
     assert.deepEqual(saved.state.wolves, before.wolves);
     assert.deepEqual(saved.state.journey, before.journey);
     assert.deepEqual(saved.state.adventure, before.adventure);
@@ -1301,7 +1336,7 @@ test('herd treatment remains available during either kind of saved journey', asy
 
 test('demolition refunds half of construction and upgrades for the selected copy and persists the freed plot', async (t) => {
   const api = await fixture(t);
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => fundStorage(createGame(now), 1, 'p34'));
   let current = player.data;
   const send = async (action) => {
     const response = await api.request('/api/action', {
@@ -1320,12 +1355,15 @@ test('demolition refunds half of construction and upgrades for the selected copy
   const before = structuredClone(current.state);
   const expected = demolitionSnapshot(before, 'building-quarry');
   await send({ type: 'demolishBuilding', id: 'building-quarry', expected });
-  assert.deepEqual(current.state.buildings, [before.buildings[1]]);
-  // Quarry investment: 70 + ceil(70*1.55) wood; 30 + ceil(30*1.55) stone.
+  assert.deepEqual(
+    current.state.buildings,
+    before.buildings.filter((b) => b.id !== 'building-quarry'),
+  );
+  // First quarry: 220/120 construction plus 1320/720 paid upgrade.
   assert.deepEqual(current.state.resources, {
     ...before.resources,
-    wood: before.resources.wood + 89.5,
-    stone: before.resources.stone + 38.5,
+    wood: before.resources.wood + 770,
+    stone: before.resources.stone + 420,
   });
   assert.equal(current.state.stats.builds, before.stats.builds);
   assert.equal(current.state.capacity, before.capacity);
@@ -1337,6 +1375,7 @@ test('demolition refunds half of construction and upgrades for the selected copy
   assert.equal(restored.data.revision, current.revision);
   await send({ type: 'build', building: 'well', plotId: 'p0' });
   assert.deepEqual(current.state.buildings.at(-1), {
+    costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
     id: 'building-well',
     type: 'well',
     level: 1,
@@ -1378,8 +1417,8 @@ test('concurrent demolition pays once, stays isolated, and old confirmation cann
     error: 'stale_revision',
     ...removed,
   });
-  assert.equal(removed.state.resources.wood, built.state.resources.wood + 35);
-  assert.equal(removed.state.resources.stone, built.state.resources.stone + 15);
+  assert.equal(removed.state.resources.wood, built.state.resources.wood + 110);
+  assert.equal(removed.state.resources.stone, built.state.resources.stone + 60);
   assert.equal(removed.state.buildings.length, 0);
   const rebuilt = await send(removed.revision, { type: 'build', building: 'quarry', plotId: 'p0' });
   assert.equal(rebuilt.status, 200);
@@ -1436,7 +1475,7 @@ test('demolition rejects forged refunds and incomplete or changed confirmations 
 
 test('storage demolition checks every resource against the reduced capacity and credits the complete refund once space exists', async (t) => {
   const api = await fixture(t);
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => fillResources(createGame(now)));
   const response = await api.request('/api/action', {
     method: 'POST',
     cookie: player.cookie,
@@ -1475,8 +1514,8 @@ test('storage demolition checks every resource against the reduced capacity and 
   const removed = await accepted.json();
   assert.equal(removed.state.capacity, 1000);
   assert.equal(removed.state.resources.water, 1000);
-  assert.equal(removed.state.resources.wood, crowded.resources.wood + 40);
-  assert.equal(removed.state.resources.stone, crowded.resources.stone + 27.5);
+  assert.equal(removed.state.resources.wood, crowded.resources.wood + 450);
+  assert.equal(removed.state.resources.stone, crowded.resources.stone + 375);
   assert.equal(validateGame(removed.state), true);
   await api.restart();
   assert.deepEqual((await api.session(player.cookie)).data.state, removed.state);
@@ -1593,7 +1632,13 @@ test('manual collection awards the slower fixed bundle, persists its 90-second c
 test('slower passive production remains authoritative and client economy overrides cannot inflate a new expedition reward', async (t) => {
   let now = 100_000;
   const api = await fixture(t, { clock: () => now });
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => {
+    const state = fundStorage(createGame(now), 1, 'p34');
+    state.resources.water = 1000;
+    state.resources.feed = 1000;
+    state.resources.herbs = 80;
+    return state;
+  });
   let current = player.data;
   const send = async (action) => {
     const response = await api.request('/api/action', {
@@ -1627,7 +1672,7 @@ test('slower passive production remains authoritative and client economy overrid
     economyVersion: 1,
     reward: { wood: 999999, stone: 999999, herbs: 999999 },
   });
-  assert.equal(started.state.adventure.active.economyVersion, 3);
+  assert.equal(started.state.adventure.active.economyVersion, 4);
   assert.equal(started.state.adventure.active.endsAt, now + 6 * 60 * 60_000);
   now = started.state.adventure.active.endsAt;
   const arrived = await (await api.request('/api/state', { cookie: player.cookie })).json();
@@ -1638,7 +1683,7 @@ test('slower passive production remains authoritative and client economy overrid
     stone: 60,
     herbs: 18,
   });
-  assert.equal(arrived.state.adventure.history[0].economyVersion, 3);
+  assert.equal(arrived.state.adventure.history[0].economyVersion, 4);
   assert.equal(arrived.state.adventure.history[0].xp, 180);
   assert.equal(arrived.state.inventory.leather_vest, 1);
   await api.restart();
@@ -1650,7 +1695,7 @@ for (const kind of ['expedition', 'caravan']) {
     const startedAt = 100_000;
     let now = startedAt;
     const api = await fixture(t, { clock: () => now });
-    const player = await api.session();
+    const player = await api.session(undefined, (now) => fillResources(createGame(now)));
     const other = await api.session();
     const initial = structuredClone(player.data.state);
     initial.adventure.unlocked = ['homeland', 'spring', 'meadow', 'highland', 'ruins'];
@@ -1679,11 +1724,11 @@ for (const kind of ['expedition', 'caravan']) {
     assert.equal(departure.status, 200);
     const started = await departure.json();
     const endsAt = startedAt + 12 * 60 * 60_000;
-    assert.equal(started.state.adventure.active.economyVersion, 3);
+    assert.equal(started.state.adventure.active.economyVersion, 4);
     assert.equal(started.state.adventure.active.endsAt, endsAt);
     assert.equal(started.state.location, 'homeland');
-    assert.equal(started.state.resources.water, initial.resources.water - 37);
-    assert.equal(started.state.resources.feed, initial.resources.feed - 49);
+    assert.equal(started.state.resources.water, initial.resources.water - 646);
+    assert.equal(started.state.resources.feed, initial.resources.feed - 861);
     const expectedBeforeArrival = structuredClone(started.state);
 
     now += 6 * 60 * 60_000;
@@ -1713,7 +1758,7 @@ for (const kind of ['expedition', 'caravan']) {
       herbs: 72,
     });
     assert.equal(completed.state.adventure.history[0].xp, 720);
-    assert.equal(completed.state.adventure.history[0].economyVersion, 3);
+    assert.equal(completed.state.adventure.history[0].economyVersion, 4);
     assert.equal(completed.state.adventure.history[0].completedAt, endsAt);
     assert.equal(completed.state.inventory.healer_satchel, 1);
     assert.equal(completed.state.location, kind === 'caravan' ? 'ruins' : 'homeland');
@@ -1745,10 +1790,10 @@ for (const kind of ['expedition', 'caravan']) {
 }
 
 for (const marker of [undefined, 1, 2]) {
-  test(`persisted ${marker ?? 'unmarked'} short journeys retain their promise through restart before the next departure adopts v3`, async (t) => {
+  test(`persisted ${marker ?? 'unmarked'} short journeys retain their promise through restart before the next departure adopts v4`, async (t) => {
     let now = 100_000;
     const api = await fixture(t, { clock: () => now });
-    const player = await api.session();
+    const player = await api.session(undefined, (now) => fillResources(createGame(now)));
     const state = structuredClone(player.data.state);
     const choice = {
       type: 'expedition',
@@ -1785,7 +1830,7 @@ for (const marker of [undefined, 1, 2]) {
     });
     assert.equal(next.status, 200);
     const nextState = (await next.json()).state;
-    assert.equal(nextState.adventure.active.economyVersion, 3);
+    assert.equal(nextState.adventure.active.economyVersion, 4);
     assert.equal(nextState.adventure.active.endsAt - now, 6 * 60 * 60_000);
     assert.deepEqual(nextState.adventure.history[0], receipt);
   });
@@ -1793,10 +1838,10 @@ for (const marker of [undefined, 1, 2]) {
 
 test('four purchased corner towers persist while invalid placements and moves fail without charges or revision changes', async (t) => {
   const api = await fixture(t);
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => fundStorage(createGame(now), 1, 'p34'));
   const other = await api.session();
   let current = player.data;
-  assert.equal(current.state.buildings.length, 0);
+  assert.equal(current.state.buildings.filter((b) => b.type === 'watchtower').length, 0);
   async function reject(action, code) {
     const before = structuredClone({ state: current.state, revision: current.revision });
     const response = await api.request('/api/action', {
@@ -1826,11 +1871,11 @@ test('four purchased corner towers persist while invalid placements and moves fa
     assert.equal(response.status, 200);
     current = await response.json();
   }
-  assert.equal(current.state.buildings.length, 4);
-  assert.equal(current.state.resources.wood, 50);
-  assert.equal(current.state.resources.stone, 70);
+  assert.equal(current.state.buildings.filter((b) => b.type === 'watchtower').length, 4);
+  assert.equal(current.state.resources.wood, 4500);
+  assert.equal(current.state.resources.stone, 5600);
   assert.deepEqual(
-    current.state.buildings.map(({ x, y }) => [x, y]),
+    current.state.buildings.filter((b) => b.type === 'watchtower').map(({ x, y }) => [x, y]),
     [
       [6, 0],
       [6, 1],
@@ -1852,7 +1897,7 @@ test('four purchased corner towers persist while invalid placements and moves fa
 
 test('corner towers upgrade and demolish with exact half refunds, block replay, and retain reusable dedicated slots', async (t) => {
   const api = await fixture(t);
-  const player = await api.session();
+  const player = await api.session(undefined, (now) => fundStorage(createGame(now), 1, 'p34'));
   let current = player.data;
   async function action(value) {
     const response = await api.request('/api/action', {
@@ -1866,8 +1911,17 @@ test('corner towers upgrade and demolish with exact half refunds, block replay, 
   await action({ type: 'build', building: 'watchtower', plotId: 't2' });
   await action({ type: 'upgrade', id: 'building-watchtower' });
   await action({ type: 'build', building: 'watchtower', plotId: 't1' });
-  const tower = structuredClone(current.state.buildings[0]);
-  assert.deepEqual(tower, { id: 'building-watchtower', type: 'watchtower', level: 2, x: 6, y: 2 });
+  const tower = structuredClone(
+    current.state.buildings.find((b) => b.id === 'building-watchtower'),
+  );
+  assert.deepEqual(tower, {
+    id: 'building-watchtower',
+    type: 'watchtower',
+    level: 2,
+    x: 6,
+    y: 2,
+    costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+  });
   const before = { ...current.state.resources };
   const remove = {
     type: 'demolishBuilding',
@@ -1876,9 +1930,9 @@ test('corner towers upgrade and demolish with exact half refunds, block replay, 
   };
   const revision = current.revision;
   await action(remove);
-  assert.equal(current.state.resources.wood, before.wood + 127.5);
-  assert.equal(current.state.resources.stone, before.stone + 89.5);
-  assert.equal(current.state.buildings.length, 1);
+  assert.equal(current.state.resources.wood, before.wood + 1750);
+  assert.equal(current.state.resources.stone, before.stone + 1400);
+  assert.equal(current.state.buildings.length, 2);
   const replay = await api.request('/api/action', {
     method: 'POST',
     cookie: player.cookie,
@@ -1890,7 +1944,11 @@ test('corner towers upgrade and demolish with exact half refunds, block replay, 
     current,
   );
   await action({ type: 'build', building: 'watchtower', plotId: 't2' });
-  assert.deepEqual(current.state.buildings.at(-1), { ...tower, level: 1 });
+  assert.deepEqual(current.state.buildings.at(-1), {
+    ...tower,
+    level: 1,
+    costBasis: { legacyLevels: 0, constructionOrdinal: 2 },
+  });
   await api.restart();
   assert.deepEqual((await api.session(player.cookie)).data.state, current.state);
 });
@@ -1899,15 +1957,25 @@ test('paid legacy tower migration persists once per account and remains stable a
   const api = await fixture(t);
   const player = await api.session();
   const other = await api.session();
-  const legacy = structuredClone(player.data.state);
-  applyAction(legacy, { type: 'build', building: 'quarry', plotId: 'p0' }, legacy.updatedAt);
-  applyAction(legacy, { type: 'build', building: 'watchtower', plotId: 't3' }, legacy.updatedAt);
-  applyAction(legacy, { type: 'upgrade', id: 'building-watchtower' }, legacy.updatedAt);
+  const legacy = previousSave(player.data.state);
+  legacy.buildings = [
+    { id: 'building-quarry', type: 'quarry', level: 1, x: 0, y: 0 },
+    { id: 'building-watchtower', type: 'watchtower', level: 2, x: 6, y: 3 },
+  ];
+  legacy.resources.wood = 125;
+  legacy.resources.stone = 141;
+  legacy.stats.builds = 2;
+  legacy.quests.find((q) => q.id === 'first_build').progress = 1;
   const tower = legacy.buildings.find((building) => building.type === 'watchtower');
   Object.assign(tower, { x: 5, y: 5 });
   assert.equal(validateGame(legacy), false);
-  await saveAccountState(api, player, legacy, { allowLegacyTowerPlots: true });
-  const expected = structuredClone(legacy);
+  await saveAccountState(api, player, legacy, {
+    allowLegacyTowerPlots: true,
+    allowLegacyVersion: true,
+  });
+  const expected = { ...structuredClone(legacy), version: 3, refundReserve: { wood: 0, stone: 0 } };
+  for (const b of expected.buildings)
+    b.costBasis = { legacyLevels: b.level, constructionOrdinal: 1 };
   Object.assign(
     expected.buildings.find((building) => building.type === 'watchtower'),
     { x: 6, y: 0 },
@@ -1938,22 +2006,27 @@ test('legacy storage expands once through restart while balances, running journe
   const api = await fixture(t);
   const player = await api.session();
   const other = await api.session();
-  const legacy = structuredClone(player.data.state);
-  applyAction(legacy, { type: 'build', building: 'storage', plotId: 'p0' }, legacy.updatedAt);
-  while (legacy.buildings[0].level < 5) {
-    for (const key of Object.keys(legacy.resources)) legacy.resources[key] = legacy.capacity;
-    applyAction(legacy, { type: 'upgrade', id: 'building-storage' }, legacy.updatedAt);
-  }
+  let legacy = fundStorage(structuredClone(player.data.state), 5, 'p0');
   applyAction(
     legacy,
     { type: 'expedition', region: 'spring', difficulty: 'easy', wolfIds: ['wolf-scout'] },
     legacy.updatedAt,
   );
+  legacy = previousSave(legacy);
   legacy.capacity = 1750;
   for (const key of Object.keys(legacy.resources)) legacy.resources[key] = legacy.capacity - 0.125;
   legacy.collectReadyAt = legacy.updatedAt + 20_000;
-  await saveAccountState(api, player, legacy, { allowLegacyCapacity: true });
-  const expected = { ...structuredClone(legacy), capacity: 5000000 };
+  await saveAccountState(api, player, legacy, {
+    allowLegacyCapacity: true,
+    allowLegacyVersion: true,
+  });
+  const expected = {
+    ...structuredClone(legacy),
+    version: 3,
+    refundReserve: { wood: 0, stone: 0 },
+    capacity: 5000000,
+  };
+  expected.buildings[0].costBasis = { legacyLevels: 5, constructionOrdinal: 1 };
   await api.restart();
   const restored = await api.session(player.cookie);
   assert.deepEqual(restored.data.state, expected);
@@ -2050,4 +2123,96 @@ test('invalid and fully stocked work does not change the persisted revision, res
   assert.equal(collected.state.resources.wood, full.capacity);
   assert.equal(collected.state.stats.gathers, 1);
   assert.equal(collected.state.collectReadyAt, full.updatedAt + 90_000);
+});
+
+test('historical storage investment survives migration, a new upgrade, demolition and partial refund claims across restart', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  const other = await api.session();
+  const legacy = previousSave(fundStorage(createGame(100_000), 2, 'p0'));
+  await saveAccountState(api, player, legacy, { allowLegacyVersion: true });
+  let current = (await api.session(player.cookie)).data;
+  assert.equal(current.state.version, 3);
+  assert.deepEqual(current.state.buildings[0].costBasis, {
+    legacyLevels: 2,
+    constructionOrdinal: 1,
+  });
+  const send = async (action, revision = current.revision) => {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision },
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const upgraded = await send({ type: 'upgrade', id: 'building-storage' });
+  assert.equal(upgraded.status, 200);
+  current = upgraded.data;
+  assert.equal(current.state.resources.wood, 10000);
+  assert.equal(current.state.resources.stone, 20000);
+  // Simulate supplies already used by the saved village; never overfill storage.
+  for (const key of Object.keys(current.state.resources)) current.state.resources[key] = 0;
+  await saveAccountState(api, player, current.state);
+  const removed = await send({
+    type: 'demolishBuilding',
+    id: 'building-storage',
+    expected: demolitionSnapshot(current.state, 'building-storage'),
+  });
+  assert.equal(removed.status, 200);
+  current = removed.data;
+  // Historical L1+L2 (80+124 / 55+86), plus the new 40000/30000 upgrade, halved.
+  assert.deepEqual(current.state.resources, {
+    water: 0,
+    feed: 0,
+    herbs: 0,
+    wood: 1000,
+    stone: 1000,
+  });
+  assert.deepEqual(current.state.refundReserve, { wood: 19102, stone: 14070.5 });
+  assert.equal(current.state.resources.wood + current.state.refundReserve.wood, 20102);
+  assert.equal(current.state.resources.stone + current.state.refundReserve.stone, 15070.5);
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data, { ...current, mode: 'online' });
+  const full = await send({ type: 'claimRefund' });
+  assert.equal(full.status, 400);
+  assert.equal(full.data.error, 'REFUND_STORAGE_FULL');
+  const malformed = await send({ type: 'claimRefund', amount: 999999 });
+  assert.equal(malformed.status, 400);
+  assert.equal(malformed.data.error, 'INVALID_REFUND');
+  assert.deepEqual((await api.session(player.cookie)).data.state, current.state);
+  current.state.resources.wood = 750.25;
+  current.state.resources.stone = 800;
+  await saveAccountState(api, player, current.state);
+  const race = await Promise.all([send({ type: 'claimRefund' }), send({ type: 'claimRefund' })]);
+  assert.deepEqual(race.map((r) => r.status).sort(), [200, 409]);
+  const claimed = race.find((r) => r.status === 200).data;
+  assert.equal(claimed.state.resources.wood, 1000);
+  assert.equal(claimed.state.resources.stone, 1000);
+  assert.deepEqual(claimed.state.refundReserve, { wood: 18852.25, stone: 13870.5 });
+  assert.deepEqual(race.find((r) => r.status === 409).data, {
+    error: 'stale_revision',
+    ...claimed,
+  });
+  await api.restart();
+  assert.deepEqual((await api.session(player.cookie)).data.state, claimed.state);
+  assert.deepEqual((await api.session(other.cookie)).data.state, other.data.state);
+});
+
+test('new accounts cannot buy expensive storage or high ranks with starter supplies and rejected quotes never mutate progress', async (t) => {
+  const api = await fixture(t);
+  const player = await api.session();
+  for (const action of [
+    { type: 'build', building: 'storage', plotId: 'p0', cost: { wood: 0, stone: 0 } },
+    { type: 'train', id: 'wolf-alpha', path: 'leader', cost: { herbs: 0, feed: 0 } },
+    { type: 'upgradeWall', cost: { wood: 0, stone: 0 } },
+  ]) {
+    const response = await api.request('/api/action', {
+      method: 'POST',
+      cookie: player.cookie,
+      body: { action, revision: player.data.revision },
+    });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, 'INSUFFICIENT_RESOURCES');
+    assert.deepEqual((await api.session(player.cookie)).data, player.data);
+  }
 });

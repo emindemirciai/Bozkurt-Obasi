@@ -8,7 +8,8 @@ import {
   advanceGame,
   applyAction,
 } from '../../shared/game.mjs';
-import { signIn } from './sign-in.mjs';
+import { signIn, seedGame } from './sign-in.mjs';
+import { fundStorage, fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 9, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
@@ -50,6 +51,7 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
     if (new URL(request.url()).pathname === '/api/action') actions.push(request.postDataJSON());
   });
   await signIn(page);
+  await seedGame(page, (state) => fundStorage(state, 1));
   const now = new Date();
   await page.clock.install({ time: new Date(now.getTime() - 1000) });
   await page.clock.pauseAt(now);
@@ -65,7 +67,7 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   ).toEqual(BUILDINGS.map((building) => building.id));
   expect(session.mode).toBe('online');
   expect(Number.isSafeInteger(session.revision)).toBe(true);
-  expect(session.state.stats.builds).toBe(0);
+  expect(session.state.stats.builds).toBe(1);
   const before = await page.locator('[data-economy-stock]').allTextContents();
   const buildingCount = await page.locator('.map-chip').textContent();
   await choice.selectOption('healer');
@@ -91,21 +93,28 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
     { action: { type: 'build', building: 'quarry', plotId: 'p0' }, revision: session.revision },
   ]);
   expect(built.state.buildings.filter((building) => building.type === 'quarry')).toEqual([
-    { id: 'building-quarry', type: 'quarry', level: 1, x: 0, y: 0 },
+    {
+      id: 'building-quarry',
+      type: 'quarry',
+      level: 1,
+      x: 0,
+      y: 0,
+      costBasis: { legacyLevels: 0, constructionOrdinal: 1 },
+    },
   ]);
-  expect(built.state.stats.builds).toBe(1);
+  expect(built.state.stats.builds).toBe(2);
   expect(built.state.resources.wood).toBeCloseTo(
     session.state.resources.wood +
       ((built.state.updatedAt - session.state.updatedAt) * 0) / 60_000 -
-      70,
+      220,
     6,
   );
-  expect(built.state.resources.stone).toBe(session.state.resources.stone - 30);
+  expect(built.state.resources.stone).toBe(session.state.resources.stone - 120);
   await expect(choice).toHaveValue('quarry');
-  await expect(page.locator('.map-chip')).toHaveText('1 yapı');
+  await expect(page.locator('.map-chip')).toHaveText('2 yapı');
   await expect(page.locator('[data-economy-plan-body] h3')).toHaveText('Taş Ocağı · Seviye 2');
-  await expect(execute).toContainText('109 Odun');
-  await expect(execute).toContainText('47 Taş');
+  await expect(execute).toContainText('1.320 Odun');
+  await expect(execute).toContainText('720 Taş');
   await expect(execute).toBeEnabled();
   const upgradeResponse = page.waitForResponse('**/api/action');
   await execute.click();
@@ -120,13 +129,13 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   expect(upgraded.state.resources.wood).toBeCloseTo(
     built.state.resources.wood +
       ((upgraded.state.updatedAt - built.state.updatedAt) * 0) / 60_000 -
-      109,
+      1320,
     6,
   );
   expect(upgraded.state.resources.stone).toBeCloseTo(
     built.state.resources.stone +
       ((upgraded.state.updatedAt - built.state.updatedAt) * 0.45) / 60_000 -
-      47,
+      720,
     6,
   );
   await expect(execute).toBeEnabled();
@@ -144,7 +153,7 @@ test('choosing a plan is free and explicit construction and upgrades persist thr
   const saved = await savedResponse.json();
   expect(saved.state.buildings.filter((building) => building.type === 'quarry')).toHaveLength(1);
   expect(saved.state.buildings.find((building) => building.type === 'quarry').level).toBe(2);
-  expect(saved.state.stats.builds).toBe(1);
+  expect(saved.state.stats.builds).toBe(2);
   expect(saved.revision).toBeGreaterThanOrEqual(upgraded.revision);
   expect(errors).toEqual([]);
 });
@@ -159,15 +168,15 @@ test('server production counts down and unlocks a focused plan without replacing
   await page.clock.pauseAt(new Date(START));
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'lumber', plotId: 'p1' }, START);
-  state.resources.wood = 69;
-  state.resources.stone = 30;
+  state.resources.wood = 219;
+  state.resources.stone = 120;
   state.resources.herbs = state.capacity;
   const actions = await mockVillage(page, state);
   await page.goto('/#village');
   const choice = page.locator('#construction-plan');
   const execute = page.locator('#execute-construction-plan');
   const status = page.locator('[data-economy-plan-status]');
-  await expect(resource(page, 'wood').locator('[data-economy-stock]')).toHaveText('69 / 1.000');
+  await expect(resource(page, 'wood').locator('[data-economy-stock]')).toHaveText('219 / 1.000');
   await expect(resource(page, 'wood').locator('[data-economy-rate]')).toContainText('+0,6');
   await expect(resource(page, 'stone').locator('[data-economy-fill-status]')).toContainText(
     'Üretim yok',

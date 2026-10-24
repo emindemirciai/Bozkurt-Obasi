@@ -3,11 +3,16 @@ import assert from 'node:assert/strict';
 import { createGame, applyAction, advanceGame, TACTICS, validateGame } from '../shared/game.mjs';
 import { firstSteps } from '../web/onboarding.mjs';
 import { establishedGame } from './established-game.mjs';
+import { fillResources } from './economy-fixtures.mjs';
 
 const START = 1_000_000;
 const act = (state, action) => applyAction(state, action, state.updatedAt);
 const step = (state, id) => firstSteps(state).steps.find((entry) => entry.id === id);
-const train = (state) => act(state, { type: 'train', id: 'wolf-alpha', path: 'guardian' });
+const train = (state) => {
+  // These guide regressions start each rank with earned supplies available.
+  fillResources(state);
+  act(state, { type: 'train', id: 'wolf-alpha', path: 'guardian' });
+};
 
 function preparedVillage() {
   const state = createGame(START);
@@ -53,8 +58,10 @@ test('guide follows accepted actions, requires claiming the reward and preserves
 
 test('migrated saves recognize out-of-order actions and any new structure', () => {
   const state = establishedGame(START);
-  act(state, { type: 'upgrade', id: 'building-lumber' });
+  fillResources(state);
+  act(state, { type: 'upgrade', id: 'building-well' });
   assert.equal(step(state, 'build').complete, false);
+  fillResources(state);
   act(state, { type: 'build', building: 'healer', plotId: 'p35' });
   train(state);
   train(state);

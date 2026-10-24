@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createGame, applyAction, validateGame, migrateGame } from '../shared/game.mjs';
 import { createGame as createLegacyGame } from '../shared/legacy-v1.mjs';
 import { establishedJourney } from './established-game.mjs';
+import { fillResources } from './economy-fixtures.mjs';
 import {
   HERD_LIMIT,
   REPLENISH_BATCH_LIMIT,
@@ -15,6 +16,7 @@ const START = 1_000_000;
 function damagedHerd(count = 18) {
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'pasture', plotId: 'p0' }, START);
+  fillResources(state);
   state.herd = { count, hp: count * 10 - 35, maxHp: count * 10, panic: 41 };
   return state;
 }
@@ -27,8 +29,8 @@ function rejectWithoutChanges(state, amount, reason) {
 
 test('herd recovery planning is pure, exposes exact shortages and keeps returned costs isolated', () => {
   const state = damagedHerd();
-  state.resources.water = 5.5;
-  state.resources.feed = 10;
+  state.resources.water = 29.5;
+  state.resources.feed = 58;
   const before = structuredClone(state);
   const plan = herdRecoveryPlan(state);
   assert.deepEqual(plan, {
@@ -36,7 +38,7 @@ test('herd recovery planning is pure, exposes exact shortages and keeps returned
     maxCount: 24,
     missing: 6,
     maxAmount: 5,
-    cost: { water: 6, feed: 12 },
+    cost: { water: 30, feed: 60 },
     shortages: [
       { resource: 'water', amount: 0.5 },
       { resource: 'feed', amount: 2 },
@@ -46,7 +48,7 @@ test('herd recovery planning is pure, exposes exact shortages and keeps returned
   });
   assert.deepEqual(state, before);
   plan.cost.water = 999;
-  assert.equal(herdRecoveryPlan(state).cost.water, 6);
+  assert.equal(herdRecoveryPlan(state).cost.water, 30);
   assert.equal(Object.isFrozen(HERD_REPLENISH_COST), true);
   assert.equal(HERD_LIMIT, 24);
   assert.equal(REPLENISH_BATCH_LIMIT, 5);
@@ -60,8 +62,8 @@ test('a batch charges once and adds healthy animals while preserving old wounds,
   assert.equal(herdRecoveryPlan(state, 5).ready, true);
   assert.equal(replenishHerd(state, 5), state);
   const expected = structuredClone(before);
-  expected.resources.water -= 30;
-  expected.resources.feed -= 60;
+  expected.resources.water -= 150;
+  expected.resources.feed -= 300;
   expected.herd.count = 23;
   expected.herd.maxHp = 230;
   expected.herd.hp += 50;
@@ -132,10 +134,10 @@ test('active battles, expeditions, escorts and migrated journeys prevent repleni
 
 test('exact resource balances work and a shortage never deducts the other resource', () => {
   const state = damagedHerd();
-  state.resources.water = 12;
-  state.resources.feed = 23.999;
+  state.resources.water = 60;
+  state.resources.feed = 119.999;
   rejectWithoutChanges(state, 2, 'INSUFFICIENT_RESOURCES');
-  state.resources.feed = 24;
+  state.resources.feed = 120;
   replenishHerd(state, 2);
   assert.equal(state.resources.water, 0);
   assert.equal(state.resources.feed, 0);
@@ -183,6 +185,7 @@ test('the game command records recovery without new save fields and works for mi
   const stats = structuredClone(state.stats);
   const quests = structuredClone(state.quests);
   const inventory = structuredClone(state.inventory);
+  fillResources(state);
   applyAction(state, { type: 'replenishHerd', amount: 4 }, START);
   assert.deepEqual(state.herd, { count: 24, hp: 163, maxHp: 240, panic: 56 });
   assert.deepEqual(state.log.at(-1), { key: 'herdReplenished', at: START });

@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
 import { FIRST_WATCH_STEPS } from '../../shared/first-watch.mjs';
 import { signIn } from './sign-in.mjs';
+import { fillResources } from '../economy-fixtures.mjs';
 const START = Date.UTC(2026, 9, 15, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
 async function mockChapter(page, state) {
@@ -49,6 +50,7 @@ test('exploration, equipment and caravan guidance advances only after confirmed 
   state.stats.builds = 1;
   state.stats.trained = 1;
   state.stats.wins = 1;
+  fillResources(state);
   applyAction(state, { type: 'build', building: 'storage', plotId: 'p0' }, START);
   for (const step of FIRST_WATCH_STEPS.slice(0, 5)) {
     state.firstWatch.milestones[step.id] = START;

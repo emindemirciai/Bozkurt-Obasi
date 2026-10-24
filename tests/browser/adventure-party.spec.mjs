@@ -130,6 +130,7 @@ test('arrival rows show real fatigue, level-up healing and only accepted XP at t
 }) => {
   await signIn(page);
   const state = createGame(START);
+  state.resources.water = state.resources.feed = state.capacity;
   state.adventure.unlocked = ['homeland', 'spring', 'meadow', 'highland', 'ruins'];
   state.wolves[0].hp = 20;
   state.wolves[0].xp = 44;

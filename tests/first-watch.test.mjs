@@ -11,6 +11,14 @@ import {
 import { createGame as createLegacyGame } from '../shared/legacy-v1.mjs';
 import { FIRST_WATCH_STEPS, firstWatchProgress } from '../shared/first-watch.mjs';
 
+import { previousSave } from './economy-fixtures.mjs';
+
+// Story-state tests use explicit mid-game supply fixtures; fresh-account tests stay untouched.
+const provision = (state) => {
+  state.resources.water = Math.max(state.resources.water, 500);
+  state.resources.feed = Math.max(state.resources.feed, 500);
+  state.resources.herbs = Math.max(state.resources.herbs, 200);
+};
 const START = 1_000_000;
 const fresh = () => createGame(START);
 const act = (state, action, at = state.updatedAt) => applyAction(state, action, at, () => 0);
@@ -21,12 +29,14 @@ const unchangedFailure = (state, action, code) => {
   assert.deepEqual(state, before);
 };
 const outing = (state, kind = 'expedition') => {
+  provision(state);
   act(state, { type: kind, region: 'spring', difficulty: 'easy', wolfIds: ['wolf-scout'] });
   const arrival = state.adventure.active.endsAt;
   advanceGame(state, arrival);
   return arrival;
 };
 function completeBattle(state, { lose = false } = {}) {
+  provision(state);
   act(state, { type: 'startBattle' });
   if (lose) state.herd.hp = 1;
   advanceGame(state, state.updatedAt + 90_000);
@@ -47,6 +57,8 @@ function completeChapter() {
   claim(state, 'recover');
   outing(state);
   // Six-hour pasture production fills feed storage; build real capacity before claiming.
+  state.resources.wood = 900;
+  state.resources.stone = 750;
   act(state, { type: 'build', building: 'storage', plotId: 'p1' });
   claim(state, 'explore');
   act(state, { type: 'equip', id: 'wolf-scout', item: 'leather_vest' });
@@ -100,14 +112,15 @@ test('a complete chapter works through real game actions and survives a saved re
 });
 
 test('old v2 villages migrate without changing accounts, economy, old rewards or equipment', () => {
-  const old = completeChapter();
-  act(old, { type: 'claimQuest', id: 'first_build' });
+  const current = completeChapter();
+  act(current, { type: 'claimQuest', id: 'first_build' });
+  const old = previousSave(current);
   delete old.firstWatch;
   const before = structuredClone(old);
   assert.equal(validateGame(old), false);
   const migrated = migrateGame(old);
   assert.deepEqual(old, before);
-  const { firstWatch, ...unchanged } = migrated;
+  const { firstWatch, ...unchanged } = previousSave(migrated);
   assert.deepEqual(unchanged, before);
   assert.equal(firstWatch.cohort, 'returning');
   assert.equal(firstWatch.startedAt, old.updatedAt);
@@ -122,7 +135,7 @@ test('old v2 villages migrate without changing accounts, economy, old rewards or
 });
 
 test('old empty v2 and historical v1 saves gain a pending chapter without invented achievements', () => {
-  const old = fresh();
+  const old = previousSave(fresh());
   delete old.firstWatch;
   assert.equal(firstWatchProgress(migrateGame(old)).completed, 0);
   const legacy = createLegacyGame(START);
@@ -165,8 +178,8 @@ test('full storage keeps the entire claim pending and reveals exact required fre
   act(state, { type: 'build', building: 'well', plotId: 'p0' });
   assert.equal(firstWatchProgress(state).current.claimable, true);
   claim(state, 'gather');
-  assert.equal(state.resources.wood, state.capacity - 29.75);
-  assert.equal(state.resources.stone, state.capacity - 10);
+  assert.equal(state.resources.wood, state.capacity - 144.75);
+  assert.equal(state.resources.stone, state.capacity - 80);
   assert.equal(validateGame(state), true);
 });
 
@@ -332,9 +345,10 @@ test('strict validation rejects unknown fields, impossible timestamps and forged
 });
 
 test('migration preserves an in-flight expedition and records its actual arrival after reload', () => {
-  const old = fresh();
+  let old = fresh();
   act(old, { type: 'expedition', region: 'spring', difficulty: 'easy', wolfIds: ['wolf-scout'] });
   advanceGame(old, START + 15000);
+  old = previousSave(old);
   delete old.firstWatch;
   const active = structuredClone(old.adventure.active);
   const resources = structuredClone(old.resources);
@@ -353,6 +367,7 @@ test('the first victory is recorded even when an earlier defeat already complete
   const state = fresh();
   completeBattle(state, { lose: true });
   const completedAt = state.firstWatch.milestones.battle;
+  provision(state);
   act(state, { type: 'rest' });
   act(state, { type: 'healHerd' });
   act(state, { type: 'healHerd' });

@@ -1,13 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { createGame, applyAction, advanceGame, validateGame } from '../../shared/game.mjs';
 import { translations } from '../../web/i18n.mjs';
-import { signIn } from './sign-in.mjs';
+import { signIn, seedGame } from './sign-in.mjs';
+import { fundStorage, fillResources } from '../economy-fixtures.mjs';
 
 const START = Date.UTC(2026, 9, 15, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
 
 function villageWithQuarries(count) {
-  const state = createGame(START);
+  const state = fundStorage(createGame(START), 2, 'p34');
   for (let index = 0; index < count; index++) {
     for (const key of Object.keys(state.resources)) state.resources[key] = state.capacity;
     applyAction(state, { type: 'build', building: 'quarry', plotId: `p${index}` }, START);
@@ -52,7 +53,7 @@ test('a maxed first producer does not block planning and upgrading another copy 
   page.on('pageerror', (error) => errors.push(error.message));
   await signIn(page);
   const state = villageWithQuarries(2);
-  state.buildings[0].level = 5;
+  state.buildings.find((building) => building.type === 'quarry').level = 5;
   const actions = await mockVillage(page, state);
   await page.goto('/#village');
   const choice = page.locator('#construction-plan');
@@ -69,7 +70,7 @@ test('a maxed first producer does not block planning and upgrading another copy 
   const before = JSON.stringify(state);
   await choice.selectOption('building:building-quarry-2');
   await expect(execute).toBeEnabled();
-  await expect(execute).toContainText('109 Odun');
+  await expect(execute).toContainText('1.320 Odun');
   expect(JSON.stringify(state)).toBe(before);
   expect(actions).toEqual([]);
   const originalChoice = await choice.elementHandle();
@@ -85,7 +86,11 @@ test('a maxed first producer does not block planning and upgrading another copy 
   await execute.click();
   await (await upgraded).finished();
   expect(actions).toEqual([{ type: 'upgrade', id: 'building-quarry-2' }]);
-  expect(state.buildings.map((building) => building.level)).toEqual([5, 2]);
+  expect(
+    state.buildings
+      .filter((building) => building.type === 'quarry')
+      .map((building) => building.level),
+  ).toEqual([5, 2]);
   await expect(choice).toHaveValue('building:building-quarry-2');
   await page.getByRole('button', { name: 'Switch to English', exact: true }).click();
   await expect(choice).toHaveValue('building:building-quarry-2');
@@ -93,8 +98,8 @@ test('a maxed first producer does not block planning and upgrading another copy 
     'Plot 2',
   );
   await choice.selectOption('new:quarry');
-  await expect(execute).toContainText('70 Wood');
-  await expect(execute).toContainText('30 Stone');
+  await expect(execute).toContainText('660 Wood');
+  await expect(execute).toContainText('360 Stone');
   const stock = { ...state.resources };
   await execute.click();
   expect(actions).toHaveLength(1);
@@ -106,7 +111,7 @@ test('a maxed first producer does not block planning and upgrading another copy 
   expect(actions.at(-1)).toEqual({ type: 'build', building: 'quarry', plotId: 'p17' });
   expect(state.buildings.at(-1)).toMatchObject({ id: 'building-quarry-3', x: 5, y: 2 });
   await expect(choice).toHaveValue('new:quarry');
-  await expect(execute).toContainText('70 Wood');
+  await expect(execute).toContainText('1,100 Wood');
   await expect(execute).toBeEnabled();
   expect(errors).toEqual([]);
 });
@@ -133,7 +138,7 @@ test('the sixth producer retains the selected new-copy plan with an explicit lim
   await expect(page.locator('[data-economy-plan-status]')).toContainText(
     translations.tr.buildingLimit,
   );
-  expect(state.buildings).toHaveLength(6);
+  expect(state.buildings.filter((building) => building.type === 'quarry')).toHaveLength(6);
   expect(actions).toEqual([{ type: 'build', building: 'quarry', plotId: 'p35' }]);
   await choice.focus();
   await pollVillage(page);

@@ -19,7 +19,9 @@ test('adventure preparation agrees with authoritative departure decisions', () =
     ['hard minimum party', () => {}, selection({ difficulty: 'hard' }), false],
     [
       'hard prepared party',
-      () => {},
+      (s) => {
+        s.resources.water = s.resources.feed = s.capacity;
+      },
       selection({ difficulty: 'hard', wolfIds: ['wolf-alpha', 'wolf-scout', 'wolf-healer'] }),
       true,
     ],
@@ -42,7 +44,7 @@ test('adventure preparation agrees with authoritative departure decisions', () =
     [
       'water shortage',
       (s) => {
-        s.resources.water = 17.9;
+        s.resources.water = 82.9;
       },
       selection(),
       false,
@@ -50,8 +52,8 @@ test('adventure preparation agrees with authoritative departure decisions', () =
     [
       'exact supplies',
       (s) => {
-        s.resources.water = 18;
-        s.resources.feed = 23;
+        s.resources.water = 83;
+        s.resources.feed = 111;
       },
       selection(),
       true,
@@ -110,8 +112,8 @@ test('adventure preparation agrees with authoritative departure decisions', () =
 
 test('readiness explains the actual route and multiple shortages without blocking capped rewards', () => {
   const state = createGame(NOW);
-  state.resources.water = 16.5;
-  state.resources.feed = 20;
+  state.resources.water = 81.5;
+  state.resources.feed = 108;
   state.resources.wood = state.capacity - 1;
   state.resources.stone = state.capacity;
   state.inventory.leather_vest = 10000;
@@ -147,6 +149,7 @@ test('readiness explains the actual route and multiple shortages without blockin
 
 test('scout equipment and difficulty use the server quote, even with a legacy journey pending', () => {
   const state = createGame(NOW);
+  state.resources.water = state.resources.feed = state.capacity;
   state.inventory.scout_charm = 1;
   applyAction(state, { type: 'equip', id: 'wolf-alpha', item: 'scout_charm' }, NOW);
   const plan = adventureReadiness(
@@ -154,7 +157,7 @@ test('scout equipment and difficulty use the server quote, even with a legacy jo
     selection({ difficulty: 'hard', wolfIds: ['wolf-alpha', 'wolf-scout', 'wolf-healer'] }),
   );
   assert.equal(plan.quote.seconds, 21600);
-  assert.deepEqual(plan.quote.cost, { water: 24, feed: 32 });
+  assert.deepEqual(plan.quote.cost, { water: 198, feed: 263 });
   assert.equal(plan.fatigue, 15);
   assert.equal(plan.ready, true);
   state.journey = { destination: 'spring', startedAt: NOW, endsAt: NOW + 60000 };

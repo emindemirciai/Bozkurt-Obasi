@@ -1,4 +1,4 @@
-# Bina kaldırma / Building demolition — v2.8.0
+# Bina kaldırma / Building demolition — v2.16.0
 
 ## Türkçe
 
@@ -8,21 +8,22 @@ Ana Yurt'ta kaldırmak istediğin binayı seç ve **Binayı kaldır** düğmesin
 
 ### İade hesabı
 
-İade, binanın temel inşaat maliyeti ile mevcut seviyesine kadar yapılan yükseltmelerin toplam maliyetinin **tam %50'sidir**. Her yükseltmenin mevcut oyun tarifi kullanılır; yarım malzemeler korunur ve arayüzde yerel sayı biçimiyle gösterilir.
+İade, binanın temel inşaat maliyeti ile mevcut seviyesine kadar yapılan yükseltmelerin toplam maliyetinin **tam %50'sidir**. Her seviyenin satın alındığı tarife korunur; yeni pahalı tarifeler eski yatırıma uygulanmaz. Yarım malzemeler korunur ve yerel sayı biçimiyle gösterilir.
 
 | Örnek | İnşaat + yükseltme toplamı | İade |
 | --- | --- | --- |
-| Seviye 1 Oduncu | 60 odun + 25 taş | 30 odun + 12,5 taş |
-| Seviye 2 Oduncu | 153 odun + 64 taş | 76,5 odun + 32 taş |
+| Yeni ilk kopya, Seviye 1 Oduncu | 180 odun + 100 taş | 90 odun + 50 taş |
+| Yeni ilk kopya, Seviye 2 Oduncu | 1.260 odun + 700 taş | 630 odun + 350 taş |
+| Eski Seviye 1 → yeni tarifeyle Seviye 2 Oduncu | 1.140 odun + 625 taş | 570 odun + 312,5 taş |
 
-İnşaat/yükseltme tarifesi esas alınır; geçmiş kayıtlarda ayrı bir harcama defteri yoktur. Kayıt geçişi veya köy sıfırlaması gerekmez. Kaldırma geçmiş inşaat sayısını, tamamlanmış görevleri, kurtları veya ekipmanları geri almaz. Yeniden inşa normal maliyetiyle yeni bir işlemdir.
+v3 kaydı yapı başına eski tarife seviyelerini ve inşa sırasını saklar. Eski v1/v2 kayıtları doğrulanarak aktarılır; köy sıfırlanmaz. Yeni kopya ve yükseltmeler güncel tarifeyi öder. Kaldırma geçmiş inşaat sayısını, tamamlanmış görevleri, kurtları veya ekipmanları geri almaz. Yeniden inşa normal maliyetiyle yeni bir işlemdir.
 
 ### Depo ve işlem korumaları
 
 - Aktif savaş veya yolculuk sırasında kaldırma yapılamaz.
 - Depo kaldırılırsa kendi seviyesinin kapasite katkısı kalkar: seviyeler 1–5 için **9.000 / 49.000 / 249.000 / 999.000 / 4.999.000**. Temel 1.000 ve kalan Bey Otağı katkısı korunur.
-- Bey otağı kaldırılırsa yükseltilmiş her seviye için kazanılan **100** kapasite kaldırılır; temel 500 kapasite korunur.
-- İade ve mevcut beş kaynak, işlem sonrası kapasiteye sığmalıdır. Sığmayan kaynak ve miktarı pencerede açıklanır. Önce yer aç veya kalan depo kapasitesini artır; kaynaklar otomatik silinmez veya iade eksiltilmez.
+- Bey otağı kaldırılırsa yükseltilmiş her seviye için kazanılan **100** kapasite kaldırılır; temel 1.000 kapasite korunur.
+- Mevcut beş kaynak işlem sonrası kapasiteye sığmalıdır; stok fazlası varsa kaldırma engellenir. İadenin kendisi boşluğa sığmazsa sığan pay hemen depoya, kalan pay kalıcı bekleyen iadeye geçer. Böylece pahalı depo boşaltıldıktan sonra da kaldırılabilir. Ana Yurt üzerindeki **Bekleyen iadeyi al** düğmesi, mevcut boşluk kadarını aktarır; kalanı saklar. Kaynak veya iade eksiltilmez, otomatik tahsilat yapılmaz.
 - Başka bir oturum binayı değiştirir, taşır, kaldırır veya yeni inşaat yaparsa eski onay geçersizleşir. Pencereyi kapatıp güncel binayı tekrar seç.
 - Sunucu iadeyi kendisi hesaplar. İstemcinin değiştirdiği iade miktarı veya eski kayıt sürümüyle gelen tekrar, ikinci ödeme oluşturmaz.
 
@@ -42,21 +43,22 @@ Cancel, close, Escape and backdrop clicks do not change buildings or balances. P
 
 ### Refund calculation
 
-The refund is **exactly 50%** of base construction cost plus all upgrade costs through the current level, using the game's cost recipes. Half units are retained and displayed with localized numbers.
+The refund is **exactly 50%** of base construction cost plus all upgrade costs through the current level, using the recipe actually paid for each level. New higher prices never inflate historical investment. Half units are retained and displayed with localized numbers.
 
 | Example | Construction + upgrade total | Refund |
 | --- | --- | --- |
-| Level 1 Lumber camp | 60 wood + 25 stone | 30 wood + 12.5 stone |
-| Level 2 Lumber camp | 153 wood + 64 stone | 76.5 wood + 32 stone |
+| New first copy, Level 1 Lumber camp | 180 wood + 100 stone | 90 wood + 50 stone |
+| New first copy, Level 2 Lumber camp | 1,260 wood + 700 stone | 630 wood + 350 stone |
+| Legacy Level 1 → current-price Level 2 Lumber camp | 1,140 wood + 625 stone | 570 wood + 312.5 stone |
 
-Values follow construction/upgrade recipes; older saves do not retain a separate spending ledger. No save migration or village reset is required. Removing a building does not reverse historical build counts, completed objectives, guardians or equipment. Rebuilding is a new purchase at its normal cost.
+Save v3 retains historical price levels and construction ordinal for each building. Validated v1/v2 saves migrate without a village reset; subsequent copies and upgrades pay current prices. Removing a building does not reverse historical build counts, completed objectives, guardians or equipment. Rebuilding is a new purchase at its normal cost.
 
 ### Capacity and transaction safeguards
 
 - Active combat or a journey blocks removal.
 - Removing storage removes its level contribution: **9,000 / 49,000 / 249,000 / 999,000 / 4,999,000** for levels 1–5. Base capacity 1,000 and the remaining hall bonus stay.
-- Removing the hall loses **100** capacity per upgraded level; base capacity remains 500.
-- All five current resource balances plus the refund must fit the resulting capacity. The dialog explains overflow by resource/amount. Make room or increase remaining capacity first; resources and refunds are never silently discarded.
+- Removing the hall loses **100** capacity per upgraded level; base capacity remains 1,000.
+- All five existing balances must fit reduced capacity; existing excess blocks demolition. The refund itself is split between available storage and a persistent refund reserve, so an emptied expensive warehouse can still be removed. **Claim pending refund** in the homeland transfers only what fits and preserves the rest. No credit is lost or claimed automatically.
 - Another session changing, moving or replacing the building, or constructing a new one, invalidates the old confirmation. Close the dialog and inspect the current building again.
 - The server computes the refund. Forged refund values and stale/repeated commands cannot create a second payout.
 

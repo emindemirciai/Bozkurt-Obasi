@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { createGame, applyAction, advanceGame } from '../../shared/game.mjs';
 import { signIn } from './sign-in.mjs';
+import { fillResources } from '../economy-fixtures.mjs';
 const START = Date.UTC(2026, 9, 15, 12);
 const json = (value) => ({ contentType: 'application/json', body: JSON.stringify(value) });
 async function mockGuardian(page, state) {
@@ -51,8 +52,8 @@ test('guardian training shows actual gains and a confirmed real API action survi
     points: 1,
     ranks: { guardian: 1 },
   });
-  expect(saved.state.resources.herbs).toBe(72);
-  expect(saved.state.resources.feed).toBe(168);
+  expect(saved.state.resources.herbs).toBe(40);
+  expect(saved.state.resources.feed).toBe(100);
   await expect(page.locator('[data-guardian-stat="mitigation"]')).toHaveText('10,7%');
   await page.reload();
   await expect(page.locator('[data-guardian-stat="mitigation"]')).toHaveText('10,7%');
@@ -98,8 +99,8 @@ test('training becomes affordable without replacing focused buttons or spending 
 }) => {
   const state = createGame(START);
   applyAction(state, { type: 'build', building: 'healer', plotId: 'p0' }, START);
-  state.resources.herbs = 7.99;
-  state.resources.feed = 12;
+  state.resources.herbs = 39.99;
+  state.resources.feed = 80;
   const actions = await mockGuardian(page, state);
   const train = page.locator('#guardian-train-guardian');
   await expect(train).toBeDisabled();
@@ -129,7 +130,7 @@ test('training becomes affordable without replacing focused buttons or spending 
 test('level cap, full inventory, missions and battle explain unavailable actions', async ({
   page,
 }) => {
-  const state = createGame(START);
+  const state = fillResources(createGame(START));
   state.wolves[0].level = 20;
   state.wolves[0].xp = 899;
   state.wolves[0].equipment = 'leather_vest';

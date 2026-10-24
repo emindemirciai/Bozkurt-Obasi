@@ -4,6 +4,22 @@ Sürüm kayıtları [`releases.json`](releases.json) ile aynı içeriktedir; oyu
 
 Release entries match [`releases.json`](releases.json); the in-game **Release history** reads that file. After each completed update, advance the version and update both languages, validation, README line count, and clean source ZIP together.
 
+## v2.16.0 — 2026-10-24
+
+**TR**
+
+- Depo, bina ve sur yükseltmeleri uzun vadeli maliyetlerle yeniden dengelendi; aynı türün ek binaları daha pahalıdır ve son sur seviyesi milyonluk yatırım ister.
+- Muhafız eğitimi rütbeye, savaş erzağı dalgaya, sefer hazırlığı süre, bölge, zorluk ve kadroya göre pahalanır; bakım ve sürü tamamlama giderleri artırıldı.
+- Eski yapıların ödenmiş tarifeleri kayıt geçişinde korunur. Kaldırma gerçek yatırımın yüzde 50'sini iade eder; sığmayan pay bekleyen iadede tutulup açık işlemle alınır.
+- TR/EN maliyet ekranları, eksik kaynak ve depo gereksinimi aynı sunucu tarifesini gösterir. Başlangıç stokları, ücretsiz toplama ve başlamış seferlerin vaatleri korunur.
+
+**EN**
+
+- Storage, building and wall upgrades now require long-term investment; additional buildings of the same type cost more and the final wall tier requires millions of materials.
+- Guardian training scales with rank, battle supplies with wave, and journey preparation with time, region, difficulty and party size; care and herd replacement costs increase.
+- Migration preserves historical building prices. Demolition refunds 50% of actual investment; overflow remains in a refund reserve and can be claimed explicitly.
+- TR/EN prices, shortages and storage requirements share the authoritative server recipes. Starter balances, free gathering and existing journey promises are preserved.
+
 ## v2.15.0 — 2026-10-20
 
 **TR**

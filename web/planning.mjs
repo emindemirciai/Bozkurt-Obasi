@@ -1,5 +1,5 @@
 import { BUILDINGS, RESOURCE_KEYS, getProduction, getUpgradeCost } from '../shared/game.mjs';
-import { PLOTS, TOWER_PLOTS } from '../shared/settlement.mjs';
+import { PLOTS, TOWER_PLOTS, getConstructionCost } from '../shared/settlement.mjs';
 
 // Estimates keep current production fixed; they never advance or change the authoritative save.
 export function resourceOutlook(state) {
@@ -62,7 +62,7 @@ export function constructionPlan(state, selection = 'quarry') {
     };
   }
 
-  const cost = building ? getUpgradeCost(building) : { ...definition.cost };
+  const cost = building ? getUpgradeCost(building) : getConstructionCost(state, definition.id);
   const production = getProduction(state);
   const deficits = RESOURCE_KEYS.filter((key) => cost[key] > 0).map((key) => {
     const required = cost[key];
